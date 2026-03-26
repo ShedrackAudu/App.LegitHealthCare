@@ -1,0 +1,47 @@
+# ===== Backend (Python/Flask) =====
+backend/venv/
+backend/__pycache__/
+backend/routes/__pycache__/
+backend/utils/__pycache__/
+backend/*.pyc
+backend/*.pyo
+backend/instance/
+backend/*.db
+backend/server.log
+backend/.env
+backend/static/uploads/
+
+# Diagnostic / temp scripts (cleanup)
+backend/check_*.py
+backend/debug_*.py
+backend/inspect_*.py
+backend/diagnose_*.py
+backend/verify_*.py
+backend/robust_diagnostic.py
+backend/inspect_*.json
+backend/final_api_check.py
+backend/test_*.py
+backend/count_duplicates.py
+backend/reset_admin.py
+backend/update_db.py
+backend/migrate.py
+backend/create_tables.py
+backend/seed_config.py
+
+# ===== Frontend (Node/Vite) =====
+frontend/node_modules/
+frontend/dist/
+frontend/.env
+frontend/.env.local
+frontend/.env.*.local
+
+# ===== OS / Editor =====
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+.vscode/
+.idea/
+
+# ===== Gemini AI =====
+.gemini/

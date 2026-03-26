@@ -1,0 +1,97 @@
+from flask import Blueprint, request, jsonify
+from models import db, QueueEntry, BioData, ScreeningYearBioData
+from sqlalchemy import func
+
+queue_bp = Blueprint('queue_bp', __name__)
+
+def get_bind():
+    context = request.headers.get('X-Company-Context', '').lower()
+    return context if context in ['dcp', 'dct'] else None
+
+@queue_bp.route('/', methods=['GET'], strict_slashes=False)
+def get_queue_counts():
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    year = request.args.get('year')
+    if not year: return jsonify({"error": "Year required"}), 400
+
+    # Get counts per department, joined with ScreeningYearBioData to ensure they are in the matrix
+    counts = db.session.query(
+        func.trim(QueueEntry.department), 
+        func.count(QueueEntry.id)
+    ).join(
+        ScreeningYearBioData, 
+        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) & 
+        (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
+    ).filter(
+        QueueEntry.screening_year == year, 
+        QueueEntry.status == 'Waiting'
+    ).group_by(func.trim(QueueEntry.department)).all()
+    
+    result = {
+        "consultation": 0,
+        "audiometry": 0,
+        "spirometry": 0,
+        "ecg": 0
+    }
+    
+    for dept, count in counts:
+        if not dept: continue
+        dept_key = dept.strip().lower()
+        if dept_key in result:
+            result[dept_key] = count
+            
+    return jsonify(result), 200
+
+@queue_bp.route('/<department>', methods=['GET'], strict_slashes=False)
+def get_department_queue(department):
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    year = request.args.get('year')
+    if not year: return jsonify({"error": "Year required"}), 400
+
+    # Normalize department name
+    dept_map = {
+        'consultation': 'Consultation',
+        'audiometry': 'Audiometry',
+        'spirometry': 'Spirometry',
+        'ecg': 'ECG'
+    }
+    target_dept = dept_map.get(department.lower())
+    if not target_dept:
+        return jsonify({"error": "Invalid department"}), 400
+
+    # Join with ScreeningYearBioData to ensure patient is in the screening matrix
+    entries_with_bio = db.session.query(
+        QueueEntry, ScreeningYearBioData
+    ).join(
+        ScreeningYearBioData,
+        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) &
+        (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
+    ).filter(
+        QueueEntry.department == target_dept,
+        QueueEntry.screening_year == year,
+        QueueEntry.status == 'Waiting'
+    ).order_by(QueueEntry.created_at.asc()).all()
+
+    patients = []
+    for e, bio in entries_with_bio:
+        patients.append({
+            "staff_id": e.staff_id,
+            "first_name": bio.first_name,
+            "last_name": bio.last_name,
+            "created_at": e.created_at.isoformat()
+        })
+
+    return jsonify(patients), 200
+
+@queue_bp.route('/reset', methods=['POST'])
+def reset_queue():
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    QueueEntry.query.delete()
+    db.session.commit()
+    return jsonify({"message": "Patient queuing tracker has been reset to zero for all departments."}), 200

@@ -1,0 +1,617 @@
+import React, { useState, useEffect } from 'react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import * as z from 'zod';
+import {
+  Users,
+  Search,
+  UserPlus,
+  Save,
+  Loader2,
+  Calendar,
+  Activity,
+  ClipboardList,
+  ArrowLeft,
+  X,
+  Trash2,
+  ChevronRight
+} from 'lucide-react';
+import { SearchableCombobox } from "@/components/ui/searchable-combobox";
+import { MainLayout } from '@/components/layout/MainLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Button } from '@/components/ui/button';
+import { useAppContext } from '@/context/AppContext';
+import axios from 'axios';
+import { toast } from 'react-hot-toast';
+
+const registrationSchema = z.object({
+  staff_id: z.string().min(1, 'Staff ID is required'),
+  patient_id: z.string().min(1, 'Patient ID is required'),
+  first_name: z.string().min(1, 'First Name is required'),
+  middle_name: z.string().optional(),
+  last_name: z.string().min(1, 'Last Name is required'),
+  department: z.string().min(1, 'Department is required'),
+  gender: z.string().min(1, 'Gender is required'),
+  dob: z.string().min(1, 'Date of Birth is required'),
+  age: z.number(),
+  phone: z.string().min(1, 'Phone is required'),
+  email: z.string().email('Invalid email'),
+  race: z.string().min(1, 'Race is required'),
+  nationality: z.string().min(1, 'Nationality is required'),
+});
+
+type RegistrationValues = z.infer<typeof registrationSchema>;
+
+const RegistrationPage: React.FC = () => {
+  const { activeSection, activeYear } = useAppContext();
+  const [searchParams] = useSearchParams();
+  const [isSelecting, setIsSelecting] = useState(false);
+  const navigate = useNavigate();
+  const editStaffId = searchParams.get('edit');
+  const isEditMode = !!editStaffId;
+
+  const [loading, setLoading] = useState(false);
+  const [searching, setSearching] = useState(false);
+  const [searchId, setSearchId] = useState('');
+  const [departments, setDepartments] = useState<string[]>([]);
+  const [races, setRaces] = useState<string[]>([]);
+  const [nationalities, setNationalities] = useState<string[]>([]);
+  const [searchResults, setSearchResults] = useState<any[]>([]);
+
+  const { register, handleSubmit, watch, setValue, control, reset, formState: { errors } } = useForm<RegistrationValues>({
+    resolver: zodResolver(registrationSchema),
+    defaultValues: {
+      age: 0
+    }
+  });
+
+  const dobValue = watch('dob');
+
+  // Fetch data if in edit mode
+  useEffect(() => {
+    if (isEditMode && editStaffId) {
+      const fetchPatient = async () => {
+        setLoading(true);
+        try {
+          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}`, {
+            headers: { 'X-Company-Context': activeSection }
+          });
+          const p = response.data;
+
+          // Format ISO date (YYYY-MM-DD) to DD/MM/YYYY
+          if (p.dob && p.dob.includes('-')) {
+            const [y, m, d] = p.dob.split('-');
+            p.dob = `${d}/${m}/${y}`;
+          }
+
+          reset(p);
+        } catch (err) {
+          toast.error("Failed to load patient data for editing");
+          navigate('/view-patients');
+        } finally {
+          setLoading(false);
+        }
+      };
+      fetchPatient();
+    }
+  }, [isEditMode, editStaffId, reset, navigate, activeSection]);
+
+  // Auto-calculate age from DD/MM/YYYY
+  useEffect(() => {
+    if (dobValue && dobValue.includes('/')) {
+      const parts = dobValue.split('/');
+      if (parts.length === 3) {
+        const day = parseInt(parts[0], 10);
+        const month = parseInt(parts[1], 10) - 1;
+        const year = parseInt(parts[2], 10);
+
+        if (year > 1900 && year <= new Date().getFullYear() && month >= 0 && month < 12 && day > 0 && day <= 31) {
+          const birthDate = new Date(year, month, day);
+          const today = new Date();
+          let age = today.getFullYear() - birthDate.getFullYear();
+          const m = today.getMonth() - birthDate.getMonth();
+          if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+            age--;
+          }
+          setValue('age', age > 0 ? age : 0);
+        }
+      }
+    }
+  }, [dobValue, setValue]);
+
+  const [stats, setStats] = useState<any>(null);
+
+  const fetchStats = async () => {
+    try {
+      const response = await axios.get(`http://localhost:5000/stats?year=${activeYear}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      setStats(response.data);
+    } catch (err) {
+    }
+  };
+
+  const handleClearForm = () => {
+    reset({
+      age: 0,
+      staff_id: '',
+      patient_id: '',
+      first_name: '',
+      middle_name: '',
+      last_name: '',
+      department: '',
+      gender: '',
+      dob: '',
+      phone: '',
+      email: '',
+      race: '',
+      nationality: ''
+    });
+    setSearchId('');
+    setSearchResults([]);
+  };
+
+  useEffect(() => {
+    fetchStats();
+  }, [activeSection, activeYear]);
+
+  useEffect(() => {
+    const fetchConfigs = async () => {
+      try {
+        const [deptRes, raceRes, natRes] = await Promise.all([
+          axios.get(`http://localhost:5000/api/config/departments`),
+          axios.get(`http://localhost:5000/api/config/races`),
+          axios.get(`http://localhost:5000/api/config/nationalities`)
+        ]);
+        setDepartments(deptRes.data.map((d: any) => d.name));
+        setRaces(raceRes.data.map((r: any) => r.name));
+        setNationalities(natRes.data.map((n: any) => n.name));
+      } catch (err) {
+        console.error("Failed to fetch configs", err);
+      }
+    };
+    fetchConfigs();
+  }, []);
+
+  useEffect(() => {
+    if (searchId.length > 2) {
+      if (isSelecting) {
+        setIsSelecting(false);
+        setSearchResults([]);
+        return;
+      }
+      const fetchResults = async () => {
+        try {
+          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+            headers: { 'X-Company-Context': activeSection }
+          });
+          setSearchResults(res.data);
+        } catch (err) {
+          console.error(err);
+        }
+      };
+      const timer = setTimeout(fetchResults, 300);
+      return () => clearTimeout(timer);
+    } else {
+      setSearchResults([]);
+    }
+  }, [searchId, activeSection, isSelecting]);
+
+  const handleSearch = async () => {
+    const cleanId = searchId.trim();
+    if (!cleanId) return;
+    setSearching(true);
+    try {
+      const response = await axios.get(`http://localhost:5000/patient/${cleanId}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+
+      const p = response.data;
+      // Format ISO date (YYYY-MM-DD) to DD/MM/YYYY
+      if (p.dob && p.dob.includes('-')) {
+        const [y, m, d] = p.dob.split('-');
+        p.dob = `${d}/${m}/${y}`;
+      }
+
+      reset(p);
+      setSearchResults([]);
+      toast.success(`Patient ${p.first_name} found and records retrieved.`);
+    } catch (err) {
+      toast.error("Patient not found in the comprehensive database.");
+    } finally {
+      setSearching(false);
+    }
+  };
+
+  const selectPatient = (patient: any) => {
+    const p = { ...patient };
+    if (p.dob && p.dob.includes('-')) {
+      const [y, m, d] = p.dob.split('-');
+      p.dob = `${d}/${m}/${y}`;
+    }
+    setIsSelecting(true);
+    reset(p);
+    setSearchId(''); // Clear the search field immediately
+    setSearchResults([]);
+    toast.success(`Patient ${p.first_name} ${p.last_name} selected.`);
+  };
+
+  const onSubmit = async (data: RegistrationValues) => {
+    setLoading(true);
+    try {
+      let formattedDob = data.dob;
+      if (data.dob.includes('/')) {
+        const [d, m, y] = data.dob.split('/');
+        formattedDob = `${y}-${m}-${d}`;
+      }
+
+      if (isEditMode) {
+        await axios.put(`http://localhost:5000/patients/${editStaffId}`, {
+          ...data,
+          dob: formattedDob
+        }, {
+          headers: { 'X-Company-Context': activeSection }
+        });
+        toast.success("Patient profile updated successfully!");
+        navigate('/view-patients');
+      } else {
+        await axios.post('http://localhost:5000/register-patient', {
+          ...data,
+          dob: formattedDob,
+          screening_year: Number(activeYear)
+        }, {
+          headers: { 'X-Company-Context': activeSection }
+        });
+        toast.success("Registration successful!");
+        handleClearForm();
+        fetchStats();
+      }
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || (isEditMode ? "Update failed" : "Registration failed");
+      toast.error(errorMsg);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <MainLayout>
+      <div className="space-y-6">
+        {/* Top Header & Search */}
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-4 rounded-xl border-2 border-primary/10 shadow-sm">
+          <div className="flex items-center gap-4">
+            {isEditMode && (
+              <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="hover:bg-primary/10">
+                <ArrowLeft className="h-5 w-5 text-primary" />
+              </Button>
+            )}
+            <div>
+              <h1 className="text-2xl font-bold flex items-center gap-2">
+                {isEditMode ? <Users className="text-primary h-6 w-6" /> : <UserPlus className="text-primary h-6 w-6" />}
+                {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
+              </h1>
+              <p className="text-sm text-muted-foreground">
+                {isEditMode ? `Updating ${editStaffId}` : `Manage patient Bio-Data for ${activeSection} - ${activeYear}`}
+              </p>
+            </div>
+          </div>
+
+          {!isEditMode && (
+            <div className="flex-1 max-w-2xl relative">
+              <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                <Search className="h-6 w-6 text-muted-foreground ml-2" />
+                <Input
+                  className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
+                  placeholder="Search Staff ID or Name..."
+                  value={searchId}
+                  onChange={(e) => setSearchId(e.target.value)}
+                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                />
+                <Button 
+                  onClick={handleSearch}
+                  disabled={searching || !searchId.trim()}
+                  className="bg-primary hover:bg-primary/90 shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl"
+                >
+                  {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
+                </Button>
+
+                {/* Search Results Card */}
+                {searchResults.length > 0 && (
+                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] shadow-2xl border-2 border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                    <CardHeader className="py-3 bg-primary/5 border-b">
+                      <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
+                    </CardHeader>
+                    <ul className="max-h-[300px] overflow-auto divide-y">
+                      {searchResults.map((p: any) => (
+                        <li 
+                          key={p.staff_id}
+                          className="p-4 hover:bg-primary/5 cursor-pointer transition-colors group"
+                          onClick={() => selectPatient(p)}
+                        >
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black group-hover:scale-110 transition-transform">
+                                {p.first_name[0]}{p.last_name[0]}
+                              </div>
+                              <div>
+                                <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
+                                <p className="text-xs text-muted-foreground flex items-center gap-2">
+                                  <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
+                                  • <span>{p.department}</span>
+                                </p>
+                              </div>
+                            </div>
+                            <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
+                              Select <ChevronRight className="ml-1 h-3 w-3" />
+                            </Button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </Card>
+                )}
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <StatCard
+            title="Total Registered"
+            value={stats?.total_comprehensive?.toLocaleString() || '0'}
+            sub="Global Bio-Data"
+            icon={Users}
+            color="text-blue-600"
+          />
+          <StatCard
+            title="Registered Today"
+            value={stats?.today?.toLocaleString() || '0'}
+            sub={`${activeYear} Screening`}
+            icon={Activity}
+            color="text-emerald-600"
+          />
+          <StatCard
+            title="Gender Mix"
+            value={stats ? `${Math.round((stats.males / (stats.year_total || 1)) * 100)}% Male` : '0% Male'}
+            sub={`${stats?.males || 0} M / ${stats?.females || 0} F`}
+            icon={Users}
+            color="text-indigo-600"
+          />
+          <StatCard
+            title="Age Context"
+            value={stats?.age_40_above?.toLocaleString() || '0'}
+            sub="40 Years & Above"
+            icon={Activity}
+            color="text-amber-600"
+          />
+          <StatCard
+            title="Youth Context"
+            value={stats?.age_below_40?.toLocaleString() || '0'}
+            sub="Below 40 Years"
+            icon={Users}
+            color="text-rose-600"
+          />
+          <StatCard
+            title="Daily Target"
+            value="80%"
+            sub="Progress indicator"
+            icon={Activity}
+            color="text-primary"
+          />
+        </div>
+
+        {/* Form Section */}
+        <Card className="border-2 shadow-lg">
+          <CardHeader className="bg-primary/5 border-b py-4">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <ClipboardList className="h-5 w-5 text-primary" />
+              Bio-Data Information
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+              {/* Row 1: IDs */}
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6">
+                <div className="space-y-2">
+                  <Label className="text-primary font-bold">Staff ID (Company ID) <span className="text-destructive">*</span></Label>
+                  <Input
+                    {...register('staff_id')}
+                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
+                    placeholder="e.g. 123456"
+                    inputMode="numeric"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      e.target.value = val;
+                      register('staff_id').onChange(e);
+                    }}
+                    disabled={isEditMode}
+                  />
+                  {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-emerald-600 font-bold">Patient ID (Clinic ID) <span className="text-destructive">*</span></Label>
+                  <Input {...register('patient_id')} className="h-11 border-emerald-500/30 font-bold text-lg uppercase tracking-wider" placeholder="e.g. LEG2025-001" />
+                  {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
+                </div>
+              </div>
+
+              {/* Main Form Fields: 4 per row */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="space-y-2">
+                  <Label>First Name</Label>
+                  <Input {...register('first_name')} placeholder="First Name" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Middle Name</Label>
+                  <Input {...register('middle_name')} placeholder="Middle Name" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Last Name</Label>
+                  <Input {...register('last_name')} placeholder="Last Name" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Department</Label>
+                  <Controller
+                    name="department"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableCombobox
+                        options={departments}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Select Department..."
+                      />
+                    )}
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Gender</Label>
+                  <Controller
+                    name="gender"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableCombobox
+                        options={["Female", "Male"]}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Select Gender..."
+                      />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Date of Birth</Label>
+                  <div className="relative group">
+                    <Input
+                      type="text"
+                      {...register('dob')}
+                      placeholder="DD/MM/YYYY"
+                      className="pr-12"
+                      onChange={(e) => {
+                        let val = e.target.value.replace(/\D/g, '');
+                        if (val.length > 8) val = val.slice(0, 8);
+                        if (val.length > 4) {
+                          val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
+                        } else if (val.length > 2) {
+                          val = `${val.slice(0, 2)}/${val.slice(2)}`;
+                        }
+                        e.target.value = val;
+                        register('dob').onChange(e);
+                      }}
+                    />
+                    <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
+                      <Calendar className="h-5 w-5 text-primary" />
+                    </div>
+                    <input
+                      type="date"
+                      className="absolute right-0 top-0 bottom-0 w-12 opacity-0 cursor-pointer z-50"
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        if (val) {
+                          const [y, m, d] = val.split('-');
+                          setValue('dob', `${d}/${m}/${y}`, { shouldValidate: true });
+                        }
+                      }}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <Label>Age</Label>
+                  <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Contact Phone</Label>
+                  <Input {...register('phone')} placeholder="+234..." />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Email Address</Label>
+                  <Input type="email" {...register('email')} placeholder="email@example.com" />
+                </div>
+                <div className="space-y-2">
+                  <Label>Race (Continent)</Label>
+                  <Controller
+                    name="race"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableCombobox
+                        options={races}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Select Race..."
+                      />
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Nationality</Label>
+                  <Controller
+                    name="nationality"
+                    control={control}
+                    render={({ field }) => (
+                      <SearchableCombobox
+                        options={nationalities}
+                        value={field.value || ''}
+                        onChange={field.onChange}
+                        placeholder="Select Nationality..."
+                      />
+                    )}
+                  />
+                </div>
+
+              </div>
+
+              <div className="pt-4 border-t flex flex-wrap justify-end gap-3">
+                {!isEditMode && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="lg"
+                    className="h-12 px-8 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
+                    onClick={handleClearForm}
+                  >
+                    <Trash2 className="mr-2 h-5 w-5" /> Clear Form
+                  </Button>
+                )}
+                {isEditMode && (
+                  <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
+                    <X className="mr-2 h-5 w-5" /> Cancel
+                  </Button>
+                )}
+                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-12 font-bold text-lg shadow-xl" disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
+                    <><Save className="mr-2 h-5 w-5" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                  )}
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+      </div>
+    </MainLayout>
+  );
+};
+
+const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
+  <Card className="border-2 shadow-sm hover:shadow-md transition-all">
+    <CardContent className="p-4 flex items-center gap-4">
+      <div className={`p-3 rounded-xl bg-muted/50 ${color}`}>
+        <Icon className="h-6 w-6" />
+      </div>
+      <div>
+        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-2xl font-bold">{value}</h3>
+          {sub && <span className="text-[10px] font-medium text-muted-foreground">{sub}</span>}
+        </div>
+      </div>
+    </CardContent>
+  </Card>
+);
+
+export default RegistrationPage;

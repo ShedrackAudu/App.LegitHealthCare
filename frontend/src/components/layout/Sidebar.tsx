@@ -1,0 +1,199 @@
+import React, { useState } from 'react';
+import { NavLink } from 'react-router-dom';
+import { 
+  LayoutDashboard, 
+  UserPlus, 
+  Stethoscope, 
+  ChevronLeft, 
+  ChevronRight,
+  FlaskConical,
+  ShieldCheck,
+  Users,
+  Database,
+  FileText,
+  Bot,
+  Palette,
+  Building2,
+  UserCog,
+  MessageSquare,
+  Key,
+  Settings2,
+  Calendar
+} from 'lucide-react';
+import { cn } from '@/lib/utils';
+import { Button } from '@/components/ui/button';
+import { Badge } from '@/components/ui/badge';
+import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
+
+interface SidebarItem {
+  title: string;
+  path: string;
+  icon: React.ElementType;
+  permission?: string;
+}
+
+const medicalItems: SidebarItem[] = [
+  { title: 'Registration', path: '/registration', icon: UserPlus, permission: 'registration' },
+  { title: 'Consultation', path: '/consultation', icon: Stethoscope, permission: 'consultation' },
+  { title: 'Test Results', path: '/tests', icon: FlaskConical, permission: 'lab_tests' },
+  { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
+  { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
+  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
+  { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
+  { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
+  { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'registration' },
+];
+
+
+const adminItems: SidebarItem[] = [
+  { title: 'User Management', path: '/user-management', icon: UserCog, permission: 'view_users' },
+  { title: 'Role Configuration', path: '/roles-permissions', icon: ShieldCheck, permission: 'manage_roles' },
+  { title: 'Audit Trails', path: '/audit-logs', icon: FileText, permission: 'view_audit_logs' },
+  { title: 'Data Downloads', path: '/data-management', icon: Database, permission: 'download_data' },
+  { title: 'Access Keys', path: '/admin/access-keys', icon: Key, permission: 'manage_roles' },
+  { title: 'AI Integration', path: '/ai-integration', icon: Bot, permission: 'manage_ai' },
+  { title: 'System Branding', path: '/system-branding', icon: Palette, permission: 'manage_branding' },
+  { title: 'System Settings', path: '/system-config', icon: Settings2, permission: 'manage_departments' },
+];
+
+const sharedItems: SidebarItem[] = [
+  { title: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
+];
+
+export const Sidebar: React.FC = () => {
+  const [isCollapsed, setIsCollapsed] = useState(false);
+  const { branding, brandingError, unreadMessagesCount } = useAppContext(); 
+  const { isAdmin } = usePermissions();
+
+  return (
+    <aside 
+      className={cn(
+        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col",
+        isCollapsed ? "w-16" : "w-64"
+      )}
+    >
+      <div className="h-14 shrink-0 flex items-center px-4 border-b">
+         {/* Clinic Logo */}
+         {!isCollapsed ? (
+             (branding?.logo_dark && !brandingError) ? (
+                 <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+             ) : (
+                 <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
+                    <Building2 className="h-5 w-5 shrink-0" />
+                    {branding?.clinic_name || 'LEGIT HC'}
+                 </div>
+             )
+         ) : (
+             (branding?.logo_dark && !brandingError) ? (
+                 <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+             ) : (
+                 <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
+                    <Building2 className="h-5 w-5 shrink-0" />
+                 </div>
+             )
+         )}
+      </div>
+
+      <div className="flex flex-col flex-1 py-4 overflow-hidden">
+        <div className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar">
+          {/* Main Items */}
+          {[...sharedItems, ...medicalItems].map((item) => {
+            // Visible to everyone, access handled by ProtectedRoute
+            return (
+              <NavLink
+                key={item.path}
+                to={item.path}
+                className={({ isActive }) => cn(
+                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                  isActive 
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                )}
+              >
+                <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+                <span className={cn(
+                  "font-semibold transition-opacity duration-300 whitespace-nowrap",
+                  isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
+                )}>
+                  {item.title}
+                </span>
+                
+                {!isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
+                  <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] animate-in zoom-in">
+                    {unreadMessagesCount}
+                  </Badge>
+                )}
+                
+                {isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
+                  <div className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-background animate-pulse" />
+                )}
+                
+                {isCollapsed && (
+                  <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                    {item.title}
+                  </div>
+                )}
+              </NavLink>
+            );
+          })}
+
+          {/* Admin Section - Only visible to Admins */}
+          {isAdmin() && (
+            <div className="pt-4 pb-2">
+              {!isCollapsed && (
+                <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
+                  Admin Control Panel
+                </div>
+              )}
+              {adminItems.map((item) => {
+                return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                    className={({ isActive }) => cn(
+                      "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                      isActive 
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                        : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    )}
+                  >
+                    <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+                    <span className={cn(
+                      "font-semibold transition-opacity duration-300 whitespace-nowrap",
+                      isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
+                    )}>
+                      {item.title}
+                    </span>
+                    
+                    {isCollapsed && (
+                      <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                        {item.title}
+                      </div>
+                    )}
+                  </NavLink>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="px-3 mt-auto">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setIsCollapsed(!isCollapsed)}
+            className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+          >
+            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : (
+                <div className="flex items-center gap-2">
+                    <ChevronLeft className="h-4 w-4" />
+                    <span className="text-xs font-bold uppercase tracking-wider">Collapse</span>
+                </div>
+            )}
+          </Button>
+        </div>
+      </div>
+    </aside>
+  );
+};
