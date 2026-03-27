@@ -1,22 +1,21 @@
-import React, { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { 
-  Search, 
-  Calendar, 
-  User, 
-  Building2, 
-  Mail, 
-  Phone, 
-  Globe, 
   Clock, 
   Loader2,
   AlertCircle,
-  ChevronRight
+  Calendar,
+  User,
+  Building2,
+  Mail,
+  Phone,
+  Globe
 } from 'lucide-react';
+import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -24,7 +23,6 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
-import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
 
 const appointmentSchema = z.object({
@@ -54,9 +52,7 @@ const BioItem = ({ label, value, icon: Icon }: any) => (
 
 const AppointmentsPage = () => {
   const { activeSection, activeYear } = useAppContext();
-  const [searchId, setSearchId] = useState('');
   const [patient, setPatient] = useState<any>(null);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
 
@@ -64,41 +60,16 @@ const AppointmentsPage = () => {
     resolver: zodResolver(appointmentSchema)
   });
 
-  // Real-time search effect
-  useEffect(() => {
-    if (searchId.length > 1) {
-      const fetchResults = async () => {
-        try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
-             headers: { 'X-Company-Context': activeSection }
-          });
-          setSearchResults(res.data || []);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      const timer = setTimeout(fetchResults, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setSearchResults([]);
-    }
-  }, [searchId, activeSection]);
-
-  const handleSearch = async (forcedId?: string) => {
-    const id = forcedId || searchId;
-    if (!id) return;
-
+  const handleSearch = async (query: string) => {
+    if (!query) return;
     setIsSearching(true);
-    setSearchResults([]);
     try {
-      const res = await axios.get(`http://localhost:5000/api/patients/search?q=${id}`, {
+      const res = await axios.get(`http://localhost:5000/api/patients/search?q=${query}`, {
           headers: { 'X-Company-Context': activeSection }
       });
       if (res.data && res.data.length > 0) {
-          // Find exact match or take first
-          const match = res.data.find((p: any) => p.staff_id === id) || res.data[0];
+          const match = res.data.find((p: any) => p.staff_id === query) || res.data[0];
           setPatient(match);
-          setSearchId(match.staff_id);
           toast.success(`Patient ${match.first_name} selected`);
       } else {
           toast.error("No patient found with this Staff ID");
@@ -124,7 +95,6 @@ const AppointmentsPage = () => {
       toast.success("Appointment booked successfully!");
       reset();
       setPatient(null);
-      setSearchId('');
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to book appointment");
     } finally {
@@ -135,7 +105,7 @@ const AppointmentsPage = () => {
   const today = new Date().toISOString().split('T')[0];
 
   return (
-    <MainLayout title="Appointments Management">
+    <MainLayout>
       <div className="max-w-6xl mx-auto space-y-8 pb-20 animate-in slide-in-from-bottom-4 duration-500 mt-2 p-4">
         
         {/* Top Header & Search Area - Strictly matched with Director Review style */}
@@ -150,47 +120,16 @@ const AppointmentsPage = () => {
             </div>
           </div>
 
-          <div className="flex w-full xl:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-              <Search className="ml-2 h-5 w-5 text-muted-foreground" />
-              <Input 
-                  placeholder="Search Numeric Staff ID..." 
-                  className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                  value={searchId}
-                  inputMode="numeric"
-                  onChange={(e) => setSearchId(e.target.value.replace(/\D/g, ''))}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-              />
-              {searchResults.length > 0 && (
-                  <Card className="absolute top-full left-0 right-0 mt-2 bg-background border-2 shadow-2xl rounded-xl overflow-hidden z-[100] animate-in slide-in-from-top-2 duration-200">
-                      {searchResults.map((p, i) => (
-                          <div 
-                              key={i}
-                              onClick={() => {
-                                  setPatient(p);
-                                  setSearchId(p.staff_id);
-                                  setSearchResults([]);
-                                  toast.success(`Patient ${p.first_name} selected`);
-                              }}
-                              className="p-3 hover:bg-primary/5 cursor-pointer flex items-center justify-between group transition-colors border-b last:border-0"
-                          >
-                              <div className="flex items-center gap-3">
-                                  <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
-                                      {p.first_name[0]}{p.last_name[0]}
-                                  </div>
-                                  <div>
-                                      <p className="font-bold text-sm tracking-tight">{p.first_name} {p.last_name}</p>
-                                      <p className="text-[10px] text-muted-foreground uppercase font-black">{p.staff_id}</p>
-                                  </div>
-                              </div>
-                              <ChevronRight className="h-4 w-4 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                          </div>
-                      ))}
-                  </Card>
-              )}
-              <Button size="lg" className="shadow-lg px-8 font-bold whitespace-nowrap h-11 rounded-xl" onClick={() => handleSearch()} disabled={isSearching}>
-                  {isSearching ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Retrieve Record'}
-              </Button>
-          </div>
+          <PatientSearch
+              activeSection={activeSection}
+              onSearch={handleSearch}
+              onSelect={(p) => {
+                setPatient(p);
+                // Optionally handle record retrieval if needed immediately
+              }}
+              searching={isSearching}
+              themeColor="primary"
+          />
         </div>
 
         {patient && (

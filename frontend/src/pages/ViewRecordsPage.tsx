@@ -1,29 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
 import { 
-  Database, 
-  Search, 
-  Edit, 
+  Database,
+  Search,
   Trash2, 
   Loader2,
-  Download,
-  Stethoscope,
   ChevronRight,
   ChevronLeft
 } from 'lucide-react';
+import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { 
-    Table, 
-    TableBody, 
-    TableCell, 
-    TableHead, 
-    TableHeader, 
+    Table,
+    TableBody,
+    TableCell,
+    TableHead,
+    TableHeader,
     TableRow 
 } from "@/components/ui/table";
-import { Badge } from "@/components/ui/badge";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
@@ -31,7 +26,6 @@ import { toast } from 'react-hot-toast';
 
 const ViewRecordsPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
-    const navigate = useNavigate();
     const [recordsData, setRecordsData] = useState<any>({
         records: [],
         total: 0,
@@ -41,7 +35,6 @@ const ViewRecordsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
-    const [searchResults, setSearchResults] = useState<any[]>([]);
 
     const fetchRecords = async (page = 1, query = '') => {
         setLoading(true);
@@ -65,38 +58,10 @@ const ViewRecordsPage: React.FC = () => {
         fetchRecords(1, searchTerm);
     }, [activeSection, activeYear]);
 
-    // Real-time search effect
-    useEffect(() => {
-        if (searchTerm.length > 1) {
-            const fetchQuickResults = async () => {
-                try {
-                    const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchTerm}`, {
-                        headers: { 'X-Company-Context': activeSection }
-                    });
-                    setSearchResults(res.data);
-                } catch (err) {
-                    console.error(err);
-                }
-            };
-            const timer = setTimeout(fetchQuickResults, 300);
-            return () => clearTimeout(timer);
-        } else {
-            setSearchResults([]);
-        }
-    }, [searchTerm, activeSection]);
+    // REMOVED deprecated ad-hoc search logic
 
-    const handleSearch = () => {
-        setSearchResults([]);
-        setCurrentPage(1);
-        fetchRecords(1, searchTerm);
-    };
 
-    const selectFromDropdown = (p: any) => {
-        setSearchTerm(p.staff_id);
-        setSearchResults([]);
-        setCurrentPage(1);
-        fetchRecords(1, p.staff_id);
-    };
+
 
     const handlePageChange = (newPage: number) => {
         fetchRecords(newPage, searchTerm);
@@ -135,42 +100,20 @@ const ViewRecordsPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex w-full lg:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                        <Search className="ml-2 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search Numeric Staff ID..." 
-                            className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                            value={searchTerm}
-                            inputMode="numeric"
-                            onChange={(e) => setSearchTerm(e.target.value.replace(/\D/g, ''))}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        />
-                        {searchResults.length > 0 && (
-                            <Card className="absolute top-full left-0 right-0 mt-2 bg-background border-2 shadow-2xl rounded-xl overflow-hidden z-[100] animate-in slide-in-from-top-2 duration-200">
-                                {searchResults.map((p) => (
-                                    <div 
-                                        key={p.staff_id}
-                                        onClick={() => selectFromDropdown(p)}
-                                        className="p-3 hover:bg-primary/5 cursor-pointer flex items-center justify-between group transition-colors border-b last:border-0"
-                                    >
-                                        <div className="flex items-center gap-3">
-                                            <div className="h-8 w-8 rounded-full bg-primary/10 flex items-center justify-center text-primary font-bold text-xs uppercase">
-                                                {p.first_name[0]}{p.last_name[0]}
-                                            </div>
-                                            <div>
-                                                <p className="font-bold text-sm tracking-tight">{p.first_name} {p.last_name}</p>
-                                                <p className="text-[10px] text-muted-foreground uppercase font-black">{p.staff_id}</p>
-                                            </div>
-                                        </div>
-                                        <ChevronRight className="h-4 w-4 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                    </div>
-                                ))}
-                            </Card>
-                        )}
-                        <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl" onClick={handleSearch} disabled={loading}>
-                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Retrieve Records'}
-                        </Button>
-                    </div>
+                    <PatientSearch
+                        activeSection={activeSection}
+                        onSearch={(query) => {
+                            setSearchTerm(query);
+                            fetchRecords(1, query);
+                        }}
+                        onSelect={(p) => {
+                            setSearchTerm(p.staff_id);
+                            fetchRecords(1, p.staff_id);
+                        }}
+                        searching={loading}
+                        themeColor="primary"
+                        placeholder="Search Staff ID or Name..."
+                    />
                 </div>
 
                 <Card className="border-2 shadow-xl bg-card overflow-hidden">

@@ -13,6 +13,11 @@ mail = Mail()
 def generate_otp(length=6):
     return ''.join(random.choices(string.digits, k=length))
 
+def verify_otp(otp_code):
+    # For now, we'll just accept any 6-digit code for testing
+    # In production, this should check against a stored value in Redis or DB
+    return len(otp_code) == 6
+
 from utils.email_utils import EmailService
 
 def send_otp_email(user, otp, subject="Your Legit HealthCare OTP Code"):

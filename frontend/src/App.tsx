@@ -28,6 +28,9 @@ import DataManagementPage from './pages/DataManagementPage';
 import AccessKeysPage from './pages/AccessKeysPage';
 import AccessDeniedPage from './pages/AccessDeniedPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import PatientOTPPage from './pages/PatientOTPPage';
+import PatientManageAccountPage from './pages/PatientManageAccountPage';
+import PatientDashboard from './pages/PatientDashboard';
 import { Toaster } from 'react-hot-toast';
 
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -44,9 +47,14 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify-otp" element={<OTPPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            
+            {/* Patient Portal Onboarding */}
+            <Route path="/patient/verify-otp" element={<PatientOTPPage />} />
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+            <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={['Patient']}><PatientDashboard /></ProtectedRoute>} />
+        <Route path="/patient/account" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManageAccountPage /></ProtectedRoute>} />
             <Route path="/registration" element={<ProtectedRoute requiredPermission="registration"><RegistrationPage /></ProtectedRoute>} />
             <Route path="/consultation" element={<ProtectedRoute requiredPermission="consultation"><ConsultationPage /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute requiredPermission="registration"><AppointmentsPage /></ProtectedRoute>} />

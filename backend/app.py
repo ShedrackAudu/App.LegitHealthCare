@@ -20,6 +20,7 @@ from routes.admin_bp import admin_bp
 from routes.email_bp import email_bp
 from routes.config_bp import config_bp
 from routes.appointments import appointments_bp
+from routes.patient_bp import patient_bp
 from socket_handlers import init_socket_handlers
 from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
@@ -71,6 +72,7 @@ app.register_blueprint(admin_bp)
 app.register_blueprint(email_bp, url_prefix='/api/email')
 app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
+app.register_blueprint(patient_bp)
 
 # Initialize Socket.IO handlers
 init_socket_handlers(socketio)
@@ -170,8 +172,9 @@ def login():
     # Support both 'identity' and 'username' for frontend compatibility
     identifier = (data.get('identity') or data.get('username') or '').strip()
     password = data.get('password')
+    portal = data.get('portal') # 'staff' or 'patient'
     
-    app.logger.info(f"Login attempt for: {identifier}")
+    app.logger.info(f"Login attempt for: {identifier} (Portal: {portal})")
     
     from sqlalchemy import func
     user = User.query.filter(
@@ -181,9 +184,20 @@ def login():
     ).first()
     
     if user and user.check_password(password):
+        # Verification check
         if not user.is_verified:
             app.logger.warning(f"Login failed for {identifier}: Email not verified")
             return jsonify({"error": "Please verify your email first"}), 403
+            
+        # Role-based Portal Exclusivity check
+        user_roles = [role.name for role in user.roles]
+        if portal == 'patient':
+            if 'Patient' not in user_roles:
+                return jsonify({"error": "This account does not have patient access. Please use the Staff Portal."}), 403
+        elif portal == 'staff':
+            # If they *only* have the Patient role, they can't use the staff portal
+            if 'Patient' in user_roles and len(user_roles) == 1:
+                return jsonify({"error": "Patient accounts cannot access the Clinical Staff portal."}), 403
             
         if getattr(user, 'is_2fa_enabled', False):
             return jsonify({
@@ -196,7 +210,7 @@ def login():
         db.session.commit()
         return jsonify({
             "message": "Login successful",
-            "token": "demo-token", # In a real app, use JWT
+            "token": "demo-token", 
             "user": user.to_dict()
         }), 200
         

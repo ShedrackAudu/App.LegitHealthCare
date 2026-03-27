@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,8 @@ type LoginValues = z.infer<typeof loginSchema>;
 
 
 const LoginPage = () => {
+  const [searchParams] = useSearchParams();
+  const initialPortal = searchParams.get('portal');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -32,6 +34,8 @@ const LoginPage = () => {
   const [totpCode, setTotpCode] = useState('');
   const navigate = useNavigate();
   const { user, setUser } = useAppContext();
+
+  const [activePortal, setActivePortal] = useState<'staff' | 'patient'>(initialPortal === 'patient' ? 'patient' : 'staff');
 
   useEffect(() => {
     if (user) {
@@ -47,7 +51,10 @@ const LoginPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:5000/login', data);
+      const response = await axios.post('http://localhost:5000/login', {
+        ...data,
+        portal: activePortal
+      });
       
       if (response.data.requires_2fa) {
           setRequires2FA(true);
@@ -59,10 +66,10 @@ const LoginPage = () => {
       // Success - Update context and redirect to Dashboard
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate('/dashboard'); 
+      navigate(activePortal === 'patient' ? '/patient/dashboard' : '/dashboard'); 
     } catch (err: any) {
         if (err.response?.status === 403) {
-            setError("Your account is not verified. Please check your email.");
+            setError(err.response?.data?.error || "Your account is not verified. Please check your email.");
         } else {
             setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
         }
@@ -84,7 +91,7 @@ const LoginPage = () => {
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
         toast.success("Login successful!");
-        navigate('/dashboard');
+        navigate(activePortal === 'patient' ? '/patient/dashboard' : '/dashboard');
     } catch (err: any) {
         setError(err.response?.data?.error || "Invalid 2FA code");
     } finally {
@@ -111,27 +118,31 @@ const LoginPage = () => {
             </CardDescription>
           </CardHeader>
         <CardContent className="py-2">
-          <Tabs defaultValue="staff" className="w-full mb-6">
-            <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="staff">Clinic Staff</TabsTrigger>
-                <TabsTrigger value="patient">Patient</TabsTrigger>
+          <Tabs 
+            value={activePortal} 
+            onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
+            className="w-full"
+          >
+            <TabsList className="grid w-full grid-cols-2 mb-4">
+              <TabsTrigger value="staff">Clinical Staff</TabsTrigger>
+              <TabsTrigger value="patient">Patient Portal</TabsTrigger>
             </TabsList>
             <TabsContent value="staff">
-              <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4">
-            {error && (
-              <div className="bg-destructive/10 border border-destructive/20 text-destructive text-xs p-2 rounded-md font-medium">
-                {error}
-              </div>
-            )}
-            
-            {!requires2FA ? (
-              <>
+              <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive text-xs p-2 rounded-md font-medium">
+                    {error}
+                  </div>
+                )}
+                
+                {!requires2FA ? (
+                  <>
                 <div className="space-y-2">
-                  <Label htmlFor="identity">Username, Email, or Phone</Label>
+                  <Label htmlFor="identity">Username</Label>
                   <div className="relative">
                     <Input 
                         id="identity" 
-                        placeholder="Enter your registered identity" 
+                        placeholder="Enter your username" 
                         className="pl-10 h-11"
                         {...register('identity')} 
                         disabled={loading} 
@@ -200,35 +211,80 @@ const LoginPage = () => {
                 </div>
               </div>
             )}
+
+                <div className="text-sm text-center text-muted-foreground mt-6">
+                  Don't have an account?{' '}
+                  <Link to="/signup?portal=staff" className="text-primary font-bold hover:underline transition-all">
+                    Sign up now
+                  </Link>
+                </div>
               </form>
             </TabsContent>
+            
             <TabsContent value="patient">
-              <div className="py-12 flex flex-col items-center justify-center text-center space-y-4 animate-in fade-in zoom-in duration-500">
-                <div className="w-16 h-16 bg-amber-500/10 rounded-full flex items-center justify-center">
-                  <Construction className="w-8 h-8 text-amber-600" />
-                </div>
+              <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4 pt-4">
+                {error && (
+                  <div className="bg-destructive/10 border border-destructive/20 text-destructive text-xs p-2 rounded-md font-medium">
+                    {error}
+                  </div>
+                )}
+                
                 <div className="space-y-2">
-                  <h3 className="text-xl font-bold tracking-tight">Patient Portal Coming Soon</h3>
-                  <p className="text-sm text-muted-foreground max-w-[250px]">
-                    We are currently building a secure portal for patients to access their medical results.
-                  </p>
+                  <Label htmlFor="identity-patient">Staff ID</Label>
+                  <div className="relative">
+                    <Input 
+                        id="identity-patient" 
+                        placeholder="e.g. 310520" 
+                        className="pl-10 h-11"
+                        {...register('identity')} 
+                        disabled={loading} 
+                        onChange={(e) => {
+                          e.target.value = e.target.value.replace(/\D/g, '');
+                          register('identity').onChange(e);
+                        }}
+                    />
+                    <User className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+                  </div>
                 </div>
-                <div className="pt-4">
-                    <span className="text-[10px] font-black uppercase tracking-widest text-primary bg-primary/10 px-3 py-1 rounded-full">
-                        Under Development
-                    </span>
+
+                <div className="space-y-2">
+                  <Label htmlFor="password-patient">Password</Label>
+                  <div className="relative">
+                    <Input 
+                        id="password-patient" 
+                        type={showPassword ? "text" : "password"} 
+                        placeholder="••••••••"
+                        className="pl-10 pr-10 h-11"
+                        {...register('password')} 
+                        disabled={loading} 
+                    />
+                    <Lock className="absolute left-3 top-3.5 h-5 w-5 text-muted-foreground" />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                      disabled={loading}
+                    >
+                      {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                    </button>
+                  </div>
                 </div>
-              </div>
+
+                <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" disabled={loading}>
+                  {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Login to Patient Portal'}
+                </Button>
+
+                <div className="text-sm text-center text-muted-foreground mt-6">
+                  Don't have an account?{' '}
+                  <Link to="/signup?portal=patient" className="text-primary font-bold hover:underline transition-all">
+                    Sign up now
+                  </Link>
+                </div>
+              </form>
             </TabsContent>
           </Tabs>
         </CardContent>
           <CardFooter className="flex flex-col space-y-3 py-4 border-t border-border mt-2">
-            <div className="text-sm text-center text-muted-foreground">
-              Don't have an account?{' '}
-              <Link to="/signup" className="text-primary font-bold hover:underline transition-all">
-                Sign up now
-              </Link>
-            </div>
             <div className="text-[10px] text-center text-muted-foreground/50">
               © 2026 Legit HealthCare Services Ltd.
             </div>

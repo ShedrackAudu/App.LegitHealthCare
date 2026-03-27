@@ -4,7 +4,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Controller } from 'react-hook-form';
 import {
-  Search,
   User,
   ChevronDown,
   Users,
@@ -19,6 +18,7 @@ import {
   Thermometer,
   Save
 } from 'lucide-react';
+import { PatientSearch } from '@/components/PatientSearch';
 import { toast } from 'react-hot-toast';
 import {
   Select,
@@ -194,32 +194,8 @@ const ConsultationPage: React.FC = () => {
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [loadingQueue, setLoadingQueue] = useState(false);
 
-  const [isSelecting, setIsSelecting] = useState(false);
-  const [searchResults, setSearchResults] = useState<any[]>([]);
+  // REMOVED deprecated ad-hoc search effect logic as it's now in PatientSearch component
 
-  useEffect(() => {
-    if (searchId.length > 2) {
-      if (isSelecting) {
-        setIsSelecting(false);
-        setSearchResults([]);
-        return;
-      }
-      const fetchResults = async () => {
-        try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
-            headers: { 'X-Company-Context': activeSection }
-          });
-          setSearchResults(res.data);
-        } catch (err) {
-          console.error(err);
-        }
-      };
-      const timer = setTimeout(fetchResults, 300);
-      return () => clearTimeout(timer);
-    } else {
-      setSearchResults([]);
-    }
-  }, [searchId, activeSection, isSelecting]);
 
   // Fetch queue count
   const fetchQueue = async () => {
@@ -427,67 +403,16 @@ const ConsultationPage: React.FC = () => {
             </Card>
 
             {/* Unified Search Header style matching Director */}
-            <div className="flex-1 max-w-2xl relative">
-              <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-emerald-500/50 transition-all relative">
-                <Search className="h-6 w-6 text-muted-foreground ml-2" />
-                <Input
-                  placeholder="Search Staff ID or Name..."
-                  value={searchId}
-                  onChange={(e) => setSearchId(e.target.value)}
-                  onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                  className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                />
-                <Button 
-                  onClick={() => handleSearch()}
-                  disabled={searching || !searchId.trim()}
-                  className="bg-emerald-600 hover:bg-emerald-700 shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl"
-                >
-                  {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Retrieve Record'}
-                </Button>
-
-                {/* Search Results Card */}
-                {searchResults.length > 0 && (
-                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] shadow-2xl border-2 border-emerald-500/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
-                    <CardHeader className="py-3 bg-emerald-500/5 border-b">
-                      <CardTitle className="text-xs uppercase tracking-widest text-emerald-600/70">Matching Profiles</CardTitle>
-                    </CardHeader>
-                    <ul className="max-h-[300px] overflow-auto divide-y">
-                      {searchResults.map((p: any) => (
-                        <li 
-                          key={p.staff_id}
-                          className="p-4 hover:bg-emerald-500/5 cursor-pointer transition-colors group"
-                          onClick={() => {
-                            setIsSelecting(true);
-                            setPatient(p);
-                            setSearchId(''); // Clear the search field
-                            setSearchResults([]);
-                            handleSearch(p.staff_id);
-                          }}
-                        >
-                          <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-emerald-600 font-black group-hover:scale-110 transition-transform">
-                                {p.first_name[0]}{p.last_name[0]}
-                              </div>
-                              <div>
-                                <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
-                                <p className="text-xs text-muted-foreground flex items-center gap-2">
-                                  <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
-                                  • <span>{p.department}</span>
-                                </p>
-                              </div>
-                            </div>
-                            <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
-                              Select <ChevronRight className="ml-1 h-3 w-3" />
-                            </Button>
-                          </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </Card>
-                )}
-              </div>
-            </div>
+            <PatientSearch
+              activeSection={activeSection}
+              onSearch={handleSearch}
+              onSelect={(p) => {
+                setPatient(p);
+                handleSearch(p.staff_id);
+              }}
+              searching={searching}
+              themeColor="emerald"
+            />
           </div>
         </div>
 

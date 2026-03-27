@@ -13,6 +13,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
 import {
   Users,
@@ -208,7 +209,7 @@ const UserManagementPage: React.FC = () => {
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
             <h1 className="text-3xl font-extrabold tracking-tight text-primary">User Management</h1>
-            <p className="text-muted-foreground italic">System-wide directory of staff and administrative personnel.</p>
+            <p className="text-muted-foreground italic">Comprehensive directory of clinical personnel and registered patients.</p>
           </div>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={fetchData} className="gap-2">
@@ -222,156 +223,80 @@ const UserManagementPage: React.FC = () => {
           </div>
         </div>
 
-        <Card className="border-2 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
-          <CardHeader className="bg-muted/30 border-b">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-              <div className="space-y-1">
-                <CardTitle className="flex items-center gap-2 text-primary">
-                  <Users className="h-5 w-5" />
-                  Staff Directory
-                </CardTitle>
-                <CardDescription>Filtering {filteredUsers.length} of {users.length} total personnel.</CardDescription>
-              </div>
-              <div className="flex w-full md:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                <Search className="ml-2 h-5 w-5 text-muted-foreground" />
-                <Input
-                  placeholder="Search name, username, email..."
-                  className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+        <Tabs defaultValue="staff" className="w-full">
+          <TabsList className="bg-muted/50 p-1 mb-6 border-2 border-border/50 rounded-2xl h-14 w-full md:w-auto">
+            <TabsTrigger value="staff" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg font-bold transition-all">
+              Clinical Staff
+            </TabsTrigger>
+            <TabsTrigger value="patient" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg font-bold transition-all">
+              Patient Directory
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="staff">
+            <Card className="border-2 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
+              <CardHeader className="bg-muted/30 border-b">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                      <Users className="h-5 w-5" />
+                      Staff Directory
+                    </CardTitle>
+                    <CardDescription>Filtering {filteredUsers.filter(u => !u.roles.includes('Patient')).length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
+                  </div>
+                  <div className="flex w-full md:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                    <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search staff..."
+                      className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <UserTable 
+                  users={filteredUsers.filter(u => !u.roles.includes('Patient'))} 
+                  loading={loading} 
+                  handleAction={handleAction} 
                 />
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader className="bg-muted/50">
-                  <TableRow>
-                    <TableHead className="font-bold py-4">User Details</TableHead>
-                    <TableHead className="font-bold">Contact Info</TableHead>
-                    <TableHead className="font-bold">Assigned Roles</TableHead>
-                    <TableHead className="font-bold">Status</TableHead>
-                    <TableHead className="font-bold text-right pr-6">Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {loading ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-64 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <RefreshCw className="h-8 w-8 animate-spin text-primary/40" />
-                          <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Secure Directory...</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : filteredUsers.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={5} className="h-64 text-center">
-                        <div className="flex flex-col items-center gap-2">
-                          <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                            <Search className="h-8 w-8 text-muted-foreground/40" />
-                          </div>
-                          <p className="text-muted-foreground font-medium italic">No personnel found matching your criteria.</p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    filteredUsers.map((user) => (
-                      <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
-                        <TableCell className="py-4">
-                          <div className="flex items-center gap-3">
-                            <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-105">
-                              {user.first_name[0]}{user.last_name[0]}
-                            </div>
-                            <div>
-                              <p className="font-bold text-sm leading-none mb-1">{user.first_name} {user.last_name}</p>
-                              <p className="text-xs text-muted-foreground font-medium">@{user.username}</p>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="space-y-1">
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <Mail className="h-3 w-3 text-muted-foreground" />
-                              <span className="truncate max-w-[150px]">{user.email}</span>
-                            </div>
-                            <div className="flex items-center gap-1.5 text-xs">
-                              <Phone className="h-3 w-3 text-muted-foreground" />
-                              <span>{user.phone}</span>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1">
-                            {user.roles.length > 0 ? (
-                              user.roles.map(role => (
-                                <Badge key={role} variant="outline" className="text-[10px] font-bold bg-primary/5 text-primary border-primary/20 py-0 px-2 h-5">
-                                  {role}
-                                </Badge>
-                              ))
-                            ) : (
-                              <span className="text-[10px] text-muted-foreground italic font-medium">No roles assigned</span>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            {user.is_verified ? (
-                              <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1 pr-2 py-0.5">
-                                <CheckCircle2 className="h-3 w-3" />
-                                Verified
-                              </Badge>
-                            ) : (
-                              <Badge variant="outline" className="bg-rose-500/10 text-rose-500 border-rose-200 gap-1 pr-2 py-0.5">
-                                <XCircle className="h-3 w-3" />
-                                Pending
-                              </Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell className="text-right pr-6">
-                          <DropdownMenu>
-                            <DropdownMenuTrigger asChild>
-                              <Button variant="ghost" size="icon" className="group-hover:bg-background">
-                                <MoreVertical className="h-4 w-4" />
-                              </Button>
-                            </DropdownMenuTrigger>
-                            <DropdownMenuContent align="end" className="w-48 border-2 shadow-2xl">
-                              <DropdownMenuLabel>Actions for @{user.username}</DropdownMenuLabel>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem onClick={() => handleAction('roles', user)} className="cursor-pointer gap-2">
-                                <ShieldCheck className="h-4 w-4" />
-                                Edit Roles
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleAction('reset', user)} className="cursor-pointer gap-2">
-                                <Key className="h-4 w-4" />
-                                Reset Password
-                              </DropdownMenuItem>
-                              <DropdownMenuItem className="cursor-pointer gap-2">
-                                <Calendar className="h-4 w-4" />
-                                View Timeline
-                              </DropdownMenuItem>
-                              <DropdownMenuSeparator />
-                              <DropdownMenuItem
-                                onClick={() => handleAction('deactivate', user)}
-                                disabled={user.username === 'admin'}
-                                className={`cursor-pointer gap-2 text-rose-500 focus:text-rose-500 focus:bg-rose-50 ${user.username === 'admin' ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
-                              >
-                                <XCircle className="h-4 w-4" />
-                                {user.username === 'admin' ? 'System Protected' : 'Deactivate Account'}
-                              </DropdownMenuItem>
-                            </DropdownMenuContent>
-                          </DropdownMenu>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="patient">
+            <Card className="border-2 shadow-xl overflow-hidden bg-card/50 backdrop-blur-sm">
+              <CardHeader className="bg-muted/30 border-b">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="space-y-1">
+                    <CardTitle className="flex items-center gap-2 text-primary">
+                      <Users className="h-5 w-5" />
+                      Patient Registry
+                    </CardTitle>
+                    <CardDescription>Filtering {filteredUsers.filter(u => u.roles.includes('Patient')).length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
+                  </div>
+                  <div className="flex w-full md:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                    <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      placeholder="Search patients..."
+                      className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
+                      value={searchTerm}
+                      onChange={(e) => setSearchTerm(e.target.value)}
+                    />
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent className="p-0">
+                <UserTable 
+                  users={filteredUsers.filter(u => u.roles.includes('Patient'))} 
+                  loading={loading} 
+                  handleAction={handleAction} 
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       <AnimatePresence>
@@ -528,5 +453,134 @@ const UserManagementPage: React.FC = () => {
     </MainLayout>
   );
 };
+
+const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (action: string, u: User) => void }> = ({ users, loading, handleAction }) => (
+  <div className="overflow-x-auto">
+    <Table>
+      <TableHeader className="bg-muted/50">
+        <TableRow>
+          <TableHead className="font-bold py-4">User Details</TableHead>
+          <TableHead className="font-bold">Contact Info</TableHead>
+          <TableHead className="font-bold">Assigned Roles</TableHead>
+          <TableHead className="font-bold">Status</TableHead>
+          <TableHead className="font-bold text-right pr-6">Actions</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {loading ? (
+          <TableRow>
+            <TableCell colSpan={5} className="h-64 text-center">
+              <div className="flex flex-col items-center gap-2">
+                <RefreshCw className="h-8 w-8 animate-spin text-primary/40" />
+                <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Secure Directory...</p>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : users.length === 0 ? (
+          <TableRow>
+            <TableCell colSpan={5} className="h-64 text-center">
+              <div className="flex flex-col items-center gap-2">
+                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
+                  <Search className="h-8 w-8 text-muted-foreground/40" />
+                </div>
+                <p className="text-muted-foreground font-medium italic">No personnel found matching your criteria.</p>
+              </div>
+            </TableCell>
+          </TableRow>
+        ) : (
+          users.map((user) => (
+            <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
+              <TableCell className="py-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-105">
+                    {user.first_name?.[0]}{user.last_name?.[0]}
+                  </div>
+                  <div>
+                    <p className="font-bold text-sm leading-none mb-1">{user.first_name} {user.last_name}</p>
+                    <p className="text-xs text-muted-foreground font-medium">@{user.username}</p>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1">
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    <span className="truncate max-w-[150px]">{user.email}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5 text-xs">
+                    <Phone className="h-3 w-3 text-muted-foreground" />
+                    <span>{user.phone}</span>
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex flex-wrap gap-1">
+                  {user.roles.length > 0 ? (
+                    user.roles.map(role => (
+                      <Badge key={role} variant="outline" className="text-[10px] font-bold bg-primary/5 text-primary border-primary/20 py-0 px-2 h-5">
+                        {role}
+                      </Badge>
+                    ))
+                  ) : (
+                    <span className="text-[10px] text-muted-foreground italic font-medium">No roles assigned</span>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex items-center gap-2">
+                  {user.is_verified ? (
+                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1 pr-2 py-0.5">
+                      <CheckCircle2 className="h-3 w-3" />
+                      Verified
+                    </Badge>
+                  ) : (
+                    <Badge variant="outline" className="bg-rose-500/10 text-rose-500 border-rose-200 gap-1 pr-2 py-0.5">
+                      <XCircle className="h-3 w-3" />
+                      Pending
+                    </Badge>
+                  )}
+                </div>
+              </TableCell>
+              <TableCell className="text-right pr-6">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="group-hover:bg-background">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end" className="w-48 border-2 shadow-2xl">
+                    <DropdownMenuLabel>Actions for @{user.username}</DropdownMenuLabel>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem onClick={() => handleAction('roles', user)} className="cursor-pointer gap-2">
+                      <ShieldCheck className="h-4 w-4" />
+                      Edit Roles
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAction('reset', user)} className="cursor-pointer gap-2">
+                      <Key className="h-4 w-4" />
+                      Reset Password
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="cursor-pointer gap-2">
+                      <Calendar className="h-4 w-4" />
+                      View Timeline
+                    </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleAction('deactivate', user)}
+                      disabled={user.username === 'admin'}
+                      className={`cursor-pointer gap-2 text-rose-500 focus:text-rose-500 focus:bg-rose-50 ${user.username === 'admin' ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
+                    >
+                      <XCircle className="h-4 w-4" />
+                      {user.username === 'admin' ? 'System Protected' : 'Deactivate Account'}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </TableCell>
+            </TableRow>
+          ))
+        )}
+      </TableBody>
+    </Table>
+  </div>
+);
 
 export default UserManagementPage;

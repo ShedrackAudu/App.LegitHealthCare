@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { 
-  Search, 
   FileText, 
   Download, 
   Mail, 
   Loader2,
-  ChevronRight,
   Activity,
   Printer,
   X
 } from 'lucide-react';
+import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
@@ -22,40 +20,31 @@ import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
-    const [searchTerm, setSearchTerm] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
 
-    useEffect(() => {
-        if (searchTerm.length > 1) {
-            const fetchResults = async () => {
-                setSearching(true);
-                try {
-                    const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchTerm}`, {
-                        headers: { 'X-Company-Context': activeSection }
-                    });
-                    setSearchResults(res.data);
-                } catch (err) {
-                    console.error(err);
-                } finally {
-                    setSearching(false);
-                }
-            };
-            const timer = setTimeout(fetchResults, 300);
-            return () => clearTimeout(timer);
-        } else {
-            setSearchResults([]);
+    const handleSearchById = async (id: string) => {
+        if (!id) return;
+        setSearching(true);
+        try {
+            const pRes = await axios.get(`http://localhost:5000/patient/${id}`, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            if (pRes.data) {
+                handleSelectPatient(pRes.data);
+            }
+        } catch (err) {
+            toast.error("Patient not found");
+        } finally {
+            setSearching(false);
         }
-    }, [searchTerm, activeSection]);
+    };
 
     const handleSelectPatient = async (patient: any) => {
         setLoading(true);
         setSelectedPatient(patient);
-        setSearchTerm(patient.staff_id);
-        setSearchResults([]);
         try {
             const res = await axios.get(`http://localhost:5000/api/patient-report/${patient.staff_id}/${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
@@ -70,27 +59,7 @@ const PatientReportPage: React.FC = () => {
         }
     };
 
-    const handleRetrieve = () => {
-        if (searchResults.length > 0) {
-            handleSelectPatient(searchResults[0]);
-        } else if (searchTerm) {
-            // Try searching directly by staff_id if no results in dropdown
-            const fetchSpecific = async () => {
-                setLoading(true);
-                try {
-                    const pRes = await axios.get(`http://localhost:5000/patient/${searchTerm}`, {
-                        headers: { 'X-Company-Context': activeSection }
-                    });
-                    if (pRes.data) handleSelectPatient(pRes.data);
-                } catch (err) {
-                    toast.error("Patient not found");
-                } finally {
-                    setLoading(false);
-                }
-            };
-            fetchSpecific();
-        }
-    };
+
 
     const handlePrint = () => {
         window.print();
@@ -154,50 +123,15 @@ const PatientReportPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <div className="flex w-full lg:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                        <Search className="ml-2 h-5 w-5 text-muted-foreground" />
-                        <Input 
-                            placeholder="Search Numeric Staff ID..." 
-                            className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                            value={searchTerm}
-                            inputMode="numeric"
-                            onChange={(e) => setSearchTerm(e.target.value.replace(/\D/g, ''))}
-                            onKeyDown={(e) => e.key === 'Enter' && handleRetrieve()}
-                        />
-                        <Button size="lg" className="bg-primary hover:bg-primary/90 shadow-lg px-8 whitespace-nowrap font-bold" onClick={handleRetrieve} disabled={loading}>
-                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Retrieve Report'}
-                        </Button>
-
-                        {/* Dropdown Results */}
-                        {searchResults.length > 0 && (
-                            <Card className="absolute top-full left-0 right-0 mt-4 border-2 shadow-2xl rounded-2xl overflow-hidden z-50 animate-in slide-in-from-top-4 duration-300">
-                                <CardContent className="p-0 max-h-[300px] overflow-y-auto">
-                                    {searchResults.map((p) => (
-                                        <div 
-                                            key={p.staff_id}
-                                            onClick={() => handleSelectPatient(p)}
-                                            className="p-4 hover:bg-primary/5 cursor-pointer flex items-center justify-between group transition-colors border-b last:border-0"
-                                        >
-                                            <div className="flex items-center gap-4 text-left">
-                                                <div className="h-10 w-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary font-black uppercase shadow-inner text-sm">
-                                                    {p.first_name[0]}{p.last_name[0]}
-                                                </div>
-                                                <div>
-                                                    <p className="font-bold text-sm tracking-tight leading-none mb-1">{p.first_name} {p.last_name}</p>
-                                                    <div className="flex items-center gap-2">
-                                                        <Badge variant="outline" className="text-[9px] uppercase font-black px-1 h-4">{p.staff_id}</Badge>
-                                                        <span className="text-[10px] text-muted-foreground font-medium">{p.department}</span>
-                                                        {p.email && <span className="text-[10px] text-primary/70 font-bold ml-1">{p.email}</span>}
-                                                    </div>
-                                                </div>
-                                            </div>
-                                            <ChevronRight className="h-4 w-4 text-muted-foreground opacity-20 group-hover:opacity-100 group-hover:translate-x-1 transition-all" />
-                                        </div>
-                                    ))}
-                                </CardContent>
-                            </Card>
-                        )}
-                    </div>
+                    <PatientSearch
+                        activeSection={activeSection}
+                        onSelect={handleSelectPatient}
+                        onSearch={handleSearchById}
+                        searching={searching || loading}
+                        themeColor="primary"
+                        placeholder="Search Staff ID or Name..."
+                        buttonText="Retrieve Report"
+                    />
                 </div>
 
                 {/* Report View State */}
@@ -212,7 +146,6 @@ const PatientReportPage: React.FC = () => {
                                     onClick={() => {
                                         setSelectedPatient(null);
                                         setReportData(null);
-                                        setSearchTerm('');
                                     }}
                                 >
                                     <X className="mr-2 h-4 w-4" /> Close Report
@@ -395,7 +328,7 @@ const PatientReportPage: React.FC = () => {
                 )}
 
                 {/* Initial View Placeholder */}
-                {!selectedPatient && !searching && (
+                {!selectedPatient && (
                     <div className="flex flex-col items-center justify-center py-20 opacity-20">
                         <FileText className="h-32 w-32 mb-4" />
                         <h2 className="text-2xl font-black">Search a patient to view report</h2>

@@ -7,20 +7,31 @@ interface ProtectedRouteProps {
   children: React.ReactNode;
   adminOnly?: boolean;
   requiredPermission?: string;
+  allowedRoles?: string[];
 }
 
 export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({ 
   children, 
   adminOnly = false,
-  requiredPermission
+  requiredPermission,
+  allowedRoles
 }) => {
   const { user } = useAppContext();
   const { isAdmin, hasPermission } = usePermissions();
   const location = useLocation();
 
+  const userRoles = user?.roles?.map((r: any) => r.name) || [];
+
   if (!user) {
     // Redirect to login but save the current location to redirect back after login
     return <Navigate to="/login" state={{ from: location }} replace />;
+  }
+
+  if (allowedRoles && !isAdmin()) {
+    const hasRole = allowedRoles.some(role => userRoles.includes(role));
+    if (!hasRole) {
+      return <Navigate to="/access-denied" state={{ from: location }} replace />;
+    }
   }
 
   // Admin section: Only for admins
