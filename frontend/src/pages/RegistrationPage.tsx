@@ -249,7 +249,7 @@ const RegistrationPage: React.FC = () => {
       }
 
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/patients/${editStaffId}`, {
+        await axios.put(`http://localhost:5000/api/patients/${editStaffId}`, {
           ...data,
           dob: formattedDob
         }, {
@@ -434,7 +434,17 @@ const RegistrationPage: React.FC = () => {
                 </div>
                 <div className="space-y-2">
                   <Label className="text-emerald-600 font-bold">Patient ID (Clinic ID) <span className="text-destructive">*</span></Label>
-                  <Input {...register('patient_id')} className="h-11 border-emerald-500/30 font-bold text-lg uppercase tracking-wider" placeholder="e.g. LEG2025-001" />
+                  <Input 
+                    {...register('patient_id')} 
+                    className="h-11 border-emerald-500/30 font-bold text-lg uppercase tracking-wider" 
+                    placeholder="e.g. 12345" 
+                    inputMode="numeric"
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      e.target.value = val;
+                      register('patient_id').onChange(e);
+                    }}
+                  />
                   {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
                 </div>
               </div>

@@ -43,45 +43,33 @@ def init_rbac():
         
         db.session.commit()
 
-        # 2. Define Roles and their permissions
+        # 2. Define Roles - ONLY ADMIN as requested
+        # Delete all existing roles that are not Admin
+        existing_roles = Role.query.all()
+        for r in existing_roles:
+            if r.name != 'Admin':
+                print(f"Deleting role: {r.name}")
+                # Remove association first if needed (relationships usually handle this but sqlalchemy can be picky)
+                r.assigned_users = []
+                r.permissions = []
+                db.session.delete(r)
+        db.session.commit()
+
         roles_metadata = {
-            'Admin': list(perm_objs.keys()),
-            'Doctor': [
-                'consultation', 'view_users', 'view_dashboard', 'messaging', 
-                'patient_reports', 'view_patients', 'view_records'
-            ],
-            'Registration Staff': ['registration', 'view_users', 'messaging', 'view_patients'],
-            'Lab Technician': [
-                'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 
-                'lab_ecg', 'lab_spirometry', 'lab_audiometry', 'messaging'
-            ],
-            'FBC Technician': ['lab_fbc', 'messaging', 'view_patients'],
-            'KFT Technician': ['lab_kft', 'messaging', 'view_patients'],
-            'Lipid Technician': ['lab_lipid', 'messaging', 'view_patients'],
-            'LFT Technician': ['lab_lft', 'messaging', 'view_patients'],
-            'ECG Technician': ['lab_ecg', 'messaging', 'view_patients'],
-            'Spirometry Technician': ['lab_spirometry', 'messaging', 'view_patients'],
-            'Audiometry Technician': ['lab_audiometry', 'messaging', 'view_patients'],
-            'Data Entry Clerk': ['registration', 'messaging', 'view_patients'],
-            'New User': ['messaging']
+            'Admin': list(perm_objs.keys())
         }
 
         for role_name, perms in roles_metadata.items():
             role = Role.query.filter_by(name=role_name).first()
             if not role:
-                role = Role(name=role_name, description=f"{role_name} role with specific access.")
+                role = Role(name=role_name, description=f"{role_name} role with full system access.")
                 db.session.add(role)
                 print(f"Created Role: {role_name}")
             
-            # Sync permissions
-            if role_name == 'Admin':
-                # Dynamically assign ALL permissions to Admin
-                role.permissions = Permission.query.all()
-            else:
-                role.permissions = [perm_objs[p] for p in perms]
-            print(f"Synced permissions to {role_name}")
+            # Dynamically assign ALL permissions to Admin
+            role.permissions = Permission.query.all()
+            print(f"Synced all permissions to {role_name}")
 
-        
         db.session.commit()
 
         # 3. Assign Admin role to 'admin' user

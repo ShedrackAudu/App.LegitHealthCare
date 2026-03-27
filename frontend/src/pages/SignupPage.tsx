@@ -485,6 +485,13 @@ const SignupPage: React.FC = () => {
                         >
                           {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                         </button>
+                        <div className="absolute right-10 top-2.5">
+                          {claimData.confirm_password && (
+                              claimData.password === claimData.confirm_password ? 
+                              <CheckCircle2 className="h-4 w-4 text-emerald-500 animate-in zoom-in duration-300" /> : 
+                              <X className="h-4 w-4 text-rose-500 animate-in zoom-in duration-300" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   </div>

@@ -53,7 +53,8 @@ role_permissions = db.Table('role_permissions',
     db.Column('permission_id', db.Integer, db.ForeignKey('permissions.id'), primary_key=True)
 )
 
-class User(db.Model):
+# Staff users (Admins, Doctors, etc.) - Defaults to hc_system.db
+class StaffUser(db.Model):
     __tablename__ = 'users'
     
     id = db.Column(db.Integer, primary_key=True)
@@ -72,41 +73,21 @@ class User(db.Model):
     # 2FA Settings
     totp_secret = db.Column(db.String(32), nullable=True)
     is_2fa_enabled = db.Column(db.Boolean, default=False)
-    backup_codes = db.Column(db.Text, nullable=True) # JSON array of string codes
+    backup_codes = db.Column(db.Text, nullable=True) 
 
     section = db.Column(db.String(10), nullable=True) # DCP or DCT
     department = db.Column(db.String(100), nullable=True)
     last_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
-    
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
     contacts = db.relationship('UserContact', backref='user', lazy=True, cascade="all, delete-orphan")
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('assigned_users', lazy='dynamic'))
 
     def has_permission(self, permission_name):
-        # 1. Check Permanent Roles
         for role in self.roles:
-            if role.name == 'Admin':
-                return True
+            if role.name == 'Admin': return True
             for perm in role.permissions:
-                if perm.name == permission_name:
-                    return True
-        
-        # 2. Check Temporary Access Codes (Activated & Not Expired)
-        from models import TempAccessCode
-        from datetime import datetime
-        
-        active_codes = TempAccessCode.query.filter_by(
-            user_id=self.id, 
-            is_revoked=False
-        ).all()
-        
-        now = datetime.utcnow()
-        for code in active_codes:
-            # Check if the code matches the required permission by name
-            if code.permission.name == permission_name:
-                if not code.expires_at or code.expires_at > now:
-                    return True
+                if perm.name == permission_name: return True
         return False
 
     def set_password(self, password):
@@ -129,28 +110,50 @@ class User(db.Model):
             "is_2fa_enabled": self.is_2fa_enabled,
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "roles": [role.name for role in self.roles],
-            "permissions": list(set([p.name for role in self.roles for p in role.permissions])),
-            'temp_access': self.get_active_temp_access()
+            "permissions": list(set([p.name for role in self.roles for p in role.permissions]))
         }
 
-    def get_active_temp_access(self):
-        from models import TempAccessCode
-        from datetime import datetime
-        now = datetime.utcnow()
-        codes = TempAccessCode.query.filter_by(user_id=self.id, is_revoked=False).all()
-        result = []
-        for c in codes:
-            if not c.expires_at or c.expires_at > now:
-                result.append({
-                    'id': c.id,
-                    'code': c.code,
-                    'permission_name': c.permission.name,
-                    'is_multi_use': c.is_multi_use,
-                    'expires_at': c.expires_at.isoformat() + "Z" if c.expires_at else None,
-                    'is_revoked': c.is_revoked,
-                    'remaining_seconds': int((c.expires_at - now).total_seconds()) if c.expires_at else None
-                })
-        return result
+# Isolated Patient Portal users - Uses 'patients' bind
+class PatientPortalUser(db.Model):
+    __tablename__ = 'patient_users'
+    __bind_key__ = 'patients'
+    
+    id = db.Column(db.Integer, primary_key=True)
+    first_name = db.Column(db.String(50), nullable=False)
+    last_name = db.Column(db.String(50), nullable=True)
+    username = db.Column(db.String(50), unique=True, nullable=False) # Identity (Staff ID or Phone)
+    phone = db.Column(db.String(20), unique=True, nullable=True)
+    email = db.Column(db.String(120), unique=True, nullable=False)
+    password_hash = db.Column(db.String(128), nullable=False)
+    
+    # OTP verification
+    otp_code = db.Column(db.String(6), nullable=True)
+    otp_expiry = db.Column(db.DateTime, nullable=True)
+    is_verified = db.Column(db.Boolean, default=False)
+    
+    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def set_password(self, password):
+        self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
+
+    def check_password(self, password):
+        return bcrypt.check_password_hash(self.password_hash, password)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "username": self.username,
+            "email": self.email,
+            "phone": self.phone,
+            "is_verified": self.is_verified,
+            "portal": "patient",
+            "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
+        }
+
+# Alias StaffUser for notification relations if needed
 
 class Notification(db.Model):
     __tablename__ = 'notifications'
@@ -163,7 +166,7 @@ class Notification(db.Model):
     is_read = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
     
-    user = db.relationship('User', backref=db.backref('notifications', lazy=True, cascade="all, delete-orphan"))
+    user = db.relationship('StaffUser', backref=db.backref('notifications', lazy=True, cascade="all, delete-orphan"))
 
     def to_dict(self):
         return {
@@ -191,9 +194,9 @@ class TempAccessCode(db.Model):
     generated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship('User', foreign_keys=[user_id], backref=db.backref('temp_codes', lazy=True))
+    user = db.relationship('StaffUser', foreign_keys=[user_id], backref=db.backref('temp_codes', lazy=True))
     permission = db.relationship('Permission', backref=db.backref('temp_codes', lazy=True))
-    generator = db.relationship('User', foreign_keys=[generated_by])
+    generator = db.relationship('StaffUser', foreign_keys=[generated_by])
 
     def to_dict(self):
         return {
@@ -637,7 +640,7 @@ class AuditLog(db.Model):
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship('User', foreign_keys='AuditLog.user_id', backref=db.backref('audit_logs', lazy=True))
+    user = db.relationship('StaffUser', foreign_keys='AuditLog.user_id', backref=db.backref('audit_logs', lazy=True))
 
     def to_dict(self):
         details_data = {}
@@ -668,7 +671,7 @@ class AccessRequest(db.Model):
     review_notes = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
-    user = db.relationship('User', foreign_keys='AccessRequest.user_id', backref=db.backref('access_requests', lazy=True, cascade="all, delete-orphan"))
+    user = db.relationship('StaffUser', foreign_keys='AccessRequest.user_id', backref=db.backref('access_requests', lazy=True, cascade="all, delete-orphan"))
 
     def to_dict(self):
         return {
@@ -721,6 +724,9 @@ class Appointment(db.Model):
         }
 
 from sqlalchemy import event
+
+# Compatibility Alias
+User = StaffUser
 
 @event.listens_for(Permission, 'after_insert')
 def auto_assign_permission_to_admin(mapper, connection, target):

@@ -150,18 +150,35 @@ def handle_patient(staff_id):
         patient.race = data.get('race', patient.race)
         patient.nationality = data.get('nationality', patient.nationality)
         
-        db.session.commit()
+        # Sync to ScreeningYearBioData for directory consistency
+        try:
+            yearly_records = ScreeningYearBioData.query.filter_by(staff_id=patient.staff_id).all()
+            for yr in yearly_records:
+                yr.first_name = patient.first_name
+                yr.last_name = patient.last_name
+                yr.department = patient.department
+                yr.gender = patient.gender
+                yr.age = patient.age
+                
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            return jsonify({"error": f"Update failed: {str(e)}"}), 500
 
         # Audit Log
-        audit = AuditLog(
-            user_id=request.headers.get('X-User-ID'),
-            action='Update Patient Profile',
-            resource=f"Patient:{patient.staff_id}",
-            details=f"Updated profile for {patient.first_name} {patient.last_name}.",
-            ip_address=request.remote_addr
-        )
-        db.session.add(audit)
-        db.session.commit()
+        try:
+            audit = AuditLog(
+                user_id=request.headers.get('X-User-ID'),
+                action='Update Patient Profile',
+                resource=f"Patient:{patient.staff_id}",
+                details=f"Updated profile for {patient.first_name} {patient.last_name}.",
+                ip_address=request.remote_addr
+            )
+            db.session.add(audit)
+            db.session.commit()
+        except Exception:
+            pass # Audit log failure shouldn't block the main update
+            
         return jsonify({"message": "Patient profile updated successfully"}), 200
 
 @view_data_bp.route('/records/screening/<int:year>', methods=['GET'])

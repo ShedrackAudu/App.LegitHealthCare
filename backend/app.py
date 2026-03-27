@@ -1,6 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from models import db, User, bcrypt
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt
 from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
 from routes.registration import registration_bp
 from routes.consultation import consultation_bp
@@ -38,7 +38,8 @@ socketio = SocketIO(app, cors_allowed_origins="*")
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
 app.config['SQLALCHEMY_BINDS'] = {
     'dcp': f"sqlite:///{os.path.join(app.instance_path, 'dcp.db')}",
-    'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}"
+    'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}",
+    'patients': f"sqlite:///{os.path.join(app.instance_path, 'hc_patients.db')}"
 }
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
@@ -73,6 +74,14 @@ app.register_blueprint(email_bp, url_prefix='/api/email')
 app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
+
+# Automatically ensure admin account exists
+try:
+    from setup_system import setup_system
+    with app.app_context():
+        setup_system(purge=False)
+except Exception as e:
+    app.logger.error(f"Error initializing system: {e}")
 
 # Initialize Socket.IO handlers
 init_socket_handlers(socketio)
@@ -153,8 +162,12 @@ def verify_otp():
     data = request.json
     user_id = data.get('user_id')
     otp = data.get('otp')
+    portal = data.get('portal', 'staff')
     
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -169,43 +182,31 @@ def verify_otp():
 @app.route('/login', methods=['POST'])
 def login():
     data = request.json
-    # Support both 'identity' and 'username' for frontend compatibility
     identifier = (data.get('identity') or data.get('username') or '').strip()
     password = data.get('password')
-    portal = data.get('portal') # 'staff' or 'patient'
+    portal = data.get('portal', 'staff')
     
     app.logger.info(f"Login attempt for: {identifier} (Portal: {portal})")
     
+    from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
-    user = User.query.filter(
-        (func.lower(User.username) == func.lower(identifier)) | 
-        (func.lower(User.email) == func.lower(identifier)) | 
-        (User.phone == identifier)
+    
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.filter(
+        (func.lower(Model.username) == func.lower(identifier)) | 
+        (func.lower(Model.email) == func.lower(identifier)) | 
+        (Model.phone == identifier)
     ).first()
     
     if user and user.check_password(password):
-        # Verification check
         if not user.is_verified:
-            app.logger.warning(f"Login failed for {identifier}: Email not verified")
             return jsonify({"error": "Please verify your email first"}), 403
             
-        # Role-based Portal Exclusivity check
-        user_roles = [role.name for role in user.roles]
-        if portal == 'patient':
-            if 'Patient' not in user_roles:
-                return jsonify({"error": "This account does not have patient access. Please use the Staff Portal."}), 403
-        elif portal == 'staff':
-            # If they *only* have the Patient role, they can't use the staff portal
-            if 'Patient' in user_roles and len(user_roles) == 1:
-                return jsonify({"error": "Patient accounts cannot access the Clinical Staff portal."}), 403
+        # Optional: Add cross-portal block just in case
+        if portal == 'staff' and not hasattr(user, 'roles'): # PatientPortalUser won't have roles
+             return jsonify({"error": "This account does not have staff access."}), 403
             
-        if getattr(user, 'is_2fa_enabled', False):
-            return jsonify({
-                "requires_2fa": True,
-                "user_id": user.id,
-                "message": "Two-factor authentication required"
-            }), 200
-
         user.last_seen_at = datetime.utcnow()
         db.session.commit()
         return jsonify({
@@ -214,29 +215,25 @@ def login():
             "user": user.to_dict()
         }), 200
         
-    app.logger.warning(f"Invalid credentials for: {identifier}")
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
+    portal = data.get('portal', 'staff')
     
-    app.logger.info(f"Password reset requested for identity: {identity}")
-    
-    if not identity:
-        return jsonify({"error": "Identity required"}), 400
-
-    # Support Username or Email or Phone - CASE INSENSITIVE for strings
+    from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
-    user = User.query.filter(
-        (func.lower(User.username) == func.lower(identity)) | 
-        (func.lower(User.email) == func.lower(identity)) | 
-        (User.phone == identity)
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.filter(
+        (func.lower(Model.username) == func.lower(identity)) | 
+        (func.lower(Model.email) == func.lower(identity)) | 
+        (Model.phone == identity)
     ).first()
     
     if not user:
-        app.logger.warning(f"No account found for identity: {identity}")
         return jsonify({"error": "No account found with that identity."}), 404
         
     otp = generate_otp()
@@ -244,7 +241,7 @@ def forgot_password():
     user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
     db.session.commit()
     
-    # Send email
+    from auth_utils import send_otp_email
     try:
         success = send_otp_email(user, otp, subject="Password Recovery Code")
         if not success:
@@ -264,8 +261,12 @@ def verify_recovery_otp():
     data = request.json
     user_id = data.get('user_id')
     otp = data.get('otp')
+    portal = data.get('portal', 'staff')
     
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -280,11 +281,15 @@ def reset_password():
     user_id = data.get('user_id')
     otp = data.get('otp')
     new_password = data.get('password')
+    portal = data.get('portal', 'staff')
     
     if not new_password or not is_password_strong(new_password):
         return jsonify({"error": "Password does not meet strength requirements (8+ chars, UC, LC, Digit, Symbol)."}), 400
         
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -302,8 +307,12 @@ def login_2fa():
     data = request.json
     user_id = data.get('user_id')
     code = data.get('code')
+    portal = data.get('portal', 'staff')
     
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user or not getattr(user, 'is_2fa_enabled', False):
         return jsonify({"error": "Invalid request"}), 400
         

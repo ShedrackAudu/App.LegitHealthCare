@@ -1,18 +1,13 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User, Role
-from auth_utils import generate_otp, verify_otp
-import pyotp
+from models import db, PatientPortalUser
+from auth_utils import generate_otp
 import os
 from sqlalchemy import text
-from datetime import datetime
+from datetime import datetime, timedelta
 
 from utils.email_utils import EmailService
 
 patient_bp = Blueprint('patient_bp', __name__)
-
-# Simple in-memory store for OTPs (email -> otp)
-# In production, use Redis or a database table with expiry
-otp_store = {}
 
 @patient_bp.route('/api/patient/search', methods=['GET'])
 def search_patient():
@@ -39,7 +34,7 @@ def search_patient():
                 check_cols_query = text("PRAGMA table_info(bio_data)")
                 actual_cols = [c[1] for c in conn.execute(check_cols_query).fetchall()]
                 
-                # Columns we want to select (only if they exist)
+                # Columns we want to select
                 requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email', 'section']
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
@@ -71,42 +66,69 @@ def search_patient():
     if not results:
         return jsonify({"error": "Patient records not found in the system."}), 404
         
-    # Return only the first result to match frontend expectation
     return jsonify(results[0]), 200
 
 @patient_bp.route('/api/patient/claim', methods=['POST'])
 def claim_account():
     data = request.json
-    staff_id = data.get('staff_id')
-    email = data.get('email')
+    staff_id = data.get('staff_id', '').strip()
+    email = data.get('email', '').strip()
     password = data.get('password')
     first_name = data.get('first_name', 'Patient')
+    last_name = data.get('last_name', '')
+    phone = data.get('phone', 'N/A')
     
     if not all([staff_id, email, password]):
         return jsonify({"error": "Missing required fields"}), 400
         
-    # Check if user already exists
-    existing_user = User.query.filter((User.username == staff_id) | (User.email == email)).first()
+    # Check if user already exists in ISOLATED database
+    existing_user = PatientPortalUser.query.filter(
+        (PatientPortalUser.username == staff_id) | 
+        (PatientPortalUser.email == email)
+    ).first()
+    
     if existing_user:
-        return jsonify({"error": "An account with this Staff ID or email already exists."}), 400
-        
-    # Generate OTP
+        if existing_user.is_verified:
+            return jsonify({"error": "An account with this Staff ID or email already exists."}), 400
+        # If not verified, we can overwrite/reuse
+        user = existing_user
+    else:
+        user = PatientPortalUser(username=staff_id, email=email, phone=phone, first_name=first_name, last_name=last_name)
+    
+    # Generate OTP and store in DB
     otp = generate_otp()
-    otp_store[email] = otp
-    print(f"--- DEBUG: OTP for {email}: {otp} ---")
+    user.otp_code = otp
+    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.set_password(password)
+    
+    if not existing_user:
+        db.session.add(user)
+    
+    try:
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e)
+        if "UNIQUE constraint failed" in error_msg:
+            if "users.username" in error_msg or "patient_users.username" in error_msg:
+                return jsonify({"error": "This Staff ID is already registered."}), 400
+            if "users.email" in error_msg or "patient_users.email" in error_msg:
+                return jsonify({"error": "This email is already in use."}), 400
+            if "users.phone" in error_msg or "patient_users.phone" in error_msg:
+                return jsonify({"error": "This phone number is already in use."}), 400
+        return jsonify({"error": f"Database error: {error_msg}"}), 500
     
     # Send Email
     try:
         subject = "Patient Account Verification - Legit HealthCare"
         html_content = EmailService.get_patient_verification_template(first_name, otp)
-        sent = EmailService.send_email(email, subject, html_content)
-        if not sent:
-             print(f"--- FAILED to send email to {email} ---")
+        EmailService.send_email(email, subject, html_content)
     except Exception as e:
-        print(f"--- ERROR sending email to {email}: {str(e)} ---")
+        print(f"Failed to send email: {str(e)}")
     
     return jsonify({
         "message": "OTP sent to your email. Please verify to complete registration.",
+        "user_id": user.id,
         "otp_sent": True
     }), 200
 
@@ -114,23 +136,20 @@ def claim_account():
 def resend_otp():
     data = request.json
     email = data.get('email')
-    first_name = data.get('first_name', 'Patient')
     
-    if not email:
-        return jsonify({"error": "Email is required"}), 400
+    user = PatientPortalUser.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
         
-    # Generate new OTP
     otp = generate_otp()
-    otp_store[email] = otp
-    print(f"--- DEBUG: Resent OTP for {email}: {otp} ---")
+    user.otp_code = otp
+    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    db.session.commit()
     
-    # Send Email
     try:
         subject = "New Verification Code - Legit HealthCare"
-        html_content = EmailService.get_patient_verification_template(first_name, otp)
-        sent = EmailService.send_email(email, subject, html_content)
-        if not sent:
-             return jsonify({"error": "Failed to send email. Please check your connection."}), 500
+        html_content = EmailService.get_patient_verification_template(user.first_name, otp)
+        EmailService.send_email(user.email, subject, html_content)
     except Exception as e:
         return jsonify({"error": f"Error sending email: {str(e)}"}), 500
     
@@ -142,54 +161,20 @@ def resend_otp():
 @patient_bp.route('/api/patient/verify-otp', methods=['POST'])
 def verify_patient_otp():
     data = request.json
-    staff_id = data.get('staff_id')
     email = data.get('email')
-    password = data.get('password')
     otp_code = data.get('otp')
-    first_name = data.get('first_name')
-    last_name = data.get('last_name')
-    phone = data.get('phone', 'N/A')
-    section = data.get('section', 'DCP')
-    department = data.get('department', 'N/A')
     
-    # Verify OTP against our store
-    stored_otp = otp_store.get(email)
-    if not stored_otp or stored_otp != otp_code:
-        # For legacy compatibility during transition, check if it's 6 digits
-        if not verify_otp(otp_code):
-            return jsonify({"error": "Invalid or expired OTP"}), 400
+    user = PatientPortalUser.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found"}), 404
         
-    # Create the user account
-    patient_role = Role.query.filter_by(name='Patient').first()
-    if not patient_role:
-        return jsonify({"error": "Patient role not configured"}), 500
-        
-    try:
-        new_user = User(
-            username=staff_id,
-            email=email,
-            first_name=first_name,
-            last_name=last_name,
-            phone=phone,
-            section=section,
-            department=department,
-            is_verified=True
-        )
-        new_user.set_password(password)
-        new_user.roles.append(patient_role)
-        
-        db.session.add(new_user)
+    if user.otp_code == otp_code and user.otp_expiry > datetime.utcnow():
+        user.is_verified = True
+        user.otp_code = None
         db.session.commit()
-        
-        # Cleanup OTP store
-        if email in otp_store:
-            del otp_store[email]
-            
         return jsonify({
             "message": "Welcome! Your account has been successfully created.",
-            "user": new_user.to_dict()
+            "user": user.to_dict()
         }), 201
-    except Exception as e:
-        db.session.rollback()
-        print(f"--- DEBUG: Failed to create account: {str(e)} ---")
-        return jsonify({"error": f"Failed to create account: {str(e)}"}), 500
+    
+    return jsonify({"error": "Invalid or expired OTP"}), 400

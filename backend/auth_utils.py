@@ -6,7 +6,7 @@ from flask import request, jsonify
 from functools import wraps
 from flask_mail import Mail, Message
 from datetime import datetime, timedelta
-from models import db, User
+from models import db, StaffUser as User
 
 mail = Mail()
 

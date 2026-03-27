@@ -5,10 +5,12 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
 
+ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
+
 class EmailService:
     @staticmethod
     def _get_smtp_config():
-        load_dotenv(override=True)
+        load_dotenv(ENV_PATH, override=True)
         return {
             "server": os.getenv('MAIL_SERVER', 'smtp.gmail.com'),
             "port": int(os.getenv('MAIL_PORT', '587')),
@@ -40,6 +42,8 @@ class EmailService:
 
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
+            
+            # For Gmail SMTP, usually port 587 with TLS
             with smtplib.SMTP(smtp_server, smtp_port) as server:
                 server.starttls()
                 server.login(str(config["username"]), str(config["password"]))
@@ -162,49 +166,40 @@ class EmailService:
         <head>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f4f7fb; }}
-                .wrapper {{ padding: 40px 20px; }}
-                .container {{ max-width: 550px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }}
-                .top-accent {{ height: 8px; background: linear-gradient(90deg, #10b981 0%, #3b82f6 100%); }}
-                .header {{ padding: 40px 30px 20px; text-align: center; }}
-                .logo {{ font-size: 24px; font-weight: 900; color: #0f172a; letter-spacing: -0.04em; }}
-                .content {{ padding: 0 40px 40px; text-align: center; }}
-                .content h2 {{ color: #0f172a; font-size: 24px; font-weight: 700; margin-bottom: 10px; }}
-                .content p {{ font-size: 16px; color: #64748b; margin-bottom: 30px; }}
-                .otp-card {{ background: #f8fafc; border-radius: 16px; padding: 30px; border: 2px solid #f1f5f9; margin-bottom: 30px; }}
-                .otp-code {{ font-size: 42px; font-weight: 900; letter-spacing: 0.2em; color: #10b981; margin: 0; }}
-                .timer {{ font-size: 13px; font-weight: 600; color: #94a3b8; text-transform: uppercase; margin-top: 10px; }}
-                .footer {{ background: #f8fafc; padding: 30px; text-align: center; border-top: 1px solid #f1f5f9; }}
-                .footer p {{ margin: 5px 0; font-size: 12px; color: #94a3b8; font-weight: 500; }}
-                .socials {{ margin-top: 15px; }}
-                .social-link {{ color: #64748b; text-decoration: none; margin: 0 10px; font-size: 12px; font-weight: 600; }}
+                body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #0f172a; margin: 0; padding: 0; background-color: #f1f5f9; }}
+                .wrapper {{ padding: 60px 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }}
+                .header {{ background: #0f172a; padding: 40px; text-align: center; }}
+                .logo {{ font-size: 20px; font-weight: 900; color: #ffffff; letter-spacing: 0.1em; }}
+                .content {{ padding: 50px 40px; text-align: center; }}
+                .content h2 {{ font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 16px; letter-spacing: -0.02em; }}
+                .content p {{ font-size: 16px; color: #475569; margin-bottom: 40px; }}
+                .otp-wrap {{ position: relative; display: block; padding: 30px 10px; background: #f8fafc; border-radius: 20px; border: 2px solid #e2e8f0; margin: 0 20px 40px; }}
+                .otp-code {{ font-size: 42px; font-weight: 900; letter-spacing: 0.2em; color: #10b981; margin: 0; line-height: 1; white-space: nowrap; }}
+                .subtext {{ font-size: 13px; color: #94a3b8; margin-top: 10px; font-weight: 600; text-transform: uppercase; }}
+                .footer {{ padding: 40px; text-align: center; color: #94a3b8; font-size: 12px; border-top: 1px solid #f1f5f9; }}
+                .footer strong {{ color: #64748b; }}
             </style>
         </head>
         <body>
             <div class="wrapper">
                 <div class="container">
-                    <div class="top-accent"></div>
                     <div class="header">
                         <div class="logo">LEGIT HEALTHCARE</div>
                     </div>
                     <div class="content">
-                        <h2>Account Verification</h2>
-                        <p>Hi {first_name}, welcome to Legit HealthCare! Use the code below to complete your patient account setup.</p>
+                        <h2>Hello {first_name}!</h2>
+                        <p>We're excited to have you on board. Please use the verification code below to activate your patient account.</p>
                         
-                        <div class="otp-card">
+                        <div class="otp-wrap">
                             <h1 class="otp-code">{otp_code}</h1>
-                            <div class="timer">Valid for 10 minutes</div>
+                            <div class="subtext">Expires in 10 minutes</div>
                         </div>
                         
-                        <p style="font-size: 14px;">If you didn't request this code, you can safely ignore this email.</p>
+                        <p style="font-size: 14px; margin-bottom: 0;">If you didn't create an account, you can ignore this email.</p>
                     </div>
                     <div class="footer">
-                        <p>&copy; 2026 Legit HealthCare Services Ltd.</p>
-                        <p>Quality Care • Secure Technology • Patient Privacy</p>
-                        <div class="socials">
-                            <a href="#" class="social-link">Support</a>
-                            <a href="#" class="social-link">Privacy Policy</a>
-                        </div>
+                        <p>&copy; 2026 <strong>Legit HealthCare Services</strong><br>Quality Healthcare at your fingertips.</p>
                     </div>
                 </div>
             </div>
@@ -218,29 +213,41 @@ class EmailService:
         <!DOCTYPE html>
         <html>
         <head>
+            <meta charset="utf-8">
             <style>
-                body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
-                .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; text-align: center; }}
-                .header {{ background: #0f172a; color: #fff; padding: 20px; border-radius: 8px 8px 0 0; }}
-                .otp-box {{ font-size: 32px; font-weight: bold; letter-spacing: 5px; color: #0f172a; background: #f1f5f9; padding: 20px; margin: 20px 0; border-radius: 8px; border: 2px dashed #cbd5e1; }}
-                .footer {{ font-size: 12px; color: #666; padding: 20px; border-top: 1px solid #eee; }}
+                body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #0f172a; margin: 0; padding: 0; background-color: #f8fafc; }}
+                .wrapper {{ padding: 40px 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+                .top-bar {{ height: 6px; background: #0f172a; }}
+                .content {{ padding: 40px; text-align: center; }}
+                .logo {{ font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: 0.1em; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; display: inline-block; padding-bottom: 8px; }}
+                .title {{ font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 15px; }}
+                .message {{ font-size: 15px; color: #64748b; margin-bottom: 30px; }}
+                .otp-card {{ background: #f1f5f9; border-radius: 12px; padding: 25px 10px; margin-bottom: 30px; }}
+                .otp-code {{ font-size: 32px; font-weight: 800; letter-spacing: 0.25em; color: #0f172a; margin: 0; white-space: nowrap; }}
+                .expiry {{ font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 8px; }}
+                .footer {{ padding: 30px; text-align: center; background: #fafafa; border-top: 1px solid #f1f5f9; color: #94a3b8; font-size: 11px; }}
             </style>
         </head>
         <body>
-            <div class="container">
-                <div class="header">
-                    <h1>Verification Code</h1>
-                </div>
-                <div class="content">
-                    <p>Dear {first_name},</p>
-                    <p>Verify your action on our platform using the One Time Password below:</p>
-                    <div class="otp-box">{otp_code}</div>
-                    <p>Condition: <strong>The OTP expires in 5 minutes.</strong></p>
-                </div>
-                <div class="footer">
-                    Regards,<br>
-                    <strong>ICT Department</strong>,<br>
-                    Legit HealthCare Services Ltd.
+            <div class="wrapper">
+                <div class="container">
+                    <div class="top-bar"></div>
+                    <div class="content">
+                        <div class="logo">LEGIT HEALTHCARE</div>
+                        <h2 class="title">Password Reset</h2>
+                        <p class="message">Hi {first_name}, use the one-time verification code below to reset your account password.</p>
+                        
+                        <div class="otp-card">
+                            <h1 class="otp-code">{otp_code}</h1>
+                            <div class="expiry">Valid for 15 minutes</div>
+                        </div>
+                        
+                        <p style="font-size: 13px; color: #94a3b8;">If you didn't request a password reset, you can safely ignore this email.</p>
+                    </div>
+                    <div class="footer">
+                        <p>&copy; 2026 Legit HealthCare Services. All rights reserved.</p>
+                    </div>
                 </div>
             </div>
         </body>
