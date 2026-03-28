@@ -13,30 +13,40 @@ class RoutingSession(Session):
         super().__init__(*args, **kwargs)
 
     def get_bind(self, mapper=None, *args, **kwargs):
-        from flask import request
+        from flask import request, current_app
         
-        # If we have a mapper, check if it's a global table
+        # In case self.db wasn't initialized
+        _db = self.db if self.db else db
+        
+        # 1. If we have a mapper, check its properties
         if mapper:
             try:
                 table_name = getattr(mapper.persist_selectable, 'name', None)
-                # Global configuration tables always stay in the default database
+                model_class = getattr(mapper, 'class_', None)
+                
+                # Check for global system tables
                 if table_name in ['ai_settings', 'app_branding', 'users', 'departments', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs', 'temp_access_codes', 'access_requests', 'system_config', 'appointments']:
-                    return self.db.engine
-            except Exception:
+                    return _db.engine
+                
+                # Check for explicit bind keys (e.g., 'patients')
+                if model_class:
+                    bind_key = getattr(model_class, '__bind_key__', None)
+                    if bind_key and bind_key in _db.engines:
+                        return _db.engines[bind_key]
+            except:
                 pass
 
         try:
-            # Check if we are in a request context
+            # 2. Check for dynamic context (e.g., 'X-Company-Context' header)
             if request:
                 context = request.headers.get('X-Company-Context', '').lower()
-                if context in ['dcp', 'dct']:
-                    # Access engines through the db instance we captured in __init__
-                    return self.db.engines[context]
+                if context in _db.engines:
+                    return _db.engines[context]
         except:
             pass
         
         # Fallback to the default engine (hc_system.db)
-        return self.db.engine
+        return _db.engine
 
 db = SQLAlchemy(session_options={'class_': RoutingSession})
 bcrypt = Bcrypt()
@@ -122,7 +132,7 @@ class PatientPortalUser(db.Model):
     first_name = db.Column(db.String(50), nullable=False)
     last_name = db.Column(db.String(50), nullable=True)
     username = db.Column(db.String(50), unique=True, nullable=False) # Identity (Staff ID or Phone)
-    phone = db.Column(db.String(20), unique=True, nullable=True)
+    phone = db.Column(db.String(20), unique=True, nullable=False)
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     
@@ -149,7 +159,8 @@ class PatientPortalUser(db.Model):
             "email": self.email,
             "phone": self.phone,
             "is_verified": self.is_verified,
-            "portal": "patient",
+            "user_type": "patient",
+            "roles": ["Patient"],
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
         }
 

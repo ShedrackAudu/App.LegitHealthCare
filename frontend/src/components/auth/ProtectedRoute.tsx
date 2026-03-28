@@ -20,7 +20,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const { isAdmin, hasPermission } = usePermissions();
   const location = useLocation();
 
-  const userRoles = user?.roles?.map((r: any) => r.name) || [];
+  const userRoles = user?.roles?.map((r: any) => typeof r === 'string' ? r : r.name) || [];
 
   if (!user) {
     // Redirect to login but save the current location to redirect back after login

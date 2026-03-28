@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, Notification
+from models import db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, Notification, PatientPortalUser
 from decorators import require_permission
 import json
 from datetime import datetime
@@ -9,19 +9,39 @@ admin_bp = Blueprint('admin_bp', __name__)
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @require_permission('view_users')
 def get_users():
-    users = User.query.all()
-    return jsonify([user.to_dict() for user in users])
+    staff = User.query.all()
+    patients = PatientPortalUser.query.all()
+    
+    all_users = [u.to_dict() for u in staff]
+    for p in patients:
+        p_dict = p.to_dict()
+        # Ensure ID doesn't collide by using a prefix or just returning as is 
+        # (Frontend uses id for keys, but we can distinguish by username/email)
+        # Actually, for the table to work, we might need unique IDs.
+        # I'll use a string ID for patients to avoid collision 'p1', 'p2' etc.
+        p_dict['id'] = f"p{p.id}" 
+        all_users.append(p_dict)
+        
+    return jsonify(all_users)
 
-@admin_bp.route('/api/admin/users/<int:user_id>', methods=['GET'])
+@admin_bp.route('/api/admin/users/<string:user_id>', methods=['GET'])
 @require_permission('view_users')
 def get_user(user_id):
-    user = User.query.get_or_404(user_id)
+    if user_id.startswith('p'):
+        real_id = int(user_id[1:])
+        user = PatientPortalUser.query.get_or_404(real_id)
+        return jsonify(user.to_dict())
+    
+    user = User.query.get_or_404(int(user_id))
     return jsonify(user.to_dict())
 
-@admin_bp.route('/api/admin/users/<int:user_id>/roles', methods=['POST'])
+@admin_bp.route('/api/admin/users/<string:user_id>/roles', methods=['POST'])
 @require_permission('change_roles')
 def update_user_roles(user_id):
-    user = User.query.get_or_404(user_id)
+    if user_id.startswith('p'):
+        return jsonify({"message": "Patient roles are managed automatically and cannot be changed manually."}), 200
+        
+    user = User.query.get_or_404(int(user_id))
     data = request.json
     role_names = data.get('roles', [])
     
@@ -556,11 +576,19 @@ def delete_access_code(code_id):
     db.session.commit()
     return jsonify({"message": "Code record deleted successfully"})
 
-@admin_bp.route('/api/admin/users/<int:target_user_id>', methods=['DELETE'])
+@admin_bp.route('/api/admin/users/<string:target_user_id>', methods=['DELETE'])
 @require_permission('manage_roles')
 def delete_user(target_user_id):
     admin_id = request.headers.get('X-User-ID')
-    target_user = User.query.get_or_404(target_user_id)
+    
+    if target_user_id.startswith('p'):
+        real_id = int(target_user_id[1:])
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+        db.session.delete(target_user)
+        db.session.commit()
+        return jsonify({"message": f"Patient account @{target_user.username} deleted successfully."})
+
+    target_user = User.query.get_or_404(int(target_user_id))
     
     if target_user.username == 'admin':
         return jsonify({"error": "Protection Error: The default system administrator account cannot be deactivated or deleted."}), 403
@@ -590,11 +618,16 @@ def delete_user(target_user_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
-@admin_bp.route('/api/admin/users/<int:target_user_id>/reset-password', methods=['POST'])
+@admin_bp.route('/api/admin/users/<string:target_user_id>/reset-password', methods=['POST'])
 @require_permission('manage_roles')
 def admin_reset_password(target_user_id):
     admin_id = request.headers.get('X-User-ID')
-    target_user = User.query.get_or_404(target_user_id)
+    
+    if target_user_id.startswith('p'):
+        real_id = int(target_user_id[1:])
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+    else:
+        target_user = User.query.get_or_404(int(target_user_id))
     data = request.json
     new_password = data.get('password')
     

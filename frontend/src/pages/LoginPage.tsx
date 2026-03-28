@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Loader2, Lock, User, Activity, Construction } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, User, Activity } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'react-hot-toast';
 
@@ -39,7 +39,11 @@ const LoginPage = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      if (user.roles?.includes('Patient')) {
+        navigate('/patient/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
   }, [user, navigate]);
 
@@ -66,7 +70,8 @@ const LoginPage = () => {
       // Success - Update context and redirect to Dashboard
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      navigate(activePortal === 'patient' ? '/patient/dashboard' : '/dashboard'); 
+      const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+      navigate(target); 
     } catch (err: any) {
         if (err.response?.status === 403) {
             setError(err.response?.data?.error || "Your account is not verified. Please check your email.");
@@ -91,7 +96,8 @@ const LoginPage = () => {
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
         toast.success("Login successful!");
-        navigate(activePortal === 'patient' ? '/patient/dashboard' : '/dashboard');
+        const target = resp.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+        navigate(target);
     } catch (err: any) {
         setError(err.response?.data?.error || "Invalid 2FA code");
     } finally {
@@ -230,7 +236,7 @@ const LoginPage = () => {
                 )}
                 
                 <div className="space-y-2">
-                  <Label htmlFor="identity-patient">Staff ID</Label>
+                  <Label htmlFor="identity-patient">Patient ID</Label>
                   <div className="relative">
                     <Input 
                         id="identity-patient" 

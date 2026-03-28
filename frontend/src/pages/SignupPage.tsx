@@ -64,7 +64,11 @@ const SignupPage: React.FC = () => {
 
   useEffect(() => {
     if (user) {
-      navigate('/dashboard');
+      if (user.roles?.includes('Patient')) {
+        navigate('/patient/dashboard');
+      } else {
+        navigate('/dashboard');
+      }
     }
   }, [user, navigate]);
 
