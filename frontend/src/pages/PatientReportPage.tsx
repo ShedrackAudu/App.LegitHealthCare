@@ -8,7 +8,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
@@ -52,101 +52,128 @@ const PatientReportPage: React.FC = () => {
 
     const handlePrint = () => window.print();
 
+    const buildReportPayload = () => ({
+        report_data: {
+            ...reportData,
+            bio: {
+                ...reportData.bio,
+                section: activeSection,
+                screening_year: activeYear,
+            }
+        }
+    });
+
+    const generateFrontendPDF = async (): Promise<Blob> => {
+        const pages = document.querySelectorAll('.a4-page');
+        if (pages.length === 0) throw new Error("Report pages not found in DOM");
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 0; i < pages.length; i++) {
+            const pageEl = pages[i] as HTMLElement;
+            // Force true dimensions to prevent viewport clipping on small screens
+            const width = pageEl.scrollWidth;
+            const height = pageEl.scrollHeight;
+
+            const imgData = await toPng(pageEl, { 
+                cacheBust: true, 
+                pixelRatio: 2,
+                width: width,
+                height: height,
+                style: { margin: '0' }
+            });
+
+            if (i > 0) pdf.addPage();
+            
+            // Maintain aspect ratio to prevent any squashing/stretching
+            const imgProps = pdf.getImageProperties(imgData);
+            const ratio = Math.min(pdfWidth / imgProps.width, pdfHeight / imgProps.height);
+            const calcWidth = imgProps.width * ratio;
+            const calcHeight = imgProps.height * ratio;
+            const x = (pdfWidth - calcWidth) / 2;
+            const y = (pdfHeight - calcHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', x, y, calcWidth, calcHeight);
+        }
+        
+        return pdf.output('blob');
+    };
+
+    const getDownloadFilename = () => {
+        const pId = selectedPatient?.patient_id || 'UNKNOWN';
+        const dpt = selectedPatient?.department?.replace(/\s+/g, '') || 'Dept';
+        const sId = selectedPatient?.staff_id || 'UNKNOWN';
+        return `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
+    };
+
     const handleDownloadPDF = async () => {
         if (!selectedPatient || !reportData) return;
-        setLoading(true);
-        toast.loading("Generating PDF...", { id: 'pdfGen' });
-
+        toast.loading('Generating PDF (Pixel-Perfect)...', { id: 'pdfGen' });
         try {
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const elements = document.getElementsByClassName('a4-page');
-
-            for (let i = 0; i < elements.length; i++) {
-                if (i > 0) pdf.addPage();
-                const el = elements[i] as HTMLElement;
-
-                // Ensure the element is rendered in viewport
-                el.scrollIntoView({ block: 'start' });
-                await new Promise(resolve => setTimeout(resolve, 500));
-
-                const canvas = await html2canvas(el, {
-                    scale: 2,
-                    useCORS: true,
-                    logging: true,
-                    allowTaint: false
-                });
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-            }
-
-            // Revert scroll
-            window.scrollTo(0, 0);
-
-            pdf.save(`${selectedPatient.first_name}_${selectedPatient.last_name}_Medical_Report_${activeYear}.pdf`);
-            toast.success("PDF Downloaded successfully", { id: 'pdfGen' });
-        } catch (error) {
-            console.error("PDF generation error:", error);
-            toast.error("Failed to generate PDF.", { id: 'pdfGen' });
-        } finally {
-            setLoading(false);
+            const pdfBlob = await generateFrontendPDF();
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getDownloadFilename();
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+        } catch (err: any) {
+            console.error('PDF error:', err);
+            const msg = err.message || String(err) || 'Failed to generate frontend PDF.';
+            toast.error(`Error: ${msg}`, { id: 'pdfGen' });
         }
     };
 
     const handleEmailPDF = async () => {
         if (!selectedPatient || !reportData) return;
-        setLoading(true);
-        toast.loading("Preparing report and emailing patient...", { id: 'emailSend' });
-
+        toast.loading('Capturing layout and emailing report...', { id: 'emailSend' });
         try {
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const elements = document.getElementsByClassName('a4-page');
+            const pdfBlob = await generateFrontendPDF();
 
-            for (let i = 0; i < elements.length; i++) {
-                if (i > 0) pdf.addPage();
-                const el = elements[i] as HTMLElement;
-                el.scrollIntoView({ block: 'start' });
-                await new Promise(resolve => setTimeout(resolve, 500));
+            // Convert Base64 helper
+            const blobToBase64 = (b: Blob): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const res = reader.result as string;
+                        // Strip data:application/pdf;base64,
+                        const b64 = res.split(',')[1];
+                        resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(b);
+                });
+            };
 
-                const canvas = await html2canvas(el, { scale: 2, useCORS: true, logging: true });
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-            }
-            window.scrollTo(0, 0);
+            const b64data = await blobToBase64(pdfBlob);
 
-            const pdfBlob = pdf.output('blob');
-            const formData = new FormData();
-            formData.append('file', pdfBlob, `Medical_Report.pdf`);
-
-            // Safely resolve email
-            const pEmail = reportData.bio.email || selectedPatient.email_address || selectedPatient.email || '';
-            formData.append('email', pEmail);
-            formData.append('first_name', selectedPatient.first_name || 'Patient');
-            formData.append('screening_year', activeYear);
-
+            const pEmail = reportData.bio?.email || selectedPatient.email_address || selectedPatient.email || '';
             let companyName = 'Legit HealthCare';
             if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
             if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
-            formData.append('company', companyName);
-            formData.append('staff_id', selectedPatient.staff_id || '');
 
-            const res = await axios.post(`http://localhost:5000/api/email/report`, formData, {
-                headers: {
-                    'X-Company-Context': activeSection,
-                    'Content-Type': 'multipart/form-data'
-                }
-            });
+            const payloadData = {
+                ...buildReportPayload(),
+                email: pEmail,
+                first_name: selectedPatient.first_name || 'Patient',
+                screening_year: activeYear,
+                company: companyName,
+                staff_id: selectedPatient.staff_id || '',
+                attachment_data: b64data,
+                attachment_filename: getDownloadFilename()
+            };
 
-            toast.success(res.data.message || "Email sent successfully!", { id: 'emailSend' });
-        } catch (error: any) {
-            console.error("Email send error:", error);
-            const errMsg = error.response?.data?.error || "Failed to send email. Check patient email and SMTP settings.";
-            toast.error(errMsg, { id: 'emailSend' });
-        } finally {
-            setLoading(false);
+            const res = await axios.post('http://localhost:5000/api/email/report', payloadData);
+            toast.success(res.data.message || 'Email sent successfully!', { id: 'emailSend' });
+        } catch (err: any) {
+            console.error('Email error:', err);
+            const msg = err.response?.data?.error || 'Failed to send email. Check SMTP settings.';
+            toast.error(msg, { id: 'emailSend' });
         }
     };
 
@@ -183,6 +210,7 @@ const PatientReportPage: React.FC = () => {
 
     return (
         <MainLayout>
+            {/* All UI chrome — hidden on print */}
             <div className="space-y-8 animate-in fade-in duration-500 pb-20 no-print">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl transition-all">
                     <div className="flex items-center gap-3">
@@ -204,10 +232,12 @@ const PatientReportPage: React.FC = () => {
                         buttonText="Retrieve Report"
                     />
                 </div>
+            </div>{/* end no-print chrome */}
 
-                {selectedPatient && (
-                    <div className="space-y-8 animate-in slide-in-from-bottom-8 duration-500">
-                        <div className="flex items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-20 z-10 backdrop-blur-md">
+            {/* Report pages — visible on screen and during print */}
+            {selectedPatient && (
+                <div className="space-y-1.5 animate-in slide-in-from-bottom-8 duration-500">
+                    <div className="flex items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-20 z-10 backdrop-blur-md no-print">
                             <div className="flex items-center gap-4">
                                 <Button variant="outline" className="rounded-xl border-2 font-bold"
                                     onClick={() => { setSelectedPatient(null); setReportData(null); }}>
@@ -233,7 +263,7 @@ const PatientReportPage: React.FC = () => {
                                 <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
                             </div>
                         ) : reportData ? (
-                            <div className="flex flex-col items-center gap-8 py-8 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-zinc-950/50 rounded-3xl border-2 border-dashed border-border" style={{ padding: '2rem' }}>
+                            <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-zinc-950/50 rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
                                 {/* PAGE 1 */}
                                 <div className="a4-page">
                                     {/* Branding Header Area */}
@@ -398,6 +428,7 @@ const PatientReportPage: React.FC = () => {
                                         ) : (
                                             <div className="report-footer-img">result_footer</div>
                                         )}
+                                        <div className="report-page-number">Page 1 of 2</div>
                                     </div>
                                 </div>
 
@@ -483,15 +514,15 @@ const PatientReportPage: React.FC = () => {
                                     </div>
 
                                     <div className="report-section-title">COMMENTS/MEDICAL ADVICE</div>
-                                    <div className="report-list" style={{ minHeight: '80px', marginBottom: '20px' }}>
-                                        <div className="report-list-item" style={{ minHeight: '3.5em' }}><div className="idx">1.</div><div> {reportData.results.director?.comment_one || '-'}</div></div>
-                                        <div className="report-list-item" style={{ minHeight: '3.5em' }}><div className="idx">2.</div><div> {reportData.results.director?.comment_two || '-'}</div></div>
-                                        <div className="report-list-item" style={{ minHeight: '3.5em' }}><div className="idx">3.</div><div> {reportData.results.director?.comment_three || '-'}</div></div>
-                                        <div className="report-list-item" style={{ minHeight: '3.5em' }}><div className="idx">4.</div><div> {reportData.results.director?.comment_four || '-'}</div></div>
+                                    <div className="report-list" style={{ marginBottom: '8px' }}>
+                                        <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">1.</div><div> {reportData.results.director?.comment_one || '-'}</div></div>
+                                        <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">2.</div><div> {reportData.results.director?.comment_two || '-'}</div></div>
+                                        <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">3.</div><div> {reportData.results.director?.comment_three || '-'}</div></div>
+                                        <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">4.</div><div> {reportData.results.director?.comment_four || '-'}</div></div>
                                     </div>
 
                                     <div className="report-section-title">CERTIFICATIONS</div>
-                                    <div className="cert-text pb-2 mb-2">
+                                    <div className="cert-text pb-1 mb-1" style={{ fontSize: '10.5px' }}>
                                         I hereby <strong>certify</strong> that a <strong>comprehensive medical evaluation</strong> with relevant <strong>medical investigations</strong> were carried out on the above named staff on the aforementioned date and time.
                                     </div>
 
@@ -546,6 +577,7 @@ const PatientReportPage: React.FC = () => {
                                         ) : (
                                             <div className="report-footer-img">result_footer</div>
                                         )}
+                                        <div className="report-page-number">Page 2 of 2</div>
                                     </div>
                                 </div>
                             </div>
@@ -555,16 +587,16 @@ const PatientReportPage: React.FC = () => {
                                 <p className="text-muted-foreground font-bold">No diagnostic data found for this patient in {activeYear}</p>
                             </div>
                         )}
-                    </div>
-                )}
+                </div>
+            )}
+
                 {!selectedPatient && (
-                    <div className="flex flex-col items-center justify-center py-20 opacity-20 text-foreground">
+                    <div className="flex flex-col items-center justify-center py-20 opacity-20 text-foreground no-print">
                         <FileText className="h-32 w-32 mb-4" />
                         <h2 className="text-2xl font-black">Search a patient to view report</h2>
                     </div>
                 )}
-            </div>
-        </MainLayout>
+            </MainLayout>
     );
 };
 

@@ -26,7 +26,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import html2canvas from 'html2canvas';
+import { toPng } from 'html-to-image';
 import '@/styles/PatientReport.css';
 
 const PatientMedicalReport: React.FC = () => {
@@ -94,35 +94,120 @@ const PatientMedicalReport: React.FC = () => {
 
     const handlePrint = () => window.print();
 
+    const generateFrontendPDF = async (): Promise<Blob> => {
+        const pages = document.querySelectorAll('.a4-page');
+        if (pages.length === 0) throw new Error("Report pages not found in DOM");
+
+        const pdf = new jsPDF('p', 'mm', 'a4');
+        const pdfWidth = pdf.internal.pageSize.getWidth();
+        const pdfHeight = pdf.internal.pageSize.getHeight();
+
+        for (let i = 0; i < pages.length; i++) {
+            const pageEl = pages[i] as HTMLElement;
+            // Force true dimensions to prevent viewport clipping on small screens
+            const width = pageEl.scrollWidth;
+            const height = pageEl.scrollHeight;
+
+            const imgData = await toPng(pageEl, { 
+                cacheBust: true, 
+                pixelRatio: 2,
+                width: width,
+                height: height,
+                style: { margin: '0' }
+            });
+
+            if (i > 0) pdf.addPage();
+            
+            // Maintain aspect ratio to prevent any squashing/stretching
+            const imgProps = pdf.getImageProperties(imgData);
+            const ratio = Math.min(pdfWidth / imgProps.width, pdfHeight / imgProps.height);
+            const calcWidth = imgProps.width * ratio;
+            const calcHeight = imgProps.height * ratio;
+            const x = (pdfWidth - calcWidth) / 2;
+            const y = (pdfHeight - calcHeight) / 2;
+
+            pdf.addImage(imgData, 'PNG', x, y, calcWidth, calcHeight);
+        }
+        
+        return pdf.output('blob');
+    };
+
+    const getDownloadFilename = () => {
+        const pId = reportData?.bio?.patient_id || 'UNKNOWN';
+        const dpt = reportData?.bio?.department?.replace(/\s+/g, '') || 'Dept';
+        const sId = user?.username || reportData?.bio?.staff_id || 'UNKNOWN';
+        const sec = reportData?.bio?.section || 'DCP';
+        return `LHCSL${selectedYear}${sec}${pId}_${dpt}_${sId}.pdf`;
+    };
+
     const handleDownloadPDF = async () => {
         if (!reportData) return;
-        setLoading(true);
-        const toastId = toast.loading("Preparing PDF download...");
-
+        toast.loading('Generating PDF (Pixel-Perfect)...', { id: 'pdfGen' });
         try {
-            const pdf = new jsPDF('p', 'mm', 'a4');
-            const elements = document.getElementsByClassName('a4-page');
+            const pdfBlob = await generateFrontendPDF();
+            const url = window.URL.createObjectURL(pdfBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = getDownloadFilename();
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+        } catch (err: any) {
+            console.error('PDF error:', err);
+            const msg = err.message || String(err) || 'Failed to generate frontend PDF.';
+            toast.error(`Error: ${msg}`, { id: 'pdfGen' });
+        }
+    };
 
-            for (let i = 0; i < elements.length; i++) {
-                if (i > 0) pdf.addPage();
-                const el = elements[i] as HTMLElement;
-                el.scrollIntoView({ block: 'start' });
-                await new Promise(resolve => setTimeout(resolve, 500));
+    const handleEmailReport = async () => {
+        if (!reportData) return;
+        toast.loading('Capturing layout and emailing report...', { id: 'emailSend' });
+        try {
+            const pdfBlob = await generateFrontendPDF();
 
-                const canvas = await html2canvas(el, { scale: 2, useCORS: true });
-                const imgData = canvas.toDataURL('image/jpeg', 0.95);
-                const pdfWidth = pdf.internal.pageSize.getWidth();
-                const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-                pdf.addImage(imgData, 'JPEG', 0, 0, pdfWidth, pdfHeight);
-            }
+            // Convert Base64 helper
+            const blobToBase64 = (b: Blob): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const res = reader.result as string;
+                        // Strip data:application/pdf;base64,
+                        const b64 = res.split(',')[1];
+                        resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(b);
+                });
+            };
 
-            window.scrollTo(0, 0);
-            pdf.save(`Medical_Report_${user?.username}_${selectedYear}.pdf`);
-            toast.success("Downloaded successfully!", { id: toastId });
-        } catch (error) {
-            toast.error("Error generating PDF", { id: toastId });
-        } finally {
-            setLoading(false);
+            const b64data = await blobToBase64(pdfBlob);
+
+            const pEmail = reportData.bio?.email || user?.email || '';
+            const sec = reportData.bio?.section || 'DCP';
+            let companyName = 'Legit HealthCare';
+            if (sec === 'DCT') companyName = 'Dangote Cement Transport';
+            if (sec === 'DCP') companyName = 'Dangote Cement Plant';
+
+            const payloadData = {
+                attachment_data: b64data,
+                attachment_filename: getDownloadFilename(),
+                email: pEmail,
+                first_name: reportData.bio?.first_name || 'Patient',
+                screening_year: selectedYear,
+                company: companyName,
+                department: reportData.bio?.department || 'NA',
+                staff_id: user?.username || 'UNKNOWN',
+                origin: 'frontend'
+            };
+
+            await axios.post('http://localhost:5000/api/email/report', payloadData);
+            toast.success('Report successfully emailed to your address!', { id: 'emailSend' });
+        } catch (err: any) {
+            console.error('Email error:', err);
+            const msg = err.response?.data?.error || 'Failed to send email. Check SMTP settings.';
+            toast.error(msg, { id: 'emailSend' });
         }
     };
 
@@ -159,7 +244,8 @@ const PatientMedicalReport: React.FC = () => {
 
     return (
         <PatientLayout>
-            <div className="space-y-8 no-print animate-in fade-in duration-700">
+            <div className="space-y-8 animate-in fade-in duration-700">
+                <div className="no-print space-y-8">
                 {/* Header Selector Card */}
                 <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden bg-card/50 backdrop-blur-md">
                     <CardHeader className="p-8 md:p-10">
@@ -219,6 +305,9 @@ const PatientMedicalReport: React.FC = () => {
                              <Button className="rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50" variant="outline" onClick={handleDownloadPDF}>
                                 <Download className="mr-2 h-4 w-4" /> Download PDF
                              </Button>
+                             <Button className="rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleEmailReport}>
+                                <Mail className="mr-2 h-4 w-4" /> Email to My Address
+                             </Button>
                         </div>
                     </div>
                 )}
@@ -252,6 +341,7 @@ const PatientMedicalReport: React.FC = () => {
                          <p className="mt-6 text-sm font-black uppercase tracking-[0.3em] text-primary animate-pulse">Compiling Diagnostic Tables...</p>
                     </div>
                 )}
+                </div>{/* end no-print helper wrapper */}
 
                 {/* VERBATIM REPORT CONTENT FROM STAFF PORTAL */}
                 {reportData && !loading && (
