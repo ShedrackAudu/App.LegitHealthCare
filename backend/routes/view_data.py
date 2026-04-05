@@ -2,8 +2,11 @@ from flask import Blueprint, request, jsonify
 from models import (
     db, BioData, ScreeningYearBioData, ConsultationData, 
     FBCResult, KFTResult, LipidResult, LFTResult, 
-    SpecialTestsResult, DirectorReview, AuditLog, QueueEntry
+    SpecialTestsResult, DirectorReview, AuditLog, QueueEntry,
+    ReportVerification, AppBranding
 )
+import uuid
+
 from sqlalchemy import func
 from datetime import datetime
 
@@ -365,6 +368,7 @@ def get_patient_report(staff_id, year):
         "full_name": f"{patient.first_name} {patient.middle_name or ''} {patient.last_name}",
         "email": patient.email,
         "phone": patient.phone,
+        "dob": patient.dob.strftime('%d/%m/%Y') if hasattr(patient.dob, 'strftime') else (str(patient.dob) if patient.dob else "N/A"),
         "age": patient.age,
         "gender": patient.gender,
         "nationality": patient.nationality,
@@ -423,12 +427,62 @@ def get_patient_report(staff_id, year):
     d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if d:
         results["director"] = {
-            "assessment": d.overall_assessment, "comments": d.comment_one
+            "assessment": d.overall_assessment,
+            "comment_one": d.comment_one,
+            "comment_two": d.comment_two,
+            "comment_three": d.comment_three,
+            "comment_four": d.comment_four
         }
+    
+    # Determine Timing
+    reg_date_time = patient.created_at.isoformat() if patient.created_at else None
+    report_date_time = d.first_submitted_at.isoformat() if (d and getattr(d, 'first_submitted_at', None)) else (d.created_at.isoformat() if d else None)
+    
+    # QR Verification Logic
+    verification = ReportVerification.query.filter_by(staff_id=staff_id, screening_year=year, section=bind).first()
+    if not verification:
+        verification = ReportVerification(
+            staff_id=staff_id,
+            screening_year=year,
+            section=bind,
+            verification_code=uuid.uuid4().hex
+        )
+        db.session.add(verification)
+        db.session.commit()
+        
+    # App Branding Templates
+    branding = AppBranding.query.first()
+    branding_assets = {
+        "header_image": branding.header_image if branding else None,
+        "footer_image": branding.footer_image if branding else None,
+        "signature_image": branding.signature_image if branding else None
+    }
     
     return jsonify({
         "bio": bio_info,
-        "results": results
+        "results": results,
+        "verification_url": f"http://localhost:5173/verify/{verification.verification_code}",
+        "verification_code": verification.verification_code,
+        "timing": {
+            "reg_date_time": reg_date_time,
+            "report_date_time": report_date_time,
+            "gen_date_time": datetime.utcnow().isoformat()
+        },
+        "branding": branding_assets
+    }), 200
+
+@view_data_bp.route('/public/verify/<token>', methods=['GET'])
+def verify_report(token):
+    verification = ReportVerification.query.filter_by(verification_code=token).first()
+    if not verification:
+        return jsonify({"valid": False, "error": "Invalid or forged report signature."}), 404
+        
+    return jsonify({
+        "valid": True,
+        "staff_id": verification.staff_id,
+        "year": verification.screening_year,
+        "section": verification.section.upper(),
+        "generated_at": verification.generated_at.isoformat()
     }), 200
 
 @view_data_bp.route('/dashboard/stats', methods=['GET'])

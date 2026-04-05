@@ -47,7 +47,7 @@ const SignupPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const { user } = useAppContext();
+  const { user, branding } = useAppContext();
 
   // Patient Claim State
   const [patientStep, setPatientStep] = useState<'search' | 'claim'>('search');
@@ -165,9 +165,17 @@ const SignupPage: React.FC = () => {
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="py-4 text-center">
             <div className="flex items-center justify-center mb-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Activity className="w-8 h-8 text-primary" />
-              </div>
+              {branding?.logo_light ? (
+                <img 
+                  src={`http://localhost:5000${branding.logo_light}`} 
+                  alt="Logo" 
+                  className="h-12 w-auto object-contain" 
+                />
+              ) : (
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Activity className="w-8 h-8 text-primary" />
+                </div>
+              )}
             </div>
             <CardDescription className="text-center text-muted-foreground mt-1 text-sm">
               Please choose your account type to get started.

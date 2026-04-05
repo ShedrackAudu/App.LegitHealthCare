@@ -83,14 +83,21 @@ def get_history(conv_id):
 @messaging_bp.route('/search-users', methods=['GET'])
 def search_users():
     query = request.args.get('q', '')
-    if len(query) < 2:
-        return jsonify([])
+    user_id = request.headers.get('X-User-ID')
+    if user_id:
+        user_id = int(user_id)
         
-    users = User.query.filter(
-        (User.first_name.ilike(f'%{query}%')) | 
-        (User.last_name.ilike(f'%{query}%')) |
-        (User.username.ilike(f'%{query}%'))
-    ).limit(10).all()
+    if query:
+        users = User.query.filter(
+            (User.id != user_id) & (
+                (User.first_name.ilike(f'%{query}%')) | 
+                (User.last_name.ilike(f'%{query}%')) |
+                (User.username.ilike(f'%{query}%'))
+            )
+        ).limit(20).all()
+    else:
+        # Default: list first 20 other users
+        users = User.query.filter(User.id != user_id).limit(20).all()
     
     return jsonify([u.to_dict() for u in users])
 

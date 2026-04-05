@@ -16,7 +16,8 @@ import {
 const getPageTitle = (pathname: string) => {
   if (pathname.includes('/patient/dashboard')) return 'Dashboard';
   if (pathname.includes('/patient/records')) return 'My Medical Records';
-  if (pathname.includes('/patient/profile')) return 'Profile Settings';
+  if (pathname.includes('/patient/account/2fa')) return 'Security Settings';
+  if (pathname.includes('/patient/account')) return 'Account Settings';
   return 'Patient Portal';
 };
 
@@ -37,11 +38,15 @@ export const PatientHeader: React.FC = () => {
       <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
         
         {/* Left Side: Back Button, Page Title */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
-          <h1 className="text-xl font-bold tracking-tight">{pageTitle}</h1>
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
+              {pageTitle}
+            </h1>
+          </div>
         </div>
 
         {/* Right Side: Theme Switcher, Notifications, Profile */}

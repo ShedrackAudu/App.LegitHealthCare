@@ -13,8 +13,17 @@ import {
   Check,
   CheckCheck,
   ArrowLeft,
-  Bot
+  Bot,
+  Plus,
+  Loader2
 } from 'lucide-react';
+import { 
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -43,6 +52,9 @@ export default function MessagingPage() {
   const [isTyping, setIsTyping] = useState(false);
   const [partnerTyping, setPartnerTyping] = useState(false);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [isNewChatOpen, setIsNewChatOpen] = useState(false);
+  const [availableUsers, setAvailableUsers] = useState<any[]>([]);
+  const [loadingUsers, setLoadingUsers] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨'];
@@ -127,6 +139,24 @@ export default function MessagingPage() {
     }
   };
 
+  const fetchAvailableUsers = async () => {
+    setLoadingUsers(true);
+    try {
+      const resp = await axios.get('http://localhost:5000/api/messages/search-users', {
+        headers: { 'X-User-ID': user.id }
+      });
+      setAvailableUsers(resp.data);
+    } catch (err) {
+    } finally {
+      setLoadingUsers(false);
+    }
+  };
+
+  const openNewChat = () => {
+    setIsNewChatOpen(true);
+    fetchAvailableUsers();
+  };
+
   const handleSearch = async (val: string) => {
     setSearchQuery(val);
     if (val.length < 2) {
@@ -198,7 +228,12 @@ export default function MessagingPage() {
         activeChat ? "hidden md:flex" : "flex"
       )}>
         <div className="p-4 border-b space-y-4">
-          <h2 className="text-xl font-bold tracking-tight">Messages</h2>
+          <div className="flex items-center justify-between">
+            <h2 className="text-xl font-bold tracking-tight">Messages</h2>
+            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10 text-primary" onClick={openNewChat}>
+              <Plus className="h-4 w-4" />
+            </Button>
+          </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
@@ -482,12 +517,68 @@ export default function MessagingPage() {
                 Connect with your healthcare team in real-time. Direct messages, groups, and secure clinical updates.
               </p>
             </div>
-            <Button variant="outline" className="border-2 rounded-xl font-bold px-8 shadow-sm hover:shadow-md transition-all">
+            <Button 
+                variant="outline" 
+                className="border-2 rounded-xl font-bold px-8 shadow-sm hover:shadow-md transition-all"
+                onClick={openNewChat}
+            >
               Start Conversation
             </Button>
           </div>
         )}
       </div>
+
+      <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
+        <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          <DialogHeader className="p-6 bg-primary text-primary-foreground">
+            <DialogTitle className="text-2xl font-black">New Conversation</DialogTitle>
+          </DialogHeader>
+          <div className="p-4 space-y-4">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <Input 
+                placeholder="Search staff members..." 
+                className="pl-9 h-11"
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+            <ScrollArea className="h-[300px] pr-4">
+              {loadingUsers ? (
+                <div className="flex items-center justify-center h-full">
+                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                </div>
+              ) : (
+                <div className="space-y-1">
+                  {(searchQuery.length >= 2 ? searchResults : availableUsers).map((u: any) => (
+                    <button
+                      key={u.id}
+                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all text-left group"
+                      onClick={() => {
+                        startDirectChat(u);
+                        setIsNewChatOpen(false);
+                      }}
+                    >
+                      <Avatar className="h-10 w-10 border-2 border-background group-hover:border-primary/20">
+                        <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                          {u.first_name?.[0]}{u.last_name?.[0]}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div className="flex-1">
+                        <div className="text-sm font-bold">{u.first_name} {u.last_name}</div>
+                        <div className="text-xs text-muted-foreground">@{u.username}</div>
+                      </div>
+                    </button>
+                  ))}
+                  {(searchQuery.length >= 2 ? searchResults : availableUsers).length === 0 && (
+                     <div className="text-center py-8 text-muted-foreground italic text-sm">No users found</div>
+                  )}
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+        </DialogContent>
+      </Dialog>
+
       </div>
     </MainLayout>
   );

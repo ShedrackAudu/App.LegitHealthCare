@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, Link, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -16,6 +16,7 @@ import {
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { toast } from 'react-hot-toast';
 import { ModeToggle } from '@/components/mode-toggle';
+import { useAppContext } from '@/context/AppContext';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
@@ -29,13 +30,19 @@ const ForgotPasswordPage = () => {
     const [confirmPassword, setConfirmPassword] = useState('');
     const [userId, setUserId] = useState<string | null>(null);
     const [loading, setLoading] = useState(false);
+    const [searchParams] = useSearchParams();
+    const portal = searchParams.get('portal') || 'staff';
     const navigate = useNavigate();
+    const { branding } = useAppContext();
 
     const handleIdentify = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         try {
-            const resp = await axios.post('http://localhost:5000/forgot-password', { identity: identifier });
+            const resp = await axios.post('http://localhost:5000/forgot-password', { 
+                identity: identifier,
+                portal: portal
+            });
             setUserId(resp.data.user_id);
             toast.success(resp.data.message);
             setStep('verify');
@@ -50,7 +57,11 @@ const ForgotPasswordPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/forgot-password/verify', { user_id: userId, otp });
+            await axios.post('http://localhost:5000/forgot-password/verify', { 
+                user_id: userId, 
+                otp,
+                portal: portal
+            });
             toast.success("OTP Verified Successfully");
             setStep('reset');
         } catch (err: any) {
@@ -71,10 +82,11 @@ const ForgotPasswordPage = () => {
             await axios.post('http://localhost:5000/forgot-password/reset', { 
                 user_id: userId, 
                 otp: otp,
-                password: password 
+                password: password,
+                portal: portal
             });
             toast.success("Password Reset Successful. Please Login.");
-            navigate('/login');
+            navigate(`/login?portal=${portal}`);
         } catch (err: any) {
             toast.error(err.response?.data?.error || "Failed to reset password");
         } finally {
@@ -90,11 +102,21 @@ const ForgotPasswordPage = () => {
 
             <div className="w-full max-w-md relative z-10">
                 <div className="flex justify-center mb-8">
-                    <Link to="/login" className="group flex items-center gap-3">
-                        <div className="bg-primary/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                            <Activity className="w-7 h-7 text-primary" />
+                    <Link to={`/login?portal=${portal}`} className="group flex flex-col items-center gap-2">
+                        {branding?.logo_light ? (
+                            <img 
+                                src={`http://localhost:5000${branding.logo_light}`} 
+                                alt="Logo" 
+                                className="h-16 w-auto object-contain mb-2" 
+                            />
+                        ) : (
+                            <div className="bg-primary/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform duration-300">
+                                <Activity className="w-7 h-7 text-primary" />
+                            </div>
+                        )}
+                        <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black uppercase tracking-widest text-primary mt-2">
+                            {portal === 'patient' ? "Patient Portal" : "Staff Access"}
                         </div>
-                        <h1 className="text-2xl font-black tracking-tight group-hover:text-primary transition-colors">Legit HealthCare</h1>
                     </Link>
                 </div>
 
@@ -133,7 +155,7 @@ const ForgotPasswordPage = () => {
                                     </form>
                                 </CardContent>
                                 <CardFooter className="flex flex-col gap-2">
-                                    <Link to="/login" className="text-sm font-bold text-muted-foreground hover:text-primary flex items-center gap-1">
+                                    <Link to={`/login?portal=${portal}`} className="text-sm font-bold text-muted-foreground hover:text-primary flex items-center gap-1">
                                         <ArrowLeft className="w-4 h-4" /> Back to Login
                                     </Link>
                                 </CardFooter>
@@ -163,7 +185,7 @@ const ForgotPasswordPage = () => {
                                             <Input 
                                                 id="otp" 
                                                 placeholder="000000" 
-                                                className="text-center text-3xl font-black tracking-[0.5em] h-16 border-2 focus-visible:ring-primary"
+                                                className="text-center text-3xl font-black tracking-[1rem] h-16 border-2 focus-visible:ring-primary rounded-xl"
                                                 maxLength={6}
                                                 value={otp}
                                                 onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}

@@ -129,7 +129,7 @@ const PatientOTPPage = () => {
                       type="text"
                       inputMode="numeric"
                       placeholder="000000"
-                      className="h-16 text-center text-3xl font-black tracking-[0.8rem] border-2 focus:border-primary rounded-xl"
+                      className="h-16 text-center text-3xl font-black tracking-[1rem] border-2 focus:border-primary rounded-xl"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                       maxLength={6}

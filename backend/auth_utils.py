@@ -21,7 +21,17 @@ def verify_otp(otp_code):
 from utils.email_utils import EmailService
 
 def send_otp_email(user, otp, subject="Your Legit HealthCare OTP Code"):
-    html_content = EmailService.get_otp_template(user.first_name, otp)
+    from models import AppBranding
+    branding = AppBranding.query.first()
+    logo_url = branding.logo_light if branding and branding.logo_light else None
+    
+    # Ensure logo_url is absolute for email clients
+    if logo_url and logo_url.startswith('/'):
+        # Note: request is imported in auth_utils.py from flask
+        base_url = request.url_root.rstrip('/')
+        logo_url = f"{base_url}{logo_url}"
+    
+    html_content = EmailService.get_otp_template(user.first_name, otp, logo_url=logo_url)
     return EmailService.send_email(user.email, subject, html_content)
 
 def is_password_strong(password: str) -> bool:

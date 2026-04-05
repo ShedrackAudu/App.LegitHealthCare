@@ -3,6 +3,7 @@ import LandingPage from './pages/LandingPage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import OTPPage from './pages/OTPPage';
+import ForcePasswordResetPage from './pages/ForcePasswordResetPage';
 import Dashboard from './pages/Dashboard';
 import RegistrationPage from './pages/RegistrationPage';
 import ConsultationPage from './pages/ConsultationPage';
@@ -14,13 +15,13 @@ import DirectorPage from './pages/DirectorPage';
 import ViewPatientsPage from './pages/ViewPatientsPage';
 import ViewRecordsPage from './pages/ViewRecordsPage';
 import PatientReportPage from './pages/PatientReportPage';
+import ReportVerificationPage from './pages/ReportVerificationPage';
 import ManageAccountPage from './pages/ManageAccountPage';
 import Manage2FAPage from './pages/Manage2FAPage';
 import SystemConfigPage from './pages/SystemConfigPage';
 import BrandingSettingsPage from './pages/BrandingSettingsPage';
 import AISettingsPage from './pages/AISettingsPage';
 import MessagingPage from './pages/MessagingPage';
-// Removed EmailSettingsPage as it was merged into SystemConfigPage
 import UserManagementPage from './pages/UserManagementPage';
 import RolePermissionPage from './pages/RolePermissionPage';
 import AuditLogPage from './pages/AuditLogPage';
@@ -31,11 +32,14 @@ import ForgotPasswordPage from './pages/ForgotPasswordPage';
 import PatientOTPPage from './pages/PatientOTPPage';
 import PatientManageAccountPage from './pages/PatientManageAccountPage';
 import PatientDashboard from './pages/PatientDashboard';
+import PatientMedicalReport from './pages/PatientMedicalReport';
+import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
+import PatientManage2FAPage from './pages/PatientManage2FAPage';
 import { Toaster } from 'react-hot-toast';
-
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
-function App() {
+function RootApp() {
+  console.log("App.tsx: Full Render (as RootApp)...");
   return (
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AppProvider>
@@ -47,14 +51,22 @@ function App() {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify-otp" element={<OTPPage />} />
             <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/verify/:token" element={<ReportVerificationPage />} />
+            <Route path="/force-password-reset" element={
+              <ProtectedRoute>
+                <ForcePasswordResetPage />
+              </ProtectedRoute>
+            } />
             
-            {/* Patient Portal Onboarding */}
             <Route path="/patient/verify-otp" element={<PatientOTPPage />} />
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={['Patient']}><PatientDashboard /></ProtectedRoute>} />
-        <Route path="/patient/account" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManageAccountPage /></ProtectedRoute>} />
+            <Route path="/patient/records" element={<ProtectedRoute allowedRoles={['Patient']}><PatientMedicalReport /></ProtectedRoute>} />
+            <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={['Patient']}><PatientAppointmentsPage /></ProtectedRoute>} />
+            <Route path="/patient/account" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManageAccountPage /></ProtectedRoute>} />
+            <Route path="/patient/account/2fa" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManage2FAPage /></ProtectedRoute>} />
             <Route path="/registration" element={<ProtectedRoute requiredPermission="registration"><RegistrationPage /></ProtectedRoute>} />
             <Route path="/consultation" element={<ProtectedRoute requiredPermission="consultation"><ConsultationPage /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute requiredPermission="registration"><AppointmentsPage /></ProtectedRoute>} />
@@ -83,7 +95,6 @@ function App() {
             <Route path="/admin/access-keys" element={<ProtectedRoute adminOnly={true}><AccessKeysPage /></ProtectedRoute>} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             <Route path="/messages" element={<ProtectedRoute requiredPermission="messaging"><MessagingPage /></ProtectedRoute>} />
-// Email settings moved to /system-config
           </Routes>
         </Router>
       </AppProvider>
@@ -91,4 +102,4 @@ function App() {
   );
 }
 
-export default App;
+export default RootApp;

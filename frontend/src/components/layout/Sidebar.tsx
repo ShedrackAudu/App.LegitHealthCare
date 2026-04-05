@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -66,10 +66,24 @@ export const Sidebar: React.FC = () => {
   const { branding, brandingError, unreadMessagesCount } = useAppContext(); 
   const { isAdmin } = usePermissions();
 
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) { // Collapse on tablet and smaller
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
   return (
     <aside 
       className={cn(
-        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col",
+        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
@@ -85,8 +99,8 @@ export const Sidebar: React.FC = () => {
                  </div>
              )
          ) : (
-             (branding?.logo_dark && !brandingError) ? (
-                 <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+             (branding?.logo_light && !brandingError) ? (
+                 <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
              ) : (
                  <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
                     <Building2 className="h-5 w-5 shrink-0" />
@@ -105,7 +119,8 @@ export const Sidebar: React.FC = () => {
                 key={item.path}
                 to={item.path}
                 className={({ isActive }) => cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                  "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                  isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                   isActive 
                     ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -140,19 +155,25 @@ export const Sidebar: React.FC = () => {
 
           {/* Admin Section - Only visible to Admins */}
           {isAdmin() && (
-            <div className="pt-4 pb-2">
-              {!isCollapsed && (
-                <div className="px-3 mb-2 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60">
-                  Admin Control Panel
-                </div>
-              )}
+            <div className="pt-1 pb-2">
+              <div className={cn(
+                "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
+                isCollapsed && "flex justify-center"
+              )}>
+                {isCollapsed ? (
+                  <div className="h-px bg-border/80 w-10 my-3" />
+                ) : (
+                  "Admin Control Panel"
+                )}
+              </div>
               {adminItems.map((item) => {
                 return (
                 <NavLink
                   key={item.path}
                   to={item.path}
                     className={({ isActive }) => cn(
-                      "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                      "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                      isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                       isActive 
                         ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                         : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -184,13 +205,9 @@ export const Sidebar: React.FC = () => {
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : (
-                <div className="flex items-center gap-2">
-                    <ChevronLeft className="h-4 w-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Collapse</span>
-                </div>
-            )}
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
         </div>
       </div>

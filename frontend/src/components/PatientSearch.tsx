@@ -93,20 +93,22 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   };
 
   return (
-    <div className={`flex-1 max-w-2xl relative ${className}`}>
-      <div className={`flex items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 transition-all relative ${currentTheme.border}`}>
-        <Search className="h-6 w-6 text-muted-foreground ml-2" />
-        <Input
-          placeholder={placeholder}
-          value={searchId}
-          onChange={(e) => setSearchId(e.target.value)}
-          onKeyDown={(e) => e.key === 'Enter' && onSearch(searchId)}
-          className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-        />
+    <div className={`w-full max-w-2xl relative ${className}`}>
+      <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 transition-all relative ${currentTheme.border}`}>
+        <div className="flex items-center gap-2 flex-1 px-2 h-11">
+          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+          <Input
+            placeholder={placeholder}
+            value={searchId}
+            onChange={(e) => setSearchId(e.target.value)}
+            onKeyDown={(e) => e.key === 'Enter' && onSearch(searchId)}
+            className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
+          />
+        </div>
         <Button 
           onClick={() => onSearch(searchId)}
           disabled={searching || !searchId.trim()}
-          className={`${currentTheme.button} shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all`}
+          className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}
         >
           {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : buttonText}
         </Button>

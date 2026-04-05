@@ -4,6 +4,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
+from datetime import datetime
 
 ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 
@@ -55,56 +56,74 @@ class EmailService:
             return False
 
     @staticmethod
-    def get_report_template(first_name, screening_year, company):
+    def get_report_template(first_name, screening_year, section, logo_url=None):
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
+        
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; line-height: 1.6; color: #1e293b; margin: 0; padding: 0; background-color: #f8fafc; }}
-                .wrapper {{ padding: 40px 20px; }}
-                .container {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); border: 1px solid #e2e8f0; }}
-                .header {{ background: #0f172a; color: #ffffff; padding: 40px 30px; text-align: left; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 800; letter-spacing: -0.025em; }}
-                .header p {{ margin: 5px 0 0; font-size: 14px; opacity: 0.8; font-weight: 500; }}
-                .content {{ padding: 40px 30px; }}
-                .content p {{ margin-bottom: 20px; font-size: 16px; color: #334155; }}
-                .highlight {{ color: #10b981; font-weight: 800; }}
-                .footer {{ background: #f1f5f9; padding: 30px; text-align: center; border-top: 1px solid #e2e8f0; }}
-                .footer p {{ margin: 5px 0; font-size: 12px; color: #64748b; font-weight: 600; }}
-                .btn {{ display: inline-block; padding: 14px 28px; background: #10b981; color: #ffffff; text-decoration: none; border-radius: 8px; font-weight: 700; font-size: 14px; margin-top: 10px; }}
-                .signature {{ margin-top: 40px; padding-top: 25px; border-top: 2px dashed #f1f5f9; }}
-                .signature-name {{ font-weight: 800; color: #0f172a; margin: 0; font-size: 16px; }}
-                .signature-title {{ margin: 2px 0; font-size: 13px; color: #64748b; font-weight: 500; }}
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
+                .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
+                .contact-section {{ margin-top: 30px; padding-top: 20px; font-size: 14px; color: #64748b; }}
+                .contact-link {{ color: #0d9488; text-decoration: none; font-weight: 600; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
         <body>
             <div class="wrapper">
                 <div class="container">
-                    <div class="header">
-                        <h1>LEGIT HEALTHCARE</h1>
-                        <p>Staff Medical Screening Program</p>
+                    <div class="logo-container">
+                        {logo_html}
                     </div>
+                    
+                    <div class="header-bar">
+                        <h1>{screening_year} Medical Report</h1>
+                    </div>
+                    
                     <div class="content">
-                        <p>Dear <strong>{first_name}</strong>,</p>
-                        <p>Thank you for participating in this year's <span class="highlight">{screening_year} Annual Medical Screening Exercise</span>.</p>
-                        <p>We are pleased to inform you that your clinical diagnostic results are now ready. Please find your detailed medical report attached to this email as a PDF document.</p>
-                        <p>A physical copy of these results will also be delivered to the <strong>{company} Medical Team</strong> for official records and departmental dispatch.</p>
+                        <div class="greeting">Dear {first_name},</div>
                         
-                        <div class="signature">
-                            <p class="signature-name">Dr. Anyanwu Ugochukwu D. FMCPath</p>
-                            <p class="signature-title">Consultant in Charge</p>
-                            <p class="signature-title">Legit HealthCare Services Ltd.</p>
+                        <div class="body-text">
+                            <p>Thanks for making yourself available for this year's Annual Medical Screening Excercise.</p>
+                            <p>Please find attached your Medical Report for the year {screening_year}.</p>
+                            <p>The hard copy of your result will be given to the {section} Medical Team for dispatch to your department.</p>
                         </div>
                         
-                        <p style="margin-top: 30px; text-align: center;">
-                            <a href="https://bit.ly/SUNU-Doctor" class="btn">Consult with Doctor via WhatsApp</a>
-                        </p>
+                        <div class="signature">
+                            Warm Regards,<br>
+                            The ICT Team,<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                        
+                        <div class="signed-section">
+                            <strong>SIGNED:</strong><br>
+                            Dr. Anyanwu Ugochukwu D. FMCPath<br>
+                            Consultant in Charge<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                        
+                        <div class="contact-section">
+                            For more info and complaints, contact the Consultant in-charge (Doctor) on WhatsApp at: <br>
+                            <a href="https://bit.ly/SUNU-Doctor" class="contact-link">https://bit.ly/SUNU-Doctor</a>
+                        </div>
                     </div>
-                    <div class="footer">
-                        <p>&copy; {screening_year} LEGIT HEALTHCARE SERVICES LTD.</p>
-                        <p>All Rights Reserved • Confidential Medical Record</p>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; 2026 Legit HealthCare Services Ltd</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
                     </div>
                 </div>
             </div>
@@ -150,8 +169,8 @@ class EmailService:
                         {items_html}
                     </table>
                 </div>
-                <div class="footer">
-                    <p>System Generated Notification - Legit HealthCare</p>
+                 <div class="footer">
+                    <p>&copy; {datetime.now().year} Legit HealthCare - System Generated Notification</p>
                 </div>
             </div>
         </body>
@@ -159,47 +178,71 @@ class EmailService:
         """
 
     @staticmethod
-    def get_patient_verification_template(first_name, otp_code):
+    def get_patient_verification_template(first_name, otp_code, logo_url=None):
+        # Format OTP (strictly remove any spaces)
+        formatted_otp = str(otp_code).replace(" ", "")
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
+        
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #0f172a; margin: 0; padding: 0; background-color: #f1f5f9; }}
-                .wrapper {{ padding: 60px 20px; }}
-                .container {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }}
-                .header {{ background: #0f172a; padding: 40px; text-align: center; }}
-                .logo {{ font-size: 20px; font-weight: 900; color: #ffffff; letter-spacing: 0.1em; }}
-                .content {{ padding: 50px 40px; text-align: center; }}
-                .content h2 {{ font-size: 28px; font-weight: 800; color: #0f172a; margin-bottom: 16px; letter-spacing: -0.02em; }}
-                .content p {{ font-size: 16px; color: #475569; margin-bottom: 40px; }}
-                .otp-wrap {{ position: relative; display: block; padding: 30px 10px; background: #f8fafc; border-radius: 20px; border: 2px solid #e2e8f0; margin: 0 20px 40px; }}
-                .otp-code {{ font-size: 42px; font-weight: 900; letter-spacing: 0.2em; color: #10b981; margin: 0; line-height: 1; white-space: nowrap; }}
-                .subtext {{ font-size: 13px; color: #94a3b8; margin-top: 10px; font-weight: 600; text-transform: uppercase; }}
-                .footer {{ padding: 40px; text-align: center; color: #94a3b8; font-size: 12px; border-top: 1px solid #f1f5f9; }}
-                .footer strong {{ color: #64748b; }}
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
+                .otp-display {{ font-size: 36px; font-weight: 800; color: #1e293b; margin: 25px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px; letter-spacing: -1px !important; word-spacing: 0 !important; line-height: 1; }}
+                .expiry-text {{ font-size: 15px; color: #64748b; margin-bottom: 30px; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
         <body>
             <div class="wrapper">
                 <div class="container">
-                    <div class="header">
-                        <div class="logo">LEGIT HEALTHCARE</div>
+                    <div class="logo-container">
+                        {logo_html}
                     </div>
+                    
+                    <div class="header-bar">
+                        <h1>Verification Code</h1>
+                    </div>
+                    
                     <div class="content">
-                        <h2>Hello {first_name}!</h2>
-                        <p>We're excited to have you on board. Please use the verification code below to activate your patient account.</p>
+                        <div class="greeting">Hello {first_name}!</div>
                         
-                        <div class="otp-wrap">
-                            <h1 class="otp-code">{otp_code}</h1>
-                            <div class="subtext">Expires in 10 minutes</div>
+                        <div class="body-text">
+                            You're receiving the email because your action on our platform needs to be verified using a One Time Password:
                         </div>
                         
-                        <p style="font-size: 14px; margin-bottom: 0;">If you didn't create an account, you can ignore this email.</p>
+                        <div class="otp-display">{formatted_otp}</div>
+                        
+                        <div class="expiry-text">
+                            The code expires in 10 minutes.
+                        </div>
+                        
+                        <div class="body-text">
+                            If you did not initiate the action, kindly ignore this mail.
+                        </div>
+                        
+                        <div class="signature">
+                            Regards,<br>
+                            The ICT Team,<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
                     </div>
-                    <div class="footer">
-                        <p>&copy; 2026 <strong>Legit HealthCare Services</strong><br>Quality Healthcare at your fingertips.</p>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; 2026 Legit HealthCare Services Ltd</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
                     </div>
                 </div>
             </div>
@@ -208,45 +251,79 @@ class EmailService:
         """
 
     @staticmethod
-    def get_otp_template(first_name, otp_code):
+    def get_otp_template(first_name, otp_code, logo_url=None):
+        # Use the same exact design as verification template for "all OTP related mails"
+        return EmailService.get_patient_verification_template(first_name, otp_code, logo_url)
+
+    @staticmethod
+    def get_welcome_template(first_name, username, password, logo_url=None):
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
+        current_year = datetime.now().year
+        
         return f"""
         <!DOCTYPE html>
         <html>
         <head>
             <meta charset="utf-8">
             <style>
-                body {{ font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; line-height: 1.6; color: #0f172a; margin: 0; padding: 0; background-color: #f8fafc; }}
-                .wrapper {{ padding: 40px 20px; }}
-                .container {{ max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 20px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
-                .top-bar {{ height: 6px; background: #0f172a; }}
-                .content {{ padding: 40px; text-align: center; }}
-                .logo {{ font-size: 18px; font-weight: 800; color: #0f172a; letter-spacing: 0.1em; margin-bottom: 30px; border-bottom: 2px solid #f1f5f9; display: inline-block; padding-bottom: 8px; }}
-                .title {{ font-size: 24px; font-weight: 700; color: #0f172a; margin-bottom: 15px; }}
-                .message {{ font-size: 15px; color: #64748b; margin-bottom: 30px; }}
-                .otp-card {{ background: #f1f5f9; border-radius: 12px; padding: 25px 10px; margin-bottom: 30px; }}
-                .otp-code {{ font-size: 32px; font-weight: 800; letter-spacing: 0.25em; color: #0f172a; margin: 0; white-space: nowrap; }}
-                .expiry {{ font-size: 12px; color: #94a3b8; font-weight: 600; text-transform: uppercase; margin-top: 8px; }}
-                .footer {{ padding: 30px; text-align: center; background: #fafafa; border-top: 1px solid #f1f5f9; color: #94a3b8; font-size: 11px; }}
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 28px; color: #1e293b; font-weight: 800; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
+                .details-box {{ background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #D2F1EE; margin-bottom: 25px; }}
+                .details-box p {{ margin: 10px 0; font-size: 16px; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
         <body>
             <div class="wrapper">
                 <div class="container">
-                    <div class="top-bar"></div>
+                    <div class="logo-container">
+                        {logo_html}
+                    </div>
+                    
+                    <div class="header-bar">
+                        <h1>Welcome Onboard!</h1>
+                    </div>
+                    
                     <div class="content">
-                        <div class="logo">LEGIT HEALTHCARE</div>
-                        <h2 class="title">Password Reset</h2>
-                        <p class="message">Hi {first_name}, use the one-time verification code below to reset your account password.</p>
+                        <div class="greeting">Hello {first_name}!</div>
                         
-                        <div class="otp-card">
-                            <h1 class="otp-code">{otp_code}</h1>
-                            <div class="expiry">Valid for 15 minutes</div>
+                        <div class="body-text">
+                            Your account has been successfully created based on your request. Below are your login details:
                         </div>
                         
-                        <p style="font-size: 13px; color: #94a3b8;">If you didn't request a password reset, you can safely ignore this email.</p>
+                        <div class="details-box">
+                            <p><strong>Username:</strong> {username}</p>
+                            <p><strong>Temporary Password:</strong> {password}</p>
+                        </div>
+                        
+                        <div class="body-text">
+                            <p>For security reasons, you will be required to change your password upon your first login.</p>
+                            <p>To get started, simply log in using the credentials above and follow the prompt to set a new password.</p>
+                        </div>
+                        
+                        <div class="body-text">
+                            If you have any questions or need assistance, feel free to reach out to our support team. We're glad to have you here!
+                        </div>
+                        
+                        <div class="signature">
+                            Best Regards,<br>
+                            The ICT Team,<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
                     </div>
-                    <div class="footer">
-                        <p>&copy; 2026 Legit HealthCare Services. All rights reserved.</p>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; {current_year} Legit HealthCare Services Ltd</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
                     </div>
                 </div>
             </div>

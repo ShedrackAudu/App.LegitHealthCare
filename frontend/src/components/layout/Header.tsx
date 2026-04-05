@@ -163,24 +163,26 @@ export const Header: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
         
         {/* Left Side: Back Button, Page Title */}
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" size="icon" className="h-8 w-8 rounded-full" onClick={() => navigate(-1)}>
+        <div className="flex items-center gap-2 min-w-0">
+          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
-          <div className="flex items-center gap-2">
-            {brandingError && <Building2 className="h-5 w-5 text-muted-foreground/50" />}
-            <h1 className="text-xl font-bold tracking-tight">{pageTitle}</h1>
+          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+            {brandingError && <Building2 className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
+            <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
+              {pageTitle}
+            </h1>
           </div>
         </div>
 
         {/* Right Side: Options and Auth */}
-        <div className="flex items-center gap-2 md:gap-4 shrink-0 overflow-x-auto custom-scrollbar pb-1 md:pb-0">
+        <div className="flex items-center gap-1.5 md:gap-4 shrink-0 transition-all duration-300">
           {timeLeft && (
-            <div className="flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
+            <div className="hidden sm:flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
               <Clock className="h-4 w-4" />
               <span className="text-[10px] uppercase tracking-wider">
                 Expiring in: {timeLeft}
@@ -193,7 +195,7 @@ export const Header: React.FC = () => {
               value={activeSection} 
               onValueChange={(val) => setActiveSection(val as SectionID)}
             >
-              <SelectTrigger className="w-[100px] sm:w-[130px] h-9 border-2 font-semibold bg-card">
+              <SelectTrigger className="w-[85px] sm:w-[130px] h-9 border-2 font-semibold bg-card px-2">
                 <SelectValue placeholder="Section" />
               </SelectTrigger>
               <SelectContent>
@@ -209,7 +211,7 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-2">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
-              <SelectTrigger className="w-[90px] sm:w-[110px] h-9 border-2 font-semibold bg-card">
+              <SelectTrigger className="w-[75px] sm:w-[110px] h-9 border-2 font-semibold bg-card px-2">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
@@ -222,7 +224,6 @@ export const Header: React.FC = () => {
             </Select>
           </div>
 
-
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
@@ -230,6 +231,7 @@ export const Header: React.FC = () => {
               className="h-9 w-9 border-2 rounded-lg bg-card"
               onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
             >
+              <label className="sr-only">Toggle theme</label>
               <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
               <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
             </Button>

@@ -1,4 +1,10 @@
-/* Patient Report A4 Styling */
+:root {
+  --table-border-color: #000;
+  --report-text: #000;
+  --report-brand-red: #d32f2f;
+  --report-brand-teal: #00897b;
+}
+
 @media screen {
     .report-preview-container {
         display: flex;
@@ -11,16 +17,17 @@
 }
 
 .a4-page {
+    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     width: 210mm;
     min-height: 297mm;
-    padding: 20mm;
+    padding: 5mm 12mm 10mm 12mm;
     margin: 10mm auto;
     background: white;
-    color: black;
+    color: var(--report-text);
     box-shadow: 0 0 20px rgba(0,0,0,0.1);
     position: relative;
     overflow: hidden;
-    font-family: 'Inter', sans-serif;
+    box-sizing: border-box;
 }
 
 @media print {
@@ -32,6 +39,7 @@
         margin: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
+        background: transparent;
     }
     .no-print {
         display: none !important;
@@ -41,54 +49,236 @@
         box-shadow: none;
         width: 100%;
         height: 100%;
+        page-break-after: always;
+    }
+    .a4-page:last-child {
+        page-break-after: auto;
     }
 }
 
-.report-header {
+/* Base Typo */
+.a4-page p { margin: 0; }
+.a4-page h1, .a4-page h2, .a4-page h3 { margin: 0; font-family: inherit; }
+
+/* Header Elements */
+.report-branding {
+    width: 100%;
+    margin-bottom: 2mm;
+}
+.report-header-img {
+    width: 100%;
+    height: 22mm;
+    object-fit: contain;
+    background: transparent;
     display: flex;
-    justify-content: space-between;
-    align-items: flex-start;
-    padding-bottom: 1.5rem;
-    border-bottom: 4px solid black;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+    font-size: 14px;
+    border: 0;
+}
+.report-title {
+    text-align: center;
+    color: var(--report-brand-red);
+    font-weight: 950;
+    font-size: 16px;
+    line-height: 1.2;
+    padding: 1mm 2mm;
+    text-transform: uppercase;
+    margin-top: 1mm;
+    margin-bottom: 0mm;
 }
 
-.report-section-title {
-    font-size: 0.75rem;
+/* Patient Bio Block */
+.report-bio-header {
+    padding-bottom: 2px;
+    margin-bottom: 4px;
+}
+.report-patient-name {
+    font-size: 15px;
     font-weight: 900;
     text-transform: uppercase;
-    letter-spacing: 0.2em;
-    color: black;
-    border-bottom: 1px solid rgba(0,0,0,0.1);
-    padding-bottom: 0.25rem;
-    margin-bottom: 1rem;
-    width: fit-content;
+    margin-bottom: 1.5mm;
 }
-
-.vital-box {
-    padding: 0.75rem;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    background-color: #f8fafc;
+.report-bio-grid {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr 1.5fr;
+    gap: 4px;
+    font-size: 11px;
+    font-weight: 500;
 }
-
-.test-table {
-    width: 100%;
-    font-size: 0.75rem;
-    text-align: left;
-    border-collapse: collapse;
-    border: 1px solid #e2e8f0;
-    border-radius: 0.75rem;
-    overflow: hidden;
+.bio-row {
+    display: flex;
+    gap: 5px;
 }
-
-.test-table th {
-    background-color: #f1f5f9;
-    padding: 0.75rem;
+.bio-label {
+    min-width: 50px;
+    color: var(--report-brand-teal);
     font-weight: 700;
-    border-bottom: 1px solid #e2e8f0;
 }
 
-.test-table td {
-    padding: 0.75rem;
-    border-bottom: 1px solid #e2e8f0;
+/* Subtitles */
+.report-section-title {
+    color: var(--report-brand-teal);
+    font-size: 13px;
+    font-weight: 900;
+    text-align: center;
+    text-transform: uppercase;
+    padding: 3px 0 2px 0;
+    border-top: 2px solid var(--table-border-color);
+    border-bottom: 2px solid var(--table-border-color);
+    margin-bottom: 4px;
+    margin-top: 4px;
 }
+
+/* Common Tables */
+.report-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 10px;
+}
+.report-table th {
+    font-weight: 900;
+    text-transform: uppercase;
+    text-align: left;
+    padding: 2px 0 4px 0;
+}
+.report-table td {
+    padding: 1px 0;
+    vertical-align: top;
+    overflow-wrap: break-word;
+    word-wrap: break-word;
+    word-break: break-word;
+}
+.report-table tr.category-row td {
+    font-weight: 900;
+    padding-top: 4px;
+}
+
+/* Vital Signs */
+.vitals-grid {
+     display: grid;
+     grid-template-columns: 1fr 1fr 1fr;
+     padding-bottom: 1mm;
+     margin-bottom: 1.5mm;
+     font-size: 11px;
+     font-weight: 700;
+}
+.vital-col { display: flex; flex-direction: column; gap: 2px;}
+.vital-col span { display: inline-flex; gap: 4px; }
+.vital-col .vital-label { width: 90px; }
+
+/* Divider Rules */
+.hr-thick {
+    border: 0;
+    border-bottom: 1px solid var(--table-border-color);
+    margin: 4px 0;
+}
+.border-top-thick {
+    border-top: 2px solid var(--table-border-color);
+}
+
+/* Lists */
+.report-list {
+    font-size: 12px;
+    line-height: 1.8;
+}
+.report-list-item {
+     display: flex;
+     gap: 10px;
+     margin-bottom: 5px;
+}
+.report-list-item .idx { width: 15px; font-weight: 700;}
+
+/* Footer */
+.report-footer-stack {
+    position: absolute;
+    bottom: 10mm;
+    left: 15mm;
+    right: 15mm;
+}
+.end-marker {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 2mm;
+}
+.footer-split {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    margin-bottom: 1mm;
+    border-bottom: 2px solid var(--table-border-color);
+    padding-bottom: 1mm;
+}
+.qr-box {
+    width: 20mm;
+    height: 20mm;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+.qr-label {
+    background-color: #00c4cc; /* Cyan matching original scan text box roughly */
+    color: white;
+    font-size: 8px;
+    font-weight: 900;
+    text-transform: uppercase;
+    padding: 2px 4px;
+    margin-top: 0px;
+    z-index: 2;
+}
+.sig-box {
+    text-align: left;
+    min-width: 200px;
+}
+.sig-img {
+    height: 12mm;
+    width: 40mm;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #999;
+}
+.sig-name {
+    font-size: 10px;
+    font-weight: 900;
+    margin-top: 2px;
+}
+.sig-title {
+    font-size: 10px;
+    color: #333;
+}
+.report-footer-img {
+    width: 100%;
+    height: 8mm;
+    object-fit: contain;
+    background: transparent;
+    border: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    color: #999;
+}
+
+.cert-text {
+    font-size: 11px;
+    line-height: 1.5;
+    margin: 5mm 0;
+}
+/* Acronyms Footer */
+.acronyms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    font-size: 7px;
+    gap: 10px;
+}
+.acronym-row { display: flex; gap: 5px; }
+.acronym-key { font-weight: 900; width: 30px; }

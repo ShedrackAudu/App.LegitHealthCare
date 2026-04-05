@@ -79,29 +79,35 @@ def test_email_settings():
 @email_bp.route('/report', methods=['POST'])
 def send_patient_report():
     from utils.email_utils import EmailService
-    from utils.report_utils import generate_patient_report_pdf
     
-    data = request.json
-    recipient = data.get('email')
-    report_data = data.get('report_data')
+    # We accept multipart form data
+    file = request.files.get('file')
+    if not file:
+        return jsonify({"error": "No PDF file attached"}), 400
+        
+    recipient = request.form.get('email')
+    first_name = request.form.get('first_name', 'Patient')
+    screening_year = request.form.get('screening_year', 'Current Year')
+    company = request.form.get('company', 'Legit HealthCare')
+    staff_id = request.form.get('staff_id', 'Unknown')
     
-    if not recipient or not report_data:
-        return jsonify({"error": "Email and Report Data are required"}), 400
+    if not recipient:
+        return jsonify({"error": "Patient email is required"}), 400
         
     try:
-        # Generate PDF
-        pdf_bytes = generate_patient_report_pdf(report_data)
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
         
-        # Get Email Template
-        bio = report_data.get('bio', {})
-        first_name = bio.get('first_name', 'Patient')
-        screening_year = bio.get('screening_year', 'Current Year')
-        company = bio.get('company', 'Legit HealthCare') # Or DCP/DCT
+        # Ensure logo_url is absolute for email clients
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+
+        pdf_bytes = file.read()
+        html_content = EmailService.get_report_template(first_name, screening_year, company, logo_url=logo_url)
+        filename = f"Medical_Report_{staff_id}_{screening_year}.pdf"
         
-        html_content = EmailService.get_report_template(first_name, screening_year, company)
-        
-        # Send Email
-        filename = f"Medical_Report_{bio.get('staff_id')}_{screening_year}.pdf"
         success = EmailService.send_email(
             recipient,
             f"Your Medical Screening Report - {screening_year}",
@@ -113,7 +119,7 @@ def send_patient_report():
         if success:
             return jsonify({"message": f"Medical report sent successfully to {recipient}"}), 200
         else:
-            return jsonify({"error": "Sytem failed to send the email. Please check Email Configuration."}), 500
+            return jsonify({"error": "System failed to send the email. Please check Email Configuration."}), 500
             
     except Exception as e:
         return jsonify({"error": str(e)}), 500

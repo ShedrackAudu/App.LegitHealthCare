@@ -91,6 +91,15 @@ const UserManagementPage: React.FC = () => {
   const navigate = useNavigate();
   const [userRolesInput, setUserRolesInput] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
+  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
+  const [newUser, setNewUser] = useState({
+    first_name: '',
+    last_name: '',
+    username: '',
+    email: '',
+    phone: '',
+    roles: [] as string[]
+  });
 
   const fetchData = async () => {
     setLoading(true);
@@ -183,6 +192,26 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
+  const handleAddUser = async () => {
+    if (!newUser.first_name || !newUser.last_name || !newUser.username || !newUser.email || !newUser.phone) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    setSaving(true);
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      await axios.post('http://localhost:5000/api/admin/users', newUser, { headers });
+      toast.success(`User @${newUser.username} created and welcome email sent!`);
+      setIsAddModalOpen(false);
+      setNewUser({ first_name: '', last_name: '', username: '', email: '', phone: '', roles: [] });
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to create user");
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleDeactivateUser = async (targetUser: User) => {
     if (targetUser.username === 'admin') {
       toast.error("Security Lock: Primary Administrator cannot be deactivated.");
@@ -216,7 +245,7 @@ const UserManagementPage: React.FC = () => {
               <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
               Reload
             </Button>
-            <Button size="sm" className="gap-2 shadow-lg shadow-primary/20">
+            <Button size="sm" className="gap-2 shadow-lg shadow-primary/20" onClick={() => setIsAddModalOpen(true)}>
               <UserCog className="h-4 w-4" />
               Add User
             </Button>
@@ -446,6 +475,100 @@ const UserManagementPage: React.FC = () => {
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
               Apply New Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+      
+      <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5 text-primary" />
+              Onboard New Staff
+            </DialogTitle>
+            <DialogDescription>
+              Create a new clinical account. A temporary password will be emailed to the user.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="first_name">First Name</Label>
+                <Input
+                  id="first_name"
+                  placeholder="John"
+                  value={newUser.first_name}
+                  onChange={(e) => setNewUser({...newUser, first_name: e.target.value})}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="last_name">Last Name</Label>
+                <Input
+                  id="last_name"
+                  placeholder="Doe"
+                  value={newUser.last_name}
+                  onChange={(e) => setNewUser({...newUser, last_name: e.target.value})}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <Input
+                id="username"
+                placeholder="jdoe"
+                value={newUser.username}
+                onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">Email Address</Label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="john.doe@legit-healthcare.com"
+                value={newUser.email}
+                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="phone">Phone Number</Label>
+              <Input
+                id="phone"
+                placeholder="+234..."
+                value={newUser.phone}
+                onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Assign Roles</Label>
+              <div className="grid grid-cols-2 gap-2 mt-2">
+                {roles.map((role) => (
+                  <div key={role.id} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                       onClick={() => {
+                         const currentRoles = newUser.roles;
+                         if (currentRoles.includes(role.name)) {
+                           setNewUser({...newUser, roles: currentRoles.filter(r => r !== role.name)});
+                         } else {
+                           setNewUser({...newUser, roles: [...currentRoles, role.name]});
+                         }
+                       }}>
+                    <Checkbox checked={newUser.roles.includes(role.name)} />
+                    <span className="text-sm font-medium">{role.name}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
+            <Button 
+              onClick={handleAddUser}
+              className="font-bold gap-2"
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+              Create & Send Credentials
             </Button>
           </DialogFooter>
         </DialogContent>
