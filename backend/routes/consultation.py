@@ -68,7 +68,7 @@ def get_screening_patient(year, staff_id):
         
     return jsonify(data), 200
 
-@consultation_bp.route('/', methods=['POST'])
+@consultation_bp.route('/consultation', methods=['POST'])
 def save_consultation():
     data = request.json
     staff_id = data.get('staff_id')
@@ -103,29 +103,16 @@ def save_consultation():
     # Capture consulting doctor's name from headers
     user_id = request.headers.get('X-User-ID')
     
-    sys.stderr.write(f"\n[DEBUG] Consultation Submission - Headers: {dict(request.headers)}\n")
-    sys.stderr.write(f"[DEBUG] Consultation Submission - X-User-ID: '{user_id}' (type: {type(user_id)})\n")
-    
     if user_id and user_id != 'undefined' and user_id != 'null':
         try:
-            from sqlalchemy import text
-            # db.engine is the DEFAULT engine (hc_system.db - main DB where users table is)
-            with db.engine.connect() as conn:
-                consulted_by_name = None
-                try:
-                    u_id = int(str(user_id))
-                    res = conn.execute(text("SELECT first_name, last_name FROM users WHERE id = :id"), {"id": u_id}).fetchone()
-                    if res:
-                        consulted_by_name = f"{res[0]} {res[1]}"
-                except (ValueError, TypeError):
-                    sys.stderr.write(f"[DEBUG] Could not convert X-User-ID '{user_id}' to integer.\n")
-                    pass
-                
-                if consulted_by_name:
-                    consultation.consulted_by_name = consulted_by_name
-                    sys.stderr.write(f"[DEBUG] Successfully attributed to: {consultation.consulted_by_name}\n")
-                else:
-                    sys.stderr.write(f"[DEBUG] No user found with ID: {user_id} in main DB or ID was invalid.\n")
+            from models import StaffUser
+            u_id = int(str(user_id))
+            user = StaffUser.query.get(u_id)
+            if user:
+                consultation.consulted_by_name = user.first_name
+                sys.stderr.write(f"[DEBUG] Successfully attributed to: {consultation.consulted_by_name}\n")
+            else:
+                sys.stderr.write(f"[DEBUG] No user found with ID: {user_id}\n")
         except Exception as e:
             sys.stderr.write(f"[DEBUG] Attribution error: {e}\n")
             import traceback

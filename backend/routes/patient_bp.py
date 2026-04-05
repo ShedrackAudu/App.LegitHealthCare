@@ -120,8 +120,17 @@ def claim_account():
     
     # Send Email
     try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        # Ensure logo_url is absolute for email clients
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+            
         subject = "Patient Account Verification - Legit HealthCare"
-        html_content = EmailService.get_patient_verification_template(first_name, otp)
+        html_content = EmailService.get_patient_verification_template(first_name, otp, logo_url=logo_url)
         EmailService.send_email(email, subject, html_content)
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
@@ -147,8 +156,17 @@ def resend_otp():
     db.session.commit()
     
     try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        # Ensure logo_url is absolute for email clients
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+            
         subject = "New Verification Code - Legit HealthCare"
-        html_content = EmailService.get_patient_verification_template(user.first_name, otp)
+        html_content = EmailService.get_patient_verification_template(user.first_name, otp, logo_url=logo_url)
         EmailService.send_email(user.email, subject, html_content)
     except Exception as e:
         return jsonify({"error": f"Error sending email: {str(e)}"}), 500
@@ -178,3 +196,44 @@ def verify_patient_otp():
         }), 201
     
     return jsonify({"error": "Invalid or expired OTP"}), 400
+
+@patient_bp.route('/api/patient/reports/years', methods=['GET'])
+def get_report_years():
+    staff_id = request.headers.get('X-Staff-ID')
+    if not staff_id:
+        return jsonify({"error": "X-Staff-ID header required"}), 400
+        
+    from models import ScreeningYearBioData
+    # Query unique years for this staff_id across all sections/binds
+    # Since ScreeningYearBioData is in hc_system.db, it tracks all yearly registrations
+    records = ScreeningYearBioData.query.filter_by(staff_id=staff_id).order_by(ScreeningYearBioData.screening_year.desc()).all()
+    years = sorted(list(set([r.screening_year for r in records])), reverse=True)
+    
+    return jsonify(years), 200
+
+@patient_bp.route('/api/patient/profile', methods=['GET'])
+def get_patient_profile():
+    staff_id = request.headers.get('X-Staff-ID')
+    if not staff_id:
+        return jsonify({"error": "X-Staff-ID header required"}), 400
+        
+    from models import BioData
+    patient = BioData.query.filter_by(staff_id=staff_id).first()
+    if not patient:
+        return jsonify({"error": "Patient profile not found"}), 404
+        
+    return jsonify({
+        "staff_id": patient.staff_id,
+        "first_name": patient.first_name,
+        "middle_name": patient.middle_name,
+        "last_name": patient.last_name,
+        "department": patient.department,
+        "gender": patient.gender,
+        "dob": patient.dob.isoformat() if patient.dob else None,
+        "age": patient.age,
+        "phone": patient.phone,
+        "email": patient.email,
+        "race": patient.race,
+        "nationality": patient.nationality
+    }), 200
+

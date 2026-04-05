@@ -25,7 +25,7 @@ class RoutingSession(Session):
                 model_class = getattr(mapper, 'class_', None)
                 
                 # Check for global system tables
-                if table_name in ['ai_settings', 'app_branding', 'users', 'departments', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs', 'temp_access_codes', 'access_requests', 'system_config', 'appointments']:
+                if table_name in ['ai_settings', 'app_branding', 'users', 'departments', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs', 'temp_access_codes', 'access_requests', 'system_config', 'appointments', 'report_verifications']:
                     return _db.engine
                 
                 # Check for explicit bind keys (e.g., 'patients')
@@ -84,6 +84,7 @@ class StaffUser(db.Model):
     totp_secret = db.Column(db.String(32), nullable=True)
     is_2fa_enabled = db.Column(db.Boolean, default=False)
     backup_codes = db.Column(db.Text, nullable=True) 
+    must_reset_password = db.Column(db.Boolean, default=False)
 
     section = db.Column(db.String(10), nullable=True) # DCP or DCT
     department = db.Column(db.String(100), nullable=True)
@@ -118,6 +119,7 @@ class StaffUser(db.Model):
             "section": self.section,
             "department": self.department,
             "is_2fa_enabled": self.is_2fa_enabled,
+            "must_reset_password": self.must_reset_password,
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "roles": [role.name for role in self.roles],
             "permissions": list(set([p.name for role in self.roles for p in role.permissions]))
@@ -259,6 +261,11 @@ class AppBranding(db.Model):
     hero_image_2 = db.Column(db.String(255), nullable=True)
     hero_image_team = db.Column(db.String(255), nullable=True)
     
+    # Report Templates
+    header_image = db.Column(db.String(255), nullable=True)
+    footer_image = db.Column(db.String(255), nullable=True)
+    signature_image = db.Column(db.String(255), nullable=True)
+    
     # Contact & Social Info
     address = db.Column(db.Text, nullable=True)
     email = db.Column(db.String(120), nullable=True)
@@ -268,6 +275,12 @@ class AppBranding(db.Model):
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
+        social_links = []
+        if self.social_links:
+            try:
+                social_links = json.loads(self.social_links)
+            except:
+                social_links = []
         return {
             "clinic_name": self.clinic_name,
             "logo_light": self.logo_light,
@@ -276,10 +289,13 @@ class AppBranding(db.Model):
             "hero_image_1": self.hero_image_1,
             "hero_image_2": self.hero_image_2,
             "hero_image_team": self.hero_image_team,
+            "header_image": self.header_image,
+            "footer_image": self.footer_image,
+            "signature_image": self.signature_image,
             "address": self.address,
             "email": self.email,
             "phone": self.phone,
-            "social_links": json.loads(self.social_links) if self.social_links else []
+            "social_links": social_links
         }
 
 class Department(db.Model):
@@ -732,6 +748,24 @@ class Appointment(db.Model):
             "appointment_date": self.appointment_date.isoformat(),
             "reason": self.reason,
             "created_at": self.created_at.isoformat()
+        }
+
+class ReportVerification(db.Model):
+    __tablename__ = 'report_verifications'
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.String(50), nullable=False)
+    screening_year = db.Column(db.Integer, nullable=False)
+    section = db.Column(db.String(50), nullable=False) # e.g. 'DCP' or 'DCT' so we can look back up the patient
+    verification_code = db.Column(db.String(100), unique=True, nullable=False)
+    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def to_dict(self):
+        return {
+            "staff_id": self.staff_id,
+            "screening_year": self.screening_year,
+            "section": self.section,
+            "verification_code": self.verification_code,
+            "generated_at": self.generated_at.isoformat()
         }
 
 from sqlalchemy import event

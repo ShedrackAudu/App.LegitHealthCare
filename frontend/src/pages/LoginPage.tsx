@@ -33,7 +33,7 @@ const LoginPage = () => {
   const [tempUserId, setTempUserId] = useState<number | null>(null);
   const [totpCode, setTotpCode] = useState('');
   const navigate = useNavigate();
-  const { user, setUser } = useAppContext();
+  const { user, setUser, branding } = useAppContext();
 
   const [activePortal, setActivePortal] = useState<'staff' | 'patient'>(initialPortal === 'patient' ? 'patient' : 'staff');
 
@@ -70,6 +70,12 @@ const LoginPage = () => {
       // Success - Update context and redirect to Dashboard
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      if (response.data.user.must_reset_password) {
+          navigate('/force-password-reset');
+          return;
+      }
+
       const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
@@ -96,6 +102,12 @@ const LoginPage = () => {
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
         toast.success("Login successful!");
+
+        if (resp.data.user.must_reset_password) {
+            navigate('/force-password-reset');
+            return;
+        }
+
         const target = resp.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
         navigate(target);
     } catch (err: any) {
@@ -114,9 +126,17 @@ const LoginPage = () => {
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="py-4 text-center">
             <div className="flex items-center justify-center mb-3">
-              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Activity className="w-8 h-8 text-primary" />
-              </div>
+              {branding?.logo_light ? (
+                <img 
+                  src={`http://localhost:5000${branding.logo_light}`} 
+                  alt="Logo" 
+                  className="h-12 w-auto object-contain" 
+                />
+              ) : (
+                <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
+                  <Activity className="w-8 h-8 text-primary" />
+                </div>
+              )}
             </div>
             <CardTitle className="text-2xl font-bold tracking-tight">Welcome Back</CardTitle>
             <CardDescription className="text-muted-foreground mt-1 text-sm">
@@ -161,7 +181,7 @@ const LoginPage = () => {
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="password">Password</Label>
-                    <Link to="/forgot-password" title="Recover your account password" className="text-xs text-primary hover:underline font-bold">
+                    <Link to="/forgot-password?portal=staff" title="Recover your account password" className="text-xs text-primary hover:underline font-bold">
                         Forgot password?
                     </Link>
                   </div>
@@ -254,7 +274,12 @@ const LoginPage = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="password-patient">Password</Label>
+                  <div className="flex items-center justify-between">
+                    <Label htmlFor="password-patient">Password</Label>
+                    <Link to="/forgot-password?portal=patient" className="text-xs text-primary hover:underline font-bold">
+                        Forgot password?
+                    </Link>
+                  </div>
                   <div className="relative">
                     <Input 
                         id="password-patient" 

@@ -11,7 +11,8 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-@branding_bp.route('/', methods=['GET'])
+@branding_bp.route('', methods=['GET'], strict_slashes=False)
+@branding_bp.route('/', methods=['GET'], strict_slashes=False)
 def get_branding():
     # Since RoutingSession handles db engine switching based on X-Company-Context header automatically,
     # querying AppBranding.query.first() correctly pulls from the appropriate clinic database.
@@ -23,7 +24,8 @@ def get_branding():
     
     return jsonify(branding.to_dict()), 200
 
-@branding_bp.route('/', methods=['POST'])
+@branding_bp.route('', methods=['POST'], strict_slashes=False)
+@branding_bp.route('/', methods=['POST'], strict_slashes=False)
 def update_branding():
     branding = AppBranding.query.first()
     if not branding:
@@ -89,6 +91,18 @@ def update_branding():
     if hero_team_url:
         branding.hero_image_team = hero_team_url
 
+    header_url = save_upload('header_image')
+    if header_url:
+        branding.header_image = header_url
+
+    footer_url = save_upload('footer_image')
+    if footer_url:
+        branding.footer_image = footer_url
+
+    signature_url = save_upload('signature_image')
+    if signature_url:
+        branding.signature_image = signature_url
+
     db.session.commit()
     return jsonify({"message": "Branding updated successfully"}), 200
 
@@ -102,7 +116,7 @@ def clear_branding_asset():
     data = request.json
     field = data.get('field')
     
-    valid_fields = ['logo_light', 'logo_dark', 'favicon', 'hero_image_1', 'hero_image_2', 'hero_image_team']
+    valid_fields = ['logo_light', 'logo_dark', 'favicon', 'hero_image_1', 'hero_image_2', 'hero_image_team', 'header_image', 'footer_image', 'signature_image']
     if field not in valid_fields:
         return jsonify({"error": "Invalid field"}), 400
         

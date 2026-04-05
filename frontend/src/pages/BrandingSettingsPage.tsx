@@ -31,14 +31,20 @@ const BrandingSettingsPage: React.FC = () => {
     const [heroImage2, setHeroImage2] = useState<File | null>(null);
     const [heroImageTeam, setHeroImageTeam] = useState<File | null>(null);
 
+    const [headerImage, setHeaderImage] = useState<File | null>(null);
+    const [footerImage, setFooterImage] = useState<File | null>(null);
+    const [signatureImage, setSignatureImage] = useState<File | null>(null);
+
     // Current Values
     const [currentBranding, setCurrentBranding] = useState<any>(null);
 
     useEffect(() => {
         const loadInitial = async () => {
+            if (!activeSection) return;
             setLoading(true);
             try {
-                const response = await axios.get('http://localhost:5000/api/branding', {
+                // Using a relative URL or ensuring the base matches the dev server
+                const response = await axios.get(`http://localhost:5000/api/branding/`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setCurrentBranding(response.data);
@@ -47,15 +53,14 @@ const BrandingSettingsPage: React.FC = () => {
                 setEmail(response.data.email || '');
                 setPhone(response.data.phone || '');
                 setSocialLinks(response.data.social_links || []);
-            } catch (err) {
-                toast.error("Failed to load branding information");
+            } catch (err: any) {
+                console.error("Branding load error:", err);
+                toast.error(`Failed to load branding: ${err.message || 'Server error'}`);
             } finally {
                 setLoading(false);
             }
         };
-        if (activeSection) {
-            loadInitial();
-        }
+        loadInitial();
     }, [activeSection]);
 
     const handleResetQueue = async () => {
@@ -91,6 +96,10 @@ const BrandingSettingsPage: React.FC = () => {
             if (heroImage1) formData.append('hero_image_1', heroImage1);
             if (heroImage2) formData.append('hero_image_2', heroImage2);
             if (heroImageTeam) formData.append('hero_image_team', heroImageTeam);
+
+            if (headerImage) formData.append('header_image', headerImage);
+            if (footerImage) formData.append('footer_image', footerImage);
+            if (signatureImage) formData.append('signature_image', signatureImage);
 
             await axios.post('http://localhost:5000/api/branding', formData, {
                 headers: { 
@@ -430,6 +439,103 @@ const BrandingSettingsPage: React.FC = () => {
                                     )}
                                     <Label htmlFor="hero-team" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-team" type="file" className="hidden" onChange={e => setHeroImageTeam(e.target.files?.[0] || null)} />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    <Card className="border-2 shadow-lg">
+                        <CardHeader className="bg-muted/30 border-b pb-4">
+                            <CardTitle className="text-lg">Report Templates</CardTitle>
+                            <CardDescription>Upload header, footer, and signature images to be dynamically stamped on Patient Medical Reports.</CardDescription>
+                        </CardHeader>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Header Image */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Report Header</Label>
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
+                                        {currentBranding?.header_image && !headerImage ? (
+                                            <div className="relative group/img flex items-center justify-center h-full w-full">
+                                                <img src={`http://localhost:5000${currentBranding.header_image}`} alt="Header" className="max-h-24 object-contain" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleClear('header_image')}
+                                                    className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <span className="text-[10px] text-muted-foreground italic">No image selected</span>
+                                            </div>
+                                        )}
+                                        <Label htmlFor="header-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
+                                            <Upload className="h-3 w-3" />
+                                            {headerImage ? 'Ready' : 'Upload'}
+                                        </Label>
+                                        <input id="header-image" type="file" accept="image/*" className="hidden" onChange={(e) => setHeaderImage(e.target.files?.[0] || null)} />
+                                    </div>
+                                </div>
+
+                                {/* Footer Image */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Report Footer</Label>
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
+                                        {currentBranding?.footer_image && !footerImage ? (
+                                            <div className="relative group/img flex items-center justify-center h-full w-full">
+                                                <img src={`http://localhost:5000${currentBranding.footer_image}`} alt="Footer" className="max-h-24 object-contain" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleClear('footer_image')}
+                                                    className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <span className="text-[10px] text-muted-foreground italic">No image selected</span>
+                                            </div>
+                                        )}
+                                        <Label htmlFor="footer-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
+                                            <Upload className="h-3 w-3" />
+                                            {footerImage ? 'Ready' : 'Upload'}
+                                        </Label>
+                                        <input id="footer-image" type="file" accept="image/*" className="hidden" onChange={(e) => setFooterImage(e.target.files?.[0] || null)} />
+                                    </div>
+                                </div>
+
+                                {/* Signature Image */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Doctor Signature</Label>
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
+                                        {currentBranding?.signature_image && !signatureImage ? (
+                                            <div className="relative group/img flex items-center justify-center h-full w-full">
+                                                <img src={`http://localhost:5000${currentBranding.signature_image}`} alt="Signature" className="max-h-24 object-contain mix-blend-multiply" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => handleClear('signature_image')}
+                                                    className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <span className="text-[10px] text-muted-foreground italic">No image selected</span>
+                                            </div>
+                                        )}
+                                        <Label htmlFor="signature-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
+                                            <Upload className="h-3 w-3" />
+                                            {signatureImage ? 'Ready' : 'Upload'}
+                                        </Label>
+                                        <input id="signature-image" type="file" accept="image/*" className="hidden" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
+                                    </div>
                                 </div>
                             </div>
                         </CardContent>

@@ -27,6 +27,11 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
+  // Handle Forced Password Reset
+  if (user.must_reset_password && location.pathname !== '/force-password-reset') {
+    return <Navigate to="/force-password-reset" replace />;
+  }
+
   if (allowedRoles && !isAdmin()) {
     const hasRole = allowedRoles.some(role => userRoles.includes(role));
     if (!hasRole) {

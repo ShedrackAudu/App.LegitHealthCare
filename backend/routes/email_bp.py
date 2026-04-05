@@ -78,68 +78,59 @@ def test_email_settings():
 
 @email_bp.route('/report', methods=['POST'])
 def send_patient_report():
+    """
+    Accepts JSON body with pre-generated Base64 PDF attachment data + email details.
+    Emails it to the patient.
+    """
     from utils.email_utils import EmailService
-    from utils.report_utils import generate_patient_report_pdf
-    
-    data = request.json
-    recipient = data.get('email')
-    report_data = data.get('report_data')
-    
-    if not recipient or not report_data:
-        return jsonify({"error": "Email and Report Data are required"}), 400
-        
+    import base64
+
+    data = request.json or {}
+    recipient           = data.get('email', '')
+    first_name          = data.get('first_name', 'Patient')
+    screening_year      = data.get('screening_year', '')
+    company             = data.get('company', 'Legit HealthCare')
+    attachment_data_b64 = data.get('attachment_data')
+    attachment_filename = data.get('attachment_filename', f"Medical_Report_{screening_year}.pdf")
+
+    if not attachment_data_b64:
+        return jsonify({"error": "Pre-generated PDF attachment data is required"}), 400
+    if not recipient:
+        return jsonify({"error": "Patient email is required"}), 400
+
     try:
-        # Generate PDF
-        pdf_bytes = generate_patient_report_pdf(report_data)
-        
-        # Get Email Template
-        bio = report_data.get('bio', {})
-        first_name = bio.get('first_name', 'Patient')
-        screening_year = bio.get('screening_year', 'Current Year')
-        company = bio.get('company', 'Legit HealthCare') # Or DCP/DCT
-        
-        html_content = EmailService.get_report_template(first_name, screening_year, company)
-        
-        # Send Email
-        filename = f"Medical_Report_{bio.get('staff_id')}_{screening_year}.pdf"
+        # Decode the frontend-generated PDF
+        try:
+            pdf_bytes = base64.b64decode(attachment_data_b64)
+        except Exception as e:
+            return jsonify({"error": "Invalid PDF data format"}), 400
+
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+
+        html_content = EmailService.get_report_template(
+            first_name, screening_year, company, logo_url=logo_url
+        )
+
         success = EmailService.send_email(
             recipient,
             f"Your Medical Screening Report - {screening_year}",
             html_content,
             attachment_data=pdf_bytes,
-            attachment_filename=filename
+            attachment_filename=attachment_filename
         )
-        
+
         if success:
             return jsonify({"message": f"Medical report sent successfully to {recipient}"}), 200
         else:
-            return jsonify({"error": "Sytem failed to send the email. Please check Email Configuration."}), 500
-            
+            return jsonify({"error": "Failed to send email. Check Email/SMTP settings."}), 500
+
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": str(e)}), 500
 
-@email_bp.route('/download-report', methods=['POST'])
-def download_patient_report():
-    from utils.report_utils import generate_patient_report_pdf
-    from flask import send_file
-    import io
-    
-    data = request.json
-    report_data = data.get('report_data')
-    
-    if not report_data:
-        return jsonify({"error": "Report Data is required"}), 400
-        
-    try:
-        pdf_bytes = generate_patient_report_pdf(report_data)
-        bio = report_data.get('bio', {})
-        filename = f"Medical_Report_{bio.get('staff_id')}_{bio.get('screening_year')}.pdf"
-        
-        return send_file(
-            io.BytesIO(pdf_bytes),
-            mimetype='application/pdf',
-            as_attachment=True,
-            download_name=filename
-        )
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500

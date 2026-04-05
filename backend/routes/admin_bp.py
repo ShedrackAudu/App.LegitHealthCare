@@ -2,7 +2,10 @@ from flask import Blueprint, request, jsonify, current_app
 from models import db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, Notification, PatientPortalUser
 from decorators import require_permission
 import json
+import random
+import string
 from datetime import datetime
+from utils.email_utils import EmailService
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -670,3 +673,98 @@ def clear_audit_logs():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+@admin_bp.route('/api/admin/users', methods=['POST'])
+@require_permission('manage_roles')
+def create_user():
+    admin_id = request.headers.get('X-User-ID')
+    data = request.json
+    
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    username = data.get('username', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    role_names = data.get('roles', [])
+    
+    # Validation
+    if not all([first_name, last_name, username, email, phone]):
+        return jsonify({"error": "All fields (first_name, last_name, username, email, phone) are required"}), 400
+        
+    if User.query.filter_by(username=username).first():
+        return jsonify({"error": f"Username '@{username}' is already in use."}), 400
+        
+    if User.query.filter_by(email=email).first():
+        return jsonify({"error": f"Email '{email}' is already in use."}), 400
+
+    if User.query.filter_by(phone=phone).first():
+        return jsonify({"error": f"Phone number '{phone}' is already in use."}), 400
+
+    # Generate random temporary password
+    temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    
+    # Create User
+    new_user = User(
+        first_name=first_name,
+        last_name=last_name,
+        username=username,
+        email=email,
+        phone=phone,
+        is_verified=True,
+        must_reset_password=True
+    )
+    new_user.set_password(temp_password)
+    
+    # Assign Roles
+    for r_name in role_names:
+        role = Role.query.filter_by(name=r_name).first()
+        if role:
+            new_user.roles.append(role)
+            
+    db.session.add(new_user)
+    db.session.commit()
+    
+    # Send Welcome Email
+    try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        # Ensure logo_url is absolute
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+            
+        html_content = EmailService.get_welcome_template(
+            first_name=first_name,
+            username=username,
+            password=temp_password,
+            logo_url=logo_url
+        )
+        
+        email_sent = EmailService.send_email(
+            to_email=email,
+            subject="Welcome Onboard - Your Legit HealthCare Account",
+            html_content=html_content
+        )
+        
+        if not email_sent:
+            current_app.logger.error(f"Failed to send welcome email to {email}")
+            # We don't fail the request because the user was created, but we should inform the admin
+    except Exception as e:
+        current_app.logger.error(f"Error sending welcome email: {e}")
+
+    # Audit Log
+    log = AuditLog(
+        user_id=admin_id,
+        action="CREATE_USER",
+        resource=f"User:{username}",
+        details=json.dumps({"username": username, "email": email, "roles": role_names}),
+        ip_address=request.remote_addr
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    return jsonify({
+        "message": f"User @{username} created successfully. A welcome email has been sent to {email}.",
+        "user": new_user.to_dict()
+    }), 201

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
 import { 
   LayoutDashboard, 
@@ -6,7 +6,8 @@ import {
   User, 
   ChevronLeft, 
   ChevronRight,
-  Building2
+  Building2,
+  Calendar
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,13 +21,28 @@ interface SidebarItem {
 
 const patientItems: SidebarItem[] = [
   { title: 'Dashboard', path: '/patient/dashboard', icon: LayoutDashboard },
-  { title: 'My Records', path: '/patient/records', icon: FileText },
+  { title: 'Medical Report', path: '/patient/records', icon: FileText },
+  { title: 'Appointments', path: '/patient/appointments', icon: Calendar },
   { title: 'Profile', path: '/patient/account', icon: User },
 ];
 
 export const PatientSidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { branding, brandingError } = useAppContext();
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 1024) { // Collapse on tablet and smaller
+        setIsCollapsed(true);
+      } else {
+        setIsCollapsed(false);
+      }
+    };
+    
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   return (
     <aside 
@@ -46,8 +62,8 @@ export const PatientSidebar: React.FC = () => {
                  </div>
              )
          ) : (
-             (branding?.logo_dark && !brandingError) ? (
-                 <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+             (branding?.logo_light && !brandingError) ? (
+                 <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
              ) : (
                  <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
                     <Building2 className="h-5 w-5 shrink-0" />
@@ -63,7 +79,8 @@ export const PatientSidebar: React.FC = () => {
               key={item.path}
               to={item.path}
               className={({ isActive }) => cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 group/item relative",
+                "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                 isActive 
                   ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
                   : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
@@ -92,13 +109,9 @@ export const PatientSidebar: React.FC = () => {
             size="icon"
             onClick={() => setIsCollapsed(!isCollapsed)}
             className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <ChevronRight className="h-4 w-4" /> : (
-                <div className="flex items-center gap-2">
-                    <ChevronLeft className="h-4 w-4" />
-                    <span className="text-xs font-bold uppercase tracking-wider">Collapse</span>
-                </div>
-            )}
+            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
           </Button>
         </div>
       </div>

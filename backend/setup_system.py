@@ -42,7 +42,7 @@ def setup_system(purge=False):
             'email': 'audushedrack360@gmail.com',
             'is_verified': True
         }
-        password = '@Shedy822'
+        password = os.getenv('ADMIN_DEFAULT_PASSWORD', '@Shedy822')
 
         if not admin_user:
             admin_user = StaffUser(username='admin', **details)
