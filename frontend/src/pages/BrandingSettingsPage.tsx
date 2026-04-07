@@ -44,6 +44,7 @@ const BrandingSettingsPage: React.FC = () => {
     // Current Values
     const [currentBranding, setCurrentBranding] = useState<any>(null);
     const [confirmModal, setConfirmModal] = useState({ 
+        open: false,
         type: '' as 'clear_asset', 
         field: '',
         title: '',
