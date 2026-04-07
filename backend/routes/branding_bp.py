@@ -35,6 +35,8 @@ def update_branding():
     # Update text fields
     if 'clinic_name' in request.form:
         branding.clinic_name = request.form['clinic_name']
+    if 'clinic_slogan' in request.form:
+        branding.clinic_slogan = request.form['clinic_slogan']
     if 'address' in request.form:
         branding.address = request.form['address']
     if 'email' in request.form:
@@ -44,6 +46,10 @@ def update_branding():
     if 'social_links' in request.form:
         # Expecting JSON string from frontend
         branding.social_links = request.form['social_links']
+    if 'doctor_name' in request.form:
+        branding.doctor_name = request.form['doctor_name']
+    if 'doctor_post' in request.form:
+        branding.doctor_post = request.form['doctor_post']
 
     # Identify upload folder
     # We will store uploads in backend/static/uploads

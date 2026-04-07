@@ -11,10 +11,11 @@ def create_appointment():
     data = request.json
     staff_id = data.get('staff_id')
     appointment_date_str = data.get('appointment_date')
+    time_slot = data.get('time_slot')
     reason = data.get('reason')
     
-    if not staff_id or not appointment_date_str or not reason:
-        return jsonify({"error": "Staff ID, appointment date, and reason are required"}), 400
+    if not staff_id or not appointment_date_str or not reason or not time_slot:
+        return jsonify({"error": "Staff ID, appointment date, time slot, and reason are required"}), 400
         
     try:
         # User requested DD-MM-YYYY format
@@ -31,6 +32,14 @@ def create_appointment():
     except ValueError as e:
         print(f"Date Parse Error: {e}")
         return jsonify({"error": f"Invalid date. Expected DD-MM-YYYY, got {appointment_date_str}"}), 400
+
+    # Prevent Double Booking
+    existing = Appointment.query.filter_by(
+        appointment_date=appointment_date,
+        time_slot=time_slot
+    ).first()
+    if existing:
+        return jsonify({"error": f"The time slot {time_slot} is already booked for this date."}), 409
 
     # Get patient bio-data from global BioData table
     from models import BioData
@@ -72,6 +81,7 @@ def create_appointment():
         email=email,
         nationality=nationality,
         appointment_date=appointment_date,
+        time_slot=time_slot,
         reason=reason
     )
     
@@ -93,7 +103,8 @@ def create_appointment():
             "Age": age or "N/A",
             "Phone": phone or "N/A",
             "Email": email or "N/A",
-            "Nationality": nationality or "N/A"
+            "Nationality": nationality or "N/A",
+            "Preferred Time Slot": time_slot or "Not Specified"
         }
         
         try:
@@ -119,3 +130,24 @@ def create_appointment():
 def get_appointments():
     appointments = Appointment.query.order_by(Appointment.appointment_date.desc()).all()
     return jsonify([a.to_dict() for a in appointments]), 200
+
+@appointments_bp.route('/appointments/booked', methods=['GET'])
+def get_booked_slots():
+    date_str = request.args.get('date') # Expected DD-MM-YYYY
+    if not date_str:
+        return jsonify({"error": "Date parameter is required"}), 400
+        
+    try:
+        # Match the parsing logic in create_appointment
+        if '-' in date_str:
+            target_date = datetime.strptime(date_str, '%d-%m-%Y')
+        else:
+            target_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+    except ValueError:
+        try:
+             target_date = datetime.strptime(date_str, '%Y-%m-%d')
+        except:
+             return jsonify({"error": "Invalid date format"}), 400
+             
+    booked = Appointment.query.filter_by(appointment_date=target_date).all()
+    return jsonify([a.time_slot for a in booked if a.time_slot]), 200

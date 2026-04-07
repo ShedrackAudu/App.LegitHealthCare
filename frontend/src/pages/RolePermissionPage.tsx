@@ -10,6 +10,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const RolePermissionPage: React.FC = () => {
   const [roles, setRoles] = useState<any[]>([]);
@@ -22,6 +23,8 @@ const RolePermissionPage: React.FC = () => {
   // New Role Form State
   const [newRoleName, setNewRoleName] = useState('');
   const [newRoleDesc, setNewRoleDesc] = useState('');
+  const [deleteModal, setDeleteModal] = useState({ open: false, id: 0, name: '' });
+  const [deleting, setDeleting] = useState(false);
 
 
   const fetchData = async () => {
@@ -99,23 +102,21 @@ const RolePermissionPage: React.FC = () => {
     }
   };
 
-  const handleDeleteRole = async (roleId: number, roleName: string) => {
-    if (roleName.toLowerCase() === 'admin') {
-        toast.error("The core Admin role cannot be deleted.");
-        return;
-    }
+  const handleDeleteRole = async () => {
+    const { id: roleId, name: roleName } = deleteModal;
+    if (!roleId) return;
 
-    if (!window.confirm(`Are you sure you want to delete the role '${roleName}'? This action cannot be undone.`)) {
-        return;
-    }
-
+    setDeleting(true);
     try {
         const headers = { 'X-User-ID': user?.id?.toString() };
         await axios.delete(`http://localhost:5000/api/admin/roles/${roleId}`, { headers });
         toast.success(`Role '${roleName}' deleted successfully.`);
+        setDeleteModal({ open: false, id: 0, name: '' });
         fetchData(); // Refresh list
     } catch (err: any) {
         toast.error(err.response?.data?.error || "Failed to delete role.");
+    } finally {
+        setDeleting(false);
     }
   };
 
@@ -180,7 +181,13 @@ const RolePermissionPage: React.FC = () => {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            onClick={() => handleDeleteRole(role.id, role.name)}
+                            onClick={() => {
+                                if (role.name.toLowerCase() === 'admin') {
+                                    toast.error("The core Admin role cannot be deleted.");
+                                    return;
+                                }
+                                setDeleteModal({ open: true, id: role.id, name: role.name });
+                            }}
                             disabled={role.name.toLowerCase() === 'admin'}
                             className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30"
                           >
@@ -269,6 +276,17 @@ const RolePermissionPage: React.FC = () => {
           </TabsContent>
 
         </Tabs>
+
+        <ActionConfirmModal
+            isOpen={deleteModal.open}
+            onClose={() => setDeleteModal({ open: false, id: 0, name: '' })}
+            onConfirm={handleDeleteRole}
+            title="Delete System Role"
+            description={`Are you sure you want to delete the role '${deleteModal.name}'? This action cannot be undone and may affect users assigned to this role.`}
+            confirmText="Delete Role"
+            variant="danger"
+            loading={deleting}
+        />
       </div>
     </MainLayout>
   );

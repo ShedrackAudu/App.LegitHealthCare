@@ -211,7 +211,7 @@ const PatientReportPage: React.FC = () => {
     return (
         <MainLayout>
             {/* All UI chrome — hidden on print */}
-            <div className="space-y-8 animate-in fade-in duration-500 pb-20 no-print">
+            <div className="space-y-3 animate-in fade-in duration-500 pb-4 no-print">
                 <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-red-500/10 rounded-2xl">
@@ -237,21 +237,21 @@ const PatientReportPage: React.FC = () => {
             {/* Report pages — visible on screen and during print */}
             {selectedPatient && (
                 <div className="space-y-1.5 animate-in slide-in-from-bottom-8 duration-500">
-                    <div className="flex items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-20 z-10 backdrop-blur-md no-print">
-                            <div className="flex items-center gap-4">
-                                <Button variant="outline" className="rounded-xl border-2 font-bold"
+                    <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-20 z-10 backdrop-blur-md no-print gap-4">
+                            <div className="flex items-center gap-4 w-full md:w-auto">
+                                <Button variant="outline" className="w-full md:w-auto rounded-xl border-2 font-bold"
                                     onClick={() => { setSelectedPatient(null); setReportData(null); }}>
                                     <X className="mr-2 h-4 w-4" /> Close Report
                                 </Button>
                             </div>
-                            <div className="flex items-center gap-2">
-                                <Button className="rounded-xl shadow-lg border-2 font-bold px-6" onClick={handlePrint}>
+                            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto">
+                                <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 text-xs sm:text-sm" onClick={handlePrint}>
                                     <Printer className="mr-2 h-4 w-4" /> Print Report
                                 </Button>
-                                <Button className="rounded-xl shadow-lg border-2 font-bold px-6 border-indigo-500 text-indigo-500 hover:bg-indigo-50" variant="outline" onClick={handleDownloadPDF}>
+                                <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-xs sm:text-sm" variant="outline" onClick={handleDownloadPDF}>
                                     <Download className="mr-2 h-4 w-4" /> Download PDF
                                 </Button>
-                                <Button className="rounded-xl shadow-lg border-2 font-bold px-6 bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleEmailPDF}>
+                                <Button className="w-full md:w-auto rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 bg-indigo-600 text-white hover:bg-indigo-700 text-xs sm:text-sm" onClick={handleEmailPDF}>
                                     <Mail className="mr-2 h-4 w-4" /> Email Patient
                                 </Button>
                             </div>
@@ -419,8 +419,8 @@ const PatientReportPage: React.FC = () => {
                                                 ) : (
                                                     <div className="sig-img">&#123;signature&#125;</div>
                                                 )}
-                                                <div className="sig-name">Dr. Anyanwu Ugochukwu D. FMCPath</div>
-                                                <div className="sig-title">Consultant in Charge</div>
+                                                <div className="sig-name">{reportData.branding?.doctor_name}</div>
+                                                <div className="sig-title">{reportData.branding?.doctor_post}</div>
                                             </div>
                                         </div>
                                         {reportData.branding?.footer_image ? (
@@ -568,8 +568,8 @@ const PatientReportPage: React.FC = () => {
                                                 ) : (
                                                     <div className="sig-img">&#123;signature&#125;</div>
                                                 )}
-                                                <div className="sig-name">Dr. Anyanwu Ugochukwu D. FMCPath</div>
-                                                <div className="sig-title">Consultant in Charge</div>
+                                                <div className="sig-name">{reportData.branding?.doctor_name}</div>
+                                                <div className="sig-title">{reportData.branding?.doctor_post}</div>
                                             </div>
                                         </div>
                                         {reportData.branding?.footer_image ? (

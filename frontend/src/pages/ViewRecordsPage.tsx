@@ -23,6 +23,7 @@ import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const ViewRecordsPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
@@ -35,6 +36,8 @@ const ViewRecordsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
+    const [deleting, setDeleting] = useState(false);
 
     const fetchRecords = async (page = 1, query = '') => {
         setLoading(true);
@@ -67,9 +70,10 @@ const ViewRecordsPage: React.FC = () => {
         fetchRecords(newPage, searchTerm);
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this screening record? This will remove it from the current year's database.")) return;
-        
+    const handleDelete = async () => {
+        const id = deleteModal.id;
+        if (!id) return;
+        setDeleting(true);
         try {
             await axios.delete(`http://localhost:5000/api/records/screening/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
@@ -80,8 +84,11 @@ const ViewRecordsPage: React.FC = () => {
                 total: prev.total - 1
             }));
             toast.success("Record deleted successfully");
+            setDeleteModal({ open: false, id: 0 });
         } catch (err) {
             toast.error("Failed to delete record");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -284,15 +291,15 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.jaundice || '-'}</TableCell>
                                                         <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.murmur || '-'}</TableCell>
                                                         <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.psa || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 text-[11px] italic whitespace-normal min-w-[120px]">{r.consultation?.psa_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.psa_remark || ''}>{r.consultation?.psa_remark || '-'}</TableCell>
                                                         <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.fbs || r.consultation?.rbs || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 text-[11px] italic whitespace-normal min-w-[120px]">{r.consultation?.sugar_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.sugar_remark || ''}>{r.consultation?.sugar_remark || '-'}</TableCell>
                                                         <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.ua_result || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 text-[11px] italic whitespace-normal min-w-[120px]">{r.consultation?.ua_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.ua_remark || ''}>{r.consultation?.ua_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_status || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.assessment || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 text-[11px] italic whitespace-normal min-w-[150px]">{r.consultation?.hx_pe || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-primary/5 text-[11px] whitespace-normal min-w-[150px]">{r.consultation?.remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[150px]" title={r.consultation?.hx_pe || ''}>{r.consultation?.hx_pe || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-primary/5 text-[11px] truncate max-w-[150px]" title={r.consultation?.remarks || ''}>{r.consultation?.remarks || '-'}</TableCell>
                                                         
                                                         {/* FBC */}
                                                         <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.pcv || '-'}</TableCell>
@@ -311,8 +318,8 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mchc || '-'}</TableCell>
                                                         <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.rdw || '-'}</TableCell>
                                                         <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.pdw || '-'}</TableCell>
-                                                        <TableCell className="bg-rose-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.fbc?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-rose-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.fbc?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px] truncate max-w-[150px]" title={r.fbc?.remark || ''}>{r.fbc?.remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-rose-50/30 text-[11px] truncate max-w-[150px]" title={r.fbc?.other_remarks || ''}>{r.fbc?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* KFT */}
                                                         <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.potassium || '-'}</TableCell>
@@ -322,16 +329,16 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] text-center bg-blue-50/30 font-bold">{r.kft?.creatinine || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.hco3 || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.bicarbonate || '-'}</TableCell>
-                                                        <TableCell className="bg-blue-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.kft?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-blue-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.kft?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-blue-50/30 text-[11px] truncate max-w-[150px]" title={r.kft?.remark || ''}>{r.kft?.remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-blue-50/30 text-[11px] truncate max-w-[150px]" title={r.kft?.other_remarks || ''}>{r.kft?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* Lipid */}
                                                         <TableCell className="text-[11px] text-center bg-amber-50/30 font-bold">{r.lipid?.tcho || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.tg || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.hdl || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.ldl || '-'}</TableCell>
-                                                        <TableCell className="bg-amber-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.lipid?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-amber-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.lipid?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-amber-50/30 text-[11px] truncate max-w-[150px]" title={r.lipid?.remark || ''}>{r.lipid?.remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-amber-50/30 text-[11px] truncate max-w-[150px]" title={r.lipid?.other_remarks || ''}>{r.lipid?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* LFT */}
                                                         <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.ast || '-'}</TableCell>
@@ -339,24 +346,24 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.alp || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.tb || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.cb || '-'}</TableCell>
-                                                        <TableCell className="bg-emerald-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.lft?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-emerald-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.lft?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.other_remarks || ''}>{r.lft?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* Special */}
                                                         <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.ecg || '-'}</TableCell>
-                                                        <TableCell className="bg-red-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.special?.ecg_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.ecg_remark || ''}>{r.special?.ecg_remark || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.spirometry || '-'}</TableCell>
-                                                        <TableCell className="bg-red-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.special?.spirometry_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.spirometry_remark || ''}>{r.special?.spirometry_remark || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.audiometry || '-'}</TableCell>
-                                                        <TableCell className="bg-red-50/30 text-[11px] whitespace-normal min-w-[150px]">{r.special?.audiometry_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.audiometry_remark || ''}>{r.special?.audiometry_remark || '-'}</TableCell>
                                                         <TableCell className="text-[11px] text-center bg-red-50/30">{r.special?.weight || '-'}</TableCell>
                                                         <TableCell className="border-r text-[11px] text-center bg-red-50/30">{r.special?.height || '-'}</TableCell>
                                                         
                                                         {/* Director Review */}
-                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic whitespace-normal min-w-[150px]">{r.director_review?.comment_one || '-'}</TableCell>
-                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic whitespace-normal min-w-[150px]">{r.director_review?.comment_two || '-'}</TableCell>
-                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic whitespace-normal min-w-[150px]">{r.director_review?.comment_three || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-indigo-50/30 text-[11px] italic whitespace-normal min-w-[150px]">{r.director_review?.comment_four || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_one || ''}>{r.director_review?.comment_one || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_two || ''}>{r.director_review?.comment_two || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_three || ''}>{r.director_review?.comment_three || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_four || ''}>{r.director_review?.comment_four || '-'}</TableCell>
                                                         
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-1 transition-opacity">
@@ -364,7 +371,7 @@ const ViewRecordsPage: React.FC = () => {
                                                                     variant="ghost" 
                                                                     size="sm" 
                                                                     className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                                                    onClick={() => handleDelete(r.id)}
+                                                                    onClick={() => setDeleteModal({ open: true, id: r.id })}
                                                                 >
                                                                     <Trash2 className="h-4 w-4" />
                                                                 </Button>
@@ -416,6 +423,17 @@ const ViewRecordsPage: React.FC = () => {
                     </CardContent>
                 </Card>
             </div>
+
+            <ActionConfirmModal
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, id: 0 })}
+                onConfirm={handleDelete}
+                title="Delete Screening Record"
+                description="Are you sure you want to delete this screening record? This will permanently remove it from the database for the current academic year."
+                confirmText="Delete Record"
+                variant="danger"
+                loading={deleting}
+            />
         </MainLayout>
     );
 };

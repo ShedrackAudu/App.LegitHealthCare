@@ -101,24 +101,8 @@ const ForgotPasswordPage = () => {
             </div>
 
             <div className="w-full max-w-md relative z-10">
-                <div className="flex justify-center mb-8">
-                    <Link to={`/login?portal=${portal}`} className="group flex flex-col items-center gap-2">
-                        {branding?.logo_light ? (
-                            <img 
-                                src={`http://localhost:5000${branding.logo_light}`} 
-                                alt="Logo" 
-                                className="h-16 w-auto object-contain mb-2" 
-                            />
-                        ) : (
-                            <div className="bg-primary/10 p-2.5 rounded-xl group-hover:scale-110 transition-transform duration-300">
-                                <Activity className="w-7 h-7 text-primary" />
-                            </div>
-                        )}
-                        <div className="px-3 py-1 bg-primary/10 rounded-full text-[10px] font-black uppercase tracking-widest text-primary mt-2">
-                            {portal === 'patient' ? "Patient Portal" : "Staff Access"}
-                        </div>
-                    </Link>
-                </div>
+                {/* Removed external logo - moved into cards */}
+
 
                 <AnimatePresence mode="wait">
                     {step === 'identify' && (
@@ -129,8 +113,21 @@ const ForgotPasswordPage = () => {
                             exit={{ x: 20, opacity: 0 }}
                         >
                             <Card className="border-2 shadow-2xl">
-                                <CardHeader>
-                                    <CardTitle className="text-2xl font-black">Find Account</CardTitle>
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-center mb-4">
+                                        {branding?.logo_light ? (
+                                            <img 
+                                                src={`http://localhost:5000${branding.logo_light}`} 
+                                                alt="Logo" 
+                                                className="h-16 w-auto object-contain" 
+                                            />
+                                        ) : (
+                                            <div className="bg-primary/10 p-2.5 rounded-xl">
+                                                <Activity className="w-7 h-7 text-primary" />
+                                            </div>
+                                        )}
+                                    </div>
+                                    <CardTitle className="text-2xl font-black">Password Reset</CardTitle>
                                     <CardDescription>Enter your Username, Email, or Phone to begin.</CardDescription>
                                 </CardHeader>
                                 <CardContent>
@@ -171,9 +168,22 @@ const ForgotPasswordPage = () => {
                             exit={{ x: 20, opacity: 0 }}
                         >
                             <Card className="border-2 shadow-2xl border-primary/20">
-                                <CardHeader>
-                                    <div className="bg-primary/10 w-fit p-2 rounded-lg text-primary mb-2">
-                                        <Key className="w-5 h-5" />
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-between items-start mb-4">
+                                        {branding?.logo_light ? (
+                                            <img 
+                                                src={`http://localhost:5000${branding.logo_light}`} 
+                                                alt="Logo" 
+                                                className="h-12 w-auto object-contain" 
+                                            />
+                                        ) : (
+                                            <div className="bg-primary/10 p-2.5 rounded-xl">
+                                                <Activity className="w-5 h-5 text-primary" />
+                                            </div>
+                                        )}
+                                        <div className="bg-primary/10 w-fit p-2 rounded-lg text-primary">
+                                            <Key className="w-5 h-5" />
+                                        </div>
                                     </div>
                                     <CardTitle className="text-2xl font-black">Security Verification</CardTitle>
                                     <CardDescription>Enter the 6-digit OTP sent to your registered email.</CardDescription>
@@ -212,10 +222,23 @@ const ForgotPasswordPage = () => {
                             exit={{ x: 20, opacity: 0 }}
                         >
                             <Card className="border-2 shadow-2xl border-emerald-500/20">
-                                <CardHeader>
-                                    <div className="flex items-center gap-2 text-emerald-500 mb-2">
-                                        <ShieldCheck className="w-4 h-4" />
-                                        <span className="text-[10px] font-black uppercase tracking-widest">Final Step</span>
+                                <CardHeader className="text-center">
+                                    <div className="flex justify-between items-start mb-4">
+                                        {branding?.logo_light ? (
+                                            <img 
+                                                src={`http://localhost:5000${branding.logo_light}`} 
+                                                alt="Logo" 
+                                                className="h-12 w-auto object-contain" 
+                                            />
+                                        ) : (
+                                            <div className="bg-emerald-500/10 p-2.5 rounded-xl">
+                                                <Activity className="w-5 h-5 text-emerald-500" />
+                                            </div>
+                                        )}
+                                        <div className="flex items-center gap-2 text-emerald-500">
+                                            <ShieldCheck className="w-4 h-4" />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">Final Step</span>
+                                        </div>
                                     </div>
                                     <CardTitle className="text-2xl font-black">Secure Reset</CardTitle>
                                     <CardDescription>Define your new account access credentials.</CardDescription>

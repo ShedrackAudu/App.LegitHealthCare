@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
+import { motion } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -11,7 +12,7 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/co
 import { Badge } from '@/components/ui/badge';
 import { Activity, Loader2, User, Phone, Mail, Lock, ShieldCheck, AtSign, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Building2, HelpCircle } from 'lucide-react';
+import { Search, Building2, HelpCircle, ShieldCheck as ShieldCheckIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { ModeToggle } from '@/components/mode-toggle';
@@ -54,6 +55,7 @@ const SignupPage: React.FC = () => {
   const [patientData, setPatientData] = useState<any>(null);
   const [patientStaffId, setPatientStaffId] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
+  const [existingUser, setExistingUser] = useState(false);
   
   const [claimData, setClaimData] = useState({
     phone: '',
@@ -116,7 +118,12 @@ const SignupPage: React.FC = () => {
       setPatientStep('claim');
       toast.success('Record found! Please complete your profile.');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Staff ID not found or server error.');
+      if (err.response?.status === 409 && err.response?.data?.already_exists) {
+        setExistingUser(true);
+        toast.error('Account already exists for this Staff ID.');
+      } else {
+        toast.error(err.response?.data?.error || 'Staff ID not found or server error.');
+      }
     } finally {
       setSearchLoading(false);
     }
@@ -157,7 +164,7 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-8 transition-colors duration-500 selection:bg-primary/20 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 sm:p-12 md:p-20 transition-colors duration-500 selection:bg-primary/20 relative">
       <div className="absolute top-4 right-4 text-xs">
         <ModeToggle />
       </div>
@@ -357,6 +364,35 @@ const SignupPage: React.FC = () => {
                       Search Records
                     </Button>
                   </form>
+
+                  {existingUser && (
+                    <motion.div
+                      initial={{ opacity: 0, height: 0, scale: 0.95 }}
+                      animate={{ opacity: 1, height: 'auto', scale: 1 }}
+                      className="mt-2"
+                    >
+                      <Card className="border-2 border-primary/20 bg-primary/5">
+                        <CardHeader className="p-4 text-center">
+                          <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 text-primary">
+                              <ShieldCheckIcon className="w-5 h-5" />
+                          </div>
+                          <h4 className="text-sm font-bold">Account Already Exists</h4>
+                          <p className="text-[10px] text-muted-foreground mt-1">
+                            An account for Staff ID <strong>{patientStaffId}</strong> is already registered.
+                          </p>
+                        </CardHeader>
+                        <CardFooter className="p-4 pt-0">
+                          <Button 
+                            onClick={() => navigate('/login?portal=patient')}
+                            variant="default"
+                            className="w-full h-9 text-xs font-bold rounded-lg"
+                          >
+                            Proceed to Login
+                          </Button>
+                        </CardFooter>
+                      </Card>
+                    </motion.div>
+                  )}
 
                   <div className="p-4 rounded-xl border border-dashed text-center bg-muted/30">
                      <p className="text-[10px] text-muted-foreground font-medium flex items-center justify-center gap-1.5 uppercase tracking-widest">

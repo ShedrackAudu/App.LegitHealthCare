@@ -4,11 +4,16 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Brush, Upload, Loader2, Image as ImageIcon, RotateCcw, Trash2 } from 'lucide-react';
+import { 
+  Brush, Upload, Loader2, Image as ImageIcon, RotateCcw, Trash2, 
+  Facebook, Twitter, Instagram, Linkedin, Youtube, Globe, Link as LinkIcon,
+  MessageCircle, Music2
+} from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { Badge } from "@/components/ui/badge";
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const BrandingSettingsPage: React.FC = () => {
     const { activeSection, fetchBranding } = useAppContext();
@@ -17,6 +22,7 @@ const BrandingSettingsPage: React.FC = () => {
     
     // Form States
     const [clinicName, setClinicName] = useState('Legit HealthCare');
+    const [clinicSlogan, setClinicSlogan] = useState('Excellence.');
     const [address, setAddress] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
@@ -37,6 +43,13 @@ const BrandingSettingsPage: React.FC = () => {
 
     // Current Values
     const [currentBranding, setCurrentBranding] = useState<any>(null);
+    const [confirmModal, setConfirmModal] = useState({ 
+        open: false,
+        type: '' as 'clear_asset', 
+        field: '',
+        title: '',
+        description: ''
+    });
 
     useEffect(() => {
         const loadInitial = async () => {
@@ -49,6 +62,7 @@ const BrandingSettingsPage: React.FC = () => {
                 });
                 setCurrentBranding(response.data);
                 setClinicName(response.data.clinic_name || 'Legit HealthCare');
+                setClinicSlogan(response.data.clinic_slogan || 'Excellence.');
                 setAddress(response.data.address || '');
                 setEmail(response.data.email || '');
                 setPhone(response.data.phone || '');
@@ -63,21 +77,6 @@ const BrandingSettingsPage: React.FC = () => {
         loadInitial();
     }, [activeSection]);
 
-    const handleResetQueue = async () => {
-        if (!confirm("Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.")) return;
-        setSaving(true);
-        try {
-            await axios.post('http://localhost:5000/api/queue', {}, {
-                headers: { 'X-Company-Context': activeSection }
-            });
-            toast.success("Patient queues have been successfully reset to zero.");
-        } catch(err) {
-            toast.error("Failed to reset queue counts.");
-            console.error(err);
-        } finally {
-            setSaving(false);
-        }
-    };
 
     const handleSave = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,6 +84,7 @@ const BrandingSettingsPage: React.FC = () => {
         try {
             const formData = new FormData();
             formData.append('clinic_name', clinicName);
+            formData.append('clinic_slogan', clinicSlogan);
             formData.append('address', address);
             formData.append('email', email);
             formData.append('phone', phone);
@@ -123,14 +123,16 @@ const BrandingSettingsPage: React.FC = () => {
         }
     };
 
-    const handleClear = async (field: string) => {
-        if (!confirm(`Are you sure you want to remove this ${field.replace('_', ' ')}?`)) return;
+    const handleClear = async () => {
+        const field = confirmModal.field;
+        if (!field) return;
         setSaving(true);
         try {
             await axios.post('http://localhost:5000/api/branding/clear', { field }, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Asset removed successfully");
+            setConfirmModal({ ...confirmModal, open: false });
             // Reload local
             const response = await axios.get('http://localhost:5000/api/branding', {
                 headers: { 'X-Company-Context': activeSection }
@@ -142,6 +144,19 @@ const BrandingSettingsPage: React.FC = () => {
         } finally {
             setSaving(false);
         }
+    };
+
+    const getSocialIcon = (label: string) => {
+        const l = label.toLowerCase();
+        if (l.includes('facebook')) return Facebook;
+        if (l.includes('twitter') || l.includes('x')) return Twitter;
+        if (l.includes('instagram')) return Instagram;
+        if (l.includes('linkedin')) return Linkedin;
+        if (l.includes('youtube')) return Youtube;
+        if (l.includes('globe') || l.includes('web')) return Globe;
+        if (l.includes('whatsapp')) return MessageCircle;
+        if (l.includes('tiktok')) return Music2;
+        return LinkIcon;
     };
 
     if (loading) {
@@ -174,14 +189,25 @@ const BrandingSettingsPage: React.FC = () => {
                             <CardDescription>This name usually appears on printed reports and headers.</CardDescription>
                         </CardHeader>
                         <CardContent className="pt-6">
-                            <div className="space-y-4 max-w-xl">
-                                <Label className="text-sm font-bold uppercase text-muted-foreground">Clinic Name</Label>
-                                <Input 
-                                    className="h-12 font-bold text-lg" 
-                                    value={clinicName} 
-                                    onChange={(e) => setClinicName(e.target.value)}
-                                    placeholder="Enter clinic name..."
-                                />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-bold uppercase text-muted-foreground">Clinic Name</Label>
+                                    <Input 
+                                        className="h-12 font-bold text-lg" 
+                                        value={clinicName} 
+                                        onChange={(e) => setClinicName(e.target.value)}
+                                        placeholder="Enter clinic name..."
+                                    />
+                                </div>
+                                <div className="space-y-2">
+                                    <Label className="text-sm font-bold uppercase text-muted-foreground">Clinic Slogan</Label>
+                                    <Input 
+                                        className="h-12 font-medium" 
+                                        value={clinicSlogan} 
+                                        onChange={(e) => setClinicSlogan(e.target.value)}
+                                        placeholder="Enter slogan (e.g. Excellence.)..."
+                                    />
+                                </div>
                             </div>
                         </CardContent>
                     </Card>
@@ -195,14 +221,20 @@ const BrandingSettingsPage: React.FC = () => {
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                 {/* Light Mode Logo */}
                                 <div className="space-y-3">
-                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Light Theme Logo</Label>
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Brandmark Logo</Label>
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.logo_light && !logoLight ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
                                                 <img src={`http://localhost:5000${currentBranding.logo_light}`} alt="Light Logo" className="max-h-16 object-contain" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('logo_light')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'logo_light',
+                                                        title: 'Remove Logo',
+                                                        description: 'Are you sure you want to remove the Brandmark logo? This change is immediate.'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -225,7 +257,7 @@ const BrandingSettingsPage: React.FC = () => {
                                 {/* Dark Mode Logo */}
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between">
-                                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Dark Theme Logo</Label>
+                                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Wordmark Logo</Label>
                                         <Badge variant="outline" className="text-[8px] uppercase tracking-tighter h-4 px-1 opacity-70">Preview Box</Badge>
                                     </div>
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-slate-900 shadow-inner relative h-32 group/box">
@@ -234,7 +266,13 @@ const BrandingSettingsPage: React.FC = () => {
                                                 <img src={`http://localhost:5000${currentBranding.logo_dark}`} alt="Dark Logo" className="max-h-16 object-contain" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('logo_dark')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'logo_dark',
+                                                        title: 'Remove Logo',
+                                                        description: 'Are you sure you want to remove the Wordmark logo? This change is immediate.'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -263,7 +301,13 @@ const BrandingSettingsPage: React.FC = () => {
                                                 <img src={`http://localhost:5000${currentBranding.favicon}`} alt="Favicon" className="h-10 w-10 object-contain rounded-md shadow-sm" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('favicon')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'favicon',
+                                                        title: 'Remove Favicon',
+                                                        description: 'Are you sure you want to remove the application favicon?'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -347,6 +391,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     {socialLinks.map((link, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border text-xs group">
                                             <div className="flex items-center gap-2">
+                                                {React.createElement(getSocialIcon(link.label), { className: "h-3.5 w-3.5 text-primary" })}
                                                 <span className="font-bold">{link.label}:</span>
                                                 <span className="text-primary underline truncate max-w-[150px]">{link.value}</span>
                                             </div>
@@ -382,7 +427,13 @@ const BrandingSettingsPage: React.FC = () => {
                                             <img src={`http://localhost:5000${currentBranding.hero_image_1}`} alt="Hero 1" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
-                                                onClick={() => handleClear('hero_image_1')}
+                                                onClick={() => setConfirmModal({
+                                                    open: true,
+                                                    type: 'clear_asset',
+                                                    field: 'hero_image_1',
+                                                    title: 'Remove Hero Image',
+                                                    description: 'Are you sure you want to remove Hero Illustration Image 1?'
+                                                })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -405,7 +456,13 @@ const BrandingSettingsPage: React.FC = () => {
                                             <img src={`http://localhost:5000${currentBranding.hero_image_2}`} alt="Hero 2" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
-                                                onClick={() => handleClear('hero_image_2')}
+                                                onClick={() => setConfirmModal({
+                                                    open: true,
+                                                    type: 'clear_asset',
+                                                    field: 'hero_image_2',
+                                                    title: 'Remove Hero Image',
+                                                    description: 'Are you sure you want to remove Hero Illustration Image 2?'
+                                                })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -428,7 +485,13 @@ const BrandingSettingsPage: React.FC = () => {
                                             <img src={`http://localhost:5000${currentBranding.hero_image_team}`} alt="Team" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
-                                                onClick={() => handleClear('hero_image_team')}
+                                                onClick={() => setConfirmModal({
+                                                    open: true,
+                                                    type: 'clear_asset',
+                                                    field: 'hero_image_team',
+                                                    title: 'Remove Team Image',
+                                                    description: 'Are you sure you want to remove the Hero Team Illustration?'
+                                                })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -460,7 +523,13 @@ const BrandingSettingsPage: React.FC = () => {
                                                 <img src={`http://localhost:5000${currentBranding.header_image}`} alt="Header" className="max-h-24 object-contain" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('header_image')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'header_image',
+                                                        title: 'Remove Header',
+                                                        description: 'Are you sure you want to remove the Report Header image?'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -489,7 +558,13 @@ const BrandingSettingsPage: React.FC = () => {
                                                 <img src={`http://localhost:5000${currentBranding.footer_image}`} alt="Footer" className="max-h-24 object-contain" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('footer_image')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'footer_image',
+                                                        title: 'Remove Footer',
+                                                        description: 'Are you sure you want to remove the Report Footer image?'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -518,7 +593,13 @@ const BrandingSettingsPage: React.FC = () => {
                                                 <img src={`http://localhost:5000${currentBranding.signature_image}`} alt="Signature" className="max-h-24 object-contain mix-blend-multiply" />
                                                 <button 
                                                     type="button"
-                                                    onClick={() => handleClear('signature_image')}
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'signature_image',
+                                                        title: 'Remove Signature',
+                                                        description: 'Are you sure you want to remove the Doctor Signature image?'
+                                                    })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
                                                     <Trash2 className="h-3 w-3" />
@@ -541,35 +622,6 @@ const BrandingSettingsPage: React.FC = () => {
                         </CardContent>
                     </Card>
 
-                    <Card className="border-2 shadow-xl border-destructive/20 mt-8 relative overflow-hidden group">
-                        <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
-                        <CardHeader className="border-b bg-muted/5 p-6">
-                            <CardTitle className="text-xl flex items-center gap-2 text-destructive">
-                                <RotateCcw className="h-6 w-6" />
-                                System Maintenance
-                            </CardTitle>
-                        </CardHeader>
-                        <CardContent className="p-8 space-y-4">
-                            <div className="flex items-center justify-between flex-wrap gap-4">
-                                <div className="space-y-1">
-                                    <h4 className="font-bold text-lg">Reset Daily Patient Queues</h4>
-                                    <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                        This will immediately reset all queue counts across all departments (Consultation, Audiometry, Spirometry, ECG) to <strong className="text-foreground">Zero</strong>. This is typically done at the end of the day.
-                                    </p>
-                                </div>
-                                <Button 
-                                    onClick={handleResetQueue} 
-                                    disabled={saving} 
-                                    variant="destructive" 
-                                    size="lg" 
-                                    className="font-bold shadow-lg shadow-destructive/20 shrink-0"
-                                >
-                                    {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
-                                    Reset Queue Counts to 0
-                                </Button>
-                            </div>
-                        </CardContent>
-                    </Card>
 
                     <div className="flex justify-end pt-6 border-t mt-8">
                         <Button 
@@ -582,6 +634,17 @@ const BrandingSettingsPage: React.FC = () => {
                     </div>
                 </form>
             </div>
+
+            <ActionConfirmModal
+                isOpen={confirmModal.open}
+                onClose={() => setConfirmModal({ ...confirmModal, open: false })}
+                onConfirm={handleClear}
+                loading={saving}
+                title={confirmModal.title}
+                description={confirmModal.description}
+                confirmText="Remove Asset"
+                variant="danger"
+            />
         </MainLayout>
     );
 };

@@ -429,14 +429,18 @@ const ConsultationPage: React.FC = () => {
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 mt-8">
             <Card className="border-2 border-emerald-500/20 shadow-lg bg-emerald-500/[0.02]">
-              <CardContent className="p-6">
-                <div className="grid grid-cols-2 md:grid-cols-6 gap-6">
+              <CardContent className="p-4 md:p-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
-                  <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
+                  <div className="lg:col-span-2">
+                    <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
+                  </div>
                   <PatientInfo label="AGE" value={`${patient.age} Yrs`} />
                   <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <PatientInfo label="GENDER" value={patient.gender} />
-                  <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
+                  <div className="col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-emerald-500/10">
+                    <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -524,11 +528,13 @@ const ConsultationPage: React.FC = () => {
 
                     </div>
 
-                    <div className="pt-6 border-t flex justify-end gap-4">
-                      <Button type="button" variant="outline" size="lg" className="px-10 h-12 font-bold" onClick={() => setPatient(null)}>Discard</Button>
-                      <Button type="submit" size="lg" className="bg-emerald-600 hover:bg-emerald-700 px-16 h-12 font-bold text-lg shadow-xl shadow-emerald-500/20" disabled={saving}>
+                    <div className="pt-6 border-t flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
+                      <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto px-10 h-12 font-bold order-2 sm:order-1" onClick={() => setPatient(null)}>Discard</Button>
+                      <Button type="submit" size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-emerald-500/20 order-1 sm:order-2" disabled={saving}>
                         {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
-                          <><Save className="mr-2 h-5 w-5" /> Submit Findings</>
+                          <div className="flex items-center justify-center whitespace-nowrap">
+                             <Save className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
+                          </div>
                         )}
                       </Button>
                     </div>
@@ -624,9 +630,9 @@ const ConsultationPage: React.FC = () => {
 };
 
 const PatientInfo = ({ label, value }: any) => (
-  <div className="space-y-1">
-    <p className="text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60">{label}</p>
-    <p className="font-black text-lg text-primary tracking-tight">{value}</p>
+  <div className="space-y-0.5 sm:space-y-1">
+    <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 leading-none">{label}</p>
+    <p className="font-black text-base sm:text-lg text-primary tracking-tight truncate leading-tight">{value}</p>
   </div>
 );
 

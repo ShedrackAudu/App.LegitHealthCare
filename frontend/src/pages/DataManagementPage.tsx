@@ -2,36 +2,60 @@ import React, { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Download, Upload, FileSpreadsheet, Loader2, CheckCircle2 } from 'lucide-react';
+import { Database, Download, Upload, FileSpreadsheet, Loader2, CheckCircle2, LayoutGrid, Import, User, Activity, ShieldCheck } from 'lucide-react';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 
 const DataManagementPage: React.FC = () => {
-  const [exporting, setExporting] = useState(false);
+  const [activeTab, setActiveTab] = useState<'export' | 'import'>('export');
+  const [exporting, setExporting] = useState<string | null>(null);
   const [importing, setImporting] = useState(false);
-  const { user } = useAppContext();
+  const { user, activeSection, activeYear } = useAppContext();
 
-  const handleExport = async () => {
-    setExporting(true);
+  const handleExport = async (type: 'patients' | 'screening') => {
+    setExporting(type);
     try {
-      const resp = await axios.get('http://localhost:5000/api/admin/export', {
-        headers: { 'X-User-ID': user?.id?.toString() },
+      const endpoint = type === 'patients' ? 'export/patients' : 'export/screening';
+      const yearParam = type === 'screening' ? `?year=${activeYear}` : '';
+      
+      const resp = await axios.get(`http://localhost:5000/api/admin/${endpoint}${yearParam}`, {
+        headers: { 
+            'X-User-ID': user?.id?.toString(),
+            'X-Company-Context': activeSection 
+        },
         responseType: 'blob'
       });
       
       const url = window.URL.createObjectURL(new Blob([resp.data]));
       const link = document.createElement('a');
       link.href = url;
-      link.setAttribute('download', `Clinic_Data_Export_${new Date().toISOString().split('T')[0]}.xlsx`);
+      const filename = type === 'patients' 
+        ? `${activeSection}_Patient_Directory_${new Date().toISOString().split('T')[0]}.xlsx`
+        : `${activeSection}_Screening_Matrix_${activeYear}_${new Date().toISOString().split('T')[0]}.xlsx`;
+        
+      link.setAttribute('download', filename);
       document.body.appendChild(link);
       link.click();
       link.remove();
-      toast.success("Data export completed successfully.");
-    } catch (err) {
-      toast.error("Failed to trigger data export.");
+      toast.success(`${type === 'patients' ? 'Patient Directory' : 'Screening Matrix'} exported successfully.`);
+    } catch (err: any) {
+      if (err.response && err.response.data instanceof Blob) {
+        const reader = new FileReader();
+        reader.onload = () => {
+          try {
+            const errorData = JSON.parse(reader.result as string);
+            toast.error(errorData.error || "Failed to trigger data export.");
+          } catch (e) {
+            toast.error("Failed to trigger data export.");
+          }
+        };
+        reader.readAsText(err.response.data);
+      } else {
+        toast.error(err.response?.data?.error || "Failed to trigger data export.");
+      }
     } finally {
-      setExporting(false);
+      setExporting(null);
     }
   };
 
@@ -47,6 +71,7 @@ const DataManagementPage: React.FC = () => {
       const resp = await axios.post('http://localhost:5000/api/admin/import', formData, {
         headers: { 
           'X-User-ID': user?.id?.toString(),
+          'X-Company-Context': activeSection,
           'Content-Type': 'multipart/form-data'
         }
       });
@@ -62,108 +87,181 @@ const DataManagementPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div>
-          <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-            <Database className="w-8 h-8 text-primary" />
-            Data Management & Exports
-          </h1>
-          <p className="text-muted-foreground font-medium italic mt-1">Import bio-data and download comprehensive system records for offline analysis.</p>
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+          <div>
+            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+              <Database className="w-8 h-8 text-primary" />
+              Data Management Hub
+            </h1>
+            <p className="text-muted-foreground font-medium italic mt-1">
+                Centralized hub for {activeSection} data operations • Session {activeYear}
+            </p>
+          </div>
+
+          <div className="flex bg-muted/50 p-1 rounded-2xl border-2 shadow-sm">
+            <button
+              onClick={() => setActiveTab('export')}
+              className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'export' 
+                ? 'bg-white dark:bg-slate-900 shadow-md text-primary scale-105' 
+                : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <Download className="w-4 h-4" />
+              Data Export
+            </button>
+            <button
+              onClick={() => setActiveTab('import')}
+              className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
+                activeTab === 'import' 
+                ? 'bg-white dark:bg-slate-900 shadow-md text-primary scale-105' 
+                : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
+              }`}
+            >
+              <Upload className="w-4 h-4" />
+              Bulk Import
+            </button>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
-          {/* Export Card */}
-          <Card className="border-2 shadow-xl hover:border-primary/20 transition-all rounded-3xl overflow-hidden group">
-            <div className="h-2 bg-primary w-full opacity-50 group-hover:opacity-100 transition-opacity" />
-            <CardHeader className="pb-4">
-               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 border border-primary/20">
-                  <Download className="w-6 h-6" />
-               </div>
-               <CardTitle className="text-2xl font-black tracking-tight">Data Export</CardTitle>
-               <CardDescription className="text-sm font-bold text-muted-foreground">
-                  Download comprehensive patient and screening data in Excel format.
-               </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6">
-               <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
-                  <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
-                      <FileSpreadsheet className="w-6 h-6 text-emerald-500" />
-                  </div>
-                  <div>
-                      <p className="text-xs font-black uppercase tracking-tight">XLSX Generation Engine</p>
-                      <p className="text-[10px] text-muted-foreground font-medium italic">Available for administrators and directors.</p>
-                  </div>
-               </div>
-               
-               <Button 
-                onClick={handleExport}
-                disabled={exporting}
-                className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
-               >
-                  {exporting ? (
-                    <Loader2 className="w-5 h-5 animate-spin" />
-                  ) : (
-                    <>
-                        <Download className="w-5 h-5" />
-                        Initiate Full Data Export
-                    </>
-                  )}
-               </Button>
-            </CardContent>
-          </Card>
+        {activeTab === 'export' ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-4">
+            {/* Patient Directory Export */}
+            <Card className="border-2 shadow-xl hover:border-primary/20 transition-all rounded-3xl overflow-hidden group">
+              <div className="h-2 bg-primary w-full opacity-50 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="pb-4">
+                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 border border-primary/20">
+                    <User className="w-6 h-6" />
+                 </div>
+                 <CardTitle className="text-2xl font-black tracking-tight">Patient Directory</CardTitle>
+                 <CardDescription className="text-sm font-bold text-muted-foreground">
+                    Export all registered bio-data for the current section ({activeSection}).
+                 </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                 <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                        <FileSpreadsheet className="w-6 h-6 text-emerald-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-black uppercase tracking-tight">Full Archive Export</p>
+                        <p className="text-[10px] text-muted-foreground font-medium italic">Includes all 13 bio-data fields.</p>
+                    </div>
+                 </div>
+                 
+                 <Button 
+                  onClick={() => handleExport('patients')}
+                  disabled={!!exporting}
+                  className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
+                 >
+                    {exporting === 'patients' ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                          <Download className="w-5 h-5" />
+                          Export Directory
+                      </>
+                    )}
+                 </Button>
+              </CardContent>
+            </Card>
 
-          {/* Import Card */}
-          <Card className="border-2 shadow-xl opacity-80 rounded-3xl overflow-hidden group border-dashed relative">
-            <div className="absolute inset-0 bg-muted/5 z-0" />
-            <div className="relative z-10">
-                <CardHeader className="pb-4">
-                   <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2 border border-amber-500/20">
-                      <Upload className="w-6 h-6" />
-                   </div>
-                   <CardTitle className="text-2xl font-black tracking-tight">Data Import <span className="text-xs bg-amber-500 text-white px-2 py-0.5 rounded-full uppercase ml-2">Beta</span></CardTitle>
-                   <CardDescription className="text-sm font-bold text-muted-foreground">
-                      Excel-based patient bio-data ingestion service for bulk registration.
-                   </CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-6">
-                   <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                      <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                      <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold italic leading-relaxed">
-                        Data Import module is now ACTIVE. Ensure your Excel sheet contains 'staff_id', 'first_name', and 'last_name' columns.
-                      </p>
-                   </div>
-                   
-                   <div className="relative">
-                     <input 
-                      type="file" 
-                      id="import-file" 
-                      className="hidden" 
-                      accept=".xlsx, .xls"
-                      onChange={handleImport}
-                      disabled={importing}
-                     />
-                     <Button 
-                      onClick={() => document.getElementById('import-file')?.click()}
-                      disabled={importing}
-                      className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-amber-500/20 bg-amber-500 hover:bg-amber-600 text-white transition-all active:scale-95"
-                     >
-                       {importing ? (
-                        <Loader2 className="w-5 h-5 animate-spin" />
-                       ) : (
-                        <>
-                          <Upload className="w-5 h-5" />
-                          Import Bio-Data Excel
-                        </>
-                       )}
-                     </Button>
-                   </div>
-                </CardContent>
-            </div>
-          </Card>
-        </div>
+            {/* Screening Matrix Export */}
+            <Card className="border-2 shadow-xl hover:border-indigo-500/20 transition-all rounded-3xl overflow-hidden group">
+              <div className="h-2 bg-indigo-500 w-full opacity-50 group-hover:opacity-100 transition-opacity" />
+              <CardHeader className="pb-4">
+                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-2 border border-indigo-500/20">
+                    <LayoutGrid className="w-6 h-6" />
+                 </div>
+                 <CardTitle className="text-2xl font-black tracking-tight">Screening Matrix</CardTitle>
+                 <CardDescription className="text-sm font-bold text-muted-foreground">
+                    Export all clinical diagnostic results for the {activeYear} session.
+                 </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                 <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex gap-4 items-center">
+                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                        <Activity className="w-6 h-6 text-indigo-500" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-black uppercase tracking-tight text-indigo-600">Joined Dataset Engine</p>
+                        <p className="text-[10px] text-muted-foreground font-medium italic">Joins FBC, KFT, LFT, Lipid, ECG, and Consultations.</p>
+                    </div>
+                 </div>
+                 
+                 <Button 
+                  onClick={() => handleExport('screening')}
+                  disabled={!!exporting}
+                  className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white transition-all active:scale-95"
+                 >
+                    {exporting === 'screening' ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      <>
+                          <Download className="w-5 h-5" />
+                          Export Screening Matrix
+                      </>
+                    )}
+                 </Button>
+              </CardContent>
+            </Card>
+          </div>
+        ) : (
+          <div className="mt-4 max-w-4xl">
+            {/* Import Card */}
+            <Card className="border-2 shadow-xl rounded-3xl overflow-hidden group border-dashed relative">
+              <div className="absolute inset-0 bg-muted/5 z-0" />
+              <div className="relative z-10">
+                  <CardHeader className="pb-4">
+                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2 border border-amber-500/20">
+                        <Import className="w-6 h-6" />
+                     </div>
+                     <CardTitle className="text-2xl font-black tracking-tight">Bulk Patient Import</CardTitle>
+                     <CardDescription className="text-sm font-bold text-muted-foreground">
+                        Excel-based data ingestion for bulk registration into the {activeSection} directory.
+                     </CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-6">
+                     <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-4 items-center">
+                        <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold italic leading-relaxed">
+                          Ensure your Excel sheet contains 'staff_id', 'first_name', and 'last_name' columns. Other fields are optional.
+                        </p>
+                     </div>
+                     
+                     <div className="relative">
+                       <input 
+                        type="file" 
+                        id="import-file" 
+                        className="hidden" 
+                        accept=".xlsx, .xls"
+                        onChange={handleImport}
+                        disabled={importing}
+                       />
+                       <Button 
+                        onClick={() => document.getElementById('import-file')?.click()}
+                        disabled={importing}
+                        className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-amber-500/20 bg-amber-500 hover:bg-amber-600 text-white transition-all active:scale-95"
+                       >
+                         {importing ? (
+                          <Loader2 className="w-5 h-5 animate-spin" />
+                         ) : (
+                          <>
+                            <Upload className="w-5 h-5" />
+                            Upload Bio-Data Spreadsheet
+                          </>
+                         )}
+                       </Button>
+                     </div>
+                  </CardContent>
+              </div>
+            </Card>
+          </div>
+        )}
 
         <div className="mt-12 bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-inner">
             <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
-                <CheckCircle2 className="w-12 h-12 text-primary" />
+                <ShieldCheck className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-xl font-black tracking-tight mb-2">Secure Data Custodianship</h3>

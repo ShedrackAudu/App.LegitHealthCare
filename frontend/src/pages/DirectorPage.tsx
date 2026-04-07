@@ -36,9 +36,9 @@ import axios from 'axios';
 
 // Helper Components
 const BioItem = ({ label, value }: any) => (
-    <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground leading-none">{label}</p>
-        <p className="text-base font-bold text-foreground leading-tight truncate">{value}</p>
+    <div className="space-y-0.5">
+        <p className="text-[9px] md:text-[10px] uppercase tracking-widest font-black text-muted-foreground leading-none">{label}</p>
+        <p className="text-sm md:text-base font-bold text-foreground leading-tight truncate">{value}</p>
     </div>
 );
 
@@ -251,15 +251,17 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-2 shadow-xl bg-card overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-6">
+            <Card className="border-2 shadow-xl bg-card">
+                <CardContent className="p-4 md:p-6">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
                         <BioItem label="STAFF ID" value={patient.staff_id} />
-                        <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
+                        <div className="col-span-1 lg:col-span-2">
+                            <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
+                        </div>
                         <BioItem label="AGE" value={`${patient.age} Yrs`} />
                         <BioItem label="DEPARTMENT" value={patient.department} />
                         <BioItem label="GENDER" value={patient.gender || 'N/A'} />
-                        <div className="flex items-center justify-between col-span-1 border-l pl-4 border-muted">
+                        <div className="flex items-center justify-between col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-muted mt-1 lg:mt-0">
                             <BioItem label="CONSULTED BY" value={history?.consultation?.consulted_by_name || 'N/A'} />
                             {history?.review?.first_submitted_at && (
                                 <div className="flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 shrink-0 ml-2">
@@ -298,7 +300,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
                 <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Urea, and Creatinine">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
+                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'BICARBONATE_CA', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs">{f.replace('_', ' ')}</Label>
                                 <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
@@ -332,11 +334,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
-                            { id: 'ecg', label: 'ECG Status' },
+                            { id: 'ecg_result', label: 'ECG Status' },
                             { id: 'ecg_remark', label: 'ECG Remark' },
-                            { id: 'spirometry', label: 'Spirometry' },
+                            { id: 'spirometry_result', label: 'Spirometry' },
                             { id: 'spirometry_remark', label: 'Spiro Remark' },
-                            { id: 'audiometry', label: 'Audiometry' },
+                            { id: 'audiometry_result', label: 'Audiometry' },
                             { id: 'audiometry_remark', label: 'Audio Remark' },
                             { id: 'weight', label: 'Weight (kg)' },
                             { id: 'height', label: 'Height (m)' }
@@ -429,10 +431,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             </div>
                             
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
-                                <div className="space-y-1"><Label className="text-[10px] uppercase font-black text-rose-600">Director Comment One</Label><Input {...register('comment_one')} className="border-rose-200" /></div>
-                                <div className="space-y-1"><Label className="text-[10px] uppercase font-black text-rose-600">Director Comment Two</Label><Input {...register('comment_two')} className="border-rose-200" /></div>
-                                <div className="space-y-1"><Label className="text-[10px] uppercase font-black text-rose-600">Director Comment Three</Label><Input {...register('comment_three')} className="border-rose-200" /></div>
-                                <div className="space-y-1"><Label className="text-[10px] uppercase font-black text-rose-600">Director Comment Four</Label><Input {...register('comment_four')} className="border-rose-200" /></div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment One</Label>
+                                    <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Two</Label>
+                                    <textarea {...register('comment_two')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Three</Label>
+                                    <textarea {...register('comment_three')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." />
+                                </div>
+                                <div className="space-y-1">
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Four</Label>
+                                    <textarea {...register('comment_four')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -472,6 +486,8 @@ const DirectorPage: React.FC = () => {
 
     const handleSearchWithId = async (id: string) => {
         if (!id) return;
+        setPatient(null);
+        setHistory(null);
         setSearching(true);
         try {
             const pRes = await axios.get(`http://localhost:5000/patient/${id}`, {

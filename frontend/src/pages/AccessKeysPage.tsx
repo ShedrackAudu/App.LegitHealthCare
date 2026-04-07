@@ -36,6 +36,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
 import { useAppContext } from '@/context/AppContext';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 interface User {
     id: number;
@@ -66,6 +67,8 @@ const AccessKeysPage = () => {
     const [permissions, setPermissions] = useState<Permission[]>([]);
     const [accessCodes, setAccessCodes] = useState<AccessCode[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
+    const [deleting, setDeleting] = useState(false);
 
     // Generation State
     const [targetPerm, setTargetPerm] = useState('');
@@ -137,15 +140,20 @@ const AccessKeysPage = () => {
         }
     };
 
-    const handleDeleteCode = async (id: number) => {
-        if (!window.confirm("Are you sure? This will permanently remove the access key record.")) return;
+    const handleDeleteCode = async () => {
+        const id = deleteModal.id;
+        if (!id) return;
+        setDeleting(true);
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
             await axios.delete(`http://localhost:5000/api/admin/access-codes/${id}`, { headers });
             toast.success("Access Key record deleted.");
+            setDeleteModal({ open: false, id: 0 });
             fetchData();
         } catch (err: any) {
             toast.error(err.response?.data?.error || "Failed to delete key.");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -346,7 +354,7 @@ const AccessKeysPage = () => {
                                                         <Button 
                                                             variant="ghost" 
                                                             size="sm" 
-                                                            onClick={() => handleDeleteCode(code.id)}
+                                                            onClick={() => setDeleteModal({ open: true, id: code.id })}
                                                             className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive rounded-lg"
                                                         >
                                                             <Trash2 className="h-4 w-4" />
@@ -371,6 +379,17 @@ const AccessKeysPage = () => {
                         </CardContent>
                     </Card>
                 </div>
+
+                <ActionConfirmModal
+                    isOpen={deleteModal.open}
+                    onClose={() => setDeleteModal({ open: false, id: 0 })}
+                    onConfirm={handleDeleteCode}
+                    title="Delete Access Key"
+                    description="Are you sure you want to permanently remove this access key record? This action cannot be undone."
+                    confirmText="Delete Record"
+                    variant="danger"
+                    loading={deleting}
+                />
             </div>
         </MainLayout>
     );

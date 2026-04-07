@@ -65,22 +65,16 @@ const PatientMedicalReport: React.FC = () => {
 
         setLoading(true);
         try {
-            // Fetch profile first to get nationality/section if needed
+            // Fetch profile first to get nationality/section
             const profileRes = await axios.get('http://localhost:5000/api/patient/profile', {
                 headers: { 'X-Staff-ID': user?.username }
             });
             
-            // Try DCP then DCT as fallback logic for context
-            let res;
-            try {
-                res = await axios.get(`http://localhost:5000/api/patient-report/${user?.username}/${selectedYear}`, {
-                    headers: { 'X-Company-Context': 'DCP' }
-                });
-            } catch (err) {
-                res = await axios.get(`http://localhost:5000/api/patient-report/${user?.username}/${selectedYear}`, {
-                    headers: { 'X-Company-Context': 'DCT' }
-                });
-            }
+            const section = profileRes.data.section || 'DCP'; // Fallback if somehow missing
+            
+            const res = await axios.get(`http://localhost:5000/api/patient-report/${user?.username}/${selectedYear}`, {
+                headers: { 'X-Company-Context': section }
+            });
 
             setReportData(res.data);
             toast.success(`Report for ${selectedYear} generated!`);
@@ -293,20 +287,20 @@ const PatientMedicalReport: React.FC = () => {
 
                 {/* Report Actions Banner */}
                 {reportData && !loading && (
-                    <div className="flex items-center justify-between bg-card/80 p-4 rounded-2xl border-2 border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-lg">
-                        <div className="flex items-center gap-3 px-4">
-                            <ShieldCheck className="text-primary h-6 w-6" />
-                            <span className="text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
+                    <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 md:p-4 rounded-2xl border-2 border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-lg gap-4 md:gap-0">
+                        <div className="flex items-center gap-3 px-2 md:px-4">
+                            <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
+                            <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                         </div>
-                        <div className="flex items-center gap-2">
-                             <Button variant="outline" className="rounded-xl font-black h-10 border-2" onClick={handlePrint}>
-                                <Printer className="mr-2 h-4 w-4" /> Print
+                        <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
+                             <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
+                                <Printer className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Print
                              </Button>
-                             <Button className="rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50" variant="outline" onClick={handleDownloadPDF}>
-                                <Download className="mr-2 h-4 w-4" /> Download PDF
+                             <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
+                                <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Download
                              </Button>
-                             <Button className="rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700" onClick={handleEmailReport}>
-                                <Mail className="mr-2 h-4 w-4" /> Email to My Address
+                             <Button className="w-full md:w-auto rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
+                                <Mail className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Email Report
                              </Button>
                         </div>
                     </div>
@@ -345,7 +339,7 @@ const PatientMedicalReport: React.FC = () => {
 
                 {/* VERBATIM REPORT CONTENT FROM STAFF PORTAL */}
                 {reportData && !loading && (
-                    <div className="flex flex-col items-center gap-8 py-8 px-4 overflow-x-auto print-container bg-muted/30 rounded-3xl border-2 border-dashed border-border" style={{ padding: '2rem' }}>
+                    <div className="flex flex-col items-center gap-8 py-8 px-4 overflow-x-auto print-container bg-muted/30 rounded-3xl border-2 border-dashed border-border print:bg-transparent print:border-0 print:p-0 print:overflow-visible" style={{ padding: '2rem' }}>
                         {/* PAGE 1 */}
                         <div className="a4-page shadow-2xl">
                             {/* Branding Header Area */}
@@ -501,8 +495,8 @@ const PatientMedicalReport: React.FC = () => {
                                         ) : (
                                             <div className="sig-img">&#123;signature&#125;</div>
                                         )}
-                                        <div className="sig-name">Dr. Anyanwu Ugochukwu D. FMCPath</div>
-                                        <div className="sig-title">Consultant in Charge</div>
+                                        <div className="sig-name">{reportData.branding?.doctor_name}</div>
+                                        <div className="sig-title">{reportData.branding?.doctor_post}</div>
                                     </div>
                                 </div>
                                 {reportData.branding?.footer_image ? (
@@ -648,8 +642,8 @@ const PatientMedicalReport: React.FC = () => {
                                         ) : (
                                             <div className="sig-img">&#123;signature&#125;</div>
                                         )}
-                                        <div className="sig-name">Dr. Anyanwu Ugochukwu D. FMCPath</div>
-                                        <div className="sig-title">Consultant in Charge</div>
+                                        <div className="sig-name">{reportData.branding?.doctor_name}</div>
+                                        <div className="sig-title">{reportData.branding?.doctor_post}</div>
                                     </div>
                                 </div>
                                 {reportData.branding?.footer_image ? (

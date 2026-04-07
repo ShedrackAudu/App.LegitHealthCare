@@ -134,10 +134,44 @@ def handle_patient(staff_id):
     if request.method == 'PUT':
         data = request.json
         # Update fields
-        patient.first_name = data.get('first_name', patient.first_name)
+        first_name = data.get('first_name', patient.first_name)
+        last_name = data.get('last_name', patient.last_name)
+        
+        patient.first_name = first_name
         patient.middle_name = data.get('middle_name', patient.middle_name)
-        patient.last_name = data.get('last_name', patient.last_name)
+        patient.last_name = last_name
         patient.department = data.get('department', patient.department)
+        
+        # 1. Sync with ScreeningYearBioData in the current bind
+        ScreeningYearBioData.query.filter(func.lower(ScreeningYearBioData.staff_id) == func.lower(clean_staff_id)).update({
+            "first_name": first_name,
+            "last_name": last_name
+        }, synchronize_session=False)
+        
+        # 2. Sync with PatientPortalUser in the 'patients' bind (Aggressive Force)
+        try:
+            from sqlalchemy import text
+            # Ensure we use the 'patients' engine directly for cross-DB reliability
+            patients_engine = db.engines.get('patients')
+            if patients_engine:
+                with patients_engine.connect() as conn:
+                    # Sync by both username (Staff ID) OR email for maximum reliability
+                    sync_query = text("""
+                        UPDATE patient_users 
+                        SET first_name = :f, last_name = :l 
+                        WHERE LOWER(username) = LOWER(:sid) 
+                        OR (email IS NOT NULL AND LOWER(email) = LOWER(:email))
+                    """)
+                    conn.execute(sync_query, {
+                        "f": first_name, 
+                        "l": last_name, 
+                        "sid": clean_staff_id,
+                        "email": patient.email
+                    })
+                    conn.commit()
+                    print(f"Force-sync successful for portal account: {clean_staff_id} / {patient.email}")
+        except Exception as e:
+            print(f"Aggressive sync to portal failed: {str(e)}")
         patient.gender = data.get('gender', patient.gender)
         
         dob_str = data.get('dob')
@@ -348,23 +382,30 @@ def get_patient_report(staff_id, year):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
-    patient = BioData.query.filter_by(staff_id=staff_id).first()
-    if not patient:
-        return jsonify({"error": "Patient not found"}), 404
-        
-    yearly = ScreeningYearBioData.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    from sqlalchemy import func
+    clean_id = staff_id.strip()
     
-    # Aggregated Patient Report
-    patient = BioData.query.filter_by(staff_id=staff_id).first()
+    # Case-insensitive patient lookup
+    patient = BioData.query.filter(func.lower(BioData.staff_id) == clean_id.lower()).first()
     if not patient:
-        return jsonify({"error": "Patient not found"}), 404
+        return jsonify({"error": "Patient profile not found in this section"}), 404
         
-    yearly = ScreeningYearBioData.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    # Case-insensitive yearly record lookup
+    yearly = ScreeningYearBioData.query.filter(
+        func.lower(ScreeningYearBioData.staff_id) == clean_id.lower(),
+        ScreeningYearBioData.screening_year == year
+    ).first()
+    
+    if not yearly:
+        return jsonify({"error": "Clinical data not found for the selected year"}), 404
     
     # Initialize basic info
     bio_info = {
         "staff_id": patient.staff_id,
         "patient_id": yearly.patient_id if yearly else "N/A",
+        "first_name": patient.first_name,
+        "middle_name": patient.middle_name,
+        "last_name": patient.last_name,
         "full_name": f"{patient.first_name} {patient.middle_name or ''} {patient.last_name}",
         "email": patient.email,
         "phone": patient.phone,
@@ -452,11 +493,7 @@ def get_patient_report(staff_id, year):
         
     # App Branding Templates
     branding = AppBranding.query.first()
-    branding_assets = {
-        "header_image": branding.header_image if branding else None,
-        "footer_image": branding.footer_image if branding else None,
-        "signature_image": branding.signature_image if branding else None
-    }
+    branding_data = branding.to_dict() if branding else {}
     
     return jsonify({
         "bio": bio_info,
@@ -468,7 +505,7 @@ def get_patient_report(staff_id, year):
             "report_date_time": report_date_time,
             "gen_date_time": datetime.utcnow().isoformat()
         },
-        "branding": branding_assets
+        "branding": branding_data
     }), 200
 
 @view_data_bp.route('/public/verify/<token>', methods=['GET'])
@@ -538,3 +575,155 @@ def get_dashboard_stats():
         },
         "clinical_counts": clinical_counts
     }), 200
+@view_data_bp.route('/patient/report-progress', methods=['GET'])
+def get_report_progress():
+    try:
+        staff_id = request.headers.get('X-Staff-ID')
+        if not staff_id:
+            return jsonify({"error": "Staff ID required"}), 400
+        
+        year = datetime.utcnow().year
+        from models import (
+            ConsultationData, FBCResult, KFTResult, LipidResult, 
+            LFTResult, SpecialTestsResult, DirectorReview
+        )
+        
+        # Try to find which database has clinical data for this patient this year
+        queries = {}
+        found_bind = None
+        for bind in ['dcp', 'dct']:
+            try:
+                engine = db.engines[bind]
+                # Use a RAW SQL check to be 100% sure we don't trigger model/session bind issues during detection
+                with engine.connect() as conn:
+                    res = conn.execute(db.text("SELECT id FROM consultation_data WHERE staff_id = :s_id AND screening_year = :year LIMIT 1"), {"s_id": staff_id, "year": year}).fetchone()
+                    if res:
+                         found_bind = bind
+                         break
+            except:
+                continue
+
+        if found_bind:
+            engine = db.engines[found_bind]
+            # Use the explicit bind on the query object
+            queries = {
+                 'c': db.session.query(ConsultationData).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 'f': db.session.query(FBCResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 'k': db.session.query(KFTResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 'li': db.session.query(LipidResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 'lf': db.session.query(LFTResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 's': db.session.query(SpecialTestsResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
+                 'd': db.session.query(DirectorReview).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first()
+            }
+
+        # 42 Point Logic Check
+        points = 0
+        total_possible = 42
+        missing_fields = []
+        
+        def check_field(val, label, cat):
+            if val is not None and str(val).strip() != "" and str(val).strip().lower() != "n/a":
+                return 1
+            missing_fields.append({"label": label, "category": cat})
+            return 0
+
+        c = queries.get('c')
+        f = queries.get('f')
+        k = queries.get('k')
+        li = queries.get('li')
+        lf = queries.get('lf')
+        s = queries.get('s')
+        d = queries.get('d')
+
+        # 1. Consultation (Vitals + clinical)
+        points += check_field(c.fbs if c else None, "FBS", "Blood Sugar")
+        points += check_field(c.rbs if c else None, "RBS", "Blood Sugar")
+        points += check_field(c.sugar_remark if c else None, "Sugar Remark", "Blood Sugar")
+        points += check_field(c.ua_result if c else None, "Urine Result", "UA")
+        points += check_field(c.ua_remark if c else None, "Urine Remark", "UA")
+        points += check_field(c.psa if c else None, "PSA", "PSA")
+        points += check_field(c.psa_remark if c else None, "PSA Remark", "PSA")
+        points += check_field(c.bp if c else None, "Blood Pressure", "Vitals")
+        points += check_field(c.pulse if c else None, "Pulse Rate", "Vitals")
+        points += check_field(c.spo2 if c else None, "SPO2", "Vitals")
+        points += check_field(c.assessment_hx_pe if c else None, "Hx/PE", "Clinical")
+        points += check_field(c.overall_lab_remark if c else None, "Lab Remark", "Clinical")
+        points += check_field(c.breast_exam if c else None, "Breast Exam", "Clinical")
+
+        # 2. FBC
+        points += check_field(f.pcv if f else None, "PCV", "FBC")
+        points += check_field(f.wbc if f else None, "WBC", "FBC")
+        points += check_field(f.lymp_percent if f else None, "Lymphocytes", "FBC")
+        points += check_field(f.gra_percent if f else None, "Neutrophils", "FBC")
+        points += check_field(f.mid_percent if f else None, "Mixed", "FBC")
+        points += check_field(f.plt if f else None, "Platelets", "FBC")
+        points += check_field(f.fbc_remark if f else None, "FBC Remark", "FBC")
+
+        # 3. KFT
+        points += check_field(k.potassium if k else None, "Potassium", "KFT")
+        points += check_field(k.sodium if k else None, "Sodium", "KFT")
+        points += check_field(k.chloride if k else None, "Chloride", "KFT")
+        points += check_field(k.hco3 if k else None, "Bicarbonate", "KFT")
+        points += check_field(k.urea if k else None, "Urea", "KFT")
+        points += check_field(k.creatinine if k else None, "Creatinine", "KFT")
+        points += check_field(k.kft_remark if k else None, "KFT Remark", "KFT")
+
+        # 4. Lipid
+        points += check_field(li.total_cholesterol if li else None, "Total Cholesterol", "Lipid")
+        points += check_field(li.triglycerides if li else None, "Triglycerides", "Lipid")
+        points += check_field(li.hdl if li else None, "HDL-c", "Lipid")
+        points += check_field(li.ldl if li else None, "LDL-c", "Lipid")
+        points += check_field(li.lp_remark if li else None, "Lipid Remark", "Lipid")
+
+        # 5. LFT
+        points += check_field(lf.ast if lf else None, "AST", "LFT")
+        points += check_field(lf.alt if lf else None, "ALT", "LFT")
+        points += check_field(lf.alp if lf else None, "ALP", "LFT")
+        points += check_field(lf.tb if lf else None, "TB", "LFT")
+        points += check_field(lf.cb if lf else None, "CB", "LFT")
+        points += check_field(lf.lft_remark if lf else None, "LFT Remark", "LFT")
+
+        # 6. Special
+        points += check_field(s.ecg_result if s else None, "ECG", "Special")
+        points += check_field(s.spirometry_result if s else None, "Spirometry", "Special")
+        points += check_field(s.audiometry_result if s else None, "Audiometry", "Special")
+
+        # 7. Comments (1 point logic)
+        has_comment = 0
+        if d and (d.comment_one or d.comment_two or d.comment_three or d.comment_four):
+            has_comment = 1
+        
+        points += has_comment
+        if not has_comment:
+            missing_fields.append({"label": "Final Medical Advice", "category": "Review"})
+
+        percentage = round((points / total_possible) * 100) if points > 0 else 0
+        
+        # Dynamic status labels
+        status = "Registration Only"
+        if points > 1: status = "Lab Testing In Progress"
+        if points > 15: status = "Diagnostic Stage"
+        if points > 31: status = "Medical Review Stage"
+        if points >= 41 and not has_comment: status = "Awaiting Final Advice"
+        if percentage == 100: status = "Report Ready"
+
+        return jsonify({
+            "percentage": percentage,
+            "points": points,
+            "total": total_possible,
+            "status": status,
+            "year": year,
+            "missing_count": len(missing_fields),
+            "missing_preview": missing_fields[:5]
+        }), 200
+    except Exception as e:
+        print(f"CRITICAL PROGRESS ERROR: {e}")
+        return jsonify({
+            "percentage": 0,
+            "points": 0,
+            "total": 42,
+            "status": "Registration Data Preparing",
+            "year": datetime.utcnow().year,
+            "missing_count": 42,
+            "missing_preview": []
+        }), 200

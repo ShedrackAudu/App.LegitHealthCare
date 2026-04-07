@@ -8,6 +8,7 @@ import {
   Plus
 } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -29,6 +30,8 @@ const ViewPatientsPage: React.FC = () => {
     const navigate = useNavigate();
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
+    const [deleting, setDeleting] = useState(false);
 
     const fetchPatients = async (query = '') => {
         setLoading(true);
@@ -57,17 +60,20 @@ const ViewPatientsPage: React.FC = () => {
 
 
 
-    const handleDelete = async (staffId: string) => {
-        if (!window.confirm(`Are you sure you want to delete patient ${staffId}? This will remove them from the comprehensive database.`)) return;
-        
+    const handleDelete = async () => {
+        if (!deleteModal.staffId) return;
+        setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/patients/${staffId}`, {
+            await axios.delete(`http://localhost:5000/api/patients/${deleteModal.staffId}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
-            setPatients(prev => prev.filter(p => p.staff_id !== staffId));
+            setPatients(prev => prev.filter(p => p.staff_id !== deleteModal.staffId));
             toast.success("Patient deleted successfully");
+            setDeleteModal({ open: false, staffId: '' });
         } catch (err) {
             toast.error("Failed to delete patient");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -182,7 +188,7 @@ const ViewPatientsPage: React.FC = () => {
                                                                 variant="ghost" 
                                                                 size="sm" 
                                                                 className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                                onClick={() => handleDelete(p.staff_id)}
+                                                                onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
                                                             >
                                                                 <Trash2 className="h-4 w-4" />
                                                             </Button>
@@ -197,6 +203,17 @@ const ViewPatientsPage: React.FC = () => {
                         )}
                     </CardContent>
                 </Card>
+
+                <ActionConfirmModal
+                    isOpen={deleteModal.open}
+                    onClose={() => setDeleteModal({ open: false, staffId: '' })}
+                    onConfirm={handleDelete}
+                    title="Delete Patient Record"
+                    description={`Are you sure you want to delete patient ${deleteModal.staffId}? This will permanently remove them from the database.`}
+                    confirmText="Delete Record"
+                    variant="danger"
+                    loading={deleting}
+                />
             </div>
         </MainLayout>
     );

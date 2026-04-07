@@ -25,6 +25,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useAppContext } from '@/context/AppContext';
+import { generateAppointmentSlots } from '@/lib/timeUtils';
 
 const appointmentSchema = z.object({
   appointment_date: z.string().refine((date) => {
@@ -34,6 +35,7 @@ const appointmentSchema = z.object({
   }, {
     message: "Appointments can only be booked for Monday to Friday"
   }),
+  time_slot: z.string().min(1, "Please select a time slot"),
   reason: z.string().min(1, "Reason is required").max(500, "Reason must be less than 500 characters")
 });
 
@@ -56,10 +58,35 @@ const PatientAppointmentsPage = () => {
   const [profile, setProfile] = useState<any>(null);
   const [loadingProfile, setLoadingProfile] = useState(true);
   const [isBooking, setIsBooking] = useState(false);
+  const [bookedSlots, setBookedSlots] = useState<string[]>([]);
+  const [fetchingSlots, setFetchingSlots] = useState(false);
 
-  const { register, handleSubmit, formState: { errors }, reset } = useForm<AppointmentValues>({
+  const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<AppointmentValues>({
     resolver: zodResolver(appointmentSchema)
   });
+
+  const selectedDate = watch('appointment_date');
+  const selectedSlot = watch('time_slot');
+
+  useEffect(() => {
+    const fetchBookedSlots = async () => {
+        if (!selectedDate) return;
+        setFetchingSlots(true);
+        try {
+            // Re-format to DD-MM-YYYY for backend consistency
+            const [y, m, d] = selectedDate.split('-');
+            const formattedDate = `${d}-${m}-${y}`;
+            const res = await axios.get(`http://localhost:5000/api/appointments/booked?date=${formattedDate}`);
+            setBookedSlots(res.data);
+            setValue('time_slot', ''); // Reset slot when date changes
+        } catch (err) {
+            console.error("Error fetching booked slots:", err);
+        } finally {
+            setFetchingSlots(false);
+        }
+    };
+    fetchBookedSlots();
+  }, [selectedDate, setValue]);
 
   useEffect(() => {
      const fetchProfile = async () => {
@@ -196,9 +223,57 @@ const PatientAppointmentsPage = () => {
                                                 {errors.appointment_date.message}
                                             </p>
                                         ) : (
-                                            <p className="text-[10px] text-muted-foreground font-bold italic">* Clinical hours: Monday to Friday (8AM - 5PM)</p>
+                                            <p className="text-[10px] text-muted-foreground font-bold italic">* Clinical hours: Monday to Friday (10AM - 4PM)</p>
                                         )}
                                     </div>
+                                </div>
+
+                                <div className="space-y-4">
+                                    <Label className="text-sm font-black uppercase tracking-[0.1em] text-muted-foreground ml-1">
+                                        Choose Time Slot <span className="text-red-500 font-bold">*</span>
+                                        {fetchingSlots && <Loader2 className="inline ml-2 h-3 w-3 animate-spin text-primary" />}
+                                    </Label>
+                                    
+                                    {!selectedDate ? (
+                                        <div className="p-8 rounded-2xl bg-muted/20 border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground">
+                                            <Clock className="w-8 h-8 mb-2 opacity-20" />
+                                            <p className="text-xs font-bold uppercase tracking-widest">Select a date first</p>
+                                        </div>
+                                    ) : (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                                            {generateAppointmentSlots().map((slot) => {
+                                                const isBooked = bookedSlots.includes(slot);
+                                                const isSelected = selectedSlot === slot;
+                                                
+                                                return (
+                                                    <button
+                                                        key={slot}
+                                                        type="button"
+                                                        disabled={isBooked || fetchingSlots}
+                                                        onClick={() => setValue('time_slot', slot)}
+                                                        className={`
+                                                            relative h-14 rounded-xl border-2 font-bold text-xs transition-all
+                                                            ${isBooked 
+                                                                ? 'bg-muted/50 border-muted text-muted-foreground cursor-not-allowed opacity-50' 
+                                                                : isSelected
+                                                                    ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 scale-[1.02]'
+                                                                    : 'bg-background border-primary/10 hover:border-primary/40 hover:bg-primary/5'
+                                                            }
+                                                        `}
+                                                    >
+                                                        {slot.split(' - ')[0]}
+                                                        {isBooked && <div className="absolute -bottom-1 -right-1 bg-red-500 text-[8px] text-white px-1 rounded-sm uppercase font-black">Full</div>}
+                                                    </button>
+                                                );
+                                            })}
+                                        </div>
+                                    )}
+                                    {errors.time_slot && (
+                                        <p className="text-xs text-red-500 font-bold flex items-center gap-1.5 ml-1">
+                                            <AlertCircle className="h-3.5 w-3.5" />
+                                            {errors.time_slot.message}
+                                        </p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-3">

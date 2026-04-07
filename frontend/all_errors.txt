@@ -1,0 +1,2 @@
+﻿src/pages/SignupPage.tsx(368,22): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?
+src/pages/SignupPage.tsx(393,23): error TS2552: Cannot find name 'motion'. Did you mean 'Option'?

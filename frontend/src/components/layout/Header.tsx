@@ -37,13 +37,16 @@ const getPageTitle = (pathname: string, branding: any, brandingError: boolean) =
   if (pathname.includes('/account/2fa')) return 'Manage 2FA';
   if (pathname.includes('/account')) return 'Manage Account';
   if (pathname.includes('/messages')) return 'Messaging';
-  if (pathname.includes('/ai-settings')) return 'AI Overview Settings';
-  if (pathname.includes('/branding') || pathname.includes('/system-branding')) return 'Clinic Branding';
-  if (pathname.includes('/admin/access-keys')) return 'Access Keys';
-  if (pathname.includes('/user-management')) return 'User Management';
+  if (pathname.includes('/ai-integration')) return 'AI Insights & Parameters';
+  if (pathname.includes('/branding') || pathname.includes('/system-branding')) return 'Branding & Assets';
+  if (pathname.includes('/admin/access-keys')) return 'Security Access Keys';
+  if (pathname.includes('/user-management')) return 'User & Account Management';
   if (pathname.includes('/roles-permissions')) return 'Role Configuration';
-  if (pathname.includes('/audit-logs')) return 'Audit Trails';
-  if (pathname.includes('/data-management')) return 'Data Downloads';
+  if (pathname.includes('/audit-logs')) return 'Security Audit Trails';
+  if (pathname.includes('/data-management')) return 'Data Management';
+  if (pathname.includes('/system-config')) return 'System Settings';
+  if (pathname.includes('/departments')) return 'Clinic Departments';
+  if (pathname.includes('/appointments')) return 'Appointment Scheduler';
   
   return (branding?.clinic_name && !brandingError) ? branding.clinic_name : 'Legit HealthCare';
 };

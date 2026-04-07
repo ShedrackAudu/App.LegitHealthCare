@@ -12,7 +12,7 @@ import { useAppContext } from '@/context/AppContext';
 const PatientOTPPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const { setUser } = useAppContext();
+  const { setUser, branding } = useAppContext();
   const { patientData, claimData } = location.state || {};
   const email = claimData?.email || patientData?.email;
   const firstName = patientData?.first_name || 'Patient';
@@ -105,8 +105,18 @@ const PatientOTPPage = () => {
       >
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="text-center pb-2">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto text-primary mb-4">
-                <Mail className="w-8 h-8" />
+            <div className="flex justify-center mb-4">
+              {branding?.logo_light ? (
+                <img 
+                  src={`http://localhost:5000${branding.logo_light}`} 
+                  alt="Logo" 
+                  className="h-16 w-auto object-contain" 
+                />
+              ) : (
+                <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                    <Mail className="w-8 h-8" />
+                </div>
+              )}
             </div>
             <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
             <CardDescription>
