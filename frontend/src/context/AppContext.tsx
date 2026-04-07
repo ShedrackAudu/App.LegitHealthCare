@@ -29,7 +29,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   });
 
   const [activeYear, setActiveYear] = useState(() => {
-    return localStorage.getItem('activeYear') || '2025';
+    return localStorage.getItem('activeYear') || new Date().getFullYear().toString();
   });
   
   const [user, setUser] = useState<any | null>(() => {

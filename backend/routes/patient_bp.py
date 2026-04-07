@@ -20,6 +20,24 @@ def search_patient():
     contexts = ['dcp', 'dct']
     clean_id = staff_id.strip()
     
+    # Check if this patient already has a verified account in the portal
+    # Explicitly check the 'patients' bind via raw SQL to ensure engine accuracy
+    try:
+        patients_engine = db.get_engine(app=current_app, bind='patients')
+        with patients_engine.connect() as conn:
+            check_q = text("SELECT id FROM patient_users WHERE username = :sid AND is_verified = 1")
+            res = conn.execute(check_q, {"sid": clean_id}).fetchone()
+            if res:
+                return jsonify({
+                    "error": "An account for this Staff ID already exists in the Patient Portal.",
+                    "already_exists": True,
+                    "login_url": "/login?portal=patient"
+                }), 409
+    except Exception as e:
+        print(f"Error checking for existing user in portal bind: {str(e)}")
+        # Continue search anyway if check fails
+
+
     for ctx in contexts:
         try:
             engine = db.engines.get(ctx)
@@ -203,12 +221,29 @@ def get_report_years():
     if not staff_id:
         return jsonify({"error": "X-Staff-ID header required"}), 400
         
-    from models import ScreeningYearBioData
-    # Query unique years for this staff_id across all sections/binds
-    # Since ScreeningYearBioData is in hc_system.db, it tracks all yearly registrations
-    records = ScreeningYearBioData.query.filter_by(staff_id=staff_id).order_by(ScreeningYearBioData.screening_year.desc()).all()
-    years = sorted(list(set([r.screening_year for r in records])), reverse=True)
+    clean_id = staff_id.strip()
+    years_set = set()
+    contexts = ['dcp', 'dct']
     
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine:
+                engine = db.get_engine(bind=ctx)
+            
+            with engine.connect() as conn:
+                # Use raw SQL for consistent cross-bind behavior if needed, 
+                # but ScreeningYearBioData is standard model. 
+                # Routing session handles binds if we set header, but here we loop manually.
+                query = text("SELECT DISTINCT screening_year FROM screening_year_bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                res = conn.execute(query, {"sid": clean_id})
+                for row in res:
+                    years_set.add(row[0])
+        except Exception as e:
+            print(f"Error fetching years in {ctx}: {str(e)}")
+            continue
+            
+    years = sorted(list(years_set), reverse=True)
     return jsonify(years), 200
 
 @patient_bp.route('/api/patient/profile', methods=['GET'])
@@ -217,23 +252,105 @@ def get_patient_profile():
     if not staff_id:
         return jsonify({"error": "X-Staff-ID header required"}), 400
         
-    from models import BioData
-    patient = BioData.query.filter_by(staff_id=staff_id).first()
-    if not patient:
-        return jsonify({"error": "Patient profile not found"}), 404
+    clean_id = staff_id.strip()
+    contexts = ['dcp', 'dct']
+    
+    for ctx in contexts:
+        try:
+            # Access engine directly from db.engines for maximum reliability
+            engine = db.engines.get(ctx)
+            if not engine:
+                continue
+                
+            with engine.connect() as conn:
+                query = text("SELECT staff_id, first_name, middle_name, last_name, department, gender, dob, age, phone, email, race, nationality FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                res = conn.execute(query, {"sid": clean_id})
+                result = res.fetchone()
+                
+                if result:
+                    # Robust mapping
+                    row = dict(result._mapping)
+                    return jsonify({
+                        "staff_id": str(row.get('staff_id')),
+                        "first_name": row.get('first_name'),
+                        "middle_name": row.get('middle_name'),
+                        "last_name": row.get('last_name'),
+                        "department": row.get('department', 'General'),
+                        "gender": row.get('gender', 'N/A'),
+                        "dob": str(row.get('dob')) if row.get('dob') else 'N/A',
+                        "age": row.get('age', 'N/A'),
+                        "phone": row.get('phone', 'N/A'),
+                        "email": row.get('email', 'N/A'),
+                        "race": row.get('race', 'N/A'),
+                        "nationality": row.get('nationality', 'N/A'),
+                        "section": ctx.upper()
+                    }), 200
+        except Exception as e:
+            print(f"DEBUG: Error in {ctx} profile: {str(e)}")
+            continue
+            
+    return jsonify({"error": "Patient profile not found in any clinical section."}), 404
+
+@patient_bp.route('/api/patient/reset-password/request', methods=['POST'])
+def reset_password_request():
+    data = request.json
+    email = data.get('email')
+    
+    user = PatientPortalUser.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "No account found with this email address."}), 404
         
-    return jsonify({
-        "staff_id": patient.staff_id,
-        "first_name": patient.first_name,
-        "middle_name": patient.middle_name,
-        "last_name": patient.last_name,
-        "department": patient.department,
-        "gender": patient.gender,
-        "dob": patient.dob.isoformat() if patient.dob else None,
-        "age": patient.age,
-        "phone": patient.phone,
-        "email": patient.email,
-        "race": patient.race,
-        "nationality": patient.nationality
-    }), 200
+    otp = generate_otp()
+    user.otp_code = otp
+    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    db.session.commit()
+    
+    try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        if logo_url and logo_url.startswith('/'):
+            base_url = request.url_root.rstrip('/')
+            logo_url = f"{base_url}{logo_url}"
+            
+        subject = "Password Reset Verification - Legit HealthCare"
+        html_content = EmailService.get_otp_template(user.first_name, otp, logo_url=logo_url)
+        success = EmailService.send_email(user.email, subject, html_content)
+        
+        if not success:
+            return jsonify({"error": "System was unable to connect to the mail server. Please contact your system administrator."}), 500
+            
+    except Exception as e:
+        return jsonify({"error": f"Internal System Error: {str(e)}"}), 500
+        
+    return jsonify({"message": "A 6-digit reset code has been sent to your email.", "success": True}), 200
+
+@patient_bp.route('/api/patient/reset-password/verify', methods=['POST'])
+def reset_password_verify():
+    data = request.json
+    email = data.get('email')
+    otp = data.get('otp')
+    new_password = data.get('new_password')
+    
+    if not all([email, otp, new_password]):
+        return jsonify({"error": "All fields are required."}), 400
+        
+    user = PatientPortalUser.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"error": "User not found."}), 404
+        
+    if user.otp_code != otp or user.otp_expiry < datetime.utcnow():
+        return jsonify({"error": "Invalid or expired verification code."}), 400
+        
+    # Strong password check (optional but recommended)
+    from auth_utils import is_password_strong
+    if not is_password_strong(new_password):
+        return jsonify({"error": "New password does not meet safety requirements."}), 400
+        
+    user.set_password(new_password)
+    user.otp_code = None # Clear OTP after use
+    db.session.commit()
+    
+    return jsonify({"message": "Your password has been reset successfully. You can now log in.", "success": True}), 200
 

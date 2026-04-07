@@ -1,19 +1,22 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, User, AlertCircle, Building2, HelpCircle } from 'lucide-react';
+import { Search, ArrowRight, User, AlertCircle, Building2, HelpCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useAppContext } from '@/context/AppContext';
 
 const PatientSearchPage = () => {
   const [staffId, setStaffId] = useState('');
   const [loading, setLoading] = useState(false);
   const [patientData, setPatientData] = useState<any>(null);
   const [error, setError] = useState(false);
+  const [existingUser, setExistingUser] = useState(false);
   const navigate = useNavigate();
+  const { branding } = useAppContext();
 
   const handleSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -32,11 +35,16 @@ const PatientSearchPage = () => {
       toast.success('Record found successfully!');
     } catch (err: any) {
       console.error('Search error:', err);
-      setError(true);
-      if (err.response?.status === 404) {
-        toast.error('Staff ID not found in our records.');
+      if (err.response?.status === 409 && err.response?.data?.already_exists) {
+        setExistingUser(true);
+        toast.error('Account already exists for this Staff ID.');
       } else {
-        toast.error('An error occurred during search. Please try again.');
+        setError(true);
+        if (err.response?.status === 404) {
+          toast.error('Staff ID not found in our records.');
+        } else {
+          toast.error('An error occurred during search. Please try again.');
+        }
       }
     } finally {
       setLoading(false);
@@ -63,8 +71,18 @@ const PatientSearchPage = () => {
         className="w-full max-w-md"
       >
         <div className="text-center mb-10 space-y-4">
-          <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 border-2 border-primary/20 mb-4 shadow-xl shadow-primary/10 group">
-             <Building2 className="w-10 h-10 text-primary group-hover:scale-110 transition-transform duration-500" />
+          <div className="flex justify-center mb-4">
+            {branding?.logo_light ? (
+              <img 
+                src={`http://localhost:5000${branding.logo_light}`} 
+                alt="Logo" 
+                className="h-16 w-auto object-contain" 
+              />
+            ) : (
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 border-2 border-primary/20 shadow-xl shadow-primary/10 group">
+                <Building2 className="w-10 h-10 text-primary group-hover:scale-110 transition-transform duration-500" />
+              </div>
+            )}
           </div>
           <h1 className="text-4xl font-bold tracking-tight">Access Your Portal</h1>
           <p className="text-muted-foreground">Enter your Staff ID to claim your account and access your healthcare records.</p>
@@ -172,6 +190,37 @@ const PatientSearchPage = () => {
                      </p>
                   </div>
                 </CardContent>
+              </Card>
+            </motion.div>
+          )}
+
+          {existingUser && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, scale: 0.95 }}
+              animate={{ opacity: 1, height: 'auto', scale: 1 }}
+              exit={{ opacity: 0, height: 0, scale: 0.95 }}
+              className="mt-8"
+            >
+              <Card className="border-2 border-primary/20 bg-primary/5 backdrop-blur-xl">
+                <CardHeader className="text-center">
+                  <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 text-primary">
+                      <ShieldCheck className="w-6 h-6" />
+                  </div>
+                  <CardTitle className="text-xl font-bold">Account Already Exists</CardTitle>
+                </CardHeader>
+                <CardContent className="text-center">
+                  <p className="text-muted-foreground">
+                    An account for Staff ID <strong>{staffId}</strong> is already registered in our system.
+                  </p>
+                </CardContent>
+                <CardFooter>
+                  <Button 
+                    onClick={() => navigate('/login?portal=patient')}
+                    className="w-full h-12 font-bold rounded-xl"
+                  >
+                    Go to Patient Login
+                  </Button>
+                </CardFooter>
               </Card>
             </motion.div>
           )}

@@ -138,6 +138,11 @@ class PatientPortalUser(db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     
+    # 2FA Settings
+    totp_secret = db.Column(db.String(32), nullable=True)
+    is_2fa_enabled = db.Column(db.Boolean, default=False)
+    backup_codes = db.Column(db.Text, nullable=True) 
+
     # OTP verification
     otp_code = db.Column(db.String(6), nullable=True)
     otp_expiry = db.Column(db.DateTime, nullable=True)
@@ -161,6 +166,7 @@ class PatientPortalUser(db.Model):
             "email": self.email,
             "phone": self.phone,
             "is_verified": self.is_verified,
+            "is_2fa_enabled": self.is_2fa_enabled,
             "user_type": "patient",
             "roles": ["Patient"],
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
@@ -255,6 +261,7 @@ class AppBranding(db.Model):
     logo_light = db.Column(db.String(255), nullable=True)
     logo_dark = db.Column(db.String(255), nullable=True)
     favicon = db.Column(db.String(255), nullable=True)
+    clinic_slogan = db.Column(db.String(255), default="Excellence.")
     
     # Hero Illustration Images
     hero_image_1 = db.Column(db.String(255), nullable=True)
@@ -272,6 +279,9 @@ class AppBranding(db.Model):
     phone = db.Column(db.String(50), nullable=True)
     social_links = db.Column(db.Text, default='[]') # JSON string
     
+    doctor_name = db.Column(db.String(100), default="Dr. Anyanwu Ugochukwu D. FMCPath")
+    doctor_post = db.Column(db.String(100), default="Consultant in Charge")
+    
     updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def to_dict(self):
@@ -283,6 +293,7 @@ class AppBranding(db.Model):
                 social_links = []
         return {
             "clinic_name": self.clinic_name,
+            "clinic_slogan": self.clinic_slogan,
             "logo_light": self.logo_light,
             "logo_dark": self.logo_dark,
             "favicon": self.favicon,
@@ -295,7 +306,9 @@ class AppBranding(db.Model):
             "address": self.address,
             "email": self.email,
             "phone": self.phone,
-            "social_links": social_links
+            "social_links": social_links,
+            "doctor_name": self.doctor_name,
+            "doctor_post": self.doctor_post
         }
 
 class Department(db.Model):
@@ -730,6 +743,7 @@ class Appointment(db.Model):
     email = db.Column(db.String(100))
     nationality = db.Column(db.String(100))
     appointment_date = db.Column(db.DateTime, nullable=False)
+    time_slot = db.Column(db.String(50)) # e.g. 10:00 AM - 10:30 AM
     reason = db.Column(db.Text, nullable=False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow)
 
@@ -746,6 +760,7 @@ class Appointment(db.Model):
             "email": self.email,
             "nationality": self.nationality,
             "appointment_date": self.appointment_date.isoformat(),
+            "time_slot": self.time_slot,
             "reason": self.reason,
             "created_at": self.created_at.isoformat()
         }

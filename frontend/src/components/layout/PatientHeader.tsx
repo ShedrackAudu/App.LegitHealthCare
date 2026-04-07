@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Sun, Moon, LogOut, User, Bell } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useTheme } from '@/components/theme-provider';
 import { Button } from '@/components/ui/button';
+import axios from 'axios';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -27,6 +28,23 @@ export const PatientHeader: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
+  const [profileName, setProfileName] = useState<string | null>(null);
+
+  const fetchName = useCallback(async () => {
+    if (!user?.username) return;
+    try {
+      const response = await axios.get('http://localhost:5000/api/patient/profile', {
+        headers: { 'X-Staff-ID': user.username }
+      });
+      setProfileName(response.data.first_name);
+    } catch (err) {
+      console.error("Header name fetch failed:", err);
+    }
+  }, [user?.username]);
+
+  useEffect(() => {
+    fetchName();
+  }, [fetchName]);
 
   const handleLogout = () => {
     setUser(null);
@@ -34,7 +52,7 @@ export const PatientHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
         
         {/* Left Side: Back Button, Page Title */}
@@ -73,7 +91,7 @@ export const PatientHeader: React.FC = () => {
                 </div>
                 {user && (
                     <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors hidden md:inline-block pr-1">
-                        {user.first_name}
+                        {profileName || user.first_name}
                     </span>
                 )}
               </Button>
@@ -81,7 +99,7 @@ export const PatientHeader: React.FC = () => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/patient/profile')}>
+              <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/patient/account')}>
                 <User className="mr-2 h-4 w-4" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />

@@ -50,7 +50,7 @@ const adminItems: SidebarItem[] = [
   { title: 'User Management', path: '/user-management', icon: UserCog, permission: 'view_users' },
   { title: 'Role Configuration', path: '/roles-permissions', icon: ShieldCheck, permission: 'manage_roles' },
   { title: 'Audit Trails', path: '/audit-logs', icon: FileText, permission: 'view_audit_logs' },
-  { title: 'Data Downloads', path: '/data-management', icon: Database, permission: 'download_data' },
+  { title: 'Data Management', path: '/data-management', icon: Database, permission: 'download_data' },
   { title: 'Access Keys', path: '/admin/access-keys', icon: Key, permission: 'manage_roles' },
   { title: 'AI Integration', path: '/ai-integration', icon: Bot, permission: 'manage_ai' },
   { title: 'System Branding', path: '/system-branding', icon: Palette, permission: 'manage_branding' },

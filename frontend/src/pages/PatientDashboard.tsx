@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { 
   Activity, 
@@ -9,9 +9,11 @@ import {
   Clock,
   TrendingUp,
   CheckCircle2,
-  AlertCircle
+  AlertCircle,
+  User,
+  Building2
 } from 'lucide-react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -28,30 +30,71 @@ const PatientDashboard = () => {
     lastScreening: 'N/A'
   });
 
+  const [profile, setProfile] = useState<any>(null);
+  const [reportProgress, setReportProgress] = useState<any>(null);
+
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
     return () => clearInterval(timer);
   }, []);
 
   useEffect(() => {
-    const fetchDashboardData = async () => {
+    const fetchData = async () => {
+      if (!user?.username) return;
+
+      // 1. Profile Fetch (Critical)
       try {
-        const [yearsRes] = await Promise.all([
-          axios.get('http://localhost:5000/api/patient/reports/years', {
-            headers: { 'X-Staff-ID': user?.username }
-          })
-        ]);
+        const profileRes = await axios.get('http://localhost:5000/api/patient/profile', {
+          headers: { 'X-Staff-ID': user?.username }
+        });
+        setProfile(profileRes.data);
+      } catch (err) {
+        console.error("Profile fetch error:", err);
+      }
+
+      // 2. Core Stats (Years/Reports)
+      try {
+        const yearsRes = await axios.get('http://localhost:5000/api/patient/reports/years', {
+          headers: { 'X-Staff-ID': user?.username }
+        });
         setStats(prev => ({
           ...prev,
           totalReports: yearsRes.data.length,
           lastScreening: yearsRes.data[0] || 'N/A'
         }));
       } catch (err) {
-        console.error("Dashboard fetch error:", err);
+        console.error("Years fetch error:", err);
+      }
+
+      // 3. Progress Tracking (Non-blocking)
+      try {
+        const progressRes = await axios.get('http://localhost:5000/api/patient/report-progress', {
+          headers: { 'X-Staff-ID': user?.username }
+        });
+        setReportProgress(progressRes.data);
+      } catch (err) {
+        console.error("Progress fetch error:", err);
+        setReportProgress({
+            percentage: 0,
+            points: 0,
+            total: 42,
+            status: "Report Pending",
+            year: new Date().getFullYear(),
+            missing_count: 42,
+            missing_preview: []
+        });
       }
     };
-    if (user?.username) fetchDashboardData();
+
+    fetchData();
   }, [user]);
+
+  const getProgressColor = (percent: number) => {
+    if (percent < 30) return "#f97316"; // orange-500
+    if (percent < 70) return "#6366f1"; // indigo-500
+    if (percent < 100) return "#3b82f6"; // blue-500
+    return "#10b981"; // emerald-500
+  };
 
   const formatDateTime = (date: Date) => {
     const timeOptions: Intl.DateTimeFormatOptions = { 
@@ -121,8 +164,24 @@ const PatientDashboard = () => {
                </div>
                <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-[0.9]">
                   Welcome back, <br />
-                  <span className="text-white/70 italic">{user?.first_name}!</span>
+                  <span className="text-white/70 italic">{profile?.first_name || user?.first_name}!</span>
                </h1>
+               {profile && (
+                 <div className="flex flex-wrap items-center justify-center lg:justify-start gap-3 text-white/80 font-bold">
+                   <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center gap-2 text-sm">
+                     <Activity className="w-4 h-4 text-emerald-400" />
+                     {profile.age} Years Old
+                   </div>
+                   <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center gap-2 text-sm capitalize">
+                     <User className="w-4 h-4 text-blue-400" />
+                     {profile.gender}
+                   </div>
+                   <div className="px-4 py-1.5 rounded-full bg-white/10 backdrop-blur-md border border-white/10 flex items-center gap-2 text-sm">
+                     <Building2 className="w-4 h-4 text-amber-400" />
+                     {profile.department}
+                   </div>
+                 </div>
+               )}
                <p className="text-lg md:text-xl text-primary-foreground/80 max-w-2xl font-medium leading-relaxed">
                   Everything you need to manage your medical journey is right here. 
                   Access your screening reports, schedule clinical visits, and track your wellness progress in real-time.
@@ -142,6 +201,78 @@ const PatientDashboard = () => {
                </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* Report Progress Card */}
+        <motion.div variants={item} initial="hidden" animate="show" className="grid grid-cols-1 gap-8">
+          <Card className="border-2 shadow-xl rounded-[2.5rem] overflow-hidden bg-gradient-to-br from-card to-primary/5 border-primary/10">
+            <CardContent className="p-8">
+              {!reportProgress ? (
+                <div className="flex items-center justify-center h-40">
+                  <Activity className="h-8 w-8 animate-spin text-primary/30" />
+                  <span className="ml-3 font-bold text-muted-foreground">Calculating Report Status...</span>
+                </div>
+              ) : (
+                <div className="flex flex-col md:flex-row items-center gap-8">
+                    <div className="relative h-40 w-40 shrink-0">
+                        <svg className="h-full w-full" viewBox="0 0 100 100">
+                            <circle className="text-muted/20" strokeWidth="8" stroke="currentColor" fill="transparent" r="42" cx="50" cy="50" />
+                            <motion.circle 
+                                strokeWidth="8" 
+                                strokeDasharray={264}
+                                initial={{ strokeDashoffset: 264 }}
+                                animate={{ strokeDashoffset: 264 - (264 * (reportProgress.percentage || 0)) / 100 }}
+                                transition={{ duration: 1.5, ease: "easeOut" }}
+                                strokeLinecap="round" 
+                                stroke={getProgressColor(reportProgress.percentage)} 
+                                fill="transparent" 
+                                r="42" cx="50" cy="50" 
+                            />
+                        </svg>
+                        <div className="absolute inset-0 flex flex-col items-center justify-center">
+                            <span className="text-4xl font-black tracking-tighter" style={{ color: getProgressColor(reportProgress.percentage) }}>
+                                {reportProgress.percentage}%
+                            </span>
+                            <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground">Complete</span>
+                        </div>
+                    </div>
+                    
+                    <div className="flex-1 space-y-4 text-center md:text-left">
+                        <div>
+                            <h2 className="text-2xl font-black tracking-tight">{reportProgress.year} Medical Report Status</h2>
+                            <p className="text-lg font-bold text-primary flex items-center justify-center md:justify-start gap-2">
+                                <Activity className="h-5 w-5" />
+                                {reportProgress.status}
+                            </p>
+                        </div>
+                        <div className="flex flex-wrap gap-2 justify-center md:justify-start">
+                            <div className="px-4 py-1.5 bg-background/50 rounded-full border border-border text-xs font-bold flex items-center gap-2">
+                                <CheckCircle2 className="h-3 w-3 text-emerald-500" />
+                                {reportProgress.points} / {reportProgress.total} Items Filled
+                            </div>
+                            {reportProgress.missing_count > 0 && (
+                                <div className="px-4 py-1.5 bg-amber-500/10 rounded-full border border-amber-500/20 text-xs font-bold text-amber-600 flex items-center gap-2">
+                                    <AlertCircle className="h-3 w-3" />
+                                    {reportProgress.missing_count} Items Pending
+                                </div>
+                            )}
+                        </div>
+                        {reportProgress.percentage < 100 && reportProgress.missing_preview?.length > 0 && (
+                            <p className="text-sm text-muted-foreground font-medium">
+                                Pending: <span className="text-foreground">{reportProgress.missing_preview.map((m: any) => m.label).join(", ")}...</span>
+                            </p>
+                        )}
+                    </div>
+                    
+                    <div className="shrink-0 flex flex-col gap-3">
+                        <Button className="rounded-xl font-bold h-12 shadow-lg" onClick={() => navigate('/patient/records')}>
+                            View Detailed Report
+                        </Button>
+                    </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
         </motion.div>
 
         {/* Dynamic Metrics */}

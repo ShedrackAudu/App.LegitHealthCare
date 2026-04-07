@@ -2,11 +2,37 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
-import { Shield, Activity, MessageSquare, Bell, Search, ArrowRight, CheckCircle2, Heart, Smartphone } from 'lucide-react';
+import { 
+  Shield, 
+  Activity, 
+  MessageSquare, 
+  Bell, 
+  ArrowRight, 
+  CheckCircle2, 
+  Heart, 
+  Facebook, 
+  Twitter, 
+  Instagram, 
+  Linkedin, 
+  Youtube, 
+  Globe, 
+  LinkIcon,
+  MessageCircle,
+  Music2,
+  Menu,
+  X,
+  Mail,
+  Phone,
+  MapPin,
+  FileText,
+  LineChart,
+  Calendar
+} from 'lucide-react';
 import axios from 'axios';
 
 const LandingPage = () => {
   const [branding, setBranding] = useState<any>(null);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   useEffect(() => {
     const fetchBranding = async () => {
@@ -26,11 +52,24 @@ const LandingPage = () => {
     return `http://localhost:5000${path}`;
   };
 
+  const getSocialIcon = (label: string) => {
+    const l = label.toLowerCase();
+    if (l.includes('facebook')) return Facebook;
+    if (l.includes('twitter') || l.includes('x')) return Twitter;
+    if (l.includes('instagram')) return Instagram;
+    if (l.includes('linkedin')) return Linkedin;
+    if (l.includes('youtube')) return Youtube;
+    if (l.includes('globe') || l.includes('web')) return Globe;
+    if (l.includes('whatsapp')) return MessageCircle;
+    if (l.includes('tiktok')) return Music2;
+    return LinkIcon;
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
               {branding?.logo_dark ? (
@@ -44,7 +83,11 @@ const LandingPage = () => {
             </div>
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
-              <a href="#patient-portal" className="text-primary font-black uppercase tracking-widest border-b-2 border-primary pb-1">Patient Portal</a>
+              <Link to="/login?portal=patient">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-4 rounded-full border-2 text-[10px] uppercase tracking-widest h-9">
+                  Patient Portal
+                </Button>
+              </Link>
               <a href="#about" className="hover:text-primary transition-colors">About</a>
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
@@ -56,8 +99,40 @@ const LandingPage = () => {
                 </Link>
               </div>
             </div>
+
+            {/* Mobile Menu Button */}
+            <div className="md:hidden flex items-center gap-4">
+              <ModeToggle />
+              <button 
+                onClick={() => setMenuOpen(!menuOpen)}
+                className="p-2 text-muted-foreground hover:text-primary transition-colors"
+              >
+                {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+              </button>
+            </div>
           </div>
         </div>
+
+        {/* Mobile Navigation Overlay */}
+        {menuOpen && (
+          <div className="md:hidden absolute top-20 left-0 w-full bg-background border-b border-border p-6 space-y-6 animate-in slide-in-from-top-4 duration-300 shadow-xl">
+            <div className="flex flex-col space-y-4 text-lg font-bold">
+              <a href="#services" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">Services</a>
+              <a href="#about" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">About</a>
+              <Link to="/login?portal=patient" onClick={() => setMenuOpen(false)} className="text-primary">
+                Patient Portal
+              </Link>
+            </div>
+            <div className="pt-6 border-t border-border flex flex-col gap-4">
+              <Link to="/login" onClick={() => setMenuOpen(false)}>
+                <Button variant="outline" className="w-full text-lg h-12">Login</Button>
+              </Link>
+              <Link to="/signup" onClick={() => setMenuOpen(false)}>
+                <Button className="w-full text-lg h-12 shadow-lg">Get Started</Button>
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* Hero Section */}
@@ -66,7 +141,7 @@ const LandingPage = () => {
         <div className="absolute top-0 left-0 w-full h-full -z-10 bg-grid-white/[0.02] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10 animate-pulse" />
         
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 text-center lg:text-left space-y-8">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500">
@@ -74,11 +149,13 @@ const LandingPage = () => {
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
                 </span>
-                Now Live: Enhanced Real-time Messaging
+                Now Live: Patient Portal
               </div>
-              <h1 className="text-6xl lg:text-8xl font-bold leading-[1.1] tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-primary/50">
-                {branding?.clinic_name || "Legit HealthCare"}: <br />
-                <span className="text-primary">Excellence.</span>
+              <h1 className="text-6xl lg:text-[100px] font-bold leading-[1.1] tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-primary/50">
+                {branding?.clinic_name}: <br />
+                <span className="text-xl lg:text-4xl text-primary font-black mt-2 block">
+                  {branding?.clinic_slogan}
+                </span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl mx-auto lg:mx-0">
                 The official healthcare management portal for DCP & DCT staff. Securely manage screenings, communicate with your clinical team, and track your wellness journey.
@@ -86,12 +163,12 @@ const LandingPage = () => {
               <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-center lg:justify-start pt-4">
                 <Link to="/signup">
                   <Button size="lg" className="w-full sm:w-auto h-16 px-10 text-lg font-bold shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform">
-                    Start Your Profile <ArrowRight className="ml-2 h-5 w-5" />
+                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="lg" className="w-full sm:w-auto h-16 px-10 text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
-                    Member Login
+                    Login
                   </Button>
                 </Link>
               </div>
@@ -136,7 +213,7 @@ const LandingPage = () => {
 
       {/* Features Section */}
       <section id="services" className="py-24 relative overflow-hidden">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
           <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
             <h2 className="text-4xl lg:text-6xl font-black tracking-tight">Clinical Features</h2>
             <p className="text-lg text-muted-foreground font-medium">Built with the highest standards of modern healthcare technology.</p>
@@ -157,6 +234,21 @@ const LandingPage = () => {
               title="Alerts" 
               description="Never miss an appointment. Automated reminders for screenings and medical follow-ups." 
             />
+            <FeatureCard 
+              icon={<FileText className="w-6 h-6" />} 
+              title="Digital Health Records" 
+              description="Access all your screening history and medical records in one centralized, secure digital vault." 
+            />
+            <FeatureCard 
+              icon={<LineChart className="w-6 h-6" />} 
+              title="Health Analytics" 
+              description="Gain insights into your health with automated trend analysis across your yearly medical evaluations." 
+            />
+            <FeatureCard 
+              icon={<Calendar className="w-6 h-6" />} 
+              title="Appointment Scheduler" 
+              description="Seamlessly book and manage your yearly medical screenings and follow-up consultations." 
+            />
           </div>
         </div>
       </section>
@@ -164,7 +256,7 @@ const LandingPage = () => {
       {/* NEW Patient Portal Highlight Section */}
       <section id="patient-portal" className="py-32 relative overflow-hidden">
          <div className="absolute inset-0 bg-primary/5 -z-10" />
-         <div className="container mx-auto px-6">
+         <div className="container mx-auto px-8 md:px-12 lg:px-20">
             <div className="bg-card/50 backdrop-blur-3xl rounded-[4rem] border-2 border-primary/10 shadow-3xl overflow-hidden p-8 md:p-20 relative">
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
                   <div className="space-y-10">
@@ -257,7 +349,7 @@ const LandingPage = () => {
 
       {/* Workflow Section */}
       <section className="py-32 bg-muted/50">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
            <div className="columns-1 lg:columns-2 gap-16 space-y-12">
               <div className="space-y-6">
                  <h2 className="text-4xl font-bold">The Modern Health Experience</h2>
@@ -284,7 +376,7 @@ const LandingPage = () => {
 
       {/* Footer */}
       <footer className="bg-background border-t border-border pt-16 pb-8">
-        <div className="container mx-auto px-6">
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
           <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-12">
             <div className="md:col-span-1 space-y-4">
                <div className="flex items-center">
@@ -311,18 +403,24 @@ const LandingPage = () => {
             </div>
             <div>
               <h4 className="font-bold mb-4 text-foreground text-sm uppercase tracking-wider">Contact</h4>
-              <ul className="space-y-3 text-sm text-muted-foreground">
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  {branding?.email || "contact@legithealthcare.com"}
+              <ul className="space-y-4 text-sm text-muted-foreground">
+                <li className="flex items-center gap-3 group transition-all">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                    <Mail className="w-4 h-4" />
+                  </div>
+                  <span className="group-hover:text-primary transition-colors">{branding?.email || "contact@legithealthcare.com"}</span>
                 </li>
-                <li className="flex items-center gap-2">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary" />
-                  {branding?.phone || "+234 (0) 800 LEGIT HC"}
+                <li className="flex items-center gap-3 group transition-all">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                    <Phone className="w-4 h-4" />
+                  </div>
+                  <span className="group-hover:text-primary transition-colors">{branding?.phone || "+234 (0) 800 LEGIT HC"}</span>
                 </li>
-                <li className="flex items-start gap-2 max-w-[200px]">
-                  <span className="w-1.5 h-1.5 rounded-full bg-primary mt-1.5 shrink-0" />
-                  {branding?.address || "Healthway Avenue, Wellness City"}
+                <li className="flex items-start gap-3 group transition-all">
+                  <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0 mt-0.5">
+                    <MapPin className="w-4 h-4" />
+                  </div>
+                  <span className="group-hover:text-primary transition-colors leading-relaxed">{branding?.address || "Healthway Avenue, Wellness City"}</span>
                 </li>
               </ul>
             </div>
@@ -337,8 +435,11 @@ const LandingPage = () => {
                     rel="noopener noreferrer" 
                     className="flex items-center gap-2 text-sm text-muted-foreground hover:text-primary transition-all group"
                   >
-                    <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                      <ArrowRight className="w-3 h-3" />
+                    <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
+                      {(() => {
+                        const Icon = getSocialIcon(link.label);
+                        return <Icon className="w-4 h-4" />;
+                      })()}
                     </div>
                     <span className="font-bold uppercase tracking-tight text-[10px]">{link.label}</span>
                   </a>

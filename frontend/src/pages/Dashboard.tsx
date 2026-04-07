@@ -15,7 +15,8 @@ import {
   History,
   Key,
   Clock,
-  ClipboardList
+  ClipboardList,
+  Settings2
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -103,6 +104,14 @@ const quickActions = [
 
 const adminActions = [
   { 
+    title: 'System Settings', 
+    description: 'Manage clinical departments and system configurations.',
+    icon: Settings2, 
+    path: '/system-config',
+    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    permission: 'manage_departments'
+  },
+  { 
     title: 'User Management', 
     description: 'Manage system users, roles, and account security.',
     icon: UserCog, 
@@ -127,7 +136,7 @@ const adminActions = [
     permission: 'view_audit_logs'
   },
   { 
-    title: 'Master Downloads', 
+    title: 'Data Management', 
     description: 'Export records and screening data to Excel.',
     icon: Database, 
     path: '/data-management',
@@ -135,8 +144,8 @@ const adminActions = [
     permission: 'download_data'
   },
   { 
-    title: 'System Branding', 
-    description: 'Customize clinic logos, names, and assets.',
+    title: 'Branding & Assets', 
+    description: 'Customize clinic logos, names, and visual assets.',
     icon: User, 
     path: '/system-branding',
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
@@ -149,14 +158,6 @@ const adminActions = [
     path: '/ai-integration',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     permission: 'admin'
-  },
-  { 
-    title: 'Departments', 
-    description: 'Manage clinic departments and staff allocation.',
-    icon: Users, 
-    path: '/departments',
-    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    permission: 'manage_departments'
   },
   { 
     title: 'Access Keys', 
@@ -264,13 +265,13 @@ const Dashboard: React.FC = () => {
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
           </div>
-          <div className="flex items-center gap-3 bg-card border rounded-xl p-3 px-5 shadow-sm">
-             <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center">
-                <Activity className="w-6 h-6 text-primary" />
+          <div className="flex items-center gap-3 bg-card border-2 rounded-xl p-2 md:p-3 md:px-5 shadow-sm w-full md:w-auto justify-start md:justify-end">
+             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
+                <Activity className="w-5 h-5 md:w-6 md:h-6 text-primary" />
              </div>
-             <div className="text-right">
-                <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">Server Status</p>
-                <p className="text-sm font-bold text-emerald-500">Connected & Optimized</p>
+             <div className="text-left md:text-right min-w-0">
+                <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
+                <p className="text-xs md:text-sm font-bold text-emerald-500 truncate">Connected & Optimized</p>
              </div>
           </div>
         </div>

@@ -113,7 +113,7 @@ const TestResultsPage: React.FC = () => {
     const [selectedQueueDept, setSelectedQueueDept] = useState<string>('');
     const [isSelecting, setIsSelecting] = useState(false);
     useEffect(() => {
-        if (searchId.length > 2) {
+        if (searchId.length > 0) {
             if (isSelecting) {
                 setIsSelecting(false);
                 setSearchResults([]);
@@ -472,7 +472,27 @@ const TestResultsPage: React.FC = () => {
 
 const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuccess }: any) => {
     const [loading, setLoading] = useState(false);
+    const [fetching, setFetching] = useState(false);
+    const [initialData, setInitialData] = useState<any>(null);
     
+    useEffect(() => {
+        const fetchExisting = async () => {
+            setFetching(true);
+            try {
+                const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
+                const resp = await axios.get(`http://localhost:5000/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                setInitialData(resp.data);
+            } catch (err) {
+                setInitialData({}); // Clear if not found
+            } finally {
+                setFetching(false);
+            }
+        };
+        fetchExisting();
+    }, [testType, patient.staff_id, activeYear, activeSection]);
+
     const onSubmit = async (data: any) => {
         setLoading(true);
         try {
@@ -491,6 +511,17 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             setLoading(false);
         }
     };
+
+    if (fetching) {
+        return (
+            <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
+                <div className="flex flex-col items-center gap-4">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <p className="text-sm font-bold text-muted-foreground animate-pulse">Fetching existing records...</p>
+                </div>
+            </Card>
+        );
+    }
 
     return (
         <div className="space-y-6">
@@ -513,13 +544,13 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                     <p className="text-xs text-muted-foreground font-medium ml-1">Recording for {activeYear} Screening Program</p>
                 </CardHeader>
                 <CardContent className="p-6">
-                    {testType === 'fbc' && <FBCForm onSubmit={onSubmit} loading={loading} />}
-                    {testType === 'kft' && <KFTForm onSubmit={onSubmit} loading={loading} />}
-                    {testType === 'lipid' && <LipidForm onSubmit={onSubmit} loading={loading} />}
-                    {testType === 'lft' && <LFTForm onSubmit={onSubmit} loading={loading} />}
-                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" />}
-                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} />}
-                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" />}
+                    {testType === 'fbc' && <FBCForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
+                    {testType === 'kft' && <KFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
+                    {testType === 'lipid' && <LipidForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
+                    {testType === 'lft' && <LFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
+                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} />}
+                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
+                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} />}
                 </CardContent>
             </Card>
         </div>
@@ -534,8 +565,15 @@ const BioItem = ({ label, value, className }: any) => (
 );
 
 // Form Components
-const FBCForm = ({ onSubmit, loading }: any) => {
-    const { register, handleSubmit } = useForm();
+const FBCForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
+
     const fields = [
         'pcv', 'wbc', 'plt', 'lymp_percent', 'lymp_abs', 'gra_percent', 'gra_abs', 
         'mid_percent', 'mid_abs', 'rbc', 'mcv', 'mch', 'mchc', 'rdw', 'pdw', 'hgb'
@@ -569,8 +607,15 @@ const FBCForm = ({ onSubmit, loading }: any) => {
     );
 };
 
-const KFTForm = ({ onSubmit, loading }: any) => {
-    const { register, handleSubmit, watch, setValue } = useForm();
+const KFTForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, watch, setValue, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
+
     const k = watch('potassium');
     const na = watch('sodium');
     const cl = watch('chloride');
@@ -607,8 +652,15 @@ const KFTForm = ({ onSubmit, loading }: any) => {
     );
 };
 
-const LipidForm = ({ onSubmit, loading }: any) => {
-    const { register, handleSubmit, watch, setValue } = useForm();
+const LipidForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, watch, setValue, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
+
     const tcho = watch('total_cholesterol');
     const tg = watch('triglycerides');
 
@@ -642,8 +694,14 @@ const LipidForm = ({ onSubmit, loading }: any) => {
     );
 };
 
-const LFTForm = ({ onSubmit, loading }: any) => {
-    const { register, handleSubmit } = useForm();
+const LFTForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -666,15 +724,21 @@ const LFTForm = ({ onSubmit, loading }: any) => {
     );
 };
 
-const SpirometryForm = ({ onSubmit, loading }: any) => {
-    const { register, handleSubmit } = useForm();
+const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Spirometry Result</Label><Input {...register('spirometry_result')} /></div>
+                <div className="space-y-2"><Label>Spirometry Remark</Label><Input {...register('spirometry_remark')} /></div>
                 <div className="space-y-2"><Label>Weight</Label><Input {...register('weight')} /></div>
                 <div className="space-y-2"><Label>Height</Label><Input {...register('height')} /></div>
-                <div className="space-y-2"><Label>Spirometry Remark</Label><Input {...register('spirometry_remark')} /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
@@ -685,8 +749,15 @@ const SpirometryForm = ({ onSubmit, loading }: any) => {
     );
 };
 
-const SimpleTestForm = ({ onSubmit, loading, test }: any) => {
-    const { register, handleSubmit } = useForm();
+const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
+    const { register, handleSubmit, reset } = useForm({
+        defaultValues: initialData
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
+
     const resultKey = `${test.toLowerCase()}_result`;
     const remarkKey = `${test.toLowerCase()}_remark`;
     return (

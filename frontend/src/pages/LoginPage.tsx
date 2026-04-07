@@ -96,7 +96,8 @@ const LoginPage = () => {
     try {
         const resp = await axios.post('http://localhost:5000/login/2fa', {
             user_id: tempUserId,
-            code: totpCode
+            code: totpCode,
+            portal: activePortal
         });
         
         setUser(resp.data.user);
@@ -118,7 +119,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-4 sm:p-8 transition-colors duration-500 selection:bg-primary/20 relative">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 sm:p-12 md:p-20 transition-colors duration-500 selection:bg-primary/20 relative">
       <div className="absolute top-4 right-4 text-xs">
         <ModeToggle />
       </div>
@@ -255,6 +256,8 @@ const LoginPage = () => {
                   </div>
                 )}
                 
+                {!requires2FA ? (
+                  <>
                 <div className="space-y-2">
                   <Label htmlFor="identity-patient">Patient ID</Label>
                   <div className="relative">
@@ -304,6 +307,33 @@ const LoginPage = () => {
                 <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Login to Patient Portal'}
                 </Button>
+                  </>
+                ) : (
+                  <div className="space-y-4 animate-in fade-in duration-300 relative">
+                    <div className="bg-primary/5 border border-primary/20 rounded-md p-3 text-sm text-center mb-4 text-primary font-medium">
+                        Two-Factor Authentication is active. Enter the code from your app to continue.
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Verification Code</Label>
+                      <Input 
+                          value={totpCode}
+                          onChange={e => setTotpCode(e.target.value)}
+                          placeholder="000000" 
+                          className="h-12 text-center text-xl tracking-widest font-mono"
+                          maxLength={6}
+                          disabled={loading} 
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                        <Button type="button" variant="outline" className="w-1/3 h-11" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
+                            Cancel
+                        </Button>
+                        <Button type="submit" className="w-2/3 h-11 text-base font-bold shadow-sm" disabled={loading}>
+                          {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Verify & Login'}
+                        </Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="text-sm text-center text-muted-foreground mt-6">
                   Don't have an account?{' '}

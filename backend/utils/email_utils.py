@@ -1,4 +1,5 @@
 import smtplib
+import socket
 import os
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
@@ -23,10 +24,6 @@ class EmailService:
     @staticmethod
     def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
         config = custom_config or EmailService._get_smtp_config()
-        if not config.get("username") or not config.get("password"):
-            print("Email configuration missing.")
-            return False
-
         try:
             msg = MIMEMultipart()
             display_name = config.get("display_name", "Legit HealthCare")
@@ -44,16 +41,23 @@ class EmailService:
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
             
-            # For Gmail SMTP, usually port 587 with TLS
-            with smtplib.SMTP(smtp_server, smtp_port) as server:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
                 server.starttls()
-                server.login(str(config["username"]), str(config["password"]))
+                try:
+                    server.login(str(config["username"]), str(config["password"]))
+                except smtplib.SMTPAuthenticationError:
+                    raise Exception("Mail server authentication failed. Please check your credentials.")
+                except Exception as e:
+                    raise Exception(f"Mail server login failed: {str(e)}")
+                    
                 server.send_message(msg)
             
             return True
+        except socket.timeout:
+            raise Exception("Connection to mail server timed out. Please check your network or firewall.")
         except Exception as e:
             print(f"Failed to send email: {e}")
-            return False
+            raise e
 
     @staticmethod
     def get_report_template(first_name, screening_year, section, logo_url=None):
@@ -330,4 +334,5 @@ class EmailService:
         </body>
         </html>
         """
+
 

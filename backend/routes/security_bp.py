@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, User
+from models import db
 from auth_utils import generate_totp_secret, get_totp_uri
 import pyotp
 import json
@@ -11,10 +11,15 @@ security_bp = Blueprint('security', __name__)
 @security_bp.route('/generate', methods=['POST'])
 def generate_2fa():
     user_id = request.headers.get('X-User-ID')
+    portal = request.args.get('portal', 'staff') # Default to staff
+    
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -30,12 +35,17 @@ def generate_2fa():
 @security_bp.route('/enable', methods=['POST'])
 def enable_2fa():
     user_id = request.headers.get('X-User-ID')
-    code = request.json.get('code')
+    data = request.json or {}
+    code = data.get('code')
+    portal = data.get('portal', 'staff')
     
     if not user_id or not code:
         return jsonify({"error": "Bad request"}), 400
         
-    user = User.query.get(user_id)
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user or not user.totp_secret:
         return jsonify({"error": "Setup not initialized"}), 400
         
@@ -53,12 +63,22 @@ def enable_2fa():
 @security_bp.route('/disable', methods=['POST'])
 def disable_2fa():
     user_id = request.headers.get('X-User-ID')
-    if not request.json: return jsonify({"error": "Bad request"}), 400
-    code = request.json.get('code') # require code to disable
+    data = request.json or {}
+    code = data.get('code')
+    portal = data.get('portal', 'staff')
     
-    user = User.query.get(user_id)
+    if not user_id or not code:
+        return jsonify({"error": "Bad request"}), 400
+        
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    
+    user = Model.query.get(user_id)
     if not user:
         return jsonify({"error": "Unauthorized"}), 401
+        
+    if not user.totp_secret:
+        return jsonify({"error": "2FA is not enabled"}), 400
         
     totp = pyotp.totp.TOTP(user.totp_secret)
     if totp.verify(code) or (user.backup_codes and code in json.loads(user.backup_codes)):

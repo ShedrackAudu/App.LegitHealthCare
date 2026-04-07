@@ -5,8 +5,9 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck } from 'lucide-react';
+import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck, Stethoscope, RotateCcw } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -24,15 +25,15 @@ interface ConfigSectionProps {
     newItemName: string;
     setNewItemName: (val: string) => void;
     handleAdd: (type: 'departments' | 'races' | 'nationalities') => void;
-    handleDelete: (type: 'departments' | 'races' | 'nationalities', id: number) => void;
+    onDeleteRequest: (type: 'departments' | 'races' | 'nationalities', id: number, name: string) => void;
     loading: boolean;
     adding: boolean;
 }
 
-const ConfigSection: React.FC<ConfigSectionProps> = ({ 
-    title, description, items, type, icon: Icon, 
-    newItemName, setNewItemName, handleAdd, handleDelete, 
-    loading, adding 
+const ConfigSection: React.FC<ConfigSectionProps> = ({
+    title, description, items, type, icon: Icon,
+    newItemName, setNewItemName, handleAdd, onDeleteRequest,
+    loading, adding
 }) => (
     <div className="grid grid-cols-1 md:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
         <Card className="col-span-1 border-2 shadow-lg h-fit overflow-hidden border-primary/10">
@@ -47,20 +48,20 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                 <div className="space-y-4">
                     <div className="space-y-2">
                         <Label>Name</Label>
-                        <Input 
-                            placeholder="Enter value..." 
+                        <Input
+                            placeholder="Enter value..."
                             value={newItemName}
                             onChange={(e) => setNewItemName(e.target.value)}
                             className="h-11 font-semibold border-2 focus-visible:ring-primary"
                             onKeyDown={(e) => e.key === 'Enter' && handleAdd(type)}
                         />
                     </div>
-                    <Button 
-                        onClick={() => handleAdd(type)} 
-                        className="w-full h-11 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all" 
+                    <Button
+                        onClick={() => handleAdd(type)}
+                        className="w-full h-11 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                         disabled={adding || !newItemName.trim()}
                     >
-                        {adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="mr-2 h-5 w-5" /> Add {title.slice(0,-1)}</>}
+                        {adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="mr-2 h-5 w-5" /> Add {title.slice(0, -1)}</>}
                     </Button>
                 </div>
             </CardContent>
@@ -96,11 +97,11 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         {items.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-4 bg-background hover:bg-primary/5 transition-colors group">
                                 <span className="font-bold text-base tracking-tight">{item.name}</span>
-                                <Button 
-                                    variant="ghost" 
-                                    size="icon" 
-                                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200" 
-                                    onClick={() => handleDelete(type, item.id)}
+                                <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
+                                    onClick={() => onDeleteRequest(type, item.id, item.name)}
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
@@ -118,10 +119,17 @@ const SystemConfigPage: React.FC = () => {
     const [departments, setDepartments] = useState<ConfigItem[]>([]);
     const [races, setRaces] = useState<ConfigItem[]>([]);
     const [nationalities, setNationalities] = useState<ConfigItem[]>([]);
-    
+
     const [loading, setLoading] = useState(true);
     const [newItemName, setNewItemName] = useState('');
     const [adding, setAdding] = useState(false);
+    const [deleteModal, setDeleteModal] = useState({
+        open: false,
+        type: 'departments' as 'departments' | 'races' | 'nationalities',
+        id: 0,
+        name: ''
+    });
+    const [deleting, setDeleting] = useState(false);
 
     // Email Settings State
     const [emailLoading, setEmailLoading] = useState(false);
@@ -137,6 +145,20 @@ const SystemConfigPage: React.FC = () => {
         MAIL_PASSWORD: '',
         HEAD_DOCTOR_EMAIL: '',
         HAS_PASSWORD: false
+    });
+
+    const [maintenanceSaving, setMaintenanceSaving] = useState(false);
+    const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
+        open: false,
+        title: '',
+        description: ''
+    });
+
+    const [brandingLoading, setBrandingLoading] = useState(false);
+    const [brandingSaving, setBrandingSaving] = useState(false);
+    const [brandingData, setBrandingData] = useState({
+        doctor_name: '',
+        doctor_post: ''
     });
 
     const fetchData = useCallback(async () => {
@@ -169,10 +191,28 @@ const SystemConfigPage: React.FC = () => {
         }
     }, []);
 
+    const fetchBrandingSettings = useCallback(async () => {
+        setBrandingLoading(true);
+        try {
+            const response = await axios.get('http://localhost:5000/api/branding', {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            setBrandingData({
+                doctor_name: response.data.doctor_name || '',
+                doctor_post: response.data.doctor_post || ''
+            });
+        } catch (err) {
+            toast.error("Failed to load clinical identity settings");
+        } finally {
+            setBrandingLoading(false);
+        }
+    }, [activeSection]);
+
     useEffect(() => {
         fetchData();
         fetchEmailSettings();
-    }, [activeSection, fetchData, fetchEmailSettings]);
+        fetchBrandingSettings();
+    }, [activeSection, fetchData, fetchEmailSettings, fetchBrandingSettings]);
 
     const handleAdd = async (type: 'departments' | 'races' | 'nationalities') => {
         const trimmedName = newItemName.trim();
@@ -180,15 +220,15 @@ const SystemConfigPage: React.FC = () => {
 
         setAdding(true);
         try {
-            const resp = await axios.post(`http://localhost:5000/api/config/${type}`, 
+            const resp = await axios.post(`http://localhost:5000/api/config/${type}`,
                 { name: trimmedName }
             );
             toast.success(`${type.slice(0, -1)} added successfully`);
-            
-            if (type === 'departments') setDepartments([...departments, resp.data].sort((a,b) => a.name.localeCompare(b.name)));
-            if (type === 'races') setRaces([...races, resp.data].sort((a,b) => a.name.localeCompare(b.name)));
-            if (type === 'nationalities') setNationalities([...nationalities, resp.data].sort((a,b) => a.name.localeCompare(b.name)));
-            
+
+            if (type === 'departments') setDepartments([...departments, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
+            if (type === 'races') setRaces([...races, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
+            if (type === 'nationalities') setNationalities([...nationalities, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
+
             setNewItemName('');
         } catch (err: any) {
             toast.error(err.response?.data?.error || `Failed to add ${type.slice(0, -1)}`);
@@ -197,17 +237,22 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (type: 'departments' | 'races' | 'nationalities', id: number) => {
-        if (!window.confirm(`Are you sure you want to delete this ${type.slice(0, -1)}?`)) return;
+    const handleDelete = async () => {
+        const { type, id } = deleteModal;
+        if (!id) return;
+        setDeleting(true);
         try {
             await axios.delete(`http://localhost:5000/api/config/${type}/${id}`);
             toast.success("Item deleted");
-            
+            setDeleteModal({ ...deleteModal, open: false });
+
             if (type === 'departments') setDepartments(departments.filter(d => d.id !== id));
             if (type === 'races') setRaces(races.filter(r => r.id !== id));
             if (type === 'nationalities') setNationalities(nationalities.filter(n => n.id !== id));
         } catch (err) {
             toast.error("Failed to delete item");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -244,6 +289,44 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleSaveBranding = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setBrandingSaving(true);
+        try {
+            const formData = new FormData();
+            formData.append('doctor_name', brandingData.doctor_name);
+            formData.append('doctor_post', brandingData.doctor_post);
+
+            await axios.post('http://localhost:5000/api/branding', formData, {
+                headers: {
+                    'X-Company-Context': activeSection,
+                    'Content-Type': 'multipart/form-data'
+                }
+            });
+            toast.success("Clinical identity updated!");
+            fetchBrandingSettings();
+        } catch (err) {
+            toast.error("Failed to save clinical identity");
+        } finally {
+            setBrandingSaving(false);
+        }
+    };
+
+    const handleResetQueue = async () => {
+        setMaintenanceSaving(true);
+        try {
+            await axios.post('http://localhost:5000/api/queue/reset', {}, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            toast.success("Patient queues have been successfully reset to zero.");
+            setConfirmMaintenanceModal({ ...confirmMaintenanceModal, open: false });
+        } catch(err) {
+            toast.error("Failed to reset queue counts.");
+            console.error(err);
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
     return (
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
@@ -262,28 +345,36 @@ const SystemConfigPage: React.FC = () => {
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">
-                    <TabsList className="grid w-full grid-cols-4 h-16 p-2 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted">
-                        <TabsTrigger value="departments" className="rounded-xl font-black data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary transition-all gap-2 h-full">
-                            <Building2 className="h-5 w-5" />
+                    <TabsList className="grid w-full grid-cols-6 h-16 p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted">
+                        <TabsTrigger value="departments" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <Building2 className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
-                        <TabsTrigger value="races" className="rounded-xl font-black data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary transition-all gap-2 h-full">
-                            <Users className="h-5 w-5" />
+                        <TabsTrigger value="races" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <Users className="h-4 w-4" />
                             Races / Continents
                         </TabsTrigger>
-                        <TabsTrigger value="nationalities" className="rounded-xl font-black data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary transition-all gap-2 h-full">
-                            <Globe className="h-5 w-5" />
+                        <TabsTrigger value="nationalities" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <Globe className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="rounded-xl font-black data-[state=active]:bg-background data-[state=active]:shadow-md data-[state=active]:text-primary transition-all gap-2 h-full">
-                            <Mail className="h-5 w-5" />
-                            Email Settings
+                        <TabsTrigger value="email" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <Mail className="h-4 w-4" />
+                            Email
+                        </TabsTrigger>
+                        <TabsTrigger value="doctor" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <Stethoscope className="h-4 w-4" />
+                            Doctor
+                        </TabsTrigger>
+                        <TabsTrigger value="maintenance" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                            <RotateCcw className="h-4 w-4" />
+                            Maintenance
                         </TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="departments">
-                        <ConfigSection 
-                            title="Departments" 
+                        <ConfigSection
+                            title="Departments"
                             description="Configure department options for patient registration."
                             items={departments}
                             type="departments"
@@ -291,15 +382,15 @@ const SystemConfigPage: React.FC = () => {
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
-                            handleDelete={handleDelete}
+                            onDeleteRequest={(type, id, name) => setDeleteModal({ open: true, type, id, name })}
                             loading={loading}
                             adding={adding}
                         />
                     </TabsContent>
 
                     <TabsContent value="races">
-                        <ConfigSection 
-                            title="Races / Continents" 
+                        <ConfigSection
+                            title="Races / Continents"
                             description="Configure race/continent options for patient registration."
                             items={races}
                             type="races"
@@ -307,15 +398,15 @@ const SystemConfigPage: React.FC = () => {
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
-                            handleDelete={handleDelete}
+                            onDeleteRequest={(type, id, name) => setDeleteModal({ open: true, type, id, name })}
                             loading={loading}
                             adding={adding}
                         />
                     </TabsContent>
 
                     <TabsContent value="nationalities">
-                        <ConfigSection 
-                            title="Nationalities" 
+                        <ConfigSection
+                            title="Nationalities"
                             description="Configure nationality options for patient registration."
                             items={nationalities}
                             type="nationalities"
@@ -323,7 +414,7 @@ const SystemConfigPage: React.FC = () => {
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
-                            handleDelete={handleDelete}
+                            onDeleteRequest={(type, id, name) => setDeleteModal({ open: true, type, id, name })}
                             loading={loading}
                             adding={adding}
                         />
@@ -350,20 +441,20 @@ const SystemConfigPage: React.FC = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP Server</Label>
-                                                        <Input 
-                                                            className="h-11 font-bold border-2 focus-visible:ring-primary" 
-                                                            value={emailSettings.MAIL_SERVER} 
-                                                            onChange={e => setEmailSettings({...emailSettings, MAIL_SERVER: e.target.value})}
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                            value={emailSettings.MAIL_SERVER}
+                                                            onChange={e => setEmailSettings({ ...emailSettings, MAIL_SERVER: e.target.value })}
                                                             placeholder="e.g. smtp.gmail.com"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP Port</Label>
-                                                        <Input 
-                                                            className="h-11 font-bold border-2 focus-visible:ring-primary" 
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
                                                             type="number"
-                                                            value={emailSettings.MAIL_PORT} 
-                                                            onChange={e => setEmailSettings({...emailSettings, MAIL_PORT: e.target.value})}
+                                                            value={emailSettings.MAIL_PORT}
+                                                            onChange={e => setEmailSettings({ ...emailSettings, MAIL_PORT: e.target.value })}
                                                             placeholder="e.g. 587"
                                                         />
                                                     </div>
@@ -372,19 +463,19 @@ const SystemConfigPage: React.FC = () => {
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
                                                         <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Sender Display Name</Label>
-                                                        <Input 
-                                                            className="h-11 font-bold border-2 focus-visible:ring-primary" 
-                                                            value={emailSettings.MAIL_DISPLAY_NAME} 
-                                                            onChange={e => setEmailSettings({...emailSettings, MAIL_DISPLAY_NAME: e.target.value})}
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                            value={emailSettings.MAIL_DISPLAY_NAME}
+                                                            onChange={e => setEmailSettings({ ...emailSettings, MAIL_DISPLAY_NAME: e.target.value })}
                                                             placeholder="e.g. Legit HealthCare"
                                                         />
                                                     </div>
                                                     <div className="space-y-2">
                                                         <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Gmail Address</Label>
-                                                        <Input 
-                                                            className="h-11 font-bold border-2 focus-visible:ring-primary" 
-                                                            value={emailSettings.MAIL_USERNAME} 
-                                                            onChange={e => setEmailSettings({...emailSettings, MAIL_USERNAME: e.target.value})}
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                            value={emailSettings.MAIL_USERNAME}
+                                                            onChange={e => setEmailSettings({ ...emailSettings, MAIL_USERNAME: e.target.value })}
                                                             placeholder="e.g. noreply@gmail.com"
                                                         />
                                                     </div>
@@ -396,14 +487,14 @@ const SystemConfigPage: React.FC = () => {
                                                         {emailSettings.HAS_PASSWORD && <span className="text-[10px] text-emerald-500 font-black">● Currently Set</span>}
                                                     </Label>
                                                     <div className="relative">
-                                                        <Input 
-                                                            className="h-11 font-bold pr-12 border-2 focus-visible:ring-primary" 
+                                                        <Input
+                                                            className="h-11 font-bold pr-12 border-2 focus-visible:ring-primary"
                                                             type={showPassword ? "text" : "password"}
-                                                            value={emailSettings.MAIL_PASSWORD} 
-                                                            onChange={e => setEmailSettings({...emailSettings, MAIL_PASSWORD: e.target.value})}
+                                                            value={emailSettings.MAIL_PASSWORD}
+                                                            onChange={e => setEmailSettings({ ...emailSettings, MAIL_PASSWORD: e.target.value })}
                                                             placeholder={emailSettings.HAS_PASSWORD ? "•••••••••••• (Unchanged)" : "Enter password..."}
                                                         />
-                                                        <button 
+                                                        <button
                                                             type="button"
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
@@ -426,10 +517,10 @@ const SystemConfigPage: React.FC = () => {
                                             <CardContent className="pt-6 space-y-4">
                                                 <div className="space-y-2">
                                                     <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Head Doctor's Email</Label>
-                                                    <Input 
-                                                        className="h-11 font-bold border-2 focus-visible:ring-primary" 
-                                                        value={emailSettings.HEAD_DOCTOR_EMAIL} 
-                                                        onChange={e => setEmailSettings({...emailSettings, HEAD_DOCTOR_EMAIL: e.target.value})}
+                                                    <Input
+                                                        className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                        value={emailSettings.HEAD_DOCTOR_EMAIL}
+                                                        onChange={e => setEmailSettings({ ...emailSettings, HEAD_DOCTOR_EMAIL: e.target.value })}
                                                         placeholder="e.g. head.doctor@gmail.com"
                                                     />
                                                     <p className="text-[10px] text-muted-foreground italic">This email is used for clinical oversight and urgent reports.</p>
@@ -438,10 +529,10 @@ const SystemConfigPage: React.FC = () => {
                                         </Card>
 
                                         <div className="flex justify-end gap-3 pt-4">
-                                            <Button 
+                                            <Button
                                                 type="submit"
                                                 disabled={emailSaving}
-                                                size="lg" 
+                                                size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
                                                 {emailSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
@@ -463,16 +554,16 @@ const SystemConfigPage: React.FC = () => {
                                             <p className="text-xs text-muted-foreground font-medium">Verify your configuration by sending a test email before saving.</p>
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Recipient Email</Label>
-                                                <Input 
-                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-emerald-500" 
+                                                <Input
+                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-emerald-500"
                                                     placeholder="test@example.com"
                                                     value={testEmail}
                                                     onChange={e => setTestEmail(e.target.value)}
                                                 />
                                             </div>
-                                            <Button 
-                                                variant="secondary" 
-                                                className="w-full font-bold h-10 border-2 hover:bg-emerald-500 hover:text-white transition-all" 
+                                            <Button
+                                                variant="secondary"
+                                                className="w-full font-bold h-10 border-2 hover:bg-emerald-500 hover:text-white transition-all"
                                                 onClick={handleTestEmail}
                                                 disabled={testing}
                                             >
@@ -484,12 +575,12 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="bg-amber-500/10 border-2 border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
                                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600">
-                                           <Server className="h-5 w-5" />
+                                            <Server className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-amber-900 text-[10px] uppercase tracking-wider text-amber-600">Security Note</h4>
                                             <p className="text-[10px] text-amber-800 leading-relaxed font-medium mt-1">
-                                                Credentials are saved to <code className="bg-amber-500/10 px-1 rounded font-black">.env</code>. 
+                                                Credentials are saved to <code className="bg-amber-500/10 px-1 rounded font-black">.env</code>.
                                                 Gmail requires an "App Password" if 2nd-factor authentication is enabled.
                                             </p>
                                         </div>
@@ -498,8 +589,145 @@ const SystemConfigPage: React.FC = () => {
                             </div>
                         )}
                     </TabsContent>
+
+                    <TabsContent value="doctor">
+                        {brandingLoading ? (
+                            <div className="h-64 flex items-center justify-center">
+                                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                            </div>
+                        ) : (
+                            <form onSubmit={handleSaveBranding} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
+                                        <CardHeader className="bg-primary/5 border-b pb-4">
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                <Stethoscope className="h-5 w-5 text-primary" />
+                                                Clinical Signature
+                                            </CardTitle>
+                                            <CardDescription>Configure the doctor's name and post for report signatures.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="pt-6 space-y-6">
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Full Doctor Name</Label>
+                                                <Input
+                                                    className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                    value={brandingData.doctor_name}
+                                                    onChange={e => setBrandingData({ ...brandingData, doctor_name: e.target.value })}
+                                                    placeholder="e.g. Dr. Jane Smith FMCPath"
+                                                />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Post / Title</Label>
+                                                <Input
+                                                    className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                    value={brandingData.doctor_post}
+                                                    onChange={e => setBrandingData({ ...brandingData, doctor_post: e.target.value })}
+                                                    placeholder="e.g. Consultant in Charge"
+                                                />
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+
+                                    <Card className="border-2 shadow-lg overflow-hidden border-blue-500/10">
+                                        <CardHeader className="bg-blue-500/5 border-b pb-4">
+                                            <CardTitle className="text-lg flex items-center gap-2">
+                                                <Eye className="h-5 w-5 text-blue-500" />
+                                                Live Preview
+                                            </CardTitle>
+                                            <CardDescription>How the signature will appear on patient reports.</CardDescription>
+                                        </CardHeader>
+                                        <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[160px] bg-slate-50 shadow-inner rounded-b-2xl">
+                                            <div className="border-2 border-dashed border-slate-200 p-6 rounded-2xl bg-white flex flex-col items-center gap-1 shadow-sm">
+                                                <div className="h-12 w-48 mb-2 border-b-2 border-slate-900/10 flex items-center justify-center italic text-slate-300 select-none">
+                                                    Signature Image
+                                                </div>
+                                                <div className="font-black text-slate-900 text-lg leading-tight">{brandingData.doctor_name || "Doctor Name"}</div>
+                                                <div className="font-bold text-slate-500 text-sm">{brandingData.doctor_post || "Consultant in Charge"}</div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
+                                <div className="flex justify-end pt-4">
+                                    <Button
+                                        type="submit"
+                                        disabled={brandingSaving}
+                                        size="lg"
+                                        className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
+                                    >
+                                        {brandingSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                        {brandingSaving ? 'Saving...' : 'Update Clinical Identity'}
+                                    </Button>
+                                </div>
+                            </form>
+                        )}
+                    </TabsContent>
+
+                    <TabsContent value="maintenance">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
+                                <CardHeader className="border-b bg-muted/5 p-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-destructive/10 rounded-2xl">
+                                            <RotateCcw className="h-6 w-6 text-destructive" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
+                                            <CardDescription>Critical administrative actions to manage system state.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg">Reset Daily Patient Queues</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                This will immediately reset all queue counts across all departments (Consultation, Audiometry, Spirometry, ECG) to <strong className="text-foreground">Zero</strong>. This is typically done at the end of the day.
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={() => setConfirmMaintenanceModal({
+                                                open: true,
+                                                title: 'Reset Patient Queues',
+                                                description: 'Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.'
+                                            })} 
+                                            disabled={maintenanceSaving} 
+                                            variant="destructive" 
+                                            size="lg" 
+                                            className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
+                                        >
+                                            {maintenanceSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
+                                            Reset Queue Counts to 0
+                                        </Button>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
                 </Tabs>
             </div>
+
+            <ActionConfirmModal
+                isOpen={confirmMaintenanceModal.open}
+                onClose={() => setConfirmMaintenanceModal({ ...confirmMaintenanceModal, open: false })}
+                onConfirm={handleResetQueue}
+                loading={maintenanceSaving}
+                title={confirmMaintenanceModal.title}
+                description={confirmMaintenanceModal.description}
+                confirmText="Reset Now"
+                variant="danger"
+            />
+
+            <ActionConfirmModal
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ ...deleteModal, open: false })}
+                onConfirm={handleDelete}
+                title={`Delete ${deleteModal.type.slice(0, -1)}`}
+                description={`Are you sure you want to delete '${deleteModal.name}'? This change will reflect in all registration dropdowns.`}
+                confirmText="Delete Item"
+                variant="danger"
+                loading={deleting}
+            />
         </MainLayout>
     );
 };

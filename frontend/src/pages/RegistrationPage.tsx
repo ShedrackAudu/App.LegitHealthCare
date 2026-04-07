@@ -177,7 +177,7 @@ const RegistrationPage: React.FC = () => {
   }, []);
 
   useEffect(() => {
-    if (searchId.length > 2) {
+    if (searchId.length > 0) {
       if (isSelecting) {
         setIsSelecting(false);
         setSearchResults([]);

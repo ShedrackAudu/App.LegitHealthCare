@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Trash2, Building2, Plus, Loader2 } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 
@@ -20,6 +21,8 @@ const ManageDepartmentsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [adding, setAdding] = useState(false);
     const [newDept, setNewDept] = useState('');
+    const [deleteModal, setDeleteModal] = useState({ open: false, id: 0, name: '' });
+    const [deleting, setDeleting] = useState(false);
 
     const fetchDepartments = async () => {
         setLoading(true);
@@ -62,16 +65,21 @@ const ManageDepartmentsPage: React.FC = () => {
         }
     };
 
-    const handleDelete = async (id: number) => {
-        if (!window.confirm("Are you sure you want to delete this department?")) return;
+    const handleDelete = async () => {
+        const { id, name } = deleteModal;
+        if (!id) return;
+        setDeleting(true);
         try {
             await axios.delete(`http://localhost:5000/api/departments/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Department deleted");
             setDepartments(departments.filter(d => d.id !== id));
+            setDeleteModal({ open: false, id: 0, name: '' });
         } catch (err) {
             toast.error("Failed to delete department");
+        } finally {
+            setDeleting(false);
         }
     };
 
@@ -137,7 +145,7 @@ const ManageDepartmentsPage: React.FC = () => {
                                     {departments.map(dept => (
                                         <div key={dept.id} className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <span className="font-semibold text-lg">{dept.name}</span>
-                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => handleDelete(dept.id)}>
+                                            <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeleteModal({ open: true, id: dept.id, name: dept.name })}>
                                                 <Trash2 className="h-5 w-5" />
                                             </Button>
                                         </div>
@@ -148,6 +156,17 @@ const ManageDepartmentsPage: React.FC = () => {
                     </Card>
                 </div>
             </div>
+
+            <ActionConfirmModal
+                isOpen={deleteModal.open}
+                onClose={() => setDeleteModal({ open: false, id: 0, name: '' })}
+                onConfirm={handleDelete}
+                title="Delete Department"
+                description={`Are you sure you want to delete the department '${deleteModal.name}'? This may affect historical records linked to this department.`}
+                confirmText="Delete Department"
+                variant="danger"
+                loading={deleting}
+            />
         </MainLayout>
     );
 };

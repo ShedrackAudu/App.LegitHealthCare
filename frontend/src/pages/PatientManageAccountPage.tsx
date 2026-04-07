@@ -1,9 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { 
   User, Mail, Phone, Shield, ShieldCheck, 
   Save, ArrowLeft, Building2, Calendar, IdCard,
-  Lock, Key
+  Lock, Key, Fingerprint, ShieldEllipsis, Flag, Compass, Globe
 } from 'lucide-react';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,6 +14,14 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-hot-toast';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogDescription, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogFooter 
+} from "@/components/ui/dialog";
 import axios from 'axios';
 
 const PatientManageAccountPage = () => {
@@ -22,29 +30,57 @@ const PatientManageAccountPage = () => {
   const [saving, setSaving] = useState(false);
   const [formData, setFormData] = useState({
     first_name: '',
+    middle_name: '',
     last_name: '',
     email: '',
     phone: '',
     department: '',
     section: '',
     staff_id: '',
-    dob: ''
+    dob: '',
+    age: '',
+    gender: '',
+    race: '',
+    nationality: ''
   });
+  
+  // Password Reset States
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [resetStep, setResetStep] = useState(1); // 1: Request, 2: Verify & New Pass
+  const [resetOtp, setResetOtp] = useState('');
+  const [newPassword, setNewPassword] = useState('');
+  const [resetLoading, setResetLoading] = useState(false);
 
-  useEffect(() => {
-    if (user) {
-      setFormData({
-        first_name: user.first_name || '',
-        last_name: user.last_name || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        department: user.department || '',
-        section: user.section || '',
-        staff_id: user.username || '',
-        dob: user.dob || 'N/A'
+  const fetchProfile = useCallback(async () => {
+    if (!user?.username) return;
+    try {
+      const response = await axios.get('http://localhost:5000/api/patient/profile', {
+        headers: { 'X-Staff-ID': user.username }
       });
+      const p = response.data;
+      setFormData({
+        first_name: p.first_name || '',
+        middle_name: p.middle_name || '',
+        last_name: p.last_name || '',
+        email: p.email || '',
+        phone: p.phone || '',
+        department: p.department || '',
+        section: p.section || user.section || 'N/A',
+        staff_id: p.staff_id || '',
+        dob: p.dob || 'N/A',
+        age: p.age || '',
+        gender: p.gender || '',
+        race: p.race || '',
+        nationality: p.nationality || ''
+      });
+    } catch (err) {
+      console.error("Error fetching patient profile:", err);
     }
   }, [user]);
+
+  useEffect(() => {
+    fetchProfile();
+  }, [fetchProfile]);
 
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -104,25 +140,32 @@ const PatientManageAccountPage = () => {
                 </CardHeader>
                 <form onSubmit={handleUpdateProfile}>
                   <CardContent className="p-8 space-y-8">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                       <div className="space-y-2">
                         <Label htmlFor="first_name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">First Name</Label>
                         <Input
                           id="first_name"
-                          className="h-12 rounded-xl border-2 font-bold px-4"
+                          className="h-12 rounded-xl border-2 font-bold px-4 bg-muted/50"
                           value={formData.first_name}
-                          onChange={(e) => setFormData({ ...formData, first_name: e.target.value })}
-                          required
+                          readOnly
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="middle_name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Middle Name</Label>
+                        <Input
+                          id="middle_name"
+                          className="h-12 rounded-xl border-2 font-bold px-4 bg-muted/50"
+                          value={formData.middle_name}
+                          readOnly
                         />
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="last_name" className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Last Name</Label>
                         <Input
                           id="last_name"
-                          className="h-12 rounded-xl border-2 font-bold px-4"
+                          className="h-12 rounded-xl border-2 font-bold px-4 bg-muted/50"
                           value={formData.last_name}
-                          onChange={(e) => setFormData({ ...formData, last_name: e.target.value })}
-                          required
+                          readOnly
                         />
                       </div>
                     </div>
@@ -157,17 +200,45 @@ const PatientManageAccountPage = () => {
                     </div>
 
                     <div className="pt-6 border-t border-dashed space-y-4">
-                      <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground">Verified Corporate Identity</p>
-                      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10 transition-all hover:border-primary/20">
-                          <IdCard className="w-5 h-5 text-primary mb-1" />
-                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Employee ID</p>
-                          <p className="text-sm font-black">{formData.staff_id}</p>
+                      <p className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+                        <Fingerprint className="w-4 h-4 text-primary" />
+                        Verified Clinical Identity
+                      </p>
+                      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <IdCard className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Staff ID</p>
+                          <p className="text-xs font-black">{formData.staff_id}</p>
                         </div>
-                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10 transition-all hover:border-primary/20 md:col-span-2">
-                          <Building2 className="w-5 h-5 text-primary mb-1" />
-                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Department & Group</p>
-                          <p className="text-sm font-black truncate">{formData.department} ({formData.section})</p>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <Calendar className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Date of Birth</p>
+                          <p className="text-xs font-black">{formData.dob}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <ShieldEllipsis className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Age / Gender</p>
+                          <p className="text-xs font-black">{formData.age} yrs / {formData.gender}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <Building2 className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Department</p>
+                          <p className="text-xs font-black truncate">{formData.department}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <Compass className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Section</p>
+                          <p className="text-xs font-black">{formData.section}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10">
+                          <Flag className="w-4 h-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Race</p>
+                          <p className="text-xs font-black">{formData.race}</p>
+                        </div>
+                        <div className="flex flex-col gap-1 bg-muted/40 p-4 rounded-2xl border-2 border-border/10 md:col-span-2">
+                          <Globe className="h-4 w-4 text-primary mb-1" />
+                          <p className="text-[10px] uppercase font-black text-muted-foreground tracking-widest">Nationality</p>
+                          <p className="text-xs font-black">{formData.nationality}</p>
                         </div>
                       </div>
                     </div>
@@ -223,7 +294,10 @@ const PatientManageAccountPage = () => {
                      <Button 
                         variant="outline" 
                         className="w-full justify-start gap-4 h-14 rounded-xl border-2 font-bold px-6 group transition-all hover:bg-primary/5" 
-                        onClick={() => toast('Password reset link sent to your email', { icon: '📧' })}
+                        onClick={() => {
+                          setShowResetModal(true);
+                          setResetStep(1);
+                        }}
                       >
                         <div className="p-2 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
                           <Key className="w-4 h-4 text-muted-foreground group-hover:text-primary" />
@@ -233,6 +307,104 @@ const PatientManageAccountPage = () => {
                   </div>
                 </CardContent>
               </Card>
+
+              {/* Password Reset Modal */}
+              <Dialog open={showResetModal} onOpenChange={setShowResetModal}>
+                <DialogContent className="sm:max-w-md rounded-[2.5rem] border-2 shadow-2xl p-8">
+                  <DialogHeader className="space-y-4 items-center text-center">
+                    <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
+                      <Key className="w-8 h-8" />
+                    </div>
+                    <DialogTitle className="text-3xl font-black tracking-tight">Security Reset</DialogTitle>
+                    <DialogDescription className="text-base font-medium">
+                      {resetStep === 1 
+                        ? "We'll send a 6-digit verification code to your email to authenticate this password reset." 
+                        : "Verify the code sent to your email and choose a strong new password."}
+                    </DialogDescription>
+                  </DialogHeader>
+
+                  <div className="py-6 space-y-6">
+                    {resetStep === 1 ? (
+                      <div className="bg-muted/30 p-6 rounded-2xl border-2 border-dashed space-y-4 text-center">
+                         <span className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Target Email</span>
+                         <p className="text-lg font-black">{formData.email}</p>
+                      </div>
+                    ) : (
+                      <div className="space-y-6">
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">6-Digit Code</Label>
+                          <Input 
+                            className="h-14 rounded-xl border-2 text-center text-2xl font-black tracking-[0.3em]"
+                            maxLength={6}
+                            value={resetOtp}
+                            onChange={(e) => setResetOtp(e.target.value)}
+                            placeholder="000000"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">New Passcode</Label>
+                          <Input 
+                            type="password"
+                            className="h-14 rounded-xl border-2 font-bold px-4"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            placeholder="••••••••"
+                          />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+
+                  <DialogFooter className="sm:justify-center pt-2">
+                    {resetStep === 1 ? (
+                      <Button 
+                        className="h-14 w-full rounded-2xl font-black text-lg shadow-xl shadow-primary/20"
+                        onClick={async () => {
+                          setResetLoading(true);
+                          try {
+                            await axios.post('http://localhost:5000/api/patient/reset-password/request', { email: formData.email });
+                            toast.success("Code sent to your email!");
+                            setResetStep(2);
+                          } catch (err: any) {
+                            toast.error(err.response?.data?.error || "Failed to send code.");
+                          } finally {
+                            setResetLoading(false);
+                          }
+                        }}
+                        disabled={resetLoading}
+                      >
+                        {resetLoading ? "Sending Code..." : "Send Verification Code"}
+                      </Button>
+                    ) : (
+                      <Button 
+                        className="h-14 w-full rounded-2xl font-black text-lg shadow-xl shadow-primary/20"
+                        onClick={async () => {
+                          setResetLoading(true);
+                          try {
+                            await axios.post('http://localhost:5000/api/patient/reset-password/verify', { 
+                              email: formData.email,
+                              otp: resetOtp,
+                              new_password: newPassword
+                            });
+                            toast.success("Password reset successful!");
+                            setShowResetModal(false);
+                            setResetOtp('');
+                            setNewPassword('');
+                            setResetStep(1);
+                          } catch (err: any) {
+                            toast.error(err.response?.data?.error || "Verification failed.");
+                          } finally {
+                            setResetLoading(false);
+                          }
+                        }}
+                        disabled={resetLoading}
+                      >
+                        {resetLoading ? "Verifying..." : "Verify & Update Password"}
+                      </Button>
+                    )}
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
 
               <div className="p-8 bg-primary/5 rounded-[2.5rem] border-2 border-dashed border-primary/20 flex flex-col items-center text-center space-y-4 shadow-inner">
                  <div className="w-16 h-16 rounded-[1.5rem] bg-primary/10 flex items-center justify-center text-primary shadow-lg">

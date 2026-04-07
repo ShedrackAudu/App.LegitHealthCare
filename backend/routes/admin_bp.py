@@ -1,5 +1,9 @@
 from flask import Blueprint, request, jsonify, current_app
-from models import db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, Notification, PatientPortalUser
+from models import (
+    db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, 
+    Notification, PatientPortalUser, BioData, ScreeningYearBioData, ConsultationData,
+    FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
+)
 from decorators import require_permission
 import json
 import random
@@ -18,10 +22,12 @@ def get_users():
     all_users = [u.to_dict() for u in staff]
     for p in patients:
         p_dict = p.to_dict()
-        # Ensure ID doesn't collide by using a prefix or just returning as is 
-        # (Frontend uses id for keys, but we can distinguish by username/email)
-        # Actually, for the table to work, we might need unique IDs.
-        # I'll use a string ID for patients to avoid collision 'p1', 'p2' etc.
+        # Fallback for phone if "N/A" or missing
+        if p_dict.get('phone') == 'N/A' or not p_dict.get('phone'):
+            bio = BioData.query.filter_by(staff_id=p.username).first()
+            if bio and bio.phone and bio.phone != 'N/A':
+                p_dict['phone'] = bio.phone
+                
         p_dict['id'] = f"p{p.id}" 
         all_users.append(p_dict)
         
@@ -361,49 +367,192 @@ def update_role_permissions(role_id):
     
     return jsonify({"message": f"Permissions for role '{role.name}' updated successfully"})
 
-@admin_bp.route('/api/admin/export', methods=['GET'])
+@admin_bp.route('/api/admin/export/patients', methods=['GET'])
 @require_permission('download_data')
-def export_data():
+def export_patients():
     try:
         import pandas as pd
         import io
         from flask import send_file
-        from models import BioData
         
-        patients = BioData.query.all()
+        # Sectional export based on context
+        patients = BioData.query.all() # BioData is already filtered by bind in models if using sectional db
         data = []
         for p in patients:
             data.append({
                 "Staff ID": p.staff_id,
                 "First Name": p.first_name,
+                "Middle_Name": p.middle_name,
                 "Last Name": p.last_name,
                 "Gender": p.gender,
+                "DOB": p.dob.strftime('%Y-%m-%d') if p.dob else '',
                 "Age": p.age,
                 "Department": p.department,
                 "Phone": p.phone,
                 "Email": p.email,
+                "Race": p.race,
+                "Nationality": p.nationality,
                 "Registered At": p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else ''
             })
             
         df = pd.DataFrame(data)
-        
-        # Create in-memory buffer
         output = io.BytesIO()
         with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-            df.to_excel(writer, index=False, sheet_name='Patients')
+            df.to_excel(writer, index=False, sheet_name='Patient Directory')
         
         output.seek(0)
-        
+        context = request.headers.get('X-Company-Context', 'General').upper()
         return send_file(
             output,
             mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
             as_attachment=True,
-            download_name=f"Clinic_Data_Export_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx"
+            download_name=f"{context}_Patient_Directory_{datetime.now().strftime('%Y%m%d')}.xlsx"
         )
-    except ImportError:
-        return jsonify({"error": "Server error: missing data processing libraries (pandas/xlsxwriter)."}), 500
     except Exception as e:
         return jsonify({"error": f"Export failed: {str(e)}"}), 500
+
+@admin_bp.route('/api/admin/export/screening', methods=['GET'])
+@require_permission('download_data')
+def export_screening_matrix():
+    try:
+        import pandas as pd
+        import io
+        from flask import send_file
+        
+        year = request.args.get('year', datetime.now().year, type=int)
+        context = request.headers.get('X-Company-Context', 'General').upper()
+        
+        # 1. Fetch all screening base records for the year
+        screening_base = ScreeningYearBioData.query.filter_by(screening_year=year).all()
+        
+        data = []
+        for yp in screening_base:
+            # Base Info
+            row = {
+                "Staff ID": yp.staff_id,
+                "Patient ID": yp.patient_id,
+                "First Name": yp.first_name,
+                "Last Name": yp.last_name,
+                "Year": yp.screening_year,
+                "Section": context
+            }
+            
+            # Bio Info
+            bio = BioData.query.filter_by(staff_id=yp.staff_id).first()
+            if bio:
+                row.update({
+                    "BIO_Middle_Name": bio.middle_name,
+                    "BIO_Gender": bio.gender,
+                    "BIO_Age": bio.age,
+                    "BIO_DOB": bio.dob.strftime('%Y-%m-%d') if bio.dob else '',
+                    "BIO_Phone": bio.phone,
+                    "BIO_Email": bio.email,
+                    "BIO_Department": bio.department,
+                    "BIO_Race": bio.race,
+                    "BIO_Nationality": bio.nationality
+                })
+                
+            # Clinical Joins
+            c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if c:
+                row.update({
+                    "CLINIC_BP": c.bp, "CLINIC_Pulse": c.pulse, "CLINIC_SPO2": c.spo2, 
+                    "CLINIC_HS": c.hs_status, "CLINIC_Palor": c.palor, "CLINIC_Jaundice": c.jaundice, 
+                    "CLINIC_Murmur": c.murmur, "CLINIC_Chest_Status": c.chest_status,
+                    "CLINIC_LUTS": c.luts, "CLINIC_Chronic_Cough": c.chronic_cough, 
+                    "CLINIC_Chest_Pain": c.chronic_chest_pain, "CLINIC_Chest_Infection": c.chest_infection,
+                    "CLINIC_Heart_Dx": c.heart_dx, "CLINIC_DM_Status": c.dm_status, "CLINIC_HTN_Status": c.htn_status,
+                    "CLINIC_PSA": c.psa, "CLINIC_PSA_Remark": c.psa_remark,
+                    "CLINIC_FBS": c.fbs, "CLINIC_RBS": c.rbs, "CLINIC_Sugar_Remark": c.sugar_remark,
+                    "CLINIC_UA_Result": c.ua_result, "CLINIC_UA_Remark": c.ua_remark,
+                    "CLINIC_Breast_Exam": c.breast_exam, "CLINIC_Breast_Remark": c.breast_remark, 
+                    "CLINIC_Abdomen": c.abdomen,
+                    "CLINIC_Assessment_HX_PE": c.assessment_hx_pe, "CLINIC_Lab_Remarks": c.overall_lab_remark,
+                    "CLINIC_Other_Assessments": c.other_assessments, "CLINIC_Other_Remarks": c.other_remarks,
+                    "CLINIC_Overall_Assessment": c.overall_assessment, "CLINIC_Consulted_By": c.consulted_by_name
+                })
+                
+            f = FBCResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if f:
+                row.update({
+                    "LAB_FBC_PCV": f.pcv, "LAB_FBC_WBC": f.wbc, "LAB_FBC_HGB": f.hgb, "LAB_FBC_PLT": f.plt, "LAB_FBC_RBC": f.rbc,
+                    "LAB_FBC_LYMP_PCT": f.lymp_percent, "LAB_FBC_LYMP_ABS": f.lymp_abs, 
+                    "LAB_FBC_GRA_PCT": f.gra_percent, "LAB_FBC_GRA_ABS": f.gra_abs,
+                    "LAB_FBC_MID_PCT": f.mid_percent, "LAB_FBC_MID_ABS": f.mid_abs,
+                    "LAB_FBC_MCV": f.mcv, "LAB_FBC_MCH": f.mch, "LAB_FBC_MCHC": f.mchc, 
+                    "LAB_FBC_RDW": f.rdw, "LAB_FBC_PDW": f.pdw,
+                    "LAB_FBC_Remark": f.fbc_remark, "LAB_FBC_Others": f.other_remarks
+                })
+                
+            k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if k:
+                row.update({
+                    "LAB_KFT_Potassium": k.potassium, "LAB_KFT_Sodium": k.sodium, "LAB_KFT_Chloride": k.chloride,
+                    "LAB_KFT_Urea": k.urea, "LAB_KFT_Creatinine": k.creatinine, 
+                    "LAB_KFT_Bicarbonate": k.bicarbonate_ca, "LAB_KFT_HCO3": k.hco3, 
+                    "LAB_KFT_Remark": k.kft_remark, "LAB_KFT_Others": k.other_remarks
+                })
+                
+            li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if li:
+                row.update({
+                    "LAB_LIPID_TCHO": li.total_cholesterol, "LAB_LIPID_TG": li.triglycerides, 
+                    "LAB_LIPID_HDL": li.hdl, "LAB_LIPID_LDL": li.ldl, 
+                    "LAB_LIPID_Remark": li.lp_remark, "LAB_LIPID_Others": li.other_remarks
+                })
+                
+            lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if lf:
+                row.update({
+                    "LAB_LFT_AST": lf.ast, "LAB_LFT_ALT": lf.alt, "LAB_LFT_ALP": lf.alp, 
+                    "LAB_LFT_TB": lf.tb, "LAB_LFT_CB": lf.cb, 
+                    "LAB_LFT_Remark": lf.lft_remark, "LAB_LFT_Others": lf.other_remarks
+                })
+                
+            s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if s:
+                row.update({
+                    "SPECIAL_ECG": s.ecg_result, "SPECIAL_ECG_Remark": s.ecg_remark,
+                    "SPECIAL_Spirometry": s.spirometry_result, "SPECIAL_Spirometry_Remark": s.spirometry_remark,
+                    "SPECIAL_Audiometry": s.audiometry_result, "SPECIAL_Audiometry_Remark": s.audiometry_remark,
+                    "SPECIAL_Weight": s.weight, "SPECIAL_Height": s.height
+                })
+                
+            dr = DirectorReview.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            if dr:
+                row.update({
+                    "DIRECTOR_DM": dr.dm_status, "DIRECTOR_HTN": dr.htn_status,
+                    "DIRECTOR_BP": dr.bp, "DIRECTOR_Pulse": dr.pulse, "DIRECTOR_SPO2": dr.spo2,
+                    "DIRECTOR_HS": dr.hs_status, "DIRECTOR_Breast": dr.breast_exam, 
+                    "DIRECTOR_Abdomen": dr.abdomen, "DIRECTOR_PSA": dr.psa, "DIRECTOR_Sugar": dr.fbs_rbs_remark,
+                    "DIRECTOR_Comm1": dr.comment_one, "DIRECTOR_Comm2": dr.comment_two,
+                    "DIRECTOR_Comm3": dr.comment_three, "DIRECTOR_Comm4": dr.comment_four,
+                    "DIRECTOR_Final_Assessment": dr.overall_assessment,
+                    "DIRECTOR_Review_Date": dr.created_at.strftime('%Y-%m-%d %H:%M') if dr.created_at else ''
+                })
+            
+            data.append(row)
+            
+        df = pd.DataFrame(data)
+        output = io.BytesIO()
+        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+            df.to_excel(writer, index=False, sheet_name=f'Screening {year}')
+            
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name=f"{context}_Screening_Matrix_{year}_{datetime.now().strftime('%Y%m%d')}.xlsx"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Export failed: {str(e)}"}), 500
+
+@admin_bp.route('/api/admin/export', methods=['GET'])
+@require_permission('download_data')
+def export_data():
+    # Keep legacy route for compatibility, but redirect to patient directory export
+    return export_patients()
 
 @admin_bp.route('/api/admin/import', methods=['POST'])
 @require_permission('system_maintenance')

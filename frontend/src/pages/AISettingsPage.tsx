@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bot, Save, Loader2, Key, Settings2, FileText, Activity } from 'lucide-react';
+import { Bot, Save, Loader2, Key, Settings2, FileText, Activity, Trash2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
@@ -320,23 +320,25 @@ export const AISettingsPage = () => {
                                 </Button>
                             </div>
 
-                            <div className="space-y-2">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                                 {settings.sample_comments.map((comment, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3 bg-muted/20 border-2 border-dashed rounded-xl group">
-                                        <p className="text-sm font-medium italic">"{comment}"</p>
+                                    <div key={idx} className="flex items-center justify-between p-4 bg-muted/20 border-2 border-dashed rounded-2xl group hover:border-amber-500/30 transition-all">
+                                        <p className="text-xs font-bold italic line-clamp-3">"{comment}"</p>
                                         <Button 
                                             type="button" 
                                             variant="ghost" 
                                             size="sm" 
-                                            className="h-8 w-8 p-0 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
+                                            className="h-8 w-8 p-0 text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                             onClick={() => setSettings(prev => ({...prev, sample_comments: prev.sample_comments.filter((_, i) => i !== idx)}))}
                                         >
-                                            ×
+                                            <Trash2 className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 ))}
                                 {settings.sample_comments.length === 0 && (
-                                    <p className="text-center text-muted-foreground text-sm italic py-4">No samples added yet. AI will use its default clinical style.</p>
+                                    <div className="md:col-span-2">
+                                        <p className="text-center text-muted-foreground text-sm italic py-4">No samples added yet. AI will use its default clinical style.</p>
+                                    </div>
                                 )}
                             </div>
                         </CardContent>

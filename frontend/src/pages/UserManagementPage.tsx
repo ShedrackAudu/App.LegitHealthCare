@@ -55,6 +55,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/context/AppContext';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 interface User {
   id: number;
@@ -100,6 +101,11 @@ const UserManagementPage: React.FC = () => {
     phone: '',
     roles: [] as string[]
   });
+  const [confirmDeactivation, setConfirmDeactivation] = useState<{ open: boolean; user: User | null }>({
+    open: false,
+    user: null
+  });
+  const [deactivating, setDeactivating] = useState(false);
 
   const fetchData = async () => {
     setLoading(true);
@@ -161,7 +167,7 @@ const UserManagementPage: React.FC = () => {
       setConfirmPassword('');
       setIsResetModalOpen(true);
     } else if (action === 'deactivate') {
-      handleDeactivateUser(u);
+      setConfirmDeactivation({ open: true, user: u });
     }
   };
 
@@ -212,23 +218,27 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
-  const handleDeactivateUser = async (targetUser: User) => {
+  const handleDeactivateUser = async () => {
+    const targetUser = confirmDeactivation.user;
+    if (!targetUser) return;
+    
     if (targetUser.username === 'admin') {
       toast.error("Security Lock: Primary Administrator cannot be deactivated.");
+      setConfirmDeactivation({ open: false, user: null });
       return;
     }
 
-    if (!window.confirm(`Are you absolutely sure you want to DEACTIVATE the account for @${targetUser.username}? This action is permanent and will remove all their clinical access.`)) {
-      return;
-    }
-
+    setDeactivating(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
       await axios.delete(`http://localhost:5000/api/admin/users/${targetUser.id}`, { headers });
       toast.success(`Account @${targetUser.username} deactivated.`);
+      setConfirmDeactivation({ open: false, user: null });
       fetchData();
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to deactivate account.");
+    } finally {
+      setDeactivating(false);
     }
   };
 
@@ -573,6 +583,17 @@ const UserManagementPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <ActionConfirmModal
+        isOpen={confirmDeactivation.open}
+        onClose={() => setConfirmDeactivation({ open: false, user: null })}
+        onConfirm={handleDeactivateUser}
+        loading={deactivating}
+        title="Confirm Deactivation"
+        description={confirmDeactivation.user ? `Are you absolutely sure you want to DEACTIVATE the account for @${confirmDeactivation.user.username}? This action is permanent and will remove all their clinical access.` : ''}
+        confirmText="Deactivate Account"
+        variant="danger"
+      />
     </MainLayout>
   );
 };

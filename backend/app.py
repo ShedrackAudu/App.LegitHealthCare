@@ -206,6 +206,14 @@ def login():
         # Optional: Add cross-portal block just in case
         if portal == 'staff' and not hasattr(user, 'roles'): # PatientPortalUser won't have roles
              return jsonify({"error": "This account does not have staff access."}), 403
+        
+        # 2FA Enforcement
+        if getattr(user, 'is_2fa_enabled', False):
+            return jsonify({
+                "requires_2fa": True,
+                "user_id": user.id,
+                "message": "Two-factor authentication required"
+            }), 200
             
         user.last_seen_at = datetime.utcnow()
         db.session.commit()

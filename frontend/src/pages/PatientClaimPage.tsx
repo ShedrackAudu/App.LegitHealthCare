@@ -8,11 +8,13 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { motion } from 'framer-motion';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { useAppContext } from '@/context/AppContext';
 
 const PatientClaimPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const patientFound = location.state?.patient;
+  const { branding } = useAppContext();
 
   const [formData, setFormData] = useState({
     staff_id: '',
@@ -100,21 +102,31 @@ const PatientClaimPage = () => {
         transition={{ duration: 0.6 }}
         className="max-w-4xl mx-auto"
       >
-        <div className="flex flex-col items-center mb-10 text-center">
-            <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mb-4 text-primary">
-                <ShieldCheck className="w-8 h-8" />
-            </div>
-            <h1 className="text-3xl font-bold tracking-tight">Complete Your Profile</h1>
-            <p className="text-muted-foreground mt-2">Finish claiming your account by setting up your password and verifying your info.</p>
-        </div>
+        {/* Removed external title - moved into main card */}
+
 
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Form Fields */}
             <Card className="lg:col-span-2 border-2 border-border/50 shadow-xl shadow-foreground/5 bg-card/50 backdrop-blur-xl">
               <CardHeader className="border-b bg-muted/30">
-                <CardTitle className="text-xl">Biographic Information</CardTitle>
-                <CardDescription>Review your pre-filled details from the healthcare system.</CardDescription>
+                <div className="flex justify-between items-start mb-6">
+                  {branding?.logo_light ? (
+                    <img 
+                      src={`http://localhost:5000${branding.logo_light}`} 
+                      alt="Logo" 
+                      className="h-12 w-auto object-contain" 
+                    />
+                  ) : (
+                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                        <ShieldCheck className="w-6 h-6" />
+                    </div>
+                  )}
+                  <div className="text-right">
+                    <CardTitle className="text-2xl font-black">Complete Your Profile</CardTitle>
+                    <CardDescription>Finish claiming your account by verifying your info.</CardDescription>
+                  </div>
+                </div>
               </CardHeader>
               <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
                 <div className="space-y-2">
