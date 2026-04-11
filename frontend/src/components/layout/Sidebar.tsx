@@ -42,7 +42,7 @@ const medicalItems: SidebarItem[] = [
   { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
   { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
   { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
-  { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'registration' },
+  { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'view_appointments' },
 ];
 
 
@@ -51,7 +51,7 @@ const adminItems: SidebarItem[] = [
   { title: 'Role Configuration', path: '/roles-permissions', icon: ShieldCheck, permission: 'manage_roles' },
   { title: 'Audit Trails', path: '/audit-logs', icon: FileText, permission: 'view_audit_logs' },
   { title: 'Data Management', path: '/data-management', icon: Database, permission: 'download_data' },
-  { title: 'Access Keys', path: '/admin/access-keys', icon: Key, permission: 'manage_roles' },
+  { title: 'Access Keys', path: '/admin/access-keys', icon: Key, permission: 'manage_access_keys' },
   { title: 'AI Integration', path: '/ai-integration', icon: Bot, permission: 'manage_ai' },
   { title: 'System Branding', path: '/system-branding', icon: Palette, permission: 'manage_branding' },
   { title: 'System Settings', path: '/system-config', icon: Settings2, permission: 'manage_departments' },
@@ -68,7 +68,7 @@ export const Sidebar: React.FC = () => {
     return saved !== null ? JSON.parse(saved) : false;
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission } = usePermissions();
   const location = useLocation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -192,50 +192,58 @@ export const Sidebar: React.FC = () => {
             );
           })}
 
-          {/* Admin Section - Only visible to Admins */}
-          {isAdmin() && (
-            <div className="pt-1 pb-2 space-y-0.5">
-              <div className={cn(
-                "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
-                isCollapsed && "flex justify-center"
-              )}>
-                {isCollapsed ? (
-                  <div className="h-px bg-border/80 w-10 my-3" />
-                ) : (
-                  "Admin Control Panel"
-                )}
-              </div>
-              {adminItems.map((item) => {
-                return (
-                  <NavLink
-                    key={item.path}
-                    to={item.path}
-                    className={({ isActive }) => cn(
-                      "flex items-center rounded-lg transition-all duration-200 group/item relative",
-                      isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
-                      isActive
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                        : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
-                    )}
-                  >
-                    <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
-                    <span className={cn(
-                      "font-semibold transition-opacity duration-300 whitespace-nowrap",
-                      isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
-                    )}>
-                      {item.title}
-                    </span>
+          {/* Admin Section - Dynamic Visibility */}
+          {(() => {
+            const filteredAdminItems = adminItems.filter(item => 
+              item.permission ? hasPermission(item.permission) : isAdmin()
+            );
 
-                    {isCollapsed && (
-                      <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+            if (filteredAdminItems.length === 0) return null;
+
+            return (
+              <div className="pt-1 pb-2 space-y-0.5">
+                <div className={cn(
+                  "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
+                  isCollapsed && "flex justify-center"
+                )}>
+                  {isCollapsed ? (
+                    <div className="h-px bg-border/80 w-10 my-3" />
+                  ) : (
+                    "Admin Control Panel"
+                  )}
+                </div>
+                {filteredAdminItems.map((item) => {
+                  return (
+                    <NavLink
+                      key={item.path}
+                      to={item.path}
+                      className={({ isActive }) => cn(
+                        "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                        isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                      )}
+                    >
+                      <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+                      <span className={cn(
+                        "font-semibold transition-opacity duration-300 whitespace-nowrap",
+                        isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
+                      )}>
                         {item.title}
-                      </div>
-                    )}
-                  </NavLink>
-                );
-              })}
-            </div>
-          )}
+                      </span>
+
+                      {isCollapsed && (
+                        <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                          {item.title}
+                        </div>
+                      )}
+                    </NavLink>
+                  );
+                })}
+              </div>
+            );
+          })()}
         </div>
 
         <div className="px-3 mt-auto">

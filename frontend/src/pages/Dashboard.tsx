@@ -149,7 +149,7 @@ const adminActions = [
     icon: User, 
     path: '/system-branding',
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    permission: 'admin'
+    permission: 'manage_branding'
   },
   { 
     title: 'AI Integration', 
@@ -157,7 +157,7 @@ const adminActions = [
     icon: Activity, 
     path: '/ai-integration',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    permission: 'admin'
+    permission: 'manage_ai'
   },
   { 
     title: 'Access Keys', 
@@ -165,14 +165,14 @@ const adminActions = [
     icon: Key, 
     path: '/admin/access-keys',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
-    permission: 'manage_roles'
+    permission: 'manage_access_keys'
   },
 ];
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
   const { activeSection, activeYear } = useAppContext();
-  const { isAdmin } = usePermissions();
+  const { isAdmin, hasPermission } = usePermissions();
   const [stats, setStats] = React.useState<any>(null);
   const [queueStats, setQueueStats] = React.useState<any>(null);
   const [queueEntries, setQueueEntries] = React.useState<any[]>([]);
@@ -316,17 +316,22 @@ const Dashboard: React.FC = () => {
         </div>
 
         {/* Admin Control Panel Section - Only visible to Admins */}
-        {isAdmin() && (
-          <div className="space-y-4">
-            <div className="flex items-center gap-2">
-              <h2 className="text-xl font-black tracking-tight text-primary">Admin Control Panel</h2>
-              <div className="h-px flex-1 bg-primary/20" />
-            </div>
-            
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
-              {adminActions.map((action) => {
-                // All admin links visible if user is an admin
-                return (
+        {(() => {
+          const filteredAdminActions = adminActions.filter(action => 
+            action.permission ? hasPermission(action.permission) : isAdmin()
+          );
+
+          if (filteredAdminActions.length === 0) return null;
+
+          return (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl font-black tracking-tight text-primary">Admin Control Panel</h2>
+                <div className="h-px flex-1 bg-primary/20" />
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+                {filteredAdminActions.map((action) => (
                   <Card 
                     key={action.path}
                     className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm shadow-inner"
@@ -350,11 +355,11 @@ const Dashboard: React.FC = () => {
                       </Button>
                     </CardContent>
                   </Card>
-                );
-              })}
+                ))}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
 
         {/* Queue Stats Section */}
         <div className="space-y-4">

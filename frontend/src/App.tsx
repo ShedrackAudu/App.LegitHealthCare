@@ -75,7 +75,7 @@ function RootApp() {
             <Route path="/patient/account/2fa" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManage2FAPage /></ProtectedRoute>} />
             <Route path="/registration" element={<ProtectedRoute requiredPermission="registration"><RegistrationPage /></ProtectedRoute>} />
             <Route path="/consultation" element={<ProtectedRoute requiredPermission="consultation"><ConsultationPage /></ProtectedRoute>} />
-            <Route path="/appointments" element={<ProtectedRoute requiredPermission="registration"><AppointmentsPage /></ProtectedRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute requiredPermission="view_appointments"><AppointmentsPage /></ProtectedRoute>} />
 
             <Route path="/tests" element={<ProtectedRoute><TestResultsPage /></ProtectedRoute>} />
             <Route path="/tests/fbc" element={<ProtectedRoute requiredPermission="lab_fbc"><TestResultsPage /></ProtectedRoute>} />
@@ -92,13 +92,13 @@ function RootApp() {
             <Route path="/account/2fa" element={<ProtectedRoute><Manage2FAPage /></ProtectedRoute>} />
             <Route path="/account" element={<ProtectedRoute><ManageAccountPage /></ProtectedRoute>} />
             <Route path="/system-config" element={<ProtectedRoute requiredPermission="manage_departments"><SystemConfigPage /></ProtectedRoute>} />
-            <Route path="/system-branding" element={<ProtectedRoute adminOnly={true}><BrandingSettingsPage /></ProtectedRoute>} />
-            <Route path="/ai-integration" element={<ProtectedRoute adminOnly={true}><AISettingsPage /></ProtectedRoute>} />
-            <Route path="/user-management" element={<ProtectedRoute adminOnly={true}><UserManagementPage /></ProtectedRoute>} />
-            <Route path="/roles-permissions" element={<ProtectedRoute adminOnly={true}><RolePermissionPage /></ProtectedRoute>} />
-            <Route path="/audit-logs" element={<ProtectedRoute adminOnly={true}><AuditLogPage /></ProtectedRoute>} />
-            <Route path="/data-management" element={<ProtectedRoute adminOnly={true}><DataManagementPage /></ProtectedRoute>} />
-            <Route path="/admin/access-keys" element={<ProtectedRoute adminOnly={true}><AccessKeysPage /></ProtectedRoute>} />
+            <Route path="/system-branding" element={<ProtectedRoute requiredPermission="manage_branding"><BrandingSettingsPage /></ProtectedRoute>} />
+            <Route path="/ai-integration" element={<ProtectedRoute requiredPermission="manage_ai"><AISettingsPage /></ProtectedRoute>} />
+            <Route path="/user-management" element={<ProtectedRoute requiredPermission="view_users"><UserManagementPage /></ProtectedRoute>} />
+            <Route path="/roles-permissions" element={<ProtectedRoute requiredPermission="manage_roles"><RolePermissionPage /></ProtectedRoute>} />
+            <Route path="/audit-logs" element={<ProtectedRoute requiredPermission="view_audit_logs"><AuditLogPage /></ProtectedRoute>} />
+            <Route path="/data-management" element={<ProtectedRoute requiredPermission="download_data"><DataManagementPage /></ProtectedRoute>} />
+            <Route path="/admin/access-keys" element={<ProtectedRoute requiredPermission="manage_access_keys"><AccessKeysPage /></ProtectedRoute>} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             <Route path="/messages" element={<ProtectedRoute requiredPermission="messaging"><MessagingPage /></ProtectedRoute>} />
           </Routes>

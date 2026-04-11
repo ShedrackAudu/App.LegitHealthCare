@@ -18,7 +18,17 @@ def require_permission(permission_name):
                 return jsonify({"error": "Account not verified"}), 403
                 
             # Master logic: The user named 'admin' always has all permissions
-            if user.username == 'admin' or user.has_permission(permission_name):
+            if user.username == 'admin':
+                return f(*args, **kwargs)
+                
+            # Check for multiple permissions if a list is provided
+            if isinstance(permission_name, list):
+                if any(user.has_permission(p) for p in permission_name):
+                    return f(*args, **kwargs)
+                return jsonify({"error": f"One of permissions {permission_name} required"}), 403
+            
+            # Standard single permission check
+            if user.has_permission(permission_name):
                 return f(*args, **kwargs)
                 
             return jsonify({"error": f"Permission '{permission_name}' required"}), 403

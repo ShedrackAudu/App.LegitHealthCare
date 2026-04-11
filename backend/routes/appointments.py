@@ -8,6 +8,7 @@ from decorators import require_permission
 appointments_bp = Blueprint('appointments', __name__)
 
 @appointments_bp.route('/appointments', methods=['POST'])
+@require_permission('manage_appointments')
 def create_appointment():
     data = request.json
     staff_id = data.get('staff_id')

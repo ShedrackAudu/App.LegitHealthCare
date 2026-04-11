@@ -26,7 +26,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const ViewPatientsPage: React.FC = () => {
-    const { activeSection, activeYear } = useAppContext();
+    const { user, activeSection, activeYear } = useAppContext();
     const navigate = useNavigate();
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
@@ -176,22 +176,26 @@ const ViewPatientsPage: React.FC = () => {
                                                     <TableCell className="text-[10px] font-medium text-muted-foreground">{p.nationality || '-'}</TableCell>
                                                     <TableCell className="text-right">
                                                         <div className="flex justify-end gap-1 transition-opacity">
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
-                                                                onClick={() => navigate(`/registration?edit=${p.staff_id}`)}
-                                                            >
-                                                                <Edit className="h-4 w-4" />
-                                                            </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                                onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
+                                                            {user?.permissions?.includes('edit_patient') && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                                                                    onClick={() => navigate(`/registration?edit=${p.staff_id}`)}
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {user?.permissions?.includes('delete_patient') && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                    onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>

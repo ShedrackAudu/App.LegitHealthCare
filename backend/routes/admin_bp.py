@@ -14,7 +14,7 @@ from utils.email_utils import EmailService
 admin_bp = Blueprint('admin_bp', __name__)
 
 @admin_bp.route('/api/admin/users', methods=['GET'])
-@require_permission('view_users')
+@require_permission(['view_users', 'manage_access_keys'])
 def get_users():
     staff = User.query.all()
     patients = PatientPortalUser.query.all()
@@ -156,7 +156,7 @@ def delete_role(role_id):
     return jsonify({"message": f"Role '{role.name}' deleted successfully"})
 
 @admin_bp.route('/api/admin/permissions', methods=['GET'])
-@require_permission('manage_roles')
+@require_permission(['manage_roles', 'manage_access_keys'])
 def get_permissions():
     permissions = Permission.query.all()
     return jsonify([p.to_dict() for p in permissions])
@@ -607,13 +607,13 @@ def import_data():
         return jsonify({"error": f"Import failed: {str(e)}"}), 500
 
 @admin_bp.route('/api/admin/access-codes', methods=['GET'])
-@require_permission('manage_roles')
+@require_permission('manage_access_keys')
 def get_access_codes():
     codes = TempAccessCode.query.order_by(TempAccessCode.created_at.desc()).all()
     return jsonify([code.to_dict() for code in codes])
 
 @admin_bp.route('/api/admin/access-codes/generate', methods=['POST'])
-@require_permission('manage_roles')
+@require_permission('manage_access_keys')
 def generate_access_code():
     data = request.json
     perm_name = data.get('permission_name')
@@ -667,7 +667,7 @@ def generate_access_code():
     return jsonify(new_code.to_dict()), 201
 
 @admin_bp.route('/api/admin/access-codes/<int:code_id>/revoke', methods=['PUT'])
-@require_permission('manage_roles')
+@require_permission('manage_access_keys')
 def revoke_access_code(code_id):
     code_obj = TempAccessCode.query.get_or_404(code_id)
     code_obj.is_revoked = True
@@ -699,7 +699,7 @@ def revoke_access_code(code_id):
     return jsonify({"message": f"Code {code_obj.code} revoked successfully"})
 
 @admin_bp.route('/api/admin/access-codes/<int:code_id>', methods=['DELETE'])
-@require_permission('manage_roles')
+@require_permission('manage_access_keys')
 def delete_access_code(code_id):
     code_obj = TempAccessCode.query.get_or_404(code_id)
     if not code_obj.is_revoked and (not code_obj.expires_at or code_obj.expires_at > datetime.now()):

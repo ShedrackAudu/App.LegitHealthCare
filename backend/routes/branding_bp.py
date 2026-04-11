@@ -115,6 +115,10 @@ def update_branding():
     if auth_url:
         branding.auth_branding_image = auth_url
 
+    auth_logo_url = save_upload('auth_logo')
+    if auth_logo_url:
+        branding.auth_logo = auth_logo_url
+
     db.session.commit()
     return jsonify({"message": "Branding updated successfully"}), 200
 
@@ -132,7 +136,7 @@ def clear_branding_asset():
     valid_fields = [
         'logo_light', 'logo_dark', 'favicon', 'hero_image_1', 'hero_image_2', 
         'hero_image_team', 'header_image', 'footer_image', 'signature_image',
-        'auth_branding_image'
+        'auth_branding_image', 'auth_logo'
     ]
     if field not in valid_fields:
         return jsonify({"error": "Invalid field"}), 400

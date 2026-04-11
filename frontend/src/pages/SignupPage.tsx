@@ -180,7 +180,13 @@ const SignupPage: React.FC = () => {
 
         <div className="relative z-10 flex flex-col justify-between p-16 w-full text-white">
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
-            {branding?.logo_dark ? (
+            {branding?.auth_logo ? (
+                <img 
+                  src={`http://localhost:5000${branding.auth_logo}`} 
+                  alt="Auth Page Overlay Logo" 
+                  className="h-24 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                />
+            ) : branding?.logo_dark ? (
                 <img 
                   src={`http://localhost:5000${branding.logo_dark}`} 
                   alt="Wordmark Logo" 

@@ -14,7 +14,13 @@ from decorators import require_permission
 view_data_bp = Blueprint('view_data', __name__)
 
 @view_data_bp.route('/patients/search', methods=['GET'])
-@require_permission('view_patients')
+@require_permission([
+    'view_patients', 'registration', 'consultation', 'lab_tests', 
+    'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 
+    'lab_spirometry', 'lab_audiometry', 'director_review', 
+    'manage_appointments', 'view_appointments', 'edit_patient', 
+    'delete_patient', 'manage_access_keys'
+])
 def search_patients():
     query = request.args.get('q', '')
     if len(query) < 2: return jsonify([]), 200
@@ -100,8 +106,20 @@ def get_all_patients():
     } for p in patients]), 200
 
 @view_data_bp.route('/patients/<staff_id>', methods=['PUT', 'DELETE'])
-@require_permission('view_patients')
 def handle_patient(staff_id):
+    user_id = request.headers.get('X-User-ID')
+    from models import StaffUser
+    user = StaffUser.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Staff authentication required"}), 401
+
+    if request.method == 'DELETE':
+        if not user.has_permission('delete_patient') and user.username != 'admin':
+            return jsonify({"error": "Permission 'delete_patient' required"}), 403
+    elif request.method == 'PUT':
+        if not user.has_permission('edit_patient') and user.username != 'admin':
+            return jsonify({"error": "Permission 'edit_patient' required"}), 403
+
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
@@ -343,7 +361,7 @@ def get_screening_records(year):
     }), 200
 
 @view_data_bp.route('/records/screening/<int:id>', methods=['DELETE'])
-@require_permission('view_records')
+@require_permission('delete_record')
 def delete_screening_record(id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400

@@ -128,7 +128,14 @@ class StaffUser(db.Model):
             "must_reset_password": self.must_reset_password,
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "roles": [role.name for role in self.roles],
-            "permissions": list(set([p.name for role in self.roles for p in role.permissions]))
+            "permissions": list(set([p.name for role in self.roles for p in role.permissions])),
+            "temp_access": [
+                {
+                    "permission_name": t.permission.name,
+                    "is_revoked": t.is_revoked,
+                    "expires_at": t.expires_at.isoformat() if t.expires_at else None
+                } for t in self.temp_codes
+            ] if hasattr(self, 'temp_codes') else []
         }
 
 # Isolated Patient Portal users - Uses 'patients' bind
@@ -270,6 +277,7 @@ class AppBranding(db.Model):
     clinic_slogan = db.Column(db.String(255), default="Excellence.")
     
     auth_branding_image = db.Column(db.String(255), nullable=True)
+    auth_logo = db.Column(db.String(255), nullable=True)
     
     # Hero Illustration Images
     hero_image_1 = db.Column(db.String(255), nullable=True)
@@ -306,6 +314,7 @@ class AppBranding(db.Model):
             "logo_dark": self.logo_dark,
             "favicon": self.favicon,
             "auth_branding_image": self.auth_branding_image,
+            "auth_logo": self.auth_logo,
             "hero_image_1": self.hero_image_1,
             "hero_image_2": self.hero_image_2,
             "hero_image_team": self.hero_image_team,

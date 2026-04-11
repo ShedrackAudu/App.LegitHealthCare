@@ -139,11 +139,17 @@ const LoginPage = () => {
         {/* Content on Image */}
         <div className="relative z-10 flex flex-col justify-between p-16 w-full text-white">
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
-            {branding?.logo_dark ? (
+            {branding?.auth_logo ? (
+                <img 
+                  src={`http://localhost:5000${branding.auth_logo}`} 
+                  alt="Auth Page Overlay Logo" 
+                  className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                />
+            ) : branding?.logo_dark ? (
                 <img 
                   src={`http://localhost:5000${branding.logo_dark}`} 
                   alt="Wordmark Logo" 
-                  className="h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
                 />
               ) : (
                 <div className="flex items-center gap-2">

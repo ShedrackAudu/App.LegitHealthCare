@@ -26,7 +26,7 @@ import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const ViewRecordsPage: React.FC = () => {
-    const { activeSection, activeYear } = useAppContext();
+    const { user, activeSection, activeYear } = useAppContext();
     const [recordsData, setRecordsData] = useState<any>({
         records: [],
         total: 0,
@@ -367,14 +367,16 @@ const ViewRecordsPage: React.FC = () => {
                                                         
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-1 transition-opacity">
-                                                                <Button 
-                                                                    variant="ghost" 
-                                                                    size="sm" 
-                                                                    className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
-                                                                    onClick={() => setDeleteModal({ open: true, id: r.id })}
-                                                                >
-                                                                    <Trash2 className="h-4 w-4" />
-                                                                </Button>
+                                                                {user?.permissions?.includes('delete_record') && (
+                                                                    <Button 
+                                                                        variant="ghost" 
+                                                                        size="sm" 
+                                                                        className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                                                                        onClick={() => setDeleteModal({ open: true, id: r.id })}
+                                                                    >
+                                                                        <Trash2 className="h-4 w-4" />
+                                                                    </Button>
+                                                                )}
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>

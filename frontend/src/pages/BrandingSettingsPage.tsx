@@ -41,6 +41,7 @@ const BrandingSettingsPage: React.FC = () => {
     const [footerImage, setFooterImage] = useState<File | null>(null);
     const [signatureImage, setSignatureImage] = useState<File | null>(null);
     const [authBrandingImage, setAuthBrandingImage] = useState<File | null>(null);
+    const [authLogo, setAuthLogo] = useState<File | null>(null);
 
     // Current Values
     const [currentBranding, setCurrentBranding] = useState<any>(null);
@@ -102,6 +103,7 @@ const BrandingSettingsPage: React.FC = () => {
             if (footerImage) formData.append('footer_image', footerImage);
             if (signatureImage) formData.append('signature_image', signatureImage);
             if (authBrandingImage) formData.append('auth_branding_image', authBrandingImage);
+            if (authLogo) formData.append('auth_logo', authLogo);
 
             await axios.post('http://localhost:5000/api/branding', formData, {
                 headers: { 
@@ -360,6 +362,40 @@ const BrandingSettingsPage: React.FC = () => {
                                             {authBrandingImage ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="auth-bg" type="file" accept="image/*" className="hidden" onChange={(e) => setAuthBrandingImage(e.target.files?.[0] || null)} />
+                                    </div>
+                                </div>
+                                {/* Auth Logo */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Auth Page Overlay Logo</Label>
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
+                                        {currentBranding?.auth_logo && !authLogo ? (
+                                            <div className="relative group/img flex items-center justify-center h-full w-full">
+                                                <img src={`http://localhost:5000${currentBranding.auth_logo}`} alt="Auth Logo" className="max-h-16 object-contain" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'auth_logo',
+                                                        title: 'Remove Auth Logo',
+                                                        description: 'Are you sure you want to remove the Authentication overlay logo?'
+                                                    })}
+                                                    className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <span className="text-[10px] text-muted-foreground italic">No image selected</span>
+                                            </div>
+                                        )}
+                                        <Label htmlFor="auth-logo" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
+                                            <Upload className="h-3 w-3" />
+                                            {authLogo ? 'Ready' : 'Upload'}
+                                        </Label>
+                                        <input id="auth-logo" type="file" accept="image/*" className="hidden" onChange={(e) => setAuthLogo(e.target.files?.[0] || null)} />
                                     </div>
                                 </div>
                             </div>

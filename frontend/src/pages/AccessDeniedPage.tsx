@@ -71,7 +71,7 @@ const AccessDeniedPage: React.FC = () => {
                 localStorage.setItem('user', JSON.stringify(resp.data.user));
             }
             
-            navigate(fromPath);
+            navigate(fromPath, { replace: true });
         } catch (err: any) {
             toast.error(err.response?.data?.error || "Invalid or expired access code.");
             setAccessCode('');
