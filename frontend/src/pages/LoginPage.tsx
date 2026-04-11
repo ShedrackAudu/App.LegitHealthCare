@@ -162,18 +162,18 @@ const LoginPage = () => {
           </Link>
 
           <div className="max-w-md animate-in fade-in slide-in-from-bottom-8 duration-700">
-             <h2 className="text-4xl font-black leading-tight mb-4 tracking-tight">
+             <h2 className="text-2xl font-black leading-tight mb-2 tracking-tight">
                Precision Care,<br />
                Seamless Operations.
              </h2>
-             <p className="text-lg font-medium text-white/80 italic border-l-4 border-white/30 pl-4 py-1">
+             <p className="text-sm font-bold text-white/80 italic border-l-4 border-white/30 pl-4 py-1">
                {branding?.clinic_slogan || 'Excellence in Clinical Management.'}
              </p>
              
-             <div className="mt-12 flex gap-4 text-xs font-black uppercase tracking-widest text-white/50">
-               <span className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-md">Secure</span>
-               <span className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-md">Fast</span>
-               <span className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full backdrop-blur-md">Reliable</span>
+             <div className="mt-4 flex gap-3 text-[10px] font-black uppercase tracking-widest">
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Secure</span>
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Fast</span>
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Reliable</span>
              </div>
           </div>
         </div>

@@ -203,12 +203,18 @@ const SignupPage: React.FC = () => {
           </Link>
 
           <div className="max-w-md">
-             <h2 className="text-4xl font-black leading-tight mb-4 tracking-tight">
+             <h2 className="text-2xl font-black leading-tight mb-2 tracking-tight">
                Your Health Journey<br />Starts Here.
              </h2>
-             <p className="text-lg font-medium text-white/80 italic border-l-4 border-white/30 pl-4 py-1">
+             <p className="text-sm font-bold text-white/80 italic border-l-4 border-white/30 pl-4 py-1">
                {branding?.clinic_slogan || 'Empowering Patients through Accessible Data.'}
              </p>
+
+             <div className="mt-4 flex gap-3 text-[10px] font-black uppercase tracking-widest text-white/50">
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Secure</span>
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Fast</span>
+               <span className="flex items-center gap-2 px-3 py-1.5 bg-slate-900 text-white/70 rounded-full border border-white/10">Reliable</span>
+             </div>
           </div>
         </div>
       </div>
