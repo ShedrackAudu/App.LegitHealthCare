@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useLocation } from 'react-router-dom';
 import {
   LayoutDashboard,
   UserPlus,
@@ -69,6 +69,8 @@ export const Sidebar: React.FC = () => {
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
   const { isAdmin } = usePermissions();
+  const location = useLocation();
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
@@ -90,6 +92,23 @@ export const Sidebar: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Ensure active link is in view after navigation
+  useEffect(() => {
+    const scrollActiveIntoView = () => {
+      if (scrollContainerRef.current) {
+        // Find the NavLink that is currently active (has the bg-primary class)
+        const activeItem = scrollContainerRef.current.querySelector('.bg-primary');
+        if (activeItem) {
+          activeItem.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+      }
+    };
+
+    // Small delay to ensure styles are applied and layout is settled
+    const timer = setTimeout(scrollActiveIntoView, 100);
+    return () => clearTimeout(timer);
+  }, [location.pathname]);
 
   const toggleSidebar = () => {
     const newState = !isCollapsed;
@@ -127,7 +146,10 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
-        <div className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar">
+        <div 
+          ref={scrollContainerRef}
+          className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar"
+        >
           {/* Main Items */}
           {[...sharedItems, ...medicalItems].map((item) => {
             // Visible to everyone, access handled by ProtectedRoute

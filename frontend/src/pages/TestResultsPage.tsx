@@ -299,20 +299,22 @@ const TestResultsPage: React.FC = () => {
                                 )}
 
                                 {/* Search Section Redesign */}
-                                <div className="flex-1 max-w-2xl relative">
-                                    <div className="flex items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                                        <Search className="h-6 w-6 text-muted-foreground ml-2" />
-                                        <Input
-                                            placeholder="Search Staff ID or Name..."
-                                            value={searchId}
-                                            onChange={(e) => setSearchId(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                                            className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
-                                        />
+                                <div className="flex-1 w-full lg:max-w-2xl relative">
+                                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                                        <div className="flex items-center gap-2 flex-1 px-2 h-11">
+                                            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+                                            <Input
+                                                placeholder="Search Staff ID or Name..."
+                                                value={searchId}
+                                                onChange={(e) => setSearchId(e.target.value)}
+                                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                                className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
+                                            />
+                                        </div>
                                         <Button 
                                             onClick={handleSearch}
                                             disabled={searching || !searchId.trim()}
-                                            className="bg-primary hover:bg-primary/90 shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl"
+                                            className="bg-primary hover:bg-primary/90 shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                                         >
                                             {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Profile'}
                                         </Button>
@@ -578,8 +580,8 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
-                        <Label>{f.toUpperCase().replace('_', ' ')}</Label>
-                        <Input {...register(f)} placeholder="---" />
+                        <Label>{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
+                        <Input {...register(f, { required: true })} type="number" step="any" placeholder="0.00" required />
                     </div>
                 ))}
             </div>
@@ -626,13 +628,13 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>POTASSIUM - K</Label><Input {...register('potassium')} /></div>
-                <div className="space-y-2"><Label>SODIUM - NA</Label><Input {...register('sodium')} /></div>
-                <div className="space-y-2"><Label>CHLORIDE - CL</Label><Input {...register('chloride')} /></div>
-                <div className="space-y-2"><Label>BICARBONATE - CA</Label><Input {...register('bicarbonate_ca')} /></div>
-                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} className="font-bold text-primary" /></div>
-                <div className="space-y-2"><Label>UREA</Label><Input {...register('urea')} /></div>
-                <div className="space-y-2"><Label>CREATININE - CRE</Label><Input {...register('creatinine')} /></div>
+                <div className="space-y-2"><Label>POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
+                <div className="space-y-2"><Label>UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
@@ -671,10 +673,10 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO</Label><Input {...register('total_cholesterol')} /></div>
-                <div className="space-y-2"><Label>TRIGLYCERIDES - TG</Label><Input {...register('triglycerides')} /></div>
-                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} className="font-bold" /></div>
-                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} className="font-bold" /></div>
+                <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
+                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
@@ -700,11 +702,11 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>AST</Label><Input {...register('ast')} /></div>
-                <div className="space-y-2"><Label>ALT</Label><Input {...register('alt')} /></div>
-                <div className="space-y-2"><Label>ALP</Label><Input {...register('alp')} /></div>
-                <div className="space-y-2"><Label>TB</Label><Input {...register('tb')} /></div>
-                <div className="space-y-2"><Label>CB</Label><Input {...register('cb')} /></div>
+                <div className="space-y-2"><Label>AST <span className="text-rose-500">*</span></Label><Input {...register('ast', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>ALT <span className="text-rose-500">*</span></Label><Input {...register('alt', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
@@ -730,10 +732,10 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Spirometry Result</Label><Input {...register('spirometry_result')} /></div>
-                <div className="space-y-2"><Label>Spirometry Remark</Label><Input {...register('spirometry_remark')} /></div>
-                <div className="space-y-2"><Label>Weight</Label><Input {...register('weight')} /></div>
-                <div className="space-y-2"><Label>Height</Label><Input {...register('height')} /></div>
+                <div className="space-y-2"><Label>Spirometry Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Spirometry Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
@@ -758,8 +760,8 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>{test} Result</Label><Input {...register(resultKey)} /></div>
-                <div className="space-y-2"><Label>Remark</Label><Input {...register(remarkKey)} /></div>
+                <div className="space-y-2"><Label>{test} Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
+                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>

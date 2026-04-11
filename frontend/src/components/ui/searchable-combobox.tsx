@@ -40,7 +40,7 @@ export function SearchableCombobox({
         )}
       >
         <input 
-          className="flex-1 bg-transparent outline-none border-none font-semibold text-foreground placeholder:text-muted-foreground placeholder:font-normal"
+          className="flex-1 min-w-0 bg-transparent outline-none border-none font-semibold text-foreground placeholder:text-muted-foreground placeholder:font-normal"
           placeholder={placeholder}
           value={open ? search : (value || search)}
           onClick={() => { setOpen(true); setSearch(""); }}

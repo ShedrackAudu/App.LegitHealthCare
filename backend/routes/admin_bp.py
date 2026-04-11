@@ -946,3 +946,24 @@ def create_user():
         "message": f"User @{username} created successfully. A welcome email has been sent to {email}.",
         "user": new_user.to_dict()
     }), 201
+        if not email_sent:
+            current_app.logger.error(f"Failed to send welcome email to {email}")
+            # We don't fail the request because the user was created, but we should inform the admin
+    except Exception as e:
+        current_app.logger.error(f"Error sending welcome email: {e}")
+
+    # Audit Log
+    log = AuditLog(
+        user_id=admin_id,
+        action="CREATE_USER",
+        resource=f"User:{username}",
+        details=json.dumps({"username": username, "email": email, "roles": role_names}),
+        ip_address=request.remote_addr
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    return jsonify({
+        "message": f"User @{username} created successfully. A welcome email has been sent to {email}.",
+        "user": new_user.to_dict()
+    }), 201
