@@ -1,24 +1,24 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  FileText, 
-  Download, 
-  Mail, 
-  Loader2, 
-  X, 
-  Printer,
-  Calendar,
-  ChevronRight,
-  ShieldCheck,
-  AlertCircle
+import {
+    FileText,
+    Download,
+    Mail,
+    Loader2,
+    X,
+    Printer,
+    Calendar,
+    ChevronRight,
+    ShieldCheck,
+    AlertCircle
 } from 'lucide-react';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
-import { 
-  Select, 
-  SelectContent, 
-  SelectItem, 
-  SelectTrigger, 
-  SelectValue 
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAppContext } from '@/context/AppContext';
@@ -69,9 +69,9 @@ const PatientMedicalReport: React.FC = () => {
             const profileRes = await axios.get('http://localhost:5000/api/patient/profile', {
                 headers: { 'X-Staff-ID': user?.username }
             });
-            
+
             const section = profileRes.data.section || 'DCP'; // Fallback if somehow missing
-            
+
             const res = await axios.get(`http://localhost:5000/api/patient-report/${user?.username}/${selectedYear}`, {
                 headers: { 'X-Company-Context': section }
             });
@@ -102,8 +102,8 @@ const PatientMedicalReport: React.FC = () => {
             const width = pageEl.scrollWidth;
             const height = pageEl.scrollHeight;
 
-            const imgData = await toPng(pageEl, { 
-                cacheBust: true, 
+            const imgData = await toPng(pageEl, {
+                cacheBust: true,
                 pixelRatio: 2,
                 width: width,
                 height: height,
@@ -111,7 +111,7 @@ const PatientMedicalReport: React.FC = () => {
             });
 
             if (i > 0) pdf.addPage();
-            
+
             // Maintain aspect ratio to prevent any squashing/stretching
             const imgProps = pdf.getImageProperties(imgData);
             const ratio = Math.min(pdfWidth / imgProps.width, pdfHeight / imgProps.height);
@@ -122,7 +122,7 @@ const PatientMedicalReport: React.FC = () => {
 
             pdf.addImage(imgData, 'PNG', x, y, calcWidth, calcHeight);
         }
-        
+
         return pdf.output('blob');
     };
 
@@ -240,101 +240,101 @@ const PatientMedicalReport: React.FC = () => {
         <PatientLayout>
             <div className="space-y-8 animate-in fade-in duration-700">
                 <div className="no-print space-y-8">
-                {/* Header Selector Card */}
-                <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden bg-card/50 backdrop-blur-md">
-                    <CardHeader className="p-8 md:p-10">
-                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                            <div className="flex items-center gap-4">
-                                <div className="p-4 bg-primary/10 rounded-3xl text-primary">
-                                    <FileText className="h-8 w-8" />
+                    {/* Header Selector Card */}
+                    <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden bg-card/50 backdrop-blur-md">
+                        <CardHeader className="p-8 md:p-10">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                                <div className="flex items-center gap-4">
+                                    <div className="p-4 bg-primary/10 rounded-3xl text-primary">
+                                        <FileText className="h-8 w-8" />
+                                    </div>
+                                    <div>
+                                        <CardTitle className="text-3xl font-black tracking-tight">Your Medical Reports</CardTitle>
+                                        <CardDescription className="text-base font-medium">Select a screening year to view your detailed diagnostic results.</CardDescription>
+                                    </div>
                                 </div>
-                                <div>
-                                    <CardTitle className="text-3xl font-black tracking-tight">Your Medical Reports</CardTitle>
-                                    <CardDescription className="text-base font-medium">Select a screening year to view your detailed diagnostic results.</CardDescription>
+
+                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
+                                    <div className="w-full sm:w-48">
+                                        <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
+                                            <SelectTrigger className="h-12 rounded-xl border-2 font-bold">
+                                                <Calendar className="mr-2 h-4 w-4 text-primary" />
+                                                <SelectValue placeholder={fetchingYears ? "Loading history..." : "Select Year"} />
+                                            </SelectTrigger>
+                                            <SelectContent className="rounded-xl font-bold">
+                                                {availableYears.map(year => (
+                                                    <SelectItem key={year} value={year}>{year} Screening</SelectItem>
+                                                ))}
+                                                {availableYears.length === 0 && !fetchingYears && (
+                                                    <SelectItem value="none" disabled>No records found</SelectItem>
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                    <Button
+                                        size="lg"
+                                        className="h-12 rounded-xl px-8 font-black shadow-xl transition-all active:scale-95"
+                                        onClick={handleGenerateReport}
+                                        disabled={!selectedYear || loading || fetchingYears}
+                                    >
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ChevronRight className="mr-2 h-4 w-4" />}
+                                        Retrieve Report
+                                    </Button>
                                 </div>
                             </div>
-                            
-                            <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                                <div className="w-full sm:w-48">
-                                    <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
-                                        <SelectTrigger className="h-12 rounded-xl border-2 font-bold">
-                                            <Calendar className="mr-2 h-4 w-4 text-primary" />
-                                            <SelectValue placeholder={fetchingYears ? "Loading history..." : "Select Year"} />
-                                        </SelectTrigger>
-                                        <SelectContent className="rounded-xl font-bold">
-                                            {availableYears.map(year => (
-                                                <SelectItem key={year} value={year}>{year} Screening</SelectItem>
-                                            ))}
-                                            {availableYears.length === 0 && !fetchingYears && (
-                                                <SelectItem value="none" disabled>No records found</SelectItem>
-                                            )}
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                                <Button 
-                                    size="lg" 
-                                    className="h-12 rounded-xl px-8 font-black shadow-xl transition-all active:scale-95"
-                                    onClick={handleGenerateReport}
-                                    disabled={!selectedYear || loading || fetchingYears}
-                                >
-                                    {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ChevronRight className="mr-2 h-4 w-4" />}
-                                    Retrieve Report
+                        </CardHeader>
+                    </Card>
+
+                    {/* Report Actions Banner */}
+                    {reportData && !loading && (
+                        <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 md:p-4 rounded-2xl border-2 border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-lg gap-4 md:gap-0">
+                            <div className="flex items-center gap-3 px-2 md:px-4">
+                                <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
+                                <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
+                            </div>
+                            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
+                                <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
+                                    <Printer className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Print
+                                </Button>
+                                <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
+                                    <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Download
+                                </Button>
+                                <Button className="w-full md:w-auto rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
+                                    <Mail className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Email Report
                                 </Button>
                             </div>
                         </div>
-                    </CardHeader>
-                </Card>
+                    )}
 
-                {/* Report Actions Banner */}
-                {reportData && !loading && (
-                    <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 md:p-4 rounded-2xl border-2 border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-lg gap-4 md:gap-0">
-                        <div className="flex items-center gap-3 px-2 md:px-4">
-                            <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
-                            <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
+                    {!reportData && !loading && (
+                        <div className="flex flex-col items-center justify-center py-32 bg-muted/10 rounded-[3rem] border-2 border-dashed">
+                            {fetchingYears ? (
+                                <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20 mb-4" />
+                            ) : (
+                                <FileText className="h-20 w-20 text-muted-foreground opacity-10 mb-6" />
+                            )}
+                            <h3 className="text-xl font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                                {fetchingYears ? "Accessing Archives..." : "No Report Generated"}
+                            </h3>
+                            <p className="text-muted-foreground font-medium mt-2">
+                                {availableYears.length > 0
+                                    ? "Please select a screening session from the menu above."
+                                    : "No historical medical screenings found in our database."}
+                            </p>
                         </div>
-                        <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
-                             <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
-                                <Printer className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Print
-                             </Button>
-                             <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
-                                <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Download
-                             </Button>
-                             <Button className="w-full md:w-auto rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
-                                <Mail className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Email Report
-                             </Button>
-                        </div>
-                    </div>
-                )}
+                    )}
 
-                {!reportData && !loading && (
-                    <div className="flex flex-col items-center justify-center py-32 bg-muted/10 rounded-[3rem] border-2 border-dashed">
-                        {fetchingYears ? (
-                             <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20 mb-4" />
-                        ) : (
-                             <FileText className="h-20 w-20 text-muted-foreground opacity-10 mb-6" />
-                        )}
-                        <h3 className="text-xl font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                            {fetchingYears ? "Accessing Archives..." : "No Report Generated"}
-                        </h3>
-                        <p className="text-muted-foreground font-medium mt-2">
-                            {availableYears.length > 0 
-                                ? "Please select a screening session from the menu above." 
-                                : "No historical medical screenings found in our database."}
-                        </p>
-                    </div>
-                )}
-
-                {loading && (
-                    <div className="flex flex-col items-center justify-center py-40">
-                         <div className="relative">
-                            <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                            <div className="absolute inset-0 flex items-center justify-center">
-                                <FileText className="h-6 w-6 text-primary/40" />
+                    {loading && (
+                        <div className="flex flex-col items-center justify-center py-40">
+                            <div className="relative">
+                                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                                <div className="absolute inset-0 flex items-center justify-center">
+                                    <FileText className="h-6 w-6 text-primary/40" />
+                                </div>
                             </div>
-                         </div>
-                         <p className="mt-6 text-sm font-black uppercase tracking-[0.3em] text-primary animate-pulse">Compiling Diagnostic Tables...</p>
-                    </div>
-                )}
+                            <p className="mt-6 text-sm font-black uppercase tracking-[0.3em] text-primary animate-pulse">Compiling Diagnostic Tables...</p>
+                        </div>
+                    )}
                 </div>{/* end no-print helper wrapper */}
 
                 {/* VERBATIM REPORT CONTENT FROM STAFF PORTAL */}
@@ -356,7 +356,7 @@ const PatientMedicalReport: React.FC = () => {
 
                             {/* Patient Bio Area */}
                             <div className="report-bio-header">
-                                <div className="report-patient-name" style={{ borderBottom: '2px solid #000', marginBottom: '2mm', paddingBottom: '1mm' }}>
+                                <div className="report-patient-name" style={{ borderTop: '2px solid #000', borderBottom: '1px solid #000', marginTop: '1mm', paddingTop: '1mm', marginBottom: '2mm', paddingBottom: '1mm' }}>
                                     {mkName(reportData.bio.first_name, reportData.bio.middle_name, reportData.bio.last_name)}
                                 </div>
                                 <div className="report-bio-grid" style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>

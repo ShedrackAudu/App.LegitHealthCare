@@ -577,7 +577,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
     ];
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
                         <Label>{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
@@ -627,7 +627,7 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2"><Label>POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
@@ -672,7 +672,7 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
 
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
@@ -701,7 +701,7 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     }, [initialData, reset]);
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2"><Label>AST <span className="text-rose-500">*</span></Label><Input {...register('ast', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>ALT <span className="text-rose-500">*</span></Label><Input {...register('alt', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
@@ -731,7 +731,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
     }, [initialData, reset]);
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>Spirometry Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
                 <div className="space-y-2"><Label>Spirometry Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
                 <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
@@ -759,7 +759,7 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     const remarkKey = `${test.toLowerCase()}_remark`;
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>{test} Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
                 <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
             </div>

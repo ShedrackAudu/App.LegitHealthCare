@@ -116,7 +116,7 @@ def claim_account():
     # Generate OTP and store in DB
     otp = generate_otp()
     user.otp_code = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.otp_expiry = datetime.now() + timedelta(minutes=15)
     user.set_password(password)
     
     if not existing_user:
@@ -170,7 +170,7 @@ def resend_otp():
         
     otp = generate_otp()
     user.otp_code = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.otp_expiry = datetime.now() + timedelta(minutes=15)
     db.session.commit()
     
     try:
@@ -204,7 +204,7 @@ def verify_patient_otp():
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    if user.otp_code == otp_code and user.otp_expiry > datetime.utcnow():
+    if user.otp_code == otp_code and user.otp_expiry > datetime.now():
         user.is_verified = True
         user.otp_code = None
         db.session.commit()
@@ -302,7 +302,7 @@ def reset_password_request():
         
     otp = generate_otp()
     user.otp_code = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.otp_expiry = datetime.now() + timedelta(minutes=15)
     db.session.commit()
     
     try:
@@ -340,7 +340,7 @@ def reset_password_verify():
     if not user:
         return jsonify({"error": "User not found."}), 404
         
-    if user.otp_code != otp or user.otp_expiry < datetime.utcnow():
+    if user.otp_code != otp or user.otp_expiry < datetime.now():
         return jsonify({"error": "Invalid or expired verification code."}), 400
         
     # Strong password check (optional but recommended)

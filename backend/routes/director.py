@@ -73,7 +73,7 @@ def save_director_review():
     if not review:
         review = DirectorReview(staff_id=staff_id, screening_year=screening_year)
         # Set first_submitted_at if this is the first time
-        review.first_submitted_at = datetime.utcnow()
+        review.first_submitted_at = datetime.now()
         db.session.add(review)
         
     # Update all provided fields

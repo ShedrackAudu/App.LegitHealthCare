@@ -143,7 +143,7 @@ def signup():
     # Generate OTP
     otp = generate_otp()
     new_user.otp_code = otp
-    new_user.otp_expiry = datetime.utcnow() + timedelta(minutes=10)
+    new_user.otp_expiry = datetime.now() + timedelta(minutes=10)
     
     db.session.add(new_user)
     db.session.commit()
@@ -166,7 +166,7 @@ def verify_otp():
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    if user.otp_code == otp and user.otp_expiry > datetime.utcnow():
+    if user.otp_code == otp and user.otp_expiry > datetime.now():
         user.is_verified = True
         user.otp_code = None
         db.session.commit()
@@ -210,7 +210,7 @@ def login():
                 "message": "Two-factor authentication required"
             }), 200
             
-        user.last_seen_at = datetime.utcnow()
+        user.last_seen_at = datetime.now()
         
         # Log successful login (when 2FA is skipped)
         login_log = AuditLog(
@@ -221,7 +221,7 @@ def login():
                 "method": "PASSWORD",
                 "identity": identifier,
                 "portal": portal,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now().isoformat()
             }),
             ip_address=request.remote_addr
         )
@@ -257,7 +257,7 @@ def forgot_password():
         
     otp = generate_otp()
     user.otp_code = otp
-    user.otp_expiry = datetime.utcnow() + timedelta(minutes=15)
+    user.otp_expiry = datetime.now() + timedelta(minutes=15)
     db.session.commit()
     
     from auth_utils import send_otp_email
@@ -289,7 +289,7 @@ def verify_recovery_otp():
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    if user.otp_code == otp and user.otp_expiry > datetime.utcnow():
+    if user.otp_code == otp and user.otp_expiry > datetime.now():
         return jsonify({"message": "OTP verified successfully"}), 200
         
     return jsonify({"error": "Invalid or expired recovery code"}), 400
@@ -312,7 +312,7 @@ def reset_password():
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    if user.otp_code == otp and user.otp_expiry > datetime.utcnow():
+    if user.otp_code == otp and user.otp_expiry > datetime.now():
         user.set_password(new_password)
         user.otp_code = None # Clear OTP after success
         user.otp_expiry = None
@@ -352,7 +352,7 @@ def login_2fa():
             db.session.commit()
             
     if is_valid:
-        user.last_seen_at = datetime.utcnow()
+        user.last_seen_at = datetime.now()
         
         # Log successful 2FA login
         login_2fa_log = AuditLog(
@@ -362,7 +362,7 @@ def login_2fa():
             details=json.dumps({
                 "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
                 "portal": portal,
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now().isoformat()
             }),
             ip_address=request.remote_addr
         )
@@ -389,7 +389,7 @@ def logout():
                 resource=f"{portal.capitalize()} Portal",
                 details=json.dumps({
                     "portal": portal,
-                    "timestamp": datetime.utcnow().isoformat()
+                    "timestamp": datetime.now().isoformat()
                 }),
                 ip_address=request.remote_addr
             )

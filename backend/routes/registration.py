@@ -158,8 +158,8 @@ def get_registration_stats():
     base_query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     from datetime import time
-    today_start = datetime.combine(datetime.utcnow().date(), time.min)
-    today_end = datetime.combine(datetime.utcnow().date(), time.max)
+    today_start = datetime.combine(datetime.now().date(), time.min)
+    today_end = datetime.combine(datetime.now().date(), time.max)
     # Number registered today
     day_count = base_query.filter(ScreeningYearBioData.created_at >= today_start, ScreeningYearBioData.created_at <= today_end).count()
     

@@ -35,6 +35,9 @@ import PatientDashboard from './pages/PatientDashboard';
 import PatientMedicalReport from './pages/PatientMedicalReport';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import PatientManage2FAPage from './pages/PatientManage2FAPage';
+import PatientSearchPage from './pages/PatientSearchPage';
+import PatientClaimPage from './pages/PatientClaimPage';
+
 import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
@@ -59,6 +62,9 @@ function RootApp() {
             } />
 
             <Route path="/patient/verify-otp" element={<PatientOTPPage />} />
+            <Route path="/patient/search" element={<PatientSearchPage />} />
+            <Route path="/patient/claim" element={<PatientClaimPage />} />
+
 
             {/* Protected Routes */}
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />

@@ -518,7 +518,7 @@ def get_patient_report(staff_id, year):
         "timing": {
             "reg_date_time": reg_date_time,
             "report_date_time": report_date_time,
-            "gen_date_time": datetime.utcnow().isoformat()
+            "gen_date_time": datetime.now().isoformat()
         },
         "branding": branding_data
     }), 200
@@ -552,8 +552,8 @@ def get_dashboard_stats():
     base_query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     from datetime import time
-    today_start = datetime.combine(datetime.utcnow().date(), time.min)
-    today_end = datetime.combine(datetime.utcnow().date(), time.max)
+    today_start = datetime.combine(datetime.now().date(), time.min)
+    today_end = datetime.combine(datetime.now().date(), time.max)
     day_count = base_query.filter(ScreeningYearBioData.created_at >= today_start, ScreeningYearBioData.created_at <= today_end).count()
     
     males = base_query.filter_by(gender='Male').count()
@@ -598,7 +598,7 @@ def get_report_progress():
         if not staff_id:
             return jsonify({"error": "Staff ID required"}), 400
         
-        year = datetime.utcnow().year
+        year = datetime.now().year
         from models import (
             ConsultationData, FBCResult, KFTResult, LipidResult, 
             LFTResult, SpecialTestsResult, DirectorReview
@@ -739,7 +739,7 @@ def get_report_progress():
             "points": 0,
             "total": 42,
             "status": "Registration Data Preparing",
-            "year": datetime.utcnow().year,
+            "year": datetime.now().year,
             "missing_count": 42,
             "missing_preview": []
         }), 200
