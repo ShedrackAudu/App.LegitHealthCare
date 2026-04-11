@@ -152,8 +152,10 @@
     word-break: break-word;
 }
 .report-table tr.category-row td {
-    font-weight: 900;
     padding-top: 4px;
+}
+.report-table tr.category-row td:first-child {
+    font-weight: 900;
 }
 
 /* Vital Signs */

@@ -439,31 +439,39 @@ def get_patient_report(staff_id, year):
     if c:
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
-            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment
+            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment,
+            "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
+            "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "psa": c.psa, "psa_remark": c.psa_remark,
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam
         }
     
     f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if f:
         results["fbc"] = {
-            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark
+            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
+            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
         }
     
     k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if k:
         results["kft"] = {
-            "potassium": k.potassium, "sodium": k.sodium, "urea": k.urea, "creatinine": k.creatinine, "hco3": k.hco3
+            "potassium": k.potassium, "sodium": k.sodium, "urea": k.urea, "creatinine": k.creatinine, "hco3": k.hco3,
+            "chloride": k.chloride, "remark": k.kft_remark
         }
     
     li = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if li:
         results["lipid"] = {
-            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl
+            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl,
+            "remark": li.lp_remark
         }
     
     lf = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if lf:
         results["lft"] = {
-            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb
+            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
+            "remark": lf.lft_remark
         }
     
     s = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
