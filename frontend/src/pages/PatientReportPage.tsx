@@ -515,10 +515,10 @@ const PatientReportPage: React.FC = () => {
 
                                 <div className="report-section-title">COMMENTS/MEDICAL ADVICE</div>
                                 <div className="report-list" style={{ marginBottom: '8px' }}>
-                                    <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">1.</div><div> {reportData.results.director?.comment_one || '-'}</div></div>
-                                    <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">2.</div><div> {reportData.results.director?.comment_two || '-'}</div></div>
-                                    <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">3.</div><div> {reportData.results.director?.comment_three || '-'}</div></div>
-                                    <div className="report-list-item" style={{ minHeight: '1.2em' }}><div className="idx">4.</div><div> {reportData.results.director?.comment_four || '-'}</div></div>
+                                    <div className="report-list-item" style={{ minHeight: '3.6em' }}><div className="idx">1.</div><div> {reportData.results.director?.comment_one || '-'}</div></div>
+                                    <div className="report-list-item" style={{ minHeight: '3.6em' }}><div className="idx">2.</div><div> {reportData.results.director?.comment_two || '-'}</div></div>
+                                    <div className="report-list-item" style={{ minHeight: '3.6em' }}><div className="idx">3.</div><div> {reportData.results.director?.comment_three || '-'}</div></div>
+                                    <div className="report-list-item" style={{ minHeight: '3.6em' }}><div className="idx">4.</div><div> {reportData.results.director?.comment_four || '-'}</div></div>
                                 </div>
 
                                 <div className="report-section-title">CERTIFICATIONS</div>
