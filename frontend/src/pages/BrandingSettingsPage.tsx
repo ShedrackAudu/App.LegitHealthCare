@@ -40,6 +40,7 @@ const BrandingSettingsPage: React.FC = () => {
     const [headerImage, setHeaderImage] = useState<File | null>(null);
     const [footerImage, setFooterImage] = useState<File | null>(null);
     const [signatureImage, setSignatureImage] = useState<File | null>(null);
+    const [authBrandingImage, setAuthBrandingImage] = useState<File | null>(null);
 
     // Current Values
     const [currentBranding, setCurrentBranding] = useState<any>(null);
@@ -100,6 +101,7 @@ const BrandingSettingsPage: React.FC = () => {
             if (headerImage) formData.append('header_image', headerImage);
             if (footerImage) formData.append('footer_image', footerImage);
             if (signatureImage) formData.append('signature_image', signatureImage);
+            if (authBrandingImage) formData.append('auth_branding_image', authBrandingImage);
 
             await axios.post('http://localhost:5000/api/branding', formData, {
                 headers: { 
@@ -324,6 +326,40 @@ const BrandingSettingsPage: React.FC = () => {
                                             {favicon ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="favicon" type="file" accept=".ico,.png,.jpg,.svg" className="hidden" onChange={(e) => setFavicon(e.target.files?.[0] || null)} />
+                                    </div>
+                                </div>
+                                 {/* Auth Background */}
+                                <div className="space-y-3">
+                                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Auth Page Background</Label>
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
+                                        {currentBranding?.auth_branding_image && !authBrandingImage ? (
+                                            <div className="relative group/img flex items-center justify-center h-full w-full">
+                                                <img src={`http://localhost:5000${currentBranding.auth_branding_image}`} alt="Auth BG" className="h-full w-full object-cover rounded-lg" />
+                                                <button 
+                                                    type="button"
+                                                    onClick={() => setConfirmModal({
+                                                        open: true,
+                                                        type: 'clear_asset',
+                                                        field: 'auth_branding_image',
+                                                        title: 'Remove Auth Background',
+                                                        description: 'Are you sure you want to remove the Authentication background image?'
+                                                    })}
+                                                    className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
+                                                >
+                                                    <Trash2 className="h-3 w-3" />
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="flex flex-col items-center">
+                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <span className="text-[10px] text-muted-foreground italic">No image selected</span>
+                                            </div>
+                                        )}
+                                        <Label htmlFor="auth-bg" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
+                                            <Upload className="h-3 w-3" />
+                                            {authBrandingImage ? 'Ready' : 'Upload'}
+                                        </Label>
+                                        <input id="auth-bg" type="file" accept="image/*" className="hidden" onChange={(e) => setAuthBrandingImage(e.target.files?.[0] || null)} />
                                     </div>
                                 </div>
                             </div>

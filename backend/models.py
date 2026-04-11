@@ -269,6 +269,8 @@ class AppBranding(db.Model):
     favicon = db.Column(db.String(255), nullable=True)
     clinic_slogan = db.Column(db.String(255), default="Excellence.")
     
+    auth_branding_image = db.Column(db.String(255), nullable=True)
+    
     # Hero Illustration Images
     hero_image_1 = db.Column(db.String(255), nullable=True)
     hero_image_2 = db.Column(db.String(255), nullable=True)
@@ -303,6 +305,7 @@ class AppBranding(db.Model):
             "logo_light": self.logo_light,
             "logo_dark": self.logo_dark,
             "favicon": self.favicon,
+            "auth_branding_image": self.auth_branding_image,
             "hero_image_1": self.hero_image_1,
             "hero_image_2": self.hero_image_2,
             "hero_image_team": self.hero_image_team,
