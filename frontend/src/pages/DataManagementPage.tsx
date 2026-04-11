@@ -103,7 +103,7 @@ const DataManagementPage: React.FC = () => {
               onClick={() => setActiveTab('export')}
               className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
                 activeTab === 'export' 
-                ? 'bg-white dark:bg-slate-900 shadow-md text-primary scale-105' 
+                ? 'bg-primary shadow-md text-white scale-105' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -114,7 +114,7 @@ const DataManagementPage: React.FC = () => {
               onClick={() => setActiveTab('import')}
               className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
                 activeTab === 'import' 
-                ? 'bg-white dark:bg-slate-900 shadow-md text-primary scale-105' 
+                ? 'bg-primary shadow-md text-white scale-105' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -222,11 +222,37 @@ const DataManagementPage: React.FC = () => {
                      </CardDescription>
                   </CardHeader>
                   <CardContent className="space-y-6">
-                     <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                        <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                        <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold italic leading-relaxed">
-                          Ensure your Excel sheet contains 'staff_id', 'first_name', and 'last_name' columns. Other fields are optional.
-                        </p>
+                     <div className="space-y-4">
+                        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-4 items-center">
+                           <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
+                           <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold italic leading-relaxed">
+                             Excel headers must match exactly. The system will map data based on the header names provided below.
+                           </p>
+                        </div>
+
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+                            {[
+                                { name: 'staff_id', req: true, desc: 'Unique identifier' },
+                                { name: 'first_name', req: true, desc: 'Patient first name' },
+                                { name: 'middle_name', req: false, desc: 'Optional initial' },
+                                { name: 'last_name', req: true, desc: 'Patient surname' },
+                                { name: 'gender', req: false, desc: 'Male / Female' },
+                                { name: 'dob', req: false, desc: 'YYYY-MM-DD' },
+                                { name: 'age', req: false, desc: 'Calculated years' },
+                                { name: 'department', req: false, desc: 'Work unit' },
+                                { name: 'phone', req: false, desc: 'Contact number' },
+                                { name: 'email', req: false, desc: 'Official email' },
+                                { name: 'nationality', req: false, desc: 'Country' }
+                            ].map((col) => (
+                                <div key={col.name} className="p-2.5 bg-muted/20 border-2 border-transparent hover:border-amber-500/20 rounded-xl flex items-center justify-between transition-all group">
+                                    <div className="flex flex-col">
+                                        <span className="text-[10px] font-black font-mono text-primary group-hover:text-amber-600 transition-colors uppercase">{col.name}</span>
+                                        <span className="text-[9px] text-muted-foreground font-medium italic">{col.desc}</span>
+                                    </div>
+                                    {col.req && <span className="text-[7px] font-black bg-rose-500/10 text-rose-600 px-1.5 py-0.5 rounded-md">REQ</span>}
+                                </div>
+                            ))}
+                        </div>
                      </div>
                      
                      <div className="relative">
