@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
-import { 
-  LayoutDashboard, 
-  UserPlus, 
-  Stethoscope, 
-  ChevronLeft, 
+import {
+  LayoutDashboard,
+  UserPlus,
+  Stethoscope,
+  ChevronLeft,
   ChevronRight,
   FlaskConical,
   ShieldCheck,
@@ -62,51 +62,68 @@ const sharedItems: SidebarItem[] = [
 ];
 
 export const Sidebar: React.FC = () => {
-  const [isCollapsed, setIsCollapsed] = useState(false);
-  const { branding, brandingError, unreadMessagesCount } = useAppContext(); 
+  const [isCollapsed, setIsCollapsed] = useState(() => {
+    const saved = localStorage.getItem('legit_sidebar_collapsed');
+    // Default to uncollapsed (false), but respect saved preference
+    return saved !== null ? JSON.parse(saved) : false;
+  });
+  const { branding, brandingError, unreadMessagesCount } = useAppContext();
   const { isAdmin } = usePermissions();
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 1024) { // Collapse on tablet and smaller
+      // Only auto-collapse if user hasn't set a manual preference in this session yet
+      // or if we're on a very small screen where expanded is unusable
+      if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
-        setIsCollapsed(false);
+        const saved = localStorage.getItem('legit_sidebar_collapsed');
+        if (saved !== null) {
+          setIsCollapsed(JSON.parse(saved));
+        } else {
+          setIsCollapsed(false);
+        }
       }
     };
-    
+
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const toggleSidebar = () => {
+    const newState = !isCollapsed;
+    setIsCollapsed(newState);
+    localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(newState));
+  };
+
   return (
-    <aside 
+    <aside
       className={cn(
         "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
       <div className="h-14 shrink-0 flex items-center px-4 border-b">
-         {/* Clinic Logo */}
-         {!isCollapsed ? (
-             (branding?.logo_dark && !brandingError) ? (
-                 <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
-             ) : (
-                 <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
-                    <Building2 className="h-5 w-5 shrink-0" />
-                    {branding?.clinic_name || 'LEGIT HC'}
-                 </div>
-             )
-         ) : (
-             (branding?.logo_light && !brandingError) ? (
-                 <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
-             ) : (
-                 <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
-                    <Building2 className="h-5 w-5 shrink-0" />
-                 </div>
-             )
-         )}
+        {/* Clinic Logo */}
+        {!isCollapsed ? (
+          (branding?.logo_dark && !brandingError) ? (
+            <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+          ) : (
+            <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
+              <Building2 className="h-5 w-5 shrink-0" />
+              {branding?.clinic_name || 'LEGIT HC'}
+            </div>
+          )
+        ) : (
+          (branding?.logo_light && !brandingError) ? (
+            <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+          ) : (
+            <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
+              <Building2 className="h-5 w-5 shrink-0" />
+            </div>
+          )
+        )}
       </div>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
@@ -121,8 +138,8 @@ export const Sidebar: React.FC = () => {
                 className={({ isActive }) => cn(
                   "flex items-center rounded-lg transition-all duration-200 group/item relative",
                   isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
-                  isActive 
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                  isActive
+                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                     : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                 )}
               >
@@ -133,17 +150,17 @@ export const Sidebar: React.FC = () => {
                 )}>
                   {item.title}
                 </span>
-                
+
                 {!isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
                   <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] animate-in zoom-in">
                     {unreadMessagesCount}
                   </Badge>
                 )}
-                
+
                 {isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
                   <div className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-background animate-pulse" />
                 )}
-                
+
                 {isCollapsed && (
                   <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
                     {item.title}
@@ -155,7 +172,7 @@ export const Sidebar: React.FC = () => {
 
           {/* Admin Section - Only visible to Admins */}
           {isAdmin() && (
-            <div className="pt-1 pb-2">
+            <div className="pt-1 pb-2 space-y-0.5">
               <div className={cn(
                 "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
                 isCollapsed && "flex justify-center"
@@ -168,14 +185,14 @@ export const Sidebar: React.FC = () => {
               </div>
               {adminItems.map((item) => {
                 return (
-                <NavLink
-                  key={item.path}
-                  to={item.path}
+                  <NavLink
+                    key={item.path}
+                    to={item.path}
                     className={({ isActive }) => cn(
                       "flex items-center rounded-lg transition-all duration-200 group/item relative",
-                      isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
-                      isActive 
-                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" 
+                      isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
+                      isActive
+                        ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
                         : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
                     )}
                   >
@@ -186,7 +203,7 @@ export const Sidebar: React.FC = () => {
                     )}>
                       {item.title}
                     </span>
-                    
+
                     {isCollapsed && (
                       <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
                         {item.title}
@@ -203,7 +220,7 @@ export const Sidebar: React.FC = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setIsCollapsed(!isCollapsed)}
+            onClick={toggleSidebar}
             className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >

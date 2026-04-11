@@ -25,7 +25,13 @@ class RoutingSession(Session):
                 model_class = getattr(mapper, 'class_', None)
                 
                 # Check for global system tables
-                if table_name in ['ai_settings', 'app_branding', 'users', 'departments', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs', 'temp_access_codes', 'access_requests', 'system_config', 'appointments', 'report_verifications']:
+                if table_name in [
+                    'ai_settings', 'app_branding', 'users', 'departments', 'roles', 
+                    'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
+                    'temp_access_codes', 'access_requests', 'system_config', 
+                    'appointments', 'report_verifications', 'chat_messages', 
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications'
+                ]:
                     return _db.engine
                 
                 # Check for explicit bind keys (e.g., 'patients')
@@ -690,10 +696,29 @@ class AuditLog(db.Model):
             except (ValueError, TypeError, json.JSONDecodeError):
                 details_data = {"message": self.details}
 
+        user_name = "System"
+        if self.user:
+            user_name = f"{self.user.first_name} {self.user.last_name}"
+        elif self.user_id:
+            # Fallback check for Patient Portal users
+            portal = details_data.get('portal', 'staff')
+            if portal == 'patient':
+                try:
+                    # Look up in PatientPortalUser (which uses 'patients' bind)
+                    patient = PatientPortalUser.query.get(self.user_id)
+                    if patient:
+                        user_name = f"{patient.first_name} {patient.last_name} (Patient)"
+                    else:
+                        user_name = f"Patient {self.user_id}"
+                except:
+                    user_name = f"User {self.user_id}"
+            else:
+                user_name = f"User {self.user_id}"
+
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "System",
+            "user_name": user_name,
             "action": self.action,
             "resource": self.resource,
             "details": details_data,

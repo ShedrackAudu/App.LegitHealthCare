@@ -207,12 +207,6 @@ const TestResultsPage: React.FC = () => {
         }
     };
 
-    const resetSelection = () => {
-        setSelectedTest(null);
-        setPatient(null);
-        setSearchId('');
-    };
-
     if (!selectedTest) {
         return (
             <MainLayout>
@@ -381,7 +375,8 @@ const TestResultsPage: React.FC = () => {
                         activeSection={activeSection}
                         onSuccess={() => {
                             toast.success("Tests saved successfully!");
-                            resetSelection();
+                            setPatient(null);
+                            setSearchId('');
                         }}
                     />
                 )}
@@ -635,7 +630,7 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>SODIUM - NA</Label><Input {...register('sodium')} /></div>
                 <div className="space-y-2"><Label>CHLORIDE - CL</Label><Input {...register('chloride')} /></div>
                 <div className="space-y-2"><Label>BICARBONATE - CA</Label><Input {...register('bicarbonate_ca')} /></div>
-                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} readOnly className="bg-muted font-bold text-primary" /></div>
+                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} className="font-bold text-primary" /></div>
                 <div className="space-y-2"><Label>UREA</Label><Input {...register('urea')} /></div>
                 <div className="space-y-2"><Label>CREATININE - CRE</Label><Input {...register('creatinine')} /></div>
             </div>
@@ -678,8 +673,8 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO</Label><Input {...register('total_cholesterol')} /></div>
                 <div className="space-y-2"><Label>TRIGLYCERIDES - TG</Label><Input {...register('triglycerides')} /></div>
-                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} readOnly className="bg-muted font-bold" /></div>
-                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} readOnly className="bg-muted font-bold" /></div>
+                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} className="font-bold" /></div>
+                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} className="font-bold" /></div>
             </div>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>

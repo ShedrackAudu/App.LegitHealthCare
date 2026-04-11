@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, QueueEntry, BioData, ScreeningYearBioData
 from sqlalchemy import func
+from decorators import require_permission
 
 queue_bp = Blueprint('queue_bp', __name__)
 
@@ -9,6 +10,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @queue_bp.route('/', methods=['GET'], strict_slashes=False)
+@require_permission('manage_queues')
 def get_queue_counts():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -45,6 +47,7 @@ def get_queue_counts():
     return jsonify(result), 200
 
 @queue_bp.route('/<department>', methods=['GET'], strict_slashes=False)
+@require_permission('manage_queues')
 def get_department_queue(department):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -88,6 +91,7 @@ def get_department_queue(department):
     return jsonify(patients), 200
 
 @queue_bp.route('/reset', methods=['POST'])
+@require_permission('system_maintenance')
 def reset_queue():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400

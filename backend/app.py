@@ -1,6 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
+import json
 from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
 from routes.registration import registration_bp
 from routes.consultation import consultation_bp
@@ -32,7 +33,7 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*")
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Configuration
 app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
@@ -75,13 +76,7 @@ app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
 
-# Automatically ensure admin account exists
-try:
-    from setup_system import setup_system
-    with app.app_context():
-        setup_system(purge=False)
-except Exception as e:
-    app.logger.error(f"Error initializing system: {e}")
+
 
 # Initialize Socket.IO handlers
 init_socket_handlers(socketio)
@@ -216,7 +211,23 @@ def login():
             }), 200
             
         user.last_seen_at = datetime.utcnow()
+        
+        # Log successful login (when 2FA is skipped)
+        login_log = AuditLog(
+            user_id=user.id,
+            action="LOGIN_SUCCESS",
+            resource=f"{portal.capitalize()} Portal",
+            details=json.dumps({
+                "method": "PASSWORD",
+                "identity": identifier,
+                "portal": portal,
+                "timestamp": datetime.utcnow().isoformat()
+            }),
+            ip_address=request.remote_addr
+        )
+        db.session.add(login_log)
         db.session.commit()
+        
         return jsonify({
             "message": "Login successful",
             "token": "demo-token", 
@@ -342,14 +353,64 @@ def login_2fa():
             
     if is_valid:
         user.last_seen_at = datetime.utcnow()
+        
+        # Log successful 2FA login
+        login_2fa_log = AuditLog(
+            user_id=user.id,
+            action="LOGIN_2FA_SUCCESS",
+            resource=f"{portal.capitalize()} Portal",
+            details=json.dumps({
+                "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
+                "portal": portal,
+                "timestamp": datetime.utcnow().isoformat()
+            }),
+            ip_address=request.remote_addr
+        )
+        db.session.add(login_2fa_log)
         db.session.commit()
+        
         return jsonify({
             "message": "Login successful",
             "user": user.to_dict()
         }), 200
         
     return jsonify({"error": "Invalid 2FA code"}), 401
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    data = request.json
+    user_id = data.get('user_id')
+    portal = data.get('portal', 'staff')
+    
+    if user_id:
+        try:
+            logout_log = AuditLog(
+                user_id=user_id,
+                action="LOGOUT",
+                resource=f"{portal.capitalize()} Portal",
+                details=json.dumps({
+                    "portal": portal,
+                    "timestamp": datetime.utcnow().isoformat()
+                }),
+                ip_address=request.remote_addr
+            )
+            db.session.add(logout_log)
+            db.session.commit()
+            return jsonify({"message": "Logout recorded"}), 200
+        except Exception as e:
+            app.logger.error(f"Failed to log logout for user {user_id}: {e}")
+            return jsonify({"error": "Logout logging failed"}), 500
+            
+    return jsonify({"message": "Logout complete (client-only)"}), 200
 
 if __name__ == '__main__':
     init_db()
-    socketio.run(app, debug=False, port=5000)
+    
+    # Automatically ensure admin account exists
+    try:
+        from setup_system import setup_system
+        with app.app_context():
+            setup_system(purge=False)
+    except Exception as e:
+        app.logger.error(f"Error initializing system: {e}")
+        
+    socketio.run(app, debug=False, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)

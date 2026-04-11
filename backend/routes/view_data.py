@@ -9,10 +9,12 @@ import uuid
 
 from sqlalchemy import func
 from datetime import datetime
+from decorators import require_permission
 
 view_data_bp = Blueprint('view_data', __name__)
 
 @view_data_bp.route('/patients/search', methods=['GET'])
+@require_permission('view_patients')
 def search_patients():
     query = request.args.get('q', '')
     if len(query) < 2: return jsonify([]), 200
@@ -76,6 +78,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @view_data_bp.route('/patients/all', methods=['GET'])
+@require_permission('view_patients')
 def get_all_patients():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -97,6 +100,7 @@ def get_all_patients():
     } for p in patients]), 200
 
 @view_data_bp.route('/patients/<staff_id>', methods=['PUT', 'DELETE'])
+@require_permission('view_patients')
 def handle_patient(staff_id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -219,6 +223,7 @@ def handle_patient(staff_id):
         return jsonify({"message": "Patient profile updated successfully"}), 200
 
 @view_data_bp.route('/records/screening/<int:year>', methods=['GET'])
+@require_permission('view_records')
 def get_screening_records(year):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -338,6 +343,7 @@ def get_screening_records(year):
     }), 200
 
 @view_data_bp.route('/records/screening/<int:id>', methods=['DELETE'])
+@require_permission('view_records')
 def delete_screening_record(id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -378,6 +384,7 @@ def delete_screening_record(id):
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
 @view_data_bp.route('/patient-report/<staff_id>/<int:year>', methods=['GET'])
+@require_permission('view_records')
 def get_patient_report(staff_id, year):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -523,6 +530,7 @@ def verify_report(token):
     }), 200
 
 @view_data_bp.route('/dashboard/stats', methods=['GET'])
+@require_permission('view_dashboard')
 def get_dashboard_stats():
     bind = get_bind()
     year = request.args.get('year')

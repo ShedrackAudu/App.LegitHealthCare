@@ -57,7 +57,7 @@ function RootApp() {
                 <ForcePasswordResetPage />
               </ProtectedRoute>
             } />
-            
+
             <Route path="/patient/verify-otp" element={<PatientOTPPage />} />
 
             {/* Protected Routes */}

@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
 from models import db, User, ChatMessage, ChatGroup, ChatGroupMember
 from datetime import datetime
+from decorators import require_permission
 import json
 
 messaging_bp = Blueprint('messaging', __name__)
 
 @messaging_bp.route('/conversations', methods=['GET'])
+@require_permission('messaging')
 def get_conversations():
     user_id = request.headers.get('X-User-ID')
     if not user_id:
@@ -57,6 +59,7 @@ def get_conversations():
     return jsonify(conversations)
 
 @messaging_bp.route('/history/<conv_id>', methods=['GET'])
+@require_permission('messaging')
 def get_history(conv_id):
     user_id = request.headers.get('X-User-ID')
     if not user_id:
@@ -81,6 +84,7 @@ def get_history(conv_id):
     })
 
 @messaging_bp.route('/search-users', methods=['GET'])
+@require_permission('messaging')
 def search_users():
     query = request.args.get('q', '')
     user_id = request.headers.get('X-User-ID')
@@ -102,6 +106,7 @@ def search_users():
     return jsonify([u.to_dict() for u in users])
 
 @messaging_bp.route('/groups', methods=['POST'])
+@require_permission('messaging')
 def create_group():
     user_id = request.headers.get('X-User-ID')
     data = request.json
@@ -127,3 +132,32 @@ def create_group():
             
     db.session.commit()
     return jsonify(group.to_dict()), 201
+
+@messaging_bp.route('/conversations/<conv_id>', methods=['DELETE'])
+@require_permission('messaging')
+def delete_conversation(conv_id):
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user_id = int(user_id)
+    
+    if conv_id.startswith('dm_'):
+        other_id = int(conv_id.split('_')[1])
+        # Permanently delete all messages between these two users
+        ChatMessage.query.filter(
+            ((ChatMessage.sender_id == user_id) & (ChatMessage.receiver_id == other_id)) |
+            ((ChatMessage.sender_id == other_id) & (ChatMessage.receiver_id == user_id))
+        ).delete(synchronize_session=False)
+    else:
+        group_id = int(conv_id.split('_')[1])
+        # Check if user is Admin of the group
+        member = ChatGroupMember.query.filter_by(group_id=group_id, user_id=user_id).first()
+        if not member or member.role != 'Admin':
+            return jsonify({"error": "Only group admins can clear chat history"}), 403
+        
+        # Permanently delete all messages in the group
+        ChatMessage.query.filter_by(group_id=group_id).delete(synchronize_session=False)
+    
+    db.session.commit()
+    return jsonify({"message": "Conversation history and session deleted successfully"})

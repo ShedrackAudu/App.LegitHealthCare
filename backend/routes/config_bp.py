@@ -1,18 +1,19 @@
 from flask import Blueprint, request, jsonify
 from models import db, Race, Nationality, Department
-from auth_utils import login_required, role_required
+from models import db, Race, Nationality, Department
+from decorators import require_permission
 
 config_bp = Blueprint('config', __name__)
 
 # Race CRUD
 @config_bp.route('/races', methods=['GET'])
+@require_permission('system_maintenance')
 def get_races():
     races = Race.query.order_by(Race.name.asc()).all()
     return jsonify([{"id": r.id, "name": r.name} for r in races]), 200
 
 @config_bp.route('/races', methods=['POST'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def add_race():
     data = request.json
     if not data or not data.get('name'):
@@ -27,8 +28,7 @@ def add_race():
     return jsonify({"id": new_race.id, "name": new_race.name}), 201
 
 @config_bp.route('/races/<int:id>', methods=['DELETE'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def delete_race(id):
     race = Race.query.get(id)
     if not race:
@@ -39,13 +39,13 @@ def delete_race(id):
 
 # Nationality CRUD
 @config_bp.route('/nationalities', methods=['GET'])
+@require_permission('system_maintenance')
 def get_nationalities():
     nationalities = Nationality.query.order_by(Nationality.name.asc()).all()
     return jsonify([{"id": n.id, "name": n.name} for n in nationalities]), 200
 
 @config_bp.route('/nationalities', methods=['POST'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def add_nationality():
     data = request.json
     if not data or not data.get('name'):
@@ -60,8 +60,7 @@ def add_nationality():
     return jsonify({"id": new_nat.id, "name": new_nat.name}), 201
 
 @config_bp.route('/nationalities/<int:id>', methods=['DELETE'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def delete_nationality(id):
     nat = Nationality.query.get(id)
     if not nat:
@@ -72,13 +71,13 @@ def delete_nationality(id):
 
 # Department CRUD (Existing logic moved or duplicated for consistency in System Config)
 @config_bp.route('/departments', methods=['GET'])
+@require_permission('system_maintenance')
 def get_departments():
     depts = Department.query.order_by(Department.name.asc()).all()
     return jsonify([{"id": d.id, "name": d.name} for d in depts]), 200
 
 @config_bp.route('/departments', methods=['POST'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def add_department():
     data = request.json
     if not data or not data.get('name'):
@@ -93,8 +92,7 @@ def add_department():
     return jsonify({"id": new_dept.id, "name": new_dept.name}), 201
 
 @config_bp.route('/departments/<int:id>', methods=['DELETE'])
-@login_required
-@role_required('Admin')
+@require_permission('system_maintenance')
 def delete_department(id):
     dept = Department.query.get(id)
     if not dept:

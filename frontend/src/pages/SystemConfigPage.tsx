@@ -115,7 +115,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
 );
 
 const SystemConfigPage: React.FC = () => {
-    const { activeSection } = useAppContext();
+    const { activeSection, user } = useAppContext();
     const [departments, setDepartments] = useState<ConfigItem[]>([]);
     const [races, setRaces] = useState<ConfigItem[]>([]);
     const [nationalities, setNationalities] = useState<ConfigItem[]>([]);
@@ -151,7 +151,8 @@ const SystemConfigPage: React.FC = () => {
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
         title: '',
-        description: ''
+        description: '',
+        actionType: 'queue' as 'queue' | 'audit'
     });
 
     const [brandingLoading, setBrandingLoading] = useState(false);
@@ -319,12 +320,35 @@ const SystemConfigPage: React.FC = () => {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Patient queues have been successfully reset to zero.");
-            setConfirmMaintenanceModal({ ...confirmMaintenanceModal, open: false });
+            setConfirmMaintenanceModal((prev) => ({ ...prev, open: false }));
         } catch(err) {
             toast.error("Failed to reset queue counts.");
             console.error(err);
         } finally {
             setMaintenanceSaving(false);
+        }
+    };
+
+    const handleClearAudit = async () => {
+        setMaintenanceSaving(true);
+        try {
+            await axios.delete('http://localhost:5000/api/admin/audit-logs/clear', {
+                headers: { 'X-User-ID': user?.id?.toString() }
+            });
+            toast.success("System audit logs have been permanently cleared.");
+            setConfirmMaintenanceModal((prev) => ({ ...prev, open: false }));
+        } catch(err: any) {
+            toast.error(err.response?.data?.error || "Failed to clear audit logs.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
+    const handleMaintenanceConfirm = () => {
+        if (confirmMaintenanceModal.actionType === 'queue') {
+            handleResetQueue();
+        } else {
+            handleClearAudit();
         }
     };
     return (
@@ -345,28 +369,28 @@ const SystemConfigPage: React.FC = () => {
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">
-                    <TabsList className="grid w-full grid-cols-6 h-16 p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted">
-                        <TabsTrigger value="departments" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                    <TabsList className="flex flex-wrap w-full h-auto min-h-[64px] p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
+                        <TabsTrigger value="departments" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Building2 className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
-                        <TabsTrigger value="races" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                        <TabsTrigger value="races" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Users className="h-4 w-4" />
-                            Races / Continents
+                            Races / Cont.
                         </TabsTrigger>
-                        <TabsTrigger value="nationalities" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                        <TabsTrigger value="nationalities" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Globe className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                        <TabsTrigger value="email" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Mail className="h-4 w-4" />
                             Email
                         </TabsTrigger>
-                        <TabsTrigger value="doctor" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                        <TabsTrigger value="doctor" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Stethoscope className="h-4 w-4" />
                             Doctor
                         </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-full text-xs">
+                        <TabsTrigger value="maintenance" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <RotateCcw className="h-4 w-4" />
                             Maintenance
                         </TabsTrigger>
@@ -680,7 +704,7 @@ const SystemConfigPage: React.FC = () => {
                                 <CardContent className="p-8 space-y-6">
                                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
-                                            <h4 className="font-bold text-lg">Reset Daily Patient Queues</h4>
+                                            <h4 className="font-bold text-lg text-foreground">Reset Daily Patient Queues</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
                                                 This will immediately reset all queue counts across all departments (Consultation, Audiometry, Spirometry, ECG) to <strong className="text-foreground">Zero</strong>. This is typically done at the end of the day.
                                             </p>
@@ -689,15 +713,40 @@ const SystemConfigPage: React.FC = () => {
                                             onClick={() => setConfirmMaintenanceModal({
                                                 open: true,
                                                 title: 'Reset Patient Queues',
-                                                description: 'Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.'
+                                                description: 'Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.',
+                                                actionType: 'queue'
                                             })} 
                                             disabled={maintenanceSaving} 
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
                                             Reset Queue Counts to 0
+                                        </Button>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Clear System Audit Logs</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Permanently delete all system activity records. A single entry will be created to record this maintenance action. <strong className="text-destructive font-black">Warning: Use with caution.</strong>
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={() => setConfirmMaintenanceModal({
+                                                open: true,
+                                                title: 'Clear Audit Trail',
+                                                description: 'Are you sure you want to permanently delete all system audit logs? This action is irreversible.',
+                                                actionType: 'audit'
+                                            })} 
+                                            disabled={maintenanceSaving} 
+                                            variant="destructive" 
+                                            size="lg" 
+                                            className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
+                                        >
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
+                                            Clear Audit Trail
                                         </Button>
                                     </div>
                                 </CardContent>
@@ -710,7 +759,7 @@ const SystemConfigPage: React.FC = () => {
             <ActionConfirmModal
                 isOpen={confirmMaintenanceModal.open}
                 onClose={() => setConfirmMaintenanceModal({ ...confirmMaintenanceModal, open: false })}
-                onConfirm={handleResetQueue}
+                onConfirm={handleMaintenanceConfirm}
                 loading={maintenanceSaving}
                 title={confirmMaintenanceModal.title}
                 description={confirmMaintenanceModal.description}

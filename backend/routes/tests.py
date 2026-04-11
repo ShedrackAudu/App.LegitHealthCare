@@ -1,11 +1,32 @@
 from flask import Blueprint, request, jsonify
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User
 from datetime import datetime
+from decorators import require_permission
 
 tests_bp = Blueprint('tests', __name__)
 
+PERM_MAP = {
+    'fbc': 'lab_fbc',
+    'kft': 'lab_kft',
+    'lipid': 'lab_lipid',
+    'lft': 'lab_lft',
+    'special': 'lab_tests' # General fallback for special tests or use lab_ecg/etc if needed
+}
+
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
 def save_test_result(test_type):
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    perm_name = PERM_MAP.get(test_type, 'lab_tests')
+    if not user.has_permission(perm_name) and user.username != 'admin':
+        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+
     data = request.json
     staff_id = data.get('staff_id')
     screening_year = data.get('screening_year')
@@ -83,6 +104,18 @@ def save_test_result(test_type):
 
 @tests_bp.route('/get-test/<test_type>/<staff_id>', methods=['GET'])
 def get_test_result(test_type, staff_id):
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user = User.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    perm_name = PERM_MAP.get(test_type, 'lab_tests')
+    if not user.has_permission(perm_name) and user.username != 'admin':
+        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+
     screening_year = request.args.get('year')
     if not screening_year:
         return jsonify({"error": "Year is required"}), 400

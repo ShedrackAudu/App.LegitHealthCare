@@ -53,7 +53,11 @@ def update_user_roles(user_id):
     user = User.query.get_or_404(int(user_id))
     data = request.json
     role_names = data.get('roles', [])
-    
+        
+    # Safeguard: Default 'admin' user must always have 'Admin' role
+    if user.username == 'admin' and 'Admin' not in role_names:
+        return jsonify({"error": "Protection Error: The default 'admin' account must always be assigned the 'Admin' role to prevent system lockout."}), 403
+
     # Clear existing roles
     user.roles = []
     
@@ -329,6 +333,11 @@ def verify_access_code():
 @require_permission('manage_roles')
 def update_role_permissions(role_id):
     role = Role.query.get_or_404(role_id)
+    
+    # Safeguard: 'Admin' role permissions must not be modified via API
+    if role.name.lower() == 'admin':
+        return jsonify({"error": "Protection Error: The 'Admin' role permissions are managed by the system core and cannot be modified to ensure administrative stability."}), 403
+
     data = request.json
     permission_names = data.get('permissions', [])
     
@@ -814,14 +823,34 @@ def delete_notifications():
     
     return jsonify({"message": "All notifications permanently deleted"})
 @admin_bp.route('/api/admin/audit-logs/clear', methods=['DELETE'])
+@require_permission('system_maintenance')
 def clear_audit_logs():
+    admin_id = request.headers.get('X-User-ID')
     try:
+        # Clear all existing logs
         AuditLog.query.delete()
         db.session.commit()
-        return jsonify({"message": "All audit logs cleared successfully"}), 200
+        
+        # Record this destructive action in a fresh log entry
+        log = AuditLog(
+            user_id=admin_id,
+            action="CLEAR_AUDIT_LOGS",
+            resource="System Registry",
+            details=json.dumps({
+                "action": "FULL_CLEAR",
+                "timestamp": datetime.now().isoformat(),
+                "performed_by": admin_id
+            }),
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({"message": "All audit logs cleared successfully. A clear event has been recorded."}), 200
     except Exception as e:
         db.session.rollback()
-        return jsonify({"error": str(e)}), 500
+        current_app.logger.error(f"Audit clear failed: {str(e)}")
+        return jsonify({"error": f"Internal system error during maintenance: {str(e)}"}), 500
 @admin_bp.route('/api/admin/users', methods=['POST'])
 @require_permission('manage_roles')
 def create_user():

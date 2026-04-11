@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from models import db, AppBranding
 from werkzeug.utils import secure_filename
+from decorators import require_permission
 import os
 
 branding_bp = Blueprint('branding_bp', __name__)
@@ -26,6 +27,7 @@ def get_branding():
 
 @branding_bp.route('', methods=['POST'], strict_slashes=False)
 @branding_bp.route('/', methods=['POST'], strict_slashes=False)
+@require_permission('manage_branding')
 def update_branding():
     branding = AppBranding.query.first()
     if not branding:
@@ -118,6 +120,7 @@ def uploaded_file(filename):
     return send_from_directory(upload_folder, filename)
 
 @branding_bp.route('/clear', methods=['POST'])
+@require_permission('manage_branding')
 def clear_branding_asset():
     data = request.json
     field = data.get('field')

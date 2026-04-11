@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-instance_path = 'c:\\Users\\DELL\\Documents\\Legit HealthCare\\Legit HealthCare App\\backend\\instance'
+instance_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance')
 
 def run_reconciliation():
     print("Starting master name reconciliation...")

@@ -105,7 +105,7 @@ const PatientOTPPage = () => {
       >
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="text-center pb-2">
-            <div className="flex justify-center mb-4">
+            <Link to="/" className="flex justify-center mb-4 transition-opacity hover:opacity-80">
               {branding?.logo_light ? (
                 <img 
                   src={`http://localhost:5000${branding.logo_light}`} 
@@ -117,7 +117,7 @@ const PatientOTPPage = () => {
                     <Mail className="w-8 h-8" />
                 </div>
               )}
-            </div>
+            </Link>
             <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
             <CardDescription>
               We've sent a 6-digit code to <br />

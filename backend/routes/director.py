@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
 from datetime import datetime
+from decorators import require_permission
 
 director_bp = Blueprint('director', __name__)
 
@@ -9,6 +10,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @director_bp.route('/get-patient-history/<staff_id>', methods=['GET'])
+@require_permission('director_review')
 def get_patient_history(staff_id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid section context"}), 400
@@ -57,6 +59,7 @@ def get_patient_history(staff_id):
     return jsonify(history), 200
 
 @director_bp.route('/save-director-review', methods=['POST'])
+@require_permission('director_review')
 def save_director_review():
     data = request.json
     staff_id = data.get('staff_id')

@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify
 from models import db, Department
+from decorators import require_permission
 
 departments_bp = Blueprint('departments_bp', __name__)
 
 @departments_bp.route('/', methods=['GET'])
+@require_permission('manage_departments')
 def get_departments():
     # Context injected implicitly via RoutingSession
     departments = Department.query.order_by(Department.name).all()
@@ -19,6 +21,7 @@ def get_departments():
     return jsonify([{"id": d.id, "name": d.name} for d in departments]), 200
 
 @departments_bp.route('/', methods=['POST'])
+@require_permission('manage_departments')
 def add_department():
     data = request.json
     name = data.get('name')
@@ -35,6 +38,7 @@ def add_department():
     return jsonify({"message": "Department added successfully", "id": dep.id, "name": dep.name}), 201
 
 @departments_bp.route('/<int:dep_id>', methods=['DELETE'])
+@require_permission('manage_departments')
 def delete_department(dep_id):
     dep = Department.query.get(dep_id)
     if not dep:

@@ -29,6 +29,10 @@ def init_rbac():
             ('manage_branding', 'Update system branding/logo'),
             ('manage_departments', 'Manage clinic departments'),
             ('messaging', 'Access to internal messaging system'),
+            ('manage_appointments', 'Manage clinic appointment schedules'),
+            ('view_appointments', 'View internal appointment directory'),
+            ('manage_queues', 'Manage patient departmental queues'),
+            ('change_roles', 'Assign or revoke roles from users'),
             ('system_maintenance', 'Access to core system settings')
         ]
         

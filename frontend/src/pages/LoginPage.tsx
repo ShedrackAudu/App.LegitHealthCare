@@ -126,7 +126,7 @@ const LoginPage = () => {
       <div className="w-full max-w-sm">
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="py-4 text-center">
-            <div className="flex items-center justify-center mb-3">
+            <Link to="/" className="flex items-center justify-center mb-3 hover:opacity-80 transition-opacity">
               {branding?.logo_light ? (
                 <img 
                   src={`http://localhost:5000${branding.logo_light}`} 
@@ -138,7 +138,7 @@ const LoginPage = () => {
                   <Activity className="w-8 h-8 text-primary" />
                 </div>
               )}
-            </div>
+            </Link>
             <CardTitle className="text-2xl font-bold tracking-tight">Welcome Back</CardTitle>
             <CardDescription className="text-muted-foreground mt-1 text-sm">
               Sign in to your account.
@@ -150,9 +150,9 @@ const LoginPage = () => {
             onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
             className="w-full"
           >
-            <TabsList className="grid w-full grid-cols-2 mb-4">
-              <TabsTrigger value="staff">Clinical Staff</TabsTrigger>
-              <TabsTrigger value="patient">Patient Portal</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 mb-4 bg-muted/50 p-1 rounded-xl h-12 border border-border/50">
+              <TabsTrigger value="staff" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-bold transition-all">Clinical Staff</TabsTrigger>
+              <TabsTrigger value="patient" className="rounded-lg data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-sm font-bold transition-all">Patient Portal</TabsTrigger>
             </TabsList>
             <TabsContent value="staff">
               <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4 pt-4">

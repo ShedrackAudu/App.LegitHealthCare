@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, g
 from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, AuditLog
 from datetime import datetime
 from sqlalchemy import func
+from decorators import require_permission
 
 registration_bp = Blueprint('registration', __name__)
 
@@ -10,6 +11,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @registration_bp.route('/patient/<staff_id>', methods=['GET'])
+@require_permission('registration')
 def get_patient(staff_id):
     # Comprehensive search (always in the context's main bio_data)
     bind = get_bind()
@@ -43,6 +45,7 @@ def get_patient(staff_id):
     }), 200
 
 @registration_bp.route('/register-patient', methods=['POST'])
+@require_permission('registration')
 def register_patient():
     try:
         data = request.json
@@ -142,6 +145,7 @@ def register_patient():
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 @registration_bp.route('/stats', methods=['GET'])
+@require_permission('view_dashboard')
 def get_registration_stats():
     bind = get_bind()
     year = request.args.get('year')
