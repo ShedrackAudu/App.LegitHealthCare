@@ -108,6 +108,15 @@ def set_db_context():
     pass
 
 
+@app.route('/api/config/staff-signup-status', methods=['GET'])
+@cross_origin()
+def signup_status():
+    from models import SystemConfig
+    config = SystemConfig.query.get('staff_signup_enabled')
+    # Default to true if not set
+    is_enabled = config.value.lower() == 'true' if config else True
+    return jsonify({"staff_signup_enabled": is_enabled}), 200
+
 @app.route('/signup', methods=['POST'])
 @cross_origin()
 def signup():
@@ -130,6 +139,14 @@ def signup():
         
     if User.query.filter_by(email=data['email']).first():
         return jsonify({"error": "Email already exists"}), 400
+
+    # Config Check
+    if data.get('email') != 'admin@legit.com':
+        from models import SystemConfig
+        config = SystemConfig.query.get('staff_signup_enabled')
+        is_enabled = config.value.lower() == 'true' if config else True
+        if not is_enabled:
+            return jsonify({"error": "Staff registration is currently disabled by the system administrator."}), 403
 
     new_user = User(
         first_name=data['first_name'],

@@ -23,7 +23,8 @@ view_data_bp = Blueprint('view_data', __name__)
 ])
 def search_patients():
     query = request.args.get('q', '')
-    if len(query) < 2: return jsonify([]), 200
+    print(f"DEBUG: Search query received: '{query}'")
+    if len(query) < 1: return jsonify([]), 200
     
     search = f"%{query}%"
     
@@ -56,8 +57,19 @@ def search_patients():
         ).limit(20).all()
         
         for p in patients_global:
-            # NEW: Pull patient_id from the most recent screening record within current section
-            yearly_record = ScreeningYearBioData.query.filter_by(staff_id=p.staff_id).order_by(ScreeningYearBioData.screening_year.desc()).first()
+            # NEW: Pull patient_id from the specific screening record if year is provided,
+            # otherwise fall back to most recent (for generic lookup/compatibility)
+            year = request.args.get('year')
+            if year:
+                yearly_record = ScreeningYearBioData.query.filter_by(
+                    staff_id=p.staff_id, 
+                    screening_year=int(year)
+                ).first()
+            else:
+                yearly_record = ScreeningYearBioData.query.filter_by(
+                    staff_id=p.staff_id
+                ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+                
             p_id = yearly_record.patient_id if yearly_record else None
 
             p_dict = {

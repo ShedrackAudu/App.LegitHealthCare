@@ -24,8 +24,19 @@ def get_patient(staff_id):
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
         
-    # NEW: Pull patient_id from the most recent screening record
-    yearly_record = ScreeningYearBioData.query.filter_by(staff_id=patient.staff_id).order_by(ScreeningYearBioData.screening_year.desc()).first()
+    # NEW: Pull patient_id from the specific screening record if year is provided,
+    # otherwise fall back to most recent (for generic lookup)
+    year = request.args.get('year')
+    if year:
+        yearly_record = ScreeningYearBioData.query.filter_by(
+            staff_id=patient.staff_id, 
+            screening_year=int(year)
+        ).first()
+    else:
+        yearly_record = ScreeningYearBioData.query.filter_by(
+            staff_id=patient.staff_id
+        ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+        
     patient_id = yearly_record.patient_id if yearly_record else None
     
     return jsonify({
@@ -120,11 +131,18 @@ def register_patient():
         QueueEntry.query.filter_by(staff_id=staff_id, screening_year=screening_year).delete()
         
         for dept in ['Consultation', 'Audiometry', 'Spirometry', 'ECG']:
+            # Auto-assign next queue number for this department and year
+            max_num = db.session.query(func.max(QueueEntry.queue_number)).filter_by(
+                department=dept, 
+                screening_year=screening_year
+            ).scalar() or 0
+            
             q_entry = QueueEntry(
                 staff_id=staff_id,
                 screening_year=screening_year,
                 department=dept,
-                status='Waiting'
+                status='Waiting',
+                queue_number=max_num + 1
             )
             db.session.add(q_entry)
 

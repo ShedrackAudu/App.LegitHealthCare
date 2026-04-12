@@ -148,11 +148,12 @@ const SystemConfigPage: React.FC = () => {
     });
 
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
+    const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
         title: '',
         description: '',
-        actionType: 'queue' as 'queue' | 'audit'
+        actionType: 'queue' as 'queue' | 'audit' | 'signup'
     });
 
     const [brandingLoading, setBrandingLoading] = useState(false);
@@ -209,11 +210,28 @@ const SystemConfigPage: React.FC = () => {
         }
     }, [activeSection]);
 
+    const fetchSystemConfig = useCallback(async () => {
+        try {
+            const response = await axios.get('http://localhost:5000/api/admin/config', {
+                headers: { 
+                    'X-Company-Context': activeSection,
+                    'X-User-ID': user?.id?.toString()
+                }
+            });
+            if (response.data.staff_signup_enabled !== undefined) {
+                setStaffSignupEnabled(response.data.staff_signup_enabled === 'true');
+            }
+        } catch (err) {
+            console.error("Failed to load system configuration");
+        }
+    }, [activeSection, user]);
+
     useEffect(() => {
         fetchData();
         fetchEmailSettings();
         fetchBrandingSettings();
-    }, [activeSection, fetchData, fetchEmailSettings, fetchBrandingSettings]);
+        fetchSystemConfig();
+    }, [activeSection, fetchData, fetchEmailSettings, fetchBrandingSettings, fetchSystemConfig]);
 
     const handleAdd = async (type: 'departments' | 'races' | 'nationalities') => {
         const trimmedName = newItemName.trim();
@@ -344,10 +362,32 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleToggleSignup = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !staffSignupEnabled;
+            await axios.post('http://localhost:5000/api/admin/config', 
+                { staff_signup_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setStaffSignupEnabled(newValue);
+            toast.success(`Staff signup has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update signup setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
     const handleMaintenanceConfirm = () => {
         if (confirmMaintenanceModal.actionType === 'queue') {
             handleResetQueue();
-        } else {
+        } else if (confirmMaintenanceModal.actionType === 'audit') {
             handleClearAudit();
         }
     };
@@ -702,6 +742,30 @@ const SystemConfigPage: React.FC = () => {
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Staff Portal Registration</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                When disabled, new staff members will not be able to create accounts. This is useful during system-wide maintenance or locked recruitment periods.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
+                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-destructive'}`} />
+                                            <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
+                                                {staffSignupEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <Button 
+                                                onClick={handleToggleSignup}
+                                                disabled={maintenanceSaving}
+                                                variant={staffSignupEnabled ? "outline" : "default"}
+                                                size="sm"
+                                                className="font-bold"
+                                            >
+                                                {maintenanceSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : (staffSignupEnabled ? 'Disable Signup' : 'Enable Signup')}
+                                            </Button>
+                                        </div>
+                                    </div>
+
                                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Reset Daily Patient Queues</h4>

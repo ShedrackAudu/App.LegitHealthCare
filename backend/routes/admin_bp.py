@@ -194,6 +194,8 @@ def manage_config():
             db.session.add(config)
             
     db.session.commit()
+    return jsonify({"message": "Configuration updated successfully"}), 200
+
 @admin_bp.route('/api/admin/request-access', methods=['POST'])
 def request_access():
     data = request.json

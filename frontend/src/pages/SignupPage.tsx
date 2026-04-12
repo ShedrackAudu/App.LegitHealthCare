@@ -63,8 +63,22 @@ const SignupPage: React.FC = () => {
     password: '',
     confirm_password: ''
   });
+  const [isStaffSignupEnabled, setIsStaffSignupEnabled] = useState(true);
+  const [checkingStatus, setCheckingStatus] = useState(true);
 
   useEffect(() => {
+    const checkSignupStatus = async () => {
+      try {
+        const response = await axios.get('http://localhost:5000/api/config/staff-signup-status');
+        setIsStaffSignupEnabled(response.data.staff_signup_enabled);
+      } catch (err) {
+        console.error("Failed to check signup status");
+      } finally {
+        setCheckingStatus(false);
+      }
+    };
+    checkSignupStatus();
+
     if (user) {
       if (user.roles?.includes('Patient')) {
         navigate('/patient/dashboard');
@@ -184,13 +198,13 @@ const SignupPage: React.FC = () => {
                 <img 
                   src={`http://localhost:5000${branding.auth_logo}`} 
                   alt="Auth Page Overlay Logo" 
-                  className="h-24 w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
                 />
             ) : branding?.logo_dark ? (
                 <img 
                   src={`http://localhost:5000${branding.logo_dark}`} 
                   alt="Wordmark Logo" 
-                  className="h-16 w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
                 />
               ) : (
                 <div className="flex items-center gap-2">
@@ -249,13 +263,36 @@ const SignupPage: React.FC = () => {
             </TabsList>
 
             <TabsContent value="staff">
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                {error && (
-                  <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                    {error}
+              {!isStaffSignupEnabled && !checkingStatus ? (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-center text-center gap-4">
+                    <div className="bg-destructive/20 p-4 rounded-full">
+                      <ShieldCheck className="w-10 h-10 text-destructive" />
+                    </div>
+                    <div className="space-y-2">
+                      <h3 className="text-xl font-black text-destructive uppercase tracking-tight">Registration Locked</h3>
+                      <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+                        Staff account registration is currently disabled by the system administrator. 
+                        Please contact the IT department or your supervisor for access.
+                      </p>
+                    </div>
+                    <Button 
+                      variant="outline" 
+                      className="w-full h-12 rounded-xl font-black uppercase tracking-widest border-2 hover:bg-muted"
+                      onClick={() => navigate('/login?portal=staff')}
+                    >
+                      Return to Login
+                    </Button>
                   </div>
-                )}
+                </div>
+              ) : (
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  {error && (
+                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                      {error}
+                    </div>
+                  )}
                 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
@@ -318,10 +355,11 @@ const SignupPage: React.FC = () => {
                   </div>
                 </div>
 
-                <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading}>
-                  {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
-                </Button>
-              </form>
+                  <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
+                  </Button>
+                </form>
+              )}
             </TabsContent>
 
             <TabsContent value="patient">

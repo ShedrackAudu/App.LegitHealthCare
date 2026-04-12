@@ -80,7 +80,7 @@ const consultationSchema = z.object({
   abdomen: z.string().min(1, 'Abdomen is required'),
   assessment_hx_pe: z.string().min(1, 'Assessment HX/PE is required'),
   other_assessments: z.string().min(1, 'Other Assessments is required'),
-  other_remarks: z.string().min(1, 'Other Remarks is required'),
+  other_remarks: z.string().optional().or(z.literal('')),
   overall_assessment: z.string().optional().or(z.literal('')),
 });
 
@@ -516,7 +516,7 @@ const ConsultationPage: React.FC = () => {
                         <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
                       </div>
                       <div className="space-y-2">
-                        <Label className="font-bold text-emerald-600">Other Remarks <span className="text-red-500">*</span></Label>
+                        <Label className="font-bold">Other Remarks</Label>
                         <textarea {...register('other_remarks')} className="w-full min-h-[100px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Any other clinical notes..." />
                       </div>
 
@@ -585,14 +585,19 @@ const ConsultationPage: React.FC = () => {
                         >
                           Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                         </Button>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <div className="text-right space-y-2">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
+                              #{entry.queue_number || '--'}
+                            </Badge>
+                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-600 border-emerald-600/20 h-auto">
+                              WAITING
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground justify-end">
                             <Clock className="w-3 h-3" />
                             <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
                           </div>
-                          <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-600 border-emerald-600/20">
-                            WAITING
-                          </Badge>
                         </div>
                       </div>
                     </div>

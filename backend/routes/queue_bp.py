@@ -85,7 +85,8 @@ def get_department_queue(department):
             "staff_id": e.staff_id,
             "first_name": bio.first_name,
             "last_name": bio.last_name,
-            "created_at": e.created_at.isoformat()
+            "created_at": e.created_at.isoformat(),
+            "queue_number": e.queue_number
         })
 
     return jsonify(patients), 200
@@ -99,3 +100,33 @@ def reset_queue():
     QueueEntry.query.delete()
     db.session.commit()
     return jsonify({"message": "Patient queuing tracker has been reset to zero for all departments."}), 200
+
+@queue_bp.route('/assign-number', methods=['POST'])
+@require_permission('manage_queues')
+def assign_queue_number():
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    data = request.json
+    staff_id = data.get('staff_id')
+    department = data.get('department')
+    year = data.get('year')
+    new_number = data.get('queue_number')
+    
+    if not all([staff_id, department, year]):
+        return jsonify({"error": "Missing required fields"}), 400
+        
+    entry = QueueEntry.query.filter_by(
+        staff_id=staff_id,
+        department=department,
+        screening_year=year,
+        status='Waiting'
+    ).first()
+    
+    if not entry:
+        return jsonify({"error": "Queue entry not found"}), 404
+        
+    entry.queue_number = new_number
+    db.session.commit()
+    
+    return jsonify({"message": f"Queue number updated to {new_number} for {staff_id}"}), 200

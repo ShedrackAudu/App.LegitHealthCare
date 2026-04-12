@@ -429,14 +429,19 @@ const TestResultsPage: React.FC = () => {
                                                 >
                                                     Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                                                 </Button>
-                                                <div className="text-right">
-                                                    <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                                                <div className="text-right space-y-2">
+                                                    <div className="flex items-center gap-1.5 justify-end">
+                                                        <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
+                                                            #{entry.queue_number || '--'}
+                                                        </Badge>
+                                                        <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20 h-auto">
+                                                            WAITING
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex items-center gap-1 text-muted-foreground justify-end">
                                                         <Clock3 className="w-3 h-3" />
                                                         <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
                                                     </div>
-                                                    <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20">
-                                                        WAITING
-                                                    </Badge>
                                                 </div>
                                             </div>
                                         </div>
@@ -585,14 +590,10 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
                     </div>
                 ))}
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2">
                     <Label>FBC Remark</Label>
                     <Input {...register('fbc_remark')} placeholder="Remarks..." />
-                </div>
-                <div className="space-y-2">
-                    <Label>Other Remarks</Label>
-                    <Input {...register('other_remarks')} placeholder="General notes..." />
                 </div>
             </div>
             <div className="flex justify-end pt-4">
@@ -636,9 +637,8 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
-                <div className="space-y-2"><Label>Other Remarks</Label><Input {...register('other_remarks')} /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
@@ -678,9 +678,8 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
                 <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
-                <div className="space-y-2"><Label>Other Remarks</Label><Input {...register('other_remarks')} /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
@@ -708,9 +707,8 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
-                <div className="space-y-2"><Label>Other Remarks</Label><Input {...register('other_remarks')} /></div>
             </div>
             <div className="flex justify-end pt-4">
                 <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>

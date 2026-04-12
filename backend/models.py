@@ -402,6 +402,7 @@ class QueueEntry(db.Model):
     department = db.Column(db.String(50), nullable=False) # Consultation, Audiometry, Spirometry, ECG
     status = db.Column(db.String(20), default='Waiting') # Waiting, Completed
     created_at = db.Column(db.DateTime, default=datetime.now)
+    queue_number = db.Column(db.Integer, nullable=True)
 
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'

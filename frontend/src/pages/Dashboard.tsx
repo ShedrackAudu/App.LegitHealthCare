@@ -16,7 +16,9 @@ import {
   Key,
   Clock,
   ClipboardList,
-  Settings2
+  Settings2,
+  Edit3,
+  Check
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -513,14 +515,19 @@ const Dashboard: React.FC = () => {
                                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ID: {entry.staff_id}</p>
                                             </div>
                                         </div>
-                                        <div className="text-right">
-                                            <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                                        <div className="text-right space-y-2">
+                                            <div className="flex items-center gap-1.5 justify-end">
+                                               <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
+                                                    #{entry.queue_number || '--'}
+                                               </Badge>
+                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-500 border-emerald-500/20 h-auto">
+                                                    WAITING
+                                               </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-1 text-muted-foreground justify-end">
                                                 <Clock className="w-3 h-3" />
                                                 <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
                                             </div>
-                                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-500 border-emerald-500/20">
-                                                WAITING
-                                            </Badge>
                                         </div>
                                     </div>
                                 ))}

@@ -76,7 +76,7 @@ const RegistrationPage: React.FC = () => {
       const fetchPatient = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}`, {
+          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           const p = response.data;
@@ -185,7 +185,7 @@ const RegistrationPage: React.FC = () => {
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           setSearchResults(res.data);
@@ -205,7 +205,7 @@ const RegistrationPage: React.FC = () => {
     if (!cleanId) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/patient/${cleanId}`, {
+      const response = await axios.get(`http://localhost:5000/patient/${cleanId}?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
 

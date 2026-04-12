@@ -284,7 +284,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'PCV', 'WBC', 'PLT', 'HGB', 'RBC',
                             'LYMP_PERCENT', 'LYMP_ABS', 'MID_PERCENT', 'MID_ABS', 'GRA_PERCENT', 'GRA_ABS',
                             'MCV', 'MCH', 'MCHC', 'RDW', 'PDW',
-                            'FBC_REMARK', 'OTHER_REMARKS'
+                            'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
                                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">{f.replace('_', ' ')}</Label>

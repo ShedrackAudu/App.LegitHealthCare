@@ -146,9 +146,9 @@ export const Sidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
-        <div 
+        <div
           ref={scrollContainerRef}
-          className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar"
+          className="flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar"
         >
           {/* Main Items */}
           {[...sharedItems, ...medicalItems].map((item) => {
@@ -167,7 +167,7 @@ export const Sidebar: React.FC = () => {
               >
                 <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
                 <span className={cn(
-                  "font-semibold transition-opacity duration-300 whitespace-nowrap",
+                  "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
                   isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
                 )}>
                   {item.title}
@@ -194,7 +194,7 @@ export const Sidebar: React.FC = () => {
 
           {/* Admin Section - Dynamic Visibility */}
           {(() => {
-            const filteredAdminItems = adminItems.filter(item => 
+            const filteredAdminItems = adminItems.filter(item =>
               item.permission ? hasPermission(item.permission) : isAdmin()
             );
 
@@ -227,7 +227,7 @@ export const Sidebar: React.FC = () => {
                     >
                       <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
                       <span className={cn(
-                        "font-semibold transition-opacity duration-300 whitespace-nowrap",
+                        "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
                         isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
                       )}>
                         {item.title}
