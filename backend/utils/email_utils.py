@@ -28,19 +28,52 @@ class EmailService:
     def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
         config = custom_config or EmailService._get_smtp_config()
         
+        # 1. Check for SendGrid (Bypasses Render SMTP Block)
+        sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+        if sendgrid_api_key:
+            try:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail as SG_Mail, Attachment, FileContent, FileName, FileType, Disposition
+                import base64
+
+                print("--- SENDGRID API DELIVERY ---")
+                from_email = os.getenv('SENDGRID_FROM_EMAIL', config.get('username'))
+                message = SG_Mail(
+                    from_email=(from_email, config.get('display_name', 'Legit HealthCare')),
+                    to_emails=to_email,
+                    subject=subject,
+                    html_content=html_content
+                )
+
+                if attachment_data and attachment_filename:
+                    encoded_file = base64.b64encode(attachment_data).decode()
+                    attachedFile = Attachment(
+                        FileContent(encoded_file),
+                        FileName(attachment_filename),
+                        FileType('application/pdf'),
+                        Disposition('attachment')
+                    )
+                    message.add_attachment(attachedFile)
+
+                sg = SendGridAPIClient(sendgrid_api_key)
+                response = sg.send(message)
+                print(f"SendGrid Status: {response.status_code}")
+                return True
+            except Exception as e:
+                print(f"SendGrid API Error: {e}")
+                # If API fails, we Fallback to SMTP
+                print("Falling back to SMTP...")
+
+        # 2. Legacy SMTP Fallback (For Local Testing)
         # Diagnostic Logging (Masked)
-        print(f"--- EMAIL DIAGNOSTIC ---")
+        print(f"--- SMTP FALLBACK DELIVERY ---")
         print(f"Server: {config.get('server')}")
         print(f"Port: {config.get('port')}")
-        print(f"User: {config.get('username')[:3]}***@{config.get('username').split('@')[-1] if '@' in config.get('username') else '???'}")
-        print(f"Pass Set: {'YES' if config.get('password') else 'NO'}")
+        print(f"User: {config.get('username')[:3]}***")
         print(f"------------------------")
 
-        # Validation
         if not config.get("username") or not config.get("password"):
-            error_msg = f"SMTP Configuration Missing. USER: {config.get('username')}, PASS_SET: {bool(config.get('password'))}"
-            print(f"Error: {error_msg}")
-            raise Exception("SMTP credentials are not set. Check environment variables.")
+            raise Exception("No email service configured (Missing SENDGRID_API_KEY or SMTP credentials).")
 
         try:
             msg = MIMEMultipart()
@@ -59,32 +92,20 @@ class EmailService:
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
             
-            # Smart Connection Logic
             is_ssl = (smtp_port == 465)
-            
-            if is_ssl:
-                server_conn = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=25)
-            else:
-                server_conn = smtplib.SMTP(smtp_server, smtp_port, timeout=25)
+            server_conn = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=25) if is_ssl else smtplib.SMTP(smtp_server, smtp_port, timeout=25)
 
             with server_conn as server:
-                server.set_debuglevel(1) # HIGH VERBOSITY FOR PROD DEBUGGING
-                
                 if not is_ssl:
-                    server.ehlo()
-                    server.starttls()
-                    server.ehlo()
+                    server.ehlo(); server.starttls(); server.ehlo()
                 
-                try:
-                    server.login(str(config["username"]), str(config["password"]))
-                except smtplib.SMTPAuthenticationError:
-                    raise Exception("Authentication Failed: Check your username and App Password.")
-                    
+                server.login(str(config["username"]), str(config["password"]))
                 server.send_message(msg)
             
             return True
-        except socket.timeout:
-            raise Exception(f"Connection timed out at {smtp_server}:{smtp_port}. Check firewall/port.")
+        except Exception as e:
+            print(f"SMTP Fallback Error: {e}")
+            return False
         except Exception as e:
             # Check for common dev/test overrides
             error_str = str(e).lower()
