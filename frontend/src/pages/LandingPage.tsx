@@ -37,7 +37,7 @@ const LandingPage = () => {
   useEffect(() => {
     const fetchBranding = async () => {
       try {
-        const res = await axios.get('http://localhost:5000/api/branding');
+        const res = await axios.get('/api/branding');
         setBranding(res.data);
       } catch (err) {
         console.error("Failed to fetch branding", err);
@@ -49,7 +49,7 @@ const LandingPage = () => {
   const getImageUrl = (path: string, fallback: string) => {
     if (!path) return fallback;
     if (path.startsWith('http')) return path;
-    return `http://localhost:5000${path}`;
+    return `${(window as any).API_BASE_URL}${path}`;
   };
 
   const getSocialIcon = (label: string) => {

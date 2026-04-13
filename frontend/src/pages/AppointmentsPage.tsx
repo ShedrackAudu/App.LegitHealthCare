@@ -79,7 +79,7 @@ const AppointmentsPage = () => {
             // Re-format to DD-MM-YYYY for backend consistency
             const [y, m, d] = selectedDate.split('-');
             const formattedDate = `${d}-${m}-${y}`;
-            const res = await axios.get(`http://localhost:5000/api/appointments/booked?date=${formattedDate}`);
+            const res = await axios.get(`/api/appointments/booked?date=${formattedDate}`);
             setBookedSlots(res.data);
             setValue('time_slot', ''); // Reset slot when date changes
         } catch (err) {
@@ -95,7 +95,7 @@ const AppointmentsPage = () => {
     if (!query) return;
     setIsSearching(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/patients/search?q=${query}`, {
+      const res = await axios.get(`/api/patients/search?q=${query}`, {
           headers: { 'X-Company-Context': activeSection }
       });
       if (res.data && res.data.length > 0) {
@@ -121,7 +121,7 @@ const AppointmentsPage = () => {
       const [y, m, d] = data.appointment_date.split('-');
       const formattedDate = `${d}-${m}-${y}`;
       
-      await axios.post('http://localhost:5000/api/appointments', {
+      await axios.post('/api/appointments', {
         ...data,
         appointment_date: formattedDate,
         staff_id: patient.staff_id

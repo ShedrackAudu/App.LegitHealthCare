@@ -19,7 +19,7 @@ const DataManagementPage: React.FC = () => {
       const endpoint = type === 'patients' ? 'export/patients' : 'export/screening';
       const yearParam = type === 'screening' ? `?year=${activeYear}` : '';
       
-      const resp = await axios.get(`http://localhost:5000/api/admin/${endpoint}${yearParam}`, {
+      const resp = await axios.get(`/api/admin/${endpoint}${yearParam}`, {
         headers: { 
             'X-User-ID': user?.id?.toString(),
             'X-Company-Context': activeSection 
@@ -68,7 +68,7 @@ const DataManagementPage: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const resp = await axios.post('http://localhost:5000/api/admin/import', formData, {
+      const resp = await axios.post('/api/admin/import', formData, {
         headers: { 
           'X-User-ID': user?.id?.toString(),
           'X-Company-Context': activeSection,

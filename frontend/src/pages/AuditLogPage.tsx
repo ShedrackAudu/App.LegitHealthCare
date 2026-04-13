@@ -26,7 +26,7 @@ const AuditLogPage: React.FC = () => {
   const fetchLogs = async (pageNum: number) => {
     setLoading(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/admin/audit-logs?page=${pageNum}&per_page=15`, {
+      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=15`, {
         headers: { 'X-User-ID': user?.id?.toString() }
       });
       setLogs(resp.data.logs);

@@ -22,7 +22,7 @@ const PatientReportPage: React.FC = () => {
         if (!id) return;
         setSearching(true);
         try {
-            const pRes = await axios.get(`http://localhost:5000/api/patients/${id}`, {
+            const pRes = await axios.get(`/api/patients/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             if (pRes.data) handleSelectPatient(pRes.data);
@@ -37,7 +37,7 @@ const PatientReportPage: React.FC = () => {
         setLoading(true);
         setSelectedPatient(patient);
         try {
-            const res = await axios.get(`http://localhost:5000/api/patient-report/${patient.staff_id}/${activeYear}`, {
+            const res = await axios.get(`/api/patient-report/${patient.staff_id}/${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setReportData(res.data);
@@ -168,7 +168,7 @@ const PatientReportPage: React.FC = () => {
                 attachment_filename: getDownloadFilename()
             };
 
-            const res = await axios.post('http://localhost:5000/api/email/report', payloadData);
+            const res = await axios.post('/api/email/report', payloadData);
             toast.success(res.data.message || 'Email sent successfully!', { id: 'emailSend' });
         } catch (err: any) {
             console.error('Email error:', err);
@@ -269,7 +269,7 @@ const PatientReportPage: React.FC = () => {
                                 {/* Branding Header Area */}
                                 <div className="report-branding">
                                     {reportData.branding?.header_image ? (
-                                        <img src={`http://localhost:5000${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                        <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                     ) : (
                                         <div className="report-header-img">result_header</div>
                                     )}
@@ -415,7 +415,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                         <div className="sig-box">
                                             {reportData.branding?.signature_image ? (
-                                                <img src={`http://localhost:5000${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                                <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                             ) : (
                                                 <div className="sig-img">&#123;signature&#125;</div>
                                             )}
@@ -424,7 +424,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                     </div>
                                     {reportData.branding?.footer_image ? (
-                                        <img src={`http://localhost:5000${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                        <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                     ) : (
                                         <div className="report-footer-img">result_footer</div>
                                     )}
@@ -436,7 +436,7 @@ const PatientReportPage: React.FC = () => {
                             <div className="a4-page">
                                 <div className="report-branding">
                                     {reportData.branding?.header_image ? (
-                                        <img src={`http://localhost:5000${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                        <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                     ) : (
                                         <div className="report-header-img">result_header</div>
                                     )}
@@ -564,7 +564,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                         <div className="sig-box">
                                             {reportData.branding?.signature_image ? (
-                                                <img src={`http://localhost:5000${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                                <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                             ) : (
                                                 <div className="sig-img">&#123;signature&#125;</div>
                                             )}
@@ -573,7 +573,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                     </div>
                                     {reportData.branding?.footer_image ? (
-                                        <img src={`http://localhost:5000${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                        <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                     ) : (
                                         <div className="report-footer-img">result_footer</div>
                                     )}

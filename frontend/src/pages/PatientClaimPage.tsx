@@ -68,7 +68,7 @@ const PatientClaimPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('http://localhost:5000/api/patient/claim', {
+      const resp = await axios.post('/api/patient/claim', {
         ...formData
       });
       toast.success(resp.data.message);
@@ -118,7 +118,7 @@ const PatientClaimPage = () => {
                 <div className="flex justify-between items-start mb-6">
                   {branding?.logo_light ? (
                     <img 
-                      src={`http://localhost:5000${branding.logo_light}`} 
+                      src={`${branding.logo_light}`} 
                       alt="Logo" 
                       className="h-12 w-auto object-contain" 
                     />

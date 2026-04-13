@@ -184,7 +184,7 @@ const Dashboard: React.FC = () => {
   
   const fetchDashboardStats = async () => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/dashboard/stats?year=${activeYear}`, {
+      const resp = await axios.get(`/api/dashboard/stats?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setStats(resp.data);
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
 
   const fetchQueueStats = async () => {
     try {
-        const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+        const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
         });
         setQueueStats(resp.data);
@@ -208,7 +208,7 @@ const Dashboard: React.FC = () => {
     setSelectedDept(dept);
     setLoadingQueue(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);

@@ -81,7 +81,7 @@ export const AISettingsPage = () => {
 
     const fetchSettings = async () => {
         try {
-            const res = await axios.get('http://localhost:5000/api/ai/settings', {
+            const res = await axios.get('/api/ai/settings', {
                 headers: { 'X-Company-Context': activeSection }
             });
             setSettings({
@@ -103,7 +103,7 @@ export const AISettingsPage = () => {
         e.preventDefault();
         setSaving(true);
         try {
-            await axios.post('http://localhost:5000/api/ai/settings', settings, {
+            await axios.post('/api/ai/settings', settings, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("AI Integration Settings saved successfully!");

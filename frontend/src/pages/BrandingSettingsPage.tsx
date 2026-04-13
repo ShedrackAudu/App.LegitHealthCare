@@ -59,7 +59,7 @@ const BrandingSettingsPage: React.FC = () => {
             setLoading(true);
             try {
                 // Using a relative URL or ensuring the base matches the dev server
-                const response = await axios.get(`http://localhost:5000/api/branding/`, {
+                const response = await axios.get(`/api/branding/`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setCurrentBranding(response.data);
@@ -105,7 +105,7 @@ const BrandingSettingsPage: React.FC = () => {
             if (authBrandingImage) formData.append('auth_branding_image', authBrandingImage);
             if (authLogo) formData.append('auth_logo', authLogo);
 
-            await axios.post('http://localhost:5000/api/branding', formData, {
+            await axios.post('/api/branding', formData, {
                 headers: { 
                     'X-Company-Context': activeSection,
                     'Content-Type': 'multipart/form-data'
@@ -116,7 +116,7 @@ const BrandingSettingsPage: React.FC = () => {
             if (fetchBranding) await fetchBranding();
             
             // Reload local
-            const response = await axios.get('http://localhost:5000/api/branding', {
+            const response = await axios.get('/api/branding', {
                 headers: { 'X-Company-Context': activeSection }
             });
             setCurrentBranding(response.data);
@@ -132,13 +132,13 @@ const BrandingSettingsPage: React.FC = () => {
         if (!field) return;
         setSaving(true);
         try {
-            await axios.post('http://localhost:5000/api/branding/clear', { field }, {
+            await axios.post('/api/branding/clear', { field }, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Asset removed successfully");
             setConfirmModal({ ...confirmModal, open: false });
             // Reload local
-            const response = await axios.get('http://localhost:5000/api/branding', {
+            const response = await axios.get('/api/branding', {
                 headers: { 'X-Company-Context': activeSection }
             });
             setCurrentBranding(response.data);
@@ -229,7 +229,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.logo_light && !logoLight ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.logo_light}`} alt="Light Logo" className="max-h-16 object-contain" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.logo_light}`} alt="Light Logo" className="max-h-16 object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -267,7 +267,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-slate-900 shadow-inner relative h-32 group/box">
                                         {currentBranding?.logo_dark && !logoDark ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.logo_dark}`} alt="Dark Logo" className="max-h-16 object-contain" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.logo_dark}`} alt="Dark Logo" className="max-h-16 object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -302,7 +302,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.favicon && !favicon ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.favicon}`} alt="Favicon" className="h-10 w-10 object-contain rounded-md shadow-sm" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.favicon}`} alt="Favicon" className="h-10 w-10 object-contain rounded-md shadow-sm" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -336,7 +336,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.auth_branding_image && !authBrandingImage ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.auth_branding_image}`} alt="Auth BG" className="h-full w-full object-cover rounded-lg" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.auth_branding_image}`} alt="Auth BG" className="h-full w-full object-cover rounded-lg" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -370,7 +370,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.auth_logo && !authLogo ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.auth_logo}`} alt="Auth Logo" className="max-h-16 object-contain" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.auth_logo}`} alt="Auth Logo" className="max-h-16 object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -496,7 +496,7 @@ const BrandingSettingsPage: React.FC = () => {
                                 <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center bg-muted/10 aspect-video relative overflow-hidden group/box">
                                     {currentBranding?.hero_image_1 && !heroImage1 ? (
                                         <>
-                                            <img src={`http://localhost:5000${currentBranding.hero_image_1}`} alt="Hero 1" className="h-full w-full object-cover rounded-lg" />
+                                            <img src={`${(window as any).API_BASE_URL}${currentBranding.hero_image_1}`} alt="Hero 1" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
                                                 onClick={() => setConfirmModal({
@@ -525,7 +525,7 @@ const BrandingSettingsPage: React.FC = () => {
                                 <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center bg-muted/10 aspect-video relative overflow-hidden group/box">
                                     {currentBranding?.hero_image_2 && !heroImage2 ? (
                                         <>
-                                            <img src={`http://localhost:5000${currentBranding.hero_image_2}`} alt="Hero 2" className="h-full w-full object-cover rounded-lg" />
+                                            <img src={`${(window as any).API_BASE_URL}${currentBranding.hero_image_2}`} alt="Hero 2" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
                                                 onClick={() => setConfirmModal({
@@ -554,7 +554,7 @@ const BrandingSettingsPage: React.FC = () => {
                                 <div className="border-2 border-dashed rounded-xl p-4 flex flex-col items-center justify-center bg-muted/10 aspect-video relative overflow-hidden group/box">
                                     {currentBranding?.hero_image_team && !heroImageTeam ? (
                                         <>
-                                            <img src={`http://localhost:5000${currentBranding.hero_image_team}`} alt="Team" className="h-full w-full object-cover rounded-lg" />
+                                            <img src={`${(window as any).API_BASE_URL}${currentBranding.hero_image_team}`} alt="Team" className="h-full w-full object-cover rounded-lg" />
                                             <button 
                                                 type="button"
                                                 onClick={() => setConfirmModal({
@@ -592,7 +592,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.header_image && !headerImage ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.header_image}`} alt="Header" className="max-h-24 object-contain" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.header_image}`} alt="Header" className="max-h-24 object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -627,7 +627,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.footer_image && !footerImage ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.footer_image}`} alt="Footer" className="max-h-24 object-contain" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.footer_image}`} alt="Footer" className="max-h-24 object-contain" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({
@@ -662,7 +662,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-muted/10 relative h-32 group/box">
                                         {currentBranding?.signature_image && !signatureImage ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
-                                                <img src={`http://localhost:5000${currentBranding.signature_image}`} alt="Signature" className="max-h-24 object-contain mix-blend-multiply" />
+                                                <img src={`${(window as any).API_BASE_URL}${currentBranding.signature_image}`} alt="Signature" className="max-h-24 object-contain mix-blend-multiply" />
                                                 <button 
                                                     type="button"
                                                     onClick={() => setConfirmModal({

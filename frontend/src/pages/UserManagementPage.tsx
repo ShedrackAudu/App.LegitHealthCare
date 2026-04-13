@@ -112,8 +112,8 @@ const UserManagementPage: React.FC = () => {
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
       const [usersRes, rolesRes] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/users', { headers }),
-        axios.get('http://localhost:5000/api/admin/roles', { headers })
+        axios.get('/api/admin/users', { headers }),
+        axios.get('/api/admin/roles', { headers })
       ]);
       setUsers(usersRes.data);
       setRoles(rolesRes.data);
@@ -143,7 +143,7 @@ const UserManagementPage: React.FC = () => {
     setIsSubmitting(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
-      await axios.post(`http://localhost:5000/api/admin/users/${selectedUser.id}/reset-password`, {
+      await axios.post(`/api/admin/users/${selectedUser.id}/reset-password`, {
         password: newPassword
       }, { headers });
       toast.success(`Password for @${selectedUser.username} reset successfully.`);
@@ -184,7 +184,7 @@ const UserManagementPage: React.FC = () => {
     setSaving(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
-      await axios.post(`http://localhost:5000/api/admin/users/${selectedUser.id}/roles`, {
+      await axios.post(`/api/admin/users/${selectedUser.id}/roles`, {
         roles: userRolesInput
       }, { headers });
       toast.success("User roles updated successfully");
@@ -206,7 +206,7 @@ const UserManagementPage: React.FC = () => {
     setSaving(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
-      await axios.post('http://localhost:5000/api/admin/users', newUser, { headers });
+      await axios.post('/api/admin/users', newUser, { headers });
       toast.success(`User @${newUser.username} created and welcome email sent!`);
       setIsAddModalOpen(false);
       setNewUser({ first_name: '', last_name: '', username: '', email: '', phone: '', roles: [] });
@@ -231,7 +231,7 @@ const UserManagementPage: React.FC = () => {
     setDeactivating(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
-      await axios.delete(`http://localhost:5000/api/admin/users/${targetUser.id}`, { headers });
+      await axios.delete(`/api/admin/users/${targetUser.id}`, { headers });
       toast.success(`Account @${targetUser.username} deactivated.`);
       setConfirmDeactivation({ open: false, user: null });
       fetchData();

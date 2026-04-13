@@ -199,7 +199,7 @@ const ConsultationPage: React.FC = () => {
   // Fetch queue count
   const fetchQueue = async () => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueCount(resp.data.consultation || 0);
@@ -211,7 +211,7 @@ const ConsultationPage: React.FC = () => {
   const fetchQueueList = async () => {
     setLoadingQueue(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/consultation/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/consultation/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
@@ -310,7 +310,7 @@ const ConsultationPage: React.FC = () => {
     if (!idToSearch) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/screening/${activeYear}/patient/${idToSearch}`, {
+      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       const fullData = response.data;
@@ -344,7 +344,7 @@ const ConsultationPage: React.FC = () => {
     if (!patient) return;
     setSaving(true);
     try {
-      await axios.post('http://localhost:5000/consultation', {
+      await axios.post('/consultation', {
         ...data,
         staff_id: patient.staff_id,
         screening_year: activeYear

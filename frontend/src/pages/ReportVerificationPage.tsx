@@ -20,7 +20,7 @@ const ReportVerificationPage: React.FC = () => {
             }
 
             try {
-                const response = await axios.get(`http://localhost:5000/api/public/verify/${token}`);
+                const response = await axios.get(`/api/public/verify/${token}`);
                 setReportDetails(response.data);
                 setStatus('success');
             } catch (err) {

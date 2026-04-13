@@ -33,7 +33,7 @@ export const PatientHeader: React.FC = () => {
   const fetchName = useCallback(async () => {
     if (!user?.username) return;
     try {
-      const response = await axios.get('http://localhost:5000/api/patient/profile', {
+      const response = await axios.get('/api/patient/profile', {
         headers: { 'X-Staff-ID': user.username }
       });
       setProfileName(response.data.first_name);
@@ -49,7 +49,7 @@ export const PatientHeader: React.FC = () => {
   const handleLogout = async () => {
     if (user) {
         try {
-            await axios.post('http://localhost:5000/api/logout', { 
+            await axios.post('/api/logout', { 
                 user_id: user.id,
                 portal: 'patient' 
             });

@@ -121,7 +121,7 @@ const TestResultsPage: React.FC = () => {
             }
             const fetchResults = async () => {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+                    const res = await axios.get(`/api/patients/search?q=${searchId}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
                     setSearchResults(res.data);
@@ -139,7 +139,7 @@ const TestResultsPage: React.FC = () => {
     const [queueData, setQueueData] = useState<any>({});
     const fetchQueue = async () => {
         try {
-            const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+            const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueData(resp.data);
@@ -150,7 +150,7 @@ const TestResultsPage: React.FC = () => {
         setLoadingQueue(true);
         setSelectedQueueDept(dept);
         try {
-            const resp = await axios.get(`http://localhost:5000/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
+            const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueEntries(resp.data);
@@ -196,7 +196,7 @@ const TestResultsPage: React.FC = () => {
         if (!searchId) return;
         setSearching(true);
         try {
-            const response = await axios.get(`http://localhost:5000/patient/${searchId}`, {
+            const response = await axios.get(`/patient/${searchId}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
@@ -482,7 +482,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             setFetching(true);
             try {
                 const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-                const resp = await axios.get(`http://localhost:5000/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
+                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setInitialData(resp.data);
@@ -499,7 +499,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         setLoading(true);
         try {
             const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-            await axios.post(`http://localhost:5000/api/tests/save-test/${type}`, {
+            await axios.post(`/api/tests/save-test/${type}`, {
                 ...data,
                 staff_id: patient.staff_id,
                 screening_year: activeYear

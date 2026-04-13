@@ -32,7 +32,7 @@ const Manage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/generate`, {}, {
+            const resp = await axios.post(`/api/2fa/generate`, {}, {
                 headers: { 'X-User-ID': user?.id }
             });
             setQrUri(resp.data.uri);
@@ -50,7 +50,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/enable`, { code }, {
+            const resp = await axios.post(`/api/2fa/enable`, { code }, {
                 headers: { 'X-User-ID': user?.id }
             });
             toast.success(resp.data.message || "2FA successfully enabled!");
@@ -68,7 +68,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/disable`, { code: disableCode }, {
+            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode }, {
                 headers: { 'X-User-ID': user?.id }
             });
             toast.success(resp.data.message || "2FA has been disabled.");

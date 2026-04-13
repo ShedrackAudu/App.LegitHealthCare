@@ -127,7 +127,7 @@ export default function MessagingPage() {
 
   const fetchConversations = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/messages/conversations', {
+      const resp = await axios.get('/api/messages/conversations', {
         headers: { 'X-User-ID': user.id }
       });
       setConversations(resp.data);
@@ -137,7 +137,7 @@ export default function MessagingPage() {
 
   const fetchHistory = async (convId: string) => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/messages/history/${convId}`, {
+      const resp = await axios.get(`/api/messages/history/${convId}`, {
         headers: { 'X-User-ID': user.id }
       });
       setMessages(resp.data.messages);
@@ -148,7 +148,7 @@ export default function MessagingPage() {
   const fetchAvailableUsers = async () => {
     setLoadingUsers(true);
     try {
-      const resp = await axios.get('http://localhost:5000/api/messages/search-users', {
+      const resp = await axios.get('/api/messages/search-users', {
         headers: { 'X-User-ID': user.id }
       });
       setAvailableUsers(resp.data);
@@ -170,7 +170,7 @@ export default function MessagingPage() {
       return;
     }
     try {
-      const resp = await axios.get(`http://localhost:5000/api/messages/search-users?q=${val}`, {
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`, {
         headers: { 'X-User-ID': user.id }
       });
       setSearchResults(resp.data);
@@ -229,7 +229,7 @@ export default function MessagingPage() {
     setIsDeleting(true);
 
     try {
-      await axios.delete(`http://localhost:5000/api/messages/conversations/${activeChat.id}`, {
+      await axios.delete(`/api/messages/conversations/${activeChat.id}`, {
         headers: { 'X-User-ID': user.id }
       });
       setActiveChat(null);

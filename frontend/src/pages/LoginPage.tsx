@@ -55,7 +55,7 @@ const LoginPage = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:5000/login', {
+      const response = await axios.post('/login', {
         ...data,
         portal: activePortal
       });
@@ -94,7 +94,7 @@ const LoginPage = () => {
     setLoading(true);
     setError(null);
     try {
-        const resp = await axios.post('http://localhost:5000/login/2fa', {
+        const resp = await axios.post('/login/2fa', {
             user_id: tempUserId,
             code: totpCode,
             portal: activePortal
@@ -127,7 +127,7 @@ const LoginPage = () => {
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
           style={{ 
             backgroundImage: branding?.auth_branding_image 
-              ? `url(http://localhost:5000${branding.auth_branding_image})` 
+              ? `url(${branding.auth_branding_image})` 
               : `url('https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=2070&auto=format&fit=crop')` 
           }}
         />
@@ -141,13 +141,13 @@ const LoginPage = () => {
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
             {branding?.auth_logo ? (
                 <img 
-                  src={`http://localhost:5000${branding.auth_logo}`} 
+                  src={`${branding.auth_logo}`} 
                   alt="Auth Page Overlay Logo" 
                   className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
                 />
             ) : branding?.logo_dark ? (
                 <img 
-                  src={`http://localhost:5000${branding.logo_dark}`} 
+                  src={`${branding.logo_dark}`} 
                   alt="Wordmark Logo" 
                   className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
                 />
@@ -189,7 +189,7 @@ const LoginPage = () => {
           <div className="text-center lg:text-left space-y-2">
              <div className="lg:hidden flex justify-center mb-6">
                  {branding?.logo_light ? (
-                    <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
+                    <img src={`${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
                  ) : (
                     <Activity className="w-12 h-12 text-primary" />
                  )}

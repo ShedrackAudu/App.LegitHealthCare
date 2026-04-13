@@ -115,7 +115,7 @@ export const Header: React.FC = () => {
   const fetchNotifications = async () => {
       if (!user) return;
       try {
-          const resp = await axios.get('http://localhost:5000/api/notifications/', {
+          const resp = await axios.get('/api/notifications/', {
               headers: { 'X-User-ID': user.id }
           });
           setNotifications(resp.data.notifications);
@@ -128,7 +128,7 @@ export const Header: React.FC = () => {
   const markAsRead = async (id: number) => {
       if (!user) return;
       try {
-          await axios.put(`http://localhost:5000/api/notifications/${id}/read`, {}, {
+          await axios.put(`/api/notifications/${id}/read`, {}, {
               headers: { 'X-User-ID': user.id }
           });
           fetchNotifications();
@@ -140,7 +140,7 @@ export const Header: React.FC = () => {
   const markAllAsRead = async () => {
       if (!user) return;
       try {
-          await axios.delete(`http://localhost:5000/api/notifications/delete-all`, {
+          await axios.delete(`/api/notifications/delete-all`, {
               headers: { 'X-User-ID': user.id }
           });
           fetchNotifications();
@@ -163,7 +163,7 @@ export const Header: React.FC = () => {
   const handleLogout = async () => {
     if (user) {
         try {
-            await axios.post('http://localhost:5000/api/logout', { 
+            await axios.post('/api/logout', { 
                 user_id: user.id,
                 portal: 'staff' 
             });

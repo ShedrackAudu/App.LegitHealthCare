@@ -221,7 +221,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     const handleAIGenerate = async () => {
         setGeneratingAI(true);
         try {
-            const res = await axios.post('http://localhost:5000/api/ai/generate', {
+            const res = await axios.post('/api/ai/generate', {
                 staff_id: patient.staff_id,
                 screening_year: activeYear
             }, {
@@ -488,12 +488,12 @@ const DirectorPage: React.FC = () => {
         setHistory(null);
         setSearching(true);
         try {
-            const pRes = await axios.get(`http://localhost:5000/patient/${id}`, {
+            const pRes = await axios.get(`/patient/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(pRes.data);
             
-            const hRes = await axios.get(`http://localhost:5000/api/director/get-patient-history/${id}?year=${activeYear}`, {
+            const hRes = await axios.get(`/api/director/get-patient-history/${id}?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setHistory(hRes.data);
@@ -513,7 +513,7 @@ const DirectorPage: React.FC = () => {
     const handleSaveAll = async (data: any) => {
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/api/director/save-director-review', {
+            await axios.post('/api/director/save-director-review', {
                 ...data,
                 staff_id: patient.staff_id,
                 screening_year: activeYear

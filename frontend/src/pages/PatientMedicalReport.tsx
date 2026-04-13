@@ -40,7 +40,7 @@ const PatientMedicalReport: React.FC = () => {
     useEffect(() => {
         const fetchYears = async () => {
             try {
-                const res = await axios.get('http://localhost:5000/api/patient/reports/years', {
+                const res = await axios.get('/api/patient/reports/years', {
                     headers: { 'X-Staff-ID': user?.username }
                 });
                 setAvailableYears(res.data);
@@ -66,13 +66,13 @@ const PatientMedicalReport: React.FC = () => {
         setLoading(true);
         try {
             // Fetch profile first to get nationality/section
-            const profileRes = await axios.get('http://localhost:5000/api/patient/profile', {
+            const profileRes = await axios.get('/api/patient/profile', {
                 headers: { 'X-Staff-ID': user?.username }
             });
 
             const section = profileRes.data.section || 'DCP'; // Fallback if somehow missing
 
-            const res = await axios.get(`http://localhost:5000/api/patient-report/${user?.username}/${selectedYear}`, {
+            const res = await axios.get(`/api/patient-report/${user?.username}/${selectedYear}`, {
                 headers: { 'X-Company-Context': section }
             });
 
@@ -196,7 +196,7 @@ const PatientMedicalReport: React.FC = () => {
                 origin: 'frontend'
             };
 
-            await axios.post('http://localhost:5000/api/email/report', payloadData);
+            await axios.post('/api/email/report', payloadData);
             toast.success('Report successfully emailed to your address!', { id: 'emailSend' });
         } catch (err: any) {
             console.error('Email error:', err);
@@ -345,7 +345,7 @@ const PatientMedicalReport: React.FC = () => {
                             {/* Branding Header Area */}
                             <div className="report-branding">
                                 {reportData.branding?.header_image ? (
-                                    <img src={`http://localhost:5000${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                    <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                 ) : (
                                     <div className="report-header-img">result_header</div>
                                 )}
@@ -491,7 +491,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                     <div className="sig-box">
                                         {reportData.branding?.signature_image ? (
-                                            <img src={`http://localhost:5000${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                            <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                         ) : (
                                             <div className="sig-img">&#123;signature&#125;</div>
                                         )}
@@ -500,7 +500,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                 </div>
                                 {reportData.branding?.footer_image ? (
-                                    <img src={`http://localhost:5000${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                    <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                 ) : (
                                     <div className="report-footer-img">result_footer</div>
                                 )}
@@ -511,7 +511,7 @@ const PatientMedicalReport: React.FC = () => {
                         <div className="a4-page shadow-2xl">
                             <div className="report-branding">
                                 {reportData.branding?.header_image ? (
-                                    <img src={`http://localhost:5000${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                    <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                 ) : (
                                     <div className="report-header-img">result_header</div>
                                 )}
@@ -638,7 +638,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                     <div className="sig-box">
                                         {reportData.branding?.signature_image ? (
-                                            <img src={`http://localhost:5000${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                            <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                         ) : (
                                             <div className="sig-img">&#123;signature&#125;</div>
                                         )}
@@ -647,7 +647,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                 </div>
                                 {reportData.branding?.footer_image ? (
-                                    <img src={`http://localhost:5000${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                    <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                 ) : (
                                     <div className="report-footer-img">result_footer</div>
                                 )}

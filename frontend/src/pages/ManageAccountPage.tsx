@@ -56,7 +56,7 @@ const ManageAccountPage = () => {
 
     const fetchContacts = async () => {
         try {
-            const resp = await axios.get('http://localhost:5000/api/account/contacts', {
+            const resp = await axios.get('/api/account/contacts', {
                 headers: { 'X-User-ID': user?.id }
             });
             setContacts(resp.data);
@@ -68,7 +68,7 @@ const ManageAccountPage = () => {
     const handleUpdateInfo = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            const resp = await axios.put(`http://localhost:5000/api/account/profile`, {
+            const resp = await axios.put(`/api/account/profile`, {
                 first_name: firstName,
                 last_name: lastName,
                 phone,
@@ -91,7 +91,7 @@ const ManageAccountPage = () => {
         }
 
         try {
-            const resp = await axios.put(`http://localhost:5000/api/account/password`, {
+            const resp = await axios.put(`/api/account/password`, {
                 current_password: currentPassword,
                 new_password: newPassword
             }, { headers: { 'X-User-ID': user?.id } });
@@ -109,7 +109,7 @@ const ManageAccountPage = () => {
         e.preventDefault();
         if (!newLabel || !newValue) return;
         try {
-            const resp = await axios.post('http://localhost:5000/api/account/contacts/save', {
+            const resp = await axios.post('/api/account/contacts/save', {
                 label: newLabel,
                 value: newValue,
                 contact_type: newValue.includes('http') ? 'link' : (newValue.includes('@') ? 'email' : 'phone')
@@ -126,7 +126,7 @@ const ManageAccountPage = () => {
 
     const handleDeleteContact = async (id: number) => {
         try {
-            await axios.delete(`http://localhost:5000/api/account/contacts/${id}`, {
+            await axios.delete(`/api/account/contacts/${id}`, {
                 headers: { 'X-User-ID': user?.id }
             });
             setContacts(contacts.filter(c => c.id !== id));

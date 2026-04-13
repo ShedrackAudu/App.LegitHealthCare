@@ -36,12 +36,28 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
-app.config['SQLALCHEMY_BINDS'] = {
-    'dcp': f"sqlite:///{os.path.join(app.instance_path, 'dcp.db')}",
-    'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}",
-    'patients': f"sqlite:///{os.path.join(app.instance_path, 'hc_patients.db')}"
-}
+raw_db_url = os.getenv('DATABASE_URL')
+if raw_db_url:
+    # Render/Heroiku provides 'postgres://', but SQLAlchemy 1.4+ requires 'postgresql://'
+    if raw_db_url.startswith("postgres://"):
+        raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+    # For Render/Production, consolidate all binds into the same main database
+    app.config['SQLALCHEMY_BINDS'] = {
+        'dcp': raw_db_url,
+        'dct': raw_db_url,
+        'patients': raw_db_url
+    }
+else:
+    # Use SQLite for local development
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
+    app.config['SQLALCHEMY_BINDS'] = {
+        'dcp': f"sqlite:///{os.path.join(app.instance_path, 'dcp.db')}",
+        'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}",
+        'patients': f"sqlite:///{os.path.join(app.instance_path, 'hc_patients.db')}"
+    }
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
 

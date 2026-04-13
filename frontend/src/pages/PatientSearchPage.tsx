@@ -30,7 +30,7 @@ const PatientSearchPage = () => {
     setPatientData(null);
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/patient/search?staff_id=${staffId.trim()}`);
+      const response = await axios.get(`/api/patient/search?staff_id=${staffId.trim()}`);
       setPatientData(response.data.data);
       toast.success('Record found successfully!');
     } catch (err: any) {
@@ -74,7 +74,7 @@ const PatientSearchPage = () => {
           <div className="flex justify-center mb-4">
             {branding?.logo_light ? (
               <img 
-                src={`http://localhost:5000${branding.logo_light}`} 
+                src={`${branding.logo_light}`} 
                 alt="Logo" 
                 className="h-16 w-auto object-contain" 
               />

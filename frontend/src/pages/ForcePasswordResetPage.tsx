@@ -37,7 +37,7 @@ const ForcePasswordResetPage: React.FC = () => {
         setLoading(true);
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            const response = await axios.post('http://localhost:5000/api/account/force-reset-password', {
+            const response = await axios.post('/api/account/force-reset-password', {
                 new_password: newPassword
             }, { headers });
 

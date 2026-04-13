@@ -69,7 +69,7 @@ const SignupPage: React.FC = () => {
   useEffect(() => {
     const checkSignupStatus = async () => {
       try {
-        const response = await axios.get('http://localhost:5000/api/config/staff-signup-status');
+        const response = await axios.get('/api/config/staff-signup-status');
         setIsStaffSignupEnabled(response.data.staff_signup_enabled);
       } catch (err) {
         console.error("Failed to check signup status");
@@ -99,7 +99,7 @@ const SignupPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await axios.post('http://localhost:5000/signup', data);
+      const response = await axios.post('/signup', data);
       navigate('/verify-otp', { state: { userId: response.data.user_id } });
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
@@ -117,7 +117,7 @@ const SignupPage: React.FC = () => {
 
     setSearchLoading(true);
     try {
-      const response = await axios.get(`http://localhost:5000/api/patient/search?staff_id=${patientStaffId.trim()}`);
+      const response = await axios.get(`/api/patient/search?staff_id=${patientStaffId.trim()}`);
       const data = response.data;
       if (!data) {
         toast.error('Patient records not found in the system.');
@@ -157,7 +157,7 @@ const SignupPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('http://localhost:5000/api/patient/claim', {
+      const response = await axios.post('/api/patient/claim', {
         staff_id: patientStaffId,
         email: claimData.email,
         password: claimData.password,
@@ -185,7 +185,7 @@ const SignupPage: React.FC = () => {
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
           style={{ 
             backgroundImage: branding?.auth_branding_image 
-              ? `url(http://localhost:5000${branding.auth_branding_image})` 
+              ? `url(${branding.auth_branding_image})` 
               : `url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop')` 
           }}
         />
@@ -196,13 +196,13 @@ const SignupPage: React.FC = () => {
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
             {branding?.auth_logo ? (
                 <img 
-                  src={`http://localhost:5000${branding.auth_logo}`} 
+                  src={`${branding.auth_logo}`} 
                   alt="Auth Page Overlay Logo" 
                   className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
                 />
             ) : branding?.logo_dark ? (
                 <img 
-                  src={`http://localhost:5000${branding.logo_dark}`} 
+                  src={`${branding.logo_dark}`} 
                   alt="Wordmark Logo" 
                   className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
                 />
@@ -243,7 +243,7 @@ const SignupPage: React.FC = () => {
           <div className="text-center lg:text-left space-y-2">
              <div className="lg:hidden flex justify-center mb-6">
                  {branding?.logo_light ? (
-                    <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
+                    <img src={`${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
                  ) : (
                     <Activity className="w-12 h-12 text-primary" />
                  )}

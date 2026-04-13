@@ -48,7 +48,7 @@ const PatientOTPPage = () => {
     
     setResending(true);
     try {
-      await axios.post('http://localhost:5000/api/patient/resend-otp', {
+      await axios.post('/api/patient/resend-otp', {
         email,
         first_name: firstName
       });
@@ -71,7 +71,7 @@ const PatientOTPPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('http://localhost:5000/api/patient/verify-otp', {
+      const resp = await axios.post('/api/patient/verify-otp', {
         ...patientData,
         ...claimData,
         otp
@@ -108,7 +108,7 @@ const PatientOTPPage = () => {
             <Link to="/" className="flex justify-center mb-4 transition-opacity hover:opacity-80">
               {branding?.logo_light ? (
                 <img 
-                  src={`http://localhost:5000${branding.logo_light}`} 
+                  src={`${branding.logo_light}`} 
                   alt="Logo" 
                   className="h-16 w-auto object-contain" 
                 />

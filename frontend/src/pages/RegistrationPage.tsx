@@ -76,7 +76,7 @@ const RegistrationPage: React.FC = () => {
       const fetchPatient = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}?year=${activeYear}`, {
+          const response = await axios.get(`/patient/${editStaffId}?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           const p = response.data;
@@ -126,7 +126,7 @@ const RegistrationPage: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/stats?year=${activeYear}`, {
+      const response = await axios.get(`/stats?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setStats(response.data);
@@ -162,9 +162,9 @@ const RegistrationPage: React.FC = () => {
     const fetchConfigs = async () => {
       try {
         const [deptRes, raceRes, natRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/config/departments`),
-          axios.get(`http://localhost:5000/api/config/races`),
-          axios.get(`http://localhost:5000/api/config/nationalities`)
+          axios.get(`/api/config/departments`),
+          axios.get(`/api/config/races`),
+          axios.get(`/api/config/nationalities`)
         ]);
         setDepartments(deptRes.data.map((d: any) => d.name));
         setRaces(raceRes.data.map((r: any) => r.name));
@@ -185,7 +185,7 @@ const RegistrationPage: React.FC = () => {
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}&year=${activeYear}`, {
+          const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           setSearchResults(res.data);
@@ -205,7 +205,7 @@ const RegistrationPage: React.FC = () => {
     if (!cleanId) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/patient/${cleanId}?year=${activeYear}`, {
+      const response = await axios.get(`/patient/${cleanId}?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
 
@@ -249,7 +249,7 @@ const RegistrationPage: React.FC = () => {
       }
 
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/api/patients/${editStaffId}`, {
+        await axios.put(`/api/patients/${editStaffId}`, {
           ...data,
           dob: formattedDob
         }, {
@@ -258,7 +258,7 @@ const RegistrationPage: React.FC = () => {
         toast.success("Patient profile updated successfully!");
         navigate('/view-patients');
       } else {
-        await axios.post('http://localhost:5000/register-patient', {
+        await axios.post('/register-patient', {
           ...data,
           dob: formattedDob,
           screening_year: Number(activeYear)

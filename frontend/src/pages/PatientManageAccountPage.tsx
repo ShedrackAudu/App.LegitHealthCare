@@ -54,7 +54,7 @@ const PatientManageAccountPage = () => {
   const fetchProfile = useCallback(async () => {
     if (!user?.username) return;
     try {
-      const response = await axios.get('http://localhost:5000/api/patient/profile', {
+      const response = await axios.get('/api/patient/profile', {
         headers: { 'X-Staff-ID': user.username }
       });
       const p = response.data;
@@ -86,7 +86,7 @@ const PatientManageAccountPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await axios.put('http://localhost:5000/api/account/profile', {
+      const response = await axios.put('/api/account/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
@@ -362,7 +362,7 @@ const PatientManageAccountPage = () => {
                         onClick={async () => {
                           setResetLoading(true);
                           try {
-                            await axios.post('http://localhost:5000/api/patient/reset-password/request', { email: formData.email });
+                            await axios.post('/api/patient/reset-password/request', { email: formData.email });
                             toast.success("Code sent to your email!");
                             setResetStep(2);
                           } catch (err: any) {
@@ -381,7 +381,7 @@ const PatientManageAccountPage = () => {
                         onClick={async () => {
                           setResetLoading(true);
                           try {
-                            await axios.post('http://localhost:5000/api/patient/reset-password/verify', { 
+                            await axios.post('/api/patient/reset-password/verify', { 
                               email: formData.email,
                               otp: resetOtp,
                               new_password: newPassword

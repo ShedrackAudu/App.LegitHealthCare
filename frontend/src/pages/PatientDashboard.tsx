@@ -44,7 +44,7 @@ const PatientDashboard = () => {
 
       // 1. Profile Fetch (Critical)
       try {
-        const profileRes = await axios.get('http://localhost:5000/api/patient/profile', {
+        const profileRes = await axios.get('/api/patient/profile', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setProfile(profileRes.data);
@@ -54,7 +54,7 @@ const PatientDashboard = () => {
 
       // 2. Core Stats (Years/Reports)
       try {
-        const yearsRes = await axios.get('http://localhost:5000/api/patient/reports/years', {
+        const yearsRes = await axios.get('/api/patient/reports/years', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setStats(prev => ({
@@ -68,7 +68,7 @@ const PatientDashboard = () => {
 
       // 3. Progress Tracking (Non-blocking)
       try {
-        const progressRes = await axios.get('http://localhost:5000/api/patient/report-progress', {
+        const progressRes = await axios.get('/api/patient/report-progress', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setReportProgress(progressRes.data);

@@ -33,7 +33,7 @@ const AccessDeniedPage: React.FC = () => {
     const handleRequestAccess = async () => {
         setIsRequesting(true);
         try {
-            await axios.post('http://localhost:5000/api/admin/request-access', {
+            await axios.post('/api/admin/request-access', {
                 user_id: user?.id,
                 path: fromPath
             }, {
@@ -54,7 +54,7 @@ const AccessDeniedPage: React.FC = () => {
         
         setIsVerifying(true);
         try {
-            const resp = await axios.post('http://localhost:5000/api/admin/verify-access-code', {
+            const resp = await axios.post('/api/admin/verify-access-code', {
                 code: accessCode,
                 path: fromPath
             }, {

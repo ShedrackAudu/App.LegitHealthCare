@@ -39,7 +39,7 @@ const ForgotPasswordPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            const resp = await axios.post('http://localhost:5000/forgot-password', { 
+            const resp = await axios.post('/forgot-password', { 
                 identity: identifier,
                 portal: portal
             });
@@ -57,7 +57,7 @@ const ForgotPasswordPage = () => {
         e.preventDefault();
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/forgot-password/verify', { 
+            await axios.post('/forgot-password/verify', { 
                 user_id: userId, 
                 otp,
                 portal: portal
@@ -79,7 +79,7 @@ const ForgotPasswordPage = () => {
         }
         setLoading(true);
         try {
-            await axios.post('http://localhost:5000/forgot-password/reset', { 
+            await axios.post('/forgot-password/reset', { 
                 user_id: userId, 
                 otp: otp,
                 password: password,
@@ -117,7 +117,7 @@ const ForgotPasswordPage = () => {
                                     <Link to="/" className="flex justify-center mb-4 hover:opacity-80 transition-opacity">
                                         {branding?.logo_light ? (
                                             <img 
-                                                src={`http://localhost:5000${branding.logo_light}`} 
+                                                src={`${branding.logo_light}`} 
                                                 alt="Logo" 
                                                 className="h-16 w-auto object-contain" 
                                             />
@@ -173,7 +173,7 @@ const ForgotPasswordPage = () => {
                                         <Link to="/" className="hover:opacity-80 transition-opacity">
                                             {branding?.logo_light ? (
                                                 <img 
-                                                    src={`http://localhost:5000${branding.logo_light}`} 
+                                                    src={`${branding.logo_light}`} 
                                                     alt="Logo" 
                                                     className="h-12 w-auto object-contain" 
                                                 />
@@ -229,7 +229,7 @@ const ForgotPasswordPage = () => {
                                         <Link to="/" className="hover:opacity-80 transition-opacity">
                                             {branding?.logo_light ? (
                                                 <img 
-                                                    src={`http://localhost:5000${branding.logo_light}`} 
+                                                    src={`${branding.logo_light}`} 
                                                     alt="Logo" 
                                                     className="h-12 w-auto object-contain" 
                                                 />

@@ -41,8 +41,8 @@ const ViewPatientsPage: React.FC = () => {
         setLoading(true);
         try {
             const url = query 
-                ? `http://localhost:5000/api/patients/all?q=${query}`
-                : 'http://localhost:5000/api/patients/all';
+                ? `/api/patients/all?q=${query}`
+                : '/api/patients/all';
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -68,7 +68,7 @@ const ViewPatientsPage: React.FC = () => {
         if (!deleteModal.staffId) return;
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/patients/${deleteModal.staffId}`, {
+            await axios.delete(`/api/patients/${deleteModal.staffId}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatients(prev => prev.filter(p => p.staff_id !== deleteModal.staffId));
