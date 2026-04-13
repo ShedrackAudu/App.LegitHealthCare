@@ -48,38 +48,39 @@ def search_patient():
                 continue
             
             with engine.connect() as conn:
-                # Dynamically check for columns
-                check_cols_query = text("PRAGMA table_info(bio_data)")
-                actual_cols = [c[1] for c in conn.execute(check_cols_query).fetchall()]
+                # Portable way to check columns (works on Postgres and SQLite)
+                res_cols = conn.execute(text("SELECT * FROM bio_data LIMIT 0"))
+                actual_cols = res_cols.keys()
                 
                 # Columns we want to select
-                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email', 'section']
+                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email']
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
                 select_clause = ", ".join(available_cols)
-                # Robust search: Case-insensitive, handles prefix/suffix, and trims
-                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid) OR staff_id LIKE :sid_like")
+                # Robust search: Case-insensitive (LOWER), handles prefix/suffix, and trims
+                # Use LOWER(...) LIKE LOWER(...) for cross-DB case-insensitive partial match
+                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid) OR LOWER(staff_id) LIKE LOWER(:sid_like)")
                 res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}%"})
                 result = res.fetchone()
                 
                 if result:
-                    # Map result to dictionary
-                    row_dict = dict(zip(available_cols, result))
+                    # Map result to dictionary using ._mapping for SQLAlchemy 1.4/2.0
+                    row_dict = dict(result._mapping)
                     results.append({
                         "staff_id": str(row_dict.get('staff_id')),
                         "first_name": row_dict.get('first_name'),
-                        "middle_name": row_dict.get('middle_name'),
+                        "middle_name": row_dict.get('middle_name', ''),
                         "last_name": row_dict.get('last_name'),
                         "department": row_dict.get('department'),
                         "gender": row_dict.get('gender'),
                         "dob": str(row_dict.get('dob')) if row_dict.get('dob') else None,
                         "phone": row_dict.get('phone'),
-                        "email": row_dict.get('email'),
-                        "section": row_dict.get('section') or ctx.upper(),
+                        "email": row_dict.get('email', ''),
+                        "section": ctx.upper(),
                         "context": ctx
                     })
         except Exception as e:
-            print(f"Error searching in {ctx}: {str(e)}")
+            print(f"DEBUG: Error searching in {ctx}: {str(e)}")
             continue
             
     if not results:
