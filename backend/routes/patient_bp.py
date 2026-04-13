@@ -57,8 +57,9 @@ def search_patient():
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
                 select_clause = ", ".join(available_cols)
-                query = text(f"SELECT {select_clause} FROM bio_data WHERE staff_id = :sid OR staff_id LIKE :sid_like")
-                res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}"})
+                # Robust search: Case-insensitive, handles prefix/suffix, and trims
+                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid) OR staff_id LIKE :sid_like")
+                res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}%"})
                 result = res.fetchone()
                 
                 if result:

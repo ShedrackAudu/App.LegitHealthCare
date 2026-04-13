@@ -72,14 +72,28 @@ const LandingPage = () => {
         <div className="container mx-auto px-8 md:px-12 lg:px-20">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
-              {branding?.logo_dark ? (
-                <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
-              ) : (
-                <>
-                  <Activity className="h-8 w-8 text-primary mr-2" />
-                  <span className="text-2xl font-bold text-primary tracking-tight">{branding?.clinic_name || "Legit HealthCare"}</span>
-                </>
-              )}
+              {/* Desktop Logo: Full Branding */}
+              <div className="hidden md:block">
+                {branding?.logo_dark ? (
+                  <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
+                ) : (
+                  <div className="flex items-center">
+                    <Activity className="h-8 w-8 text-primary mr-2" />
+                    <span className="text-2xl font-bold text-primary tracking-tight">{branding?.clinic_name || "Legit HealthCare"}</span>
+                  </div>
+                )}
+              </div>
+              
+              {/* Mobile Logo: Brandmark Only */}
+              <div className="md:hidden">
+                {branding?.logo_light ? (
+                  <img src={getImageUrl(branding.logo_light, '')} alt="Logo" className="h-10 transition-all" />
+                ) : branding?.logo_dark ? (
+                  <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
+                ) : (
+                  <Activity className="h-8 w-8 text-primary" />
+                )}
+              </div>
             </div>
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
