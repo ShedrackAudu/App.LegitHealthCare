@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+import os
 from models import (
     db, BioData, ScreeningYearBioData, ConsultationData, 
     FBCResult, KFTResult, LipidResult, LFTResult, 
@@ -543,7 +544,7 @@ def get_patient_report(staff_id, year):
     return jsonify({
         "bio": bio_info,
         "results": results,
-        "verification_url": f"http://localhost:5173/verify/{verification.verification_code}",
+        "verification_url": f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify/{verification.verification_code}",
         "verification_code": verification.verification_code,
         "timing": {
             "reg_date_time": reg_date_time,
