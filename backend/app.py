@@ -435,15 +435,14 @@ def logout():
             
     return jsonify({"message": "Logout complete (client-only)"}), 200
 
-if __name__ == '__main__':
+# Initialize Database and System (Run on startup)
+with app.app_context():
     init_db()
-    
-    # Automatically ensure admin account exists
     try:
         from setup_system import setup_system
-        with app.app_context():
-            setup_system(purge=False)
+        setup_system(purge=False)
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")
-        
-    socketio.run(app, debug=False, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)
