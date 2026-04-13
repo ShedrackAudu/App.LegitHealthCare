@@ -116,6 +116,8 @@ def create_appointment():
             
             if logo_url and logo_url.startswith('/'):
                 base_url = request.url_root.rstrip('/')
+                if 'onrender.com' in base_url and base_url.startswith('http:'):
+                    base_url = base_url.replace('http:', 'https:')
                 logo_url = f"{base_url}{logo_url}"
 
             email_content = EmailService.get_appointment_template(

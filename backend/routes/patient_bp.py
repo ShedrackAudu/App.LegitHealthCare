@@ -145,6 +145,8 @@ def claim_account():
         # Ensure logo_url is absolute for email clients
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "Patient Account Verification - Legit HealthCare"
@@ -194,6 +196,8 @@ def resend_otp():
         # Ensure logo_url is absolute for email clients
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "New Verification Code - Legit HealthCare"
@@ -329,6 +333,8 @@ def reset_password_request():
         
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "Password Reset Verification - Legit HealthCare"
