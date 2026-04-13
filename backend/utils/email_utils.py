@@ -12,7 +12,10 @@ ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 class EmailService:
     @staticmethod
     def _get_smtp_config():
-        load_dotenv(ENV_PATH, override=True)
+        # Load from .env if present, but DO NOT override system environment variables (like Render's)
+        if os.path.exists(ENV_PATH):
+            load_dotenv(ENV_PATH)
+            
         return {
             "server": os.getenv('MAIL_SERVER', 'smtp.gmail.com'),
             "port": int(os.getenv('MAIL_PORT', '587')),
@@ -25,13 +28,19 @@ class EmailService:
     def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
         config = custom_config or EmailService._get_smtp_config()
         
+        # Diagnostic Logging (Masked)
+        print(f"--- EMAIL DIAGNOSTIC ---")
+        print(f"Server: {config.get('server')}")
+        print(f"Port: {config.get('port')}")
+        print(f"User: {config.get('username')[:3]}***@{config.get('username').split('@')[-1] if '@' in config.get('username') else '???'}")
+        print(f"Pass Set: {'YES' if config.get('password') else 'NO'}")
+        print(f"------------------------")
+
         # Validation
         if not config.get("username") or not config.get("password"):
-            error_msg = "SMTP Configuration Error: MAIL_USERNAME or MAIL_PASSWORD is not set in environment variables."
+            error_msg = f"SMTP Configuration Missing. USER: {config.get('username')}, PASS_SET: {bool(config.get('password'))}"
             print(f"Error: {error_msg}")
-            # In production, we don't want to just return True (mock) if the user actively tried to send a mail
-            # But we can check if we are in a dev environment if needed.
-            raise Exception(error_msg)
+            raise Exception("SMTP credentials are not set. Check environment variables.")
 
         try:
             msg = MIMEMultipart()
@@ -50,21 +59,32 @@ class EmailService:
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
             
-            with smtplib.SMTP(smtp_server, smtp_port, timeout=20) as server:
-                server.set_debuglevel(0) # Set to 1 for verbose SMTP logs if needed
-                server.starttls()
+            # Smart Connection Logic
+            is_ssl = (smtp_port == 465)
+            
+            if is_ssl:
+                server_conn = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=25)
+            else:
+                server_conn = smtplib.SMTP(smtp_server, smtp_port, timeout=25)
+
+            with server_conn as server:
+                server.set_debuglevel(1) # HIGH VERBOSITY FOR PROD DEBUGGING
+                
+                if not is_ssl:
+                    server.ehlo()
+                    server.starttls()
+                    server.ehlo()
+                
                 try:
                     server.login(str(config["username"]), str(config["password"]))
                 except smtplib.SMTPAuthenticationError:
-                    raise Exception("Mail server authentication failed. Please check your MAIL_USERNAME and MAIL_PASSWORD (you might need an App Password for Gmail).")
-                except Exception as e:
-                    raise Exception(f"Mail server login failed: {str(e)}")
+                    raise Exception("Authentication Failed: Check your username and App Password.")
                     
                 server.send_message(msg)
             
             return True
         except socket.timeout:
-            raise Exception("Connection to mail server timed out. Check your network or MAIL_PORT (587 usually works for TLS).")
+            raise Exception(f"Connection timed out at {smtp_server}:{smtp_port}. Check firewall/port.")
         except Exception as e:
             # Check for common dev/test overrides
             error_str = str(e).lower()
