@@ -149,12 +149,25 @@ def claim_account():
             
         subject = "Patient Account Verification - Legit HealthCare"
         html_content = EmailService.get_patient_verification_template(first_name, otp, logo_url=logo_url)
-        EmailService.send_email(email, subject, html_content)
+        success = EmailService.send_email(email, subject, html_content)
+        
+        if not success:
+             return jsonify({
+                "message": "Account created, but we couldn't send the verification email. Please contact the administrator or check SMTP settings.",
+                "user_id": user.id,
+                "email_error": True
+            }), 201
+            
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
+        return jsonify({
+            "message": f"Account created, but email service failed: {str(e)}",
+            "user_id": user.id,
+            "email_error": True
+        }), 201
     
     return jsonify({
-        "message": "OTP sent to your email. Please verify to complete registration.",
+        "message": "Verification code sent to your email. Please verify to complete registration.",
         "user_id": user.id,
         "otp_sent": True
     }), 200
@@ -185,9 +198,13 @@ def resend_otp():
             
         subject = "New Verification Code - Legit HealthCare"
         html_content = EmailService.get_patient_verification_template(user.first_name, otp, logo_url=logo_url)
-        EmailService.send_email(user.email, subject, html_content)
+        success = EmailService.send_email(user.email, subject, html_content)
+        
+        if not success:
+            return jsonify({"error": "Failed to connect to the email server. Please try again later or contact support."}), 500
+            
     except Exception as e:
-        return jsonify({"error": f"Error sending email: {str(e)}"}), 500
+        return jsonify({"error": f"Email service error: {str(e)}"}), 500
     
     return jsonify({
         "message": "A new verification code has been sent to your email.",

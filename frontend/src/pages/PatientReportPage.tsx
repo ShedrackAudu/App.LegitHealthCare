@@ -269,7 +269,7 @@ const PatientReportPage: React.FC = () => {
                                 {/* Branding Header Area */}
                                 <div className="report-branding">
                                     {reportData.branding?.header_image ? (
-                                        <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                        <img src={`${(window as any).API_BASE_URL}${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                     ) : (
                                         <div className="report-header-img">result_header</div>
                                     )}
@@ -415,7 +415,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                         <div className="sig-box">
                                             {reportData.branding?.signature_image ? (
-                                                <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                                <img src={`${(window as any).API_BASE_URL}${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                             ) : (
                                                 <div className="sig-img">&#123;signature&#125;</div>
                                             )}
@@ -424,7 +424,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                     </div>
                                     {reportData.branding?.footer_image ? (
-                                        <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                        <img src={`${(window as any).API_BASE_URL}${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                     ) : (
                                         <div className="report-footer-img">result_footer</div>
                                     )}
@@ -436,7 +436,7 @@ const PatientReportPage: React.FC = () => {
                             <div className="a4-page">
                                 <div className="report-branding">
                                     {reportData.branding?.header_image ? (
-                                        <img src={`${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
+                                        <img src={`${(window as any).API_BASE_URL}${reportData.branding.header_image}`} alt="Header" className="report-header-img border-0" />
                                     ) : (
                                         <div className="report-header-img">result_header</div>
                                     )}
@@ -564,7 +564,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                         <div className="sig-box">
                                             {reportData.branding?.signature_image ? (
-                                                <img src={`${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
+                                                <img src={`${(window as any).API_BASE_URL}${reportData.branding.signature_image}`} alt="Signature" className="sig-img border-0 bg-transparent mix-blend-multiply" />
                                             ) : (
                                                 <div className="sig-img">&#123;signature&#125;</div>
                                             )}
@@ -573,7 +573,7 @@ const PatientReportPage: React.FC = () => {
                                         </div>
                                     </div>
                                     {reportData.branding?.footer_image ? (
-                                        <img src={`${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
+                                        <img src={`${(window as any).API_BASE_URL}${reportData.branding.footer_image}`} alt="Footer" className="report-footer-img border-0" />
                                     ) : (
                                         <div className="report-footer-img">result_footer</div>
                                     )}

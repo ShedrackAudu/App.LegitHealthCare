@@ -187,13 +187,13 @@ const LoginPage = () => {
 
         <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
           <div className="text-center lg:text-left space-y-2">
-             <div className="lg:hidden flex justify-center mb-6">
+             <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
                     <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
                  ) : (
                     <Activity className="w-12 h-12 text-primary" />
                  )}
-             </div>
+             </Link>
              <h1 className="text-3xl font-black tracking-tight">Login</h1>
              <p className="text-muted-foreground font-medium">Log in to your account.</p>
           </div>

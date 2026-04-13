@@ -24,6 +24,15 @@ class EmailService:
     @staticmethod
     def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
         config = custom_config or EmailService._get_smtp_config()
+        
+        # Validation
+        if not config.get("username") or not config.get("password"):
+            error_msg = "SMTP Configuration Error: MAIL_USERNAME or MAIL_PASSWORD is not set in environment variables."
+            print(f"Error: {error_msg}")
+            # In production, we don't want to just return True (mock) if the user actively tried to send a mail
+            # But we can check if we are in a dev environment if needed.
+            raise Exception(error_msg)
+
         try:
             msg = MIMEMultipart()
             display_name = config.get("display_name", "Legit HealthCare")
@@ -41,12 +50,13 @@ class EmailService:
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
             
-            with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
+            with smtplib.SMTP(smtp_server, smtp_port, timeout=20) as server:
+                server.set_debuglevel(0) # Set to 1 for verbose SMTP logs if needed
                 server.starttls()
                 try:
                     server.login(str(config["username"]), str(config["password"]))
                 except smtplib.SMTPAuthenticationError:
-                    raise Exception("Mail server authentication failed. Please check your credentials.")
+                    raise Exception("Mail server authentication failed. Please check your MAIL_USERNAME and MAIL_PASSWORD (you might need an App Password for Gmail).")
                 except Exception as e:
                     raise Exception(f"Mail server login failed: {str(e)}")
                     
@@ -54,16 +64,23 @@ class EmailService:
             
             return True
         except socket.timeout:
-            raise Exception("Connection to mail server timed out. Please check your network or firewall.")
+            raise Exception("Connection to mail server timed out. Check your network or MAIL_PORT (587 usually works for TLS).")
         except Exception as e:
-            if "authentication failed" in str(e).lower() or "timeout" in str(e).lower():
-                print(f"\n\n!!! DEVELOPMENT OTP FALLBACK !!!")
-                print(f"To: {to_email}")
-                print(f"Subject: {subject}")
-                print(f"Content: {html_content[:200]}...") # Print first part of HTML
-                print(f"!!! END FALLBACK !!!\n\n")
-                return True # Pretend it succeeded for development
-            print(f"Failed to send email: {e}")
+            # Check for common dev/test overrides
+            error_str = str(e).lower()
+            if "authentication failed" in error_str or "timeout" in error_str or "connection refused" in error_str:
+                # If we suspect it's a dev machine without internet or config, log it nicely
+                print(f"\n\n!!! EMAIL SERVICE NOTICE !!!")
+                print(f"Failed to send real email to: {to_email}")
+                print(f"Reason: {str(e)}")
+                print(f"!!! Proceeding without sending email (Fallback) !!!\n\n")
+                
+                # We return False here if we want the caller to handle the failure, 
+                # or True if we want to swallow it for development. 
+                # For production safety, we should let the caller (app.py) know it failed.
+                return False 
+            
+            print(f"Critical Email Error: {e}")
             raise e
 
     @staticmethod
@@ -143,10 +160,12 @@ class EmailService:
         """
 
     @staticmethod
-    def get_appointment_template(patient_data, appointment_date, reason):
+    def get_appointment_template(patient_data, appointment_date, reason, logo_url=None):
         items_html = ""
         for label, value in patient_data.items():
             items_html += f"<tr><td style='padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;'>{label}:</td><td style='padding: 8px; border-bottom: 1px solid #eee;'>{value}</td></tr>"
+
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
 
         return f"""
         <!DOCTYPE html>
@@ -164,6 +183,9 @@ class EmailService:
         </head>
         <body>
             <div class="container">
+                <div style="text-align: center;">
+                    {logo_html}
+                </div>
                 <div class="header">
                     <h1>New Appointment Booked</h1>
                 </div>

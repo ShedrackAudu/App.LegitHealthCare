@@ -181,7 +181,22 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
     
-    send_otp_email(new_user, otp)
+    try:
+        success = send_otp_email(new_user, otp)
+        if not success:
+            app.logger.error(f"Failed to send welcome OTP to {new_user.email}")
+            return jsonify({
+                "message": "User created, but we couldn't send the verification email. Please contact IT to manually verify your account or check your SMTP settings.",
+                "user_id": new_user.id,
+                "email_error": True
+            }), 201
+    except Exception as e:
+        app.logger.error(f"SMTP Error during registration: {e}")
+        return jsonify({
+            "message": f"User created, but email service failed: {str(e)}",
+            "user_id": new_user.id,
+            "email_error": True
+        }), 201
     
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
@@ -298,10 +313,10 @@ def forgot_password():
         success = send_otp_email(user, otp, subject="Password Recovery Code")
         if not success:
             app.logger.error(f"Failed to send recovery email to {user.email}")
-            return jsonify({"error": "System was unable to send the recovery email. Please check SMTP settings or contact IT."}), 500
+            return jsonify({"error": "The system could not connect to the email server. Please ensure MAIL_USERNAME and MAIL_PASSWORD are set correctly in your environment variables."}), 500
     except Exception as e:
-        app.logger.error(f"Failed to send recovery email: {e}")
-        return jsonify({"error": "An unexpected error occurred while sending the recovery email."}), 500
+        app.logger.error(f"Detailed SMTP error: {e}")
+        return jsonify({"error": f"Email Service Error: {str(e)}"}), 500
         
     return jsonify({
         "message": "Recovery code sent to your registered email.",
