@@ -174,21 +174,21 @@ const LandingPage = () => {
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl lg:mx-0">
                 The official healthcare management portal for DCP & DCT staff. Securely manage screenings, communicate with your clinical team, and track your wellness journey.
               </p>
-              <div className="flex flex-col sm:flex-row space-y-4 sm:space-y-0 sm:space-x-4 justify-start pt-4">
+              <div className="flex flex-row items-center space-x-3 sm:space-x-4 justify-start pt-4">
                 <Link to="/signup">
-                  <Button size="lg" className="w-full sm:w-auto h-16 px-10 text-lg font-bold shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform">
+                  <Button size="lg" className="w-auto h-16 px-6 sm:px-10 text-base sm:text-lg font-bold shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform">
                     Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="outline" size="lg" className="w-full sm:w-auto h-16 px-10 text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
+                  <Button variant="outline" size="lg" className="w-auto h-16 px-6 sm:px-10 text-base sm:text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
                     Login
                   </Button>
                 </Link>
               </div>
             </div>
-            <div className="flex-1 relative mt-16 lg:mt-0 flex justify-center lg:justify-end animate-in fade-in zoom-in-95 duration-1000">
-              <div className="relative group w-full max-w-xl">
+            <div className="w-full lg:flex-1 relative mt-16 lg:mt-0 flex justify-center lg:justify-end animate-in fade-in zoom-in-95 duration-1000">
+              <div className="relative group w-full sm:max-w-xl">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
                 <div className="relative w-full h-auto lg:aspect-square bg-card/50 backdrop-blur-2xl rounded-3xl border-2 border-primary/20 shadow-2xl flex items-center justify-center p-4 sm:p-12 overflow-hidden">
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full h-full relative z-10">
