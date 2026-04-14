@@ -31,6 +31,7 @@ import {
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -139,7 +140,7 @@ export default function MessagingPage() {
       ));
 
       // Update active chat if it matches this user
-      setActiveChat(prev => {
+      setActiveChat((prev: any) => {
         if (prev && prev.type === 'direct' && prev.other_user.id === data.user_id) {
           return { ...prev, other_user: { ...prev.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : prev.other_user.last_seen_at } };
         }
