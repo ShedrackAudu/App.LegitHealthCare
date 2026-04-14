@@ -69,7 +69,7 @@ const LandingPage = () => {
     <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
-        <div className="container mx-auto px-8 md:px-12 lg:px-20">
+        <div className="container mx-auto px-4 md:px-12 lg:px-20">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
               {/* Desktop Logo: Full Branding */}
@@ -155,7 +155,7 @@ const LandingPage = () => {
         <div className="absolute top-0 left-0 w-full h-full -z-10 bg-grid-white/[0.02] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10 animate-pulse" />
         
-        <div className="container mx-auto px-8 md:px-12 lg:px-20">
+        <div className="container mx-auto px-4 md:px-12 lg:px-20">
           <div className="flex flex-col lg:flex-row items-center gap-16">
             <div className="flex-1 text-left space-y-8">
               <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500">
@@ -190,7 +190,7 @@ const LandingPage = () => {
             <div className="flex-1 relative mt-16 lg:mt-0 flex justify-center lg:justify-end animate-in fade-in zoom-in-95 duration-1000">
               <div className="relative group w-full max-w-xl">
                 <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative w-full h-auto lg:aspect-square bg-card/50 backdrop-blur-2xl rounded-3xl border-2 border-primary/20 shadow-2xl flex items-center justify-center p-8 sm:p-12 overflow-hidden">
+                <div className="relative w-full h-auto lg:aspect-square bg-card/50 backdrop-blur-2xl rounded-3xl border-2 border-primary/20 shadow-2xl flex items-center justify-center p-4 sm:p-12 overflow-hidden">
                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full h-full relative z-10">
                       <div className="h-48 sm:h-32 bg-primary/10 rounded-2xl overflow-hidden shadow-inner border border-primary/10 transition-transform group-hover:scale-[1.02] duration-500 relative group/item">
                         <img 
