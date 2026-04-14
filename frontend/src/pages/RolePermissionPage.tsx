@@ -136,7 +136,7 @@ const RolePermissionPage: React.FC = () => {
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex justify-between items-end">
           <div>
-            <h1 className="text-3xl font-black tracking-tight">System Access Control</h1>
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">System Access Control</h1>
             <p className="text-muted-foreground font-medium italic mt-1">Manage roles, granular permissions, and security entrance keys.</p>
           </div>
           <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-2">

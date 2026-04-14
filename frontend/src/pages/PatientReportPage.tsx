@@ -218,7 +218,7 @@ const PatientReportPage: React.FC = () => {
                             <FileText className="text-red-500 h-8 w-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight text-foreground">Patient Medical Report</h1>
+                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Patient Medical Report</h1>
                             <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {fmtSec(activeSection)}</p>
                         </div>
                     </div>

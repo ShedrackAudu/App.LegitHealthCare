@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from models import db, User, ChatMessage, ChatGroup, ChatGroupMember
-from datetime import datetime
+from datetime import datetime, timedelta
 from decorators import require_permission
 import json
 from socket_handlers import connected_users
@@ -33,7 +33,10 @@ def get_conversations():
             other_user = User.query.get(other_id)
             if other_user:
                 other_dict = other_user.to_dict()
-                other_dict['is_online'] = other_id in connected_users
+                threshold = datetime.now() - timedelta(minutes=2)
+                other_dict['is_online'] = other_user.last_seen_at > threshold if other_user.last_seen_at else False
+                other_dict.pop('department', None)
+                other_dict.pop('section', None)
                 conversations.append({
                     "id": f"dm_{other_id}",
                     "type": "direct",
@@ -108,7 +111,13 @@ def search_users():
     
     def user_with_status(u):
         d = u.to_dict()
-        d['is_online'] = u.id in connected_users
+        # Presence logic: Check if user was seen in the last 2 minutes
+        threshold = datetime.now() - timedelta(minutes=2)
+        d['is_online'] = u.last_seen_at > threshold if u.last_seen_at else False
+        
+        # Security/Privacy: Remove sensitive corporate fields as requested
+        d.pop('department', None)
+        d.pop('section', None)
         return d
 
     return jsonify([user_with_status(u) for u in users])
@@ -169,3 +178,14 @@ def delete_conversation(conv_id):
     
     db.session.commit()
     return jsonify({"message": "Conversation history and session deleted successfully"})
+
+@messaging_bp.route('/heartbeat', methods=['POST'])
+@require_permission('messaging')
+def heartbeat():
+    user_id = request.headers.get('X-User-ID')
+    if user_id:
+        user = User.query.get(int(user_id))
+        if user:
+            user.last_seen_at = datetime.now()
+            db.session.commit()
+    return jsonify({"status": "alive"}), 200

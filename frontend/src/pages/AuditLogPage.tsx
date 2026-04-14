@@ -100,7 +100,7 @@ const AuditLogPage: React.FC = () => {
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
               <History className="w-8 h-8 text-primary" />
               System Audit Trails
             </h1>
@@ -237,7 +237,7 @@ const AuditLogPage: React.FC = () => {
                                 </span>
                             </div>
                             
-                            <h2 className="text-3xl font-black tracking-tighter mb-1">Activity Insight</h2>
+                            <h2 className="text-2xl sm:text-3xl font-black tracking-tighter mb-1">Activity Insight</h2>
                             <p className="text-sm text-muted-foreground font-medium italic">Detailed breakdown of the system interaction event.</p>
                         </div>
 

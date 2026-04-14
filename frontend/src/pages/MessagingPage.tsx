@@ -201,6 +201,14 @@ export default function MessagingPage() {
     fetchAvailableUsers();
   };
 
+  const openNewGroup = () => {
+    setIsNewChatOpen(true);
+    setIsCreatingGroup(true);
+    setGroupName('');
+    setSelectedMembers([]);
+    fetchAvailableUsers();
+  };
+   
   const handleSearch = async (val: string) => {
     setSearchQuery(val);
     if (val.length < 2) {
@@ -332,8 +340,13 @@ export default function MessagingPage() {
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Messages</h2>
-            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10 text-primary" onClick={openNewChat}>
-              <Plus className="h-4 w-4" />
+            <Button 
+                size="sm" 
+                variant="default" 
+                className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
+                onClick={openNewGroup}
+            >
+              <Plus className="h-4 w-4" /> New Group
             </Button>
           </div>
           <div className="relative">

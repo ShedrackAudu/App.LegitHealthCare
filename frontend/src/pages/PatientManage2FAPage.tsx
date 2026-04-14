@@ -100,7 +100,7 @@ const PatientManage2FAPage = () => {
                            <ShieldCheck className="h-8 w-8" />
                         </div>
                         <div>
-                           <h1 className="text-3xl font-black tracking-tight">Email/Two-Factor Security</h1>
+                           <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Email/Two-Factor Security</h1>
                            <p className="text-muted-foreground font-medium">Protect your medical data with an extra layer of verification.</p>
                         </div>
                     </div>
@@ -147,7 +147,7 @@ const PatientManage2FAPage = () => {
                                     <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary">
                                        <ShieldAlert className="w-10 h-10" />
                                     </div>
-                                    <CardTitle className="text-4xl font-black">Secure Your Patient Portal</CardTitle>
+                                    <CardTitle className="text-2xl sm:text-4xl font-black">Secure Your Patient Portal</CardTitle>
                                     <CardDescription className="text-lg font-medium max-w-xl mx-auto">
                                         Take the lead in your data privacy. Enabling 2FA ensures that only you can access your clinical results and medical transcripts.
                                     </CardDescription>
@@ -180,7 +180,7 @@ const PatientManage2FAPage = () => {
                         {qrUri && backupCodes.length === 0 && (
                             <Card className="border-2 shadow-2xl rounded-[3rem] overflow-hidden border-primary/20 animate-in slide-in-from-bottom-8 duration-700">
                                 <CardHeader className="p-10 md:p-12 border-b bg-primary/5">
-                                    <CardTitle className="text-3xl font-black">Configure Your App</CardTitle>
+                                    <CardTitle className="text-2xl sm:text-3xl font-black">Configure Your App</CardTitle>
                                     <CardDescription className="text-base font-medium">Follow the instructions below to link your device.</CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-10 md:p-12 space-y-12">
@@ -232,7 +232,7 @@ const PatientManage2FAPage = () => {
                         {backupCodes.length > 0 && (
                             <Card className="border-4 border-emerald-500 rounded-[3rem] bg-emerald-50/50 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
                                 <CardHeader className="p-10 md:p-12 bg-emerald-500 text-white">
-                                    <CardTitle className="text-4xl font-black flex items-center gap-4">
+                                    <CardTitle className="text-2xl sm:text-4xl font-black flex items-center gap-4">
                                         <CheckCircle2 className="h-10 w-10" /> Security Activated!
                                     </CardTitle>
                                     <CardDescription className="text-emerald-100 text-lg font-medium">

@@ -133,7 +133,7 @@ export const AISettingsPage = () => {
                         <Bot className="text-blue-600 h-8 w-8" />
                     </div>
                     <div>
-                        <h1 className="text-3xl font-black tracking-tight text-foreground">AI Director Insights</h1>
+                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">AI Director Insights</h1>
                         <p className="text-muted-foreground font-medium mt-1">Configure OpenAI ChatGPT behavior for automated result overviews and recommendations.</p>
                     </div>
                 </div>

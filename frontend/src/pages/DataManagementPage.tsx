@@ -89,7 +89,7 @@ const DataManagementPage: React.FC = () => {
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
           <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
+            <h1 className="text-2xl sm:text-3xl font-black tracking-tight flex items-center gap-3">
               <Database className="w-8 h-8 text-primary" />
               Data Management Hub
             </h1>

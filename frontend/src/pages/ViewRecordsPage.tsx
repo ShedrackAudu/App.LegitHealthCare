@@ -102,7 +102,7 @@ const ViewRecordsPage: React.FC = () => {
                             <Database className="text-primary h-8 w-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight">Screening Records Matrix</h1>
+                            <h1 className="text-xl sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
                             <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>

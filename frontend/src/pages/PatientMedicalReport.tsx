@@ -249,7 +249,7 @@ const PatientMedicalReport: React.FC = () => {
                                         <FileText className="h-8 w-8" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-3xl font-black tracking-tight">Your Medical Reports</CardTitle>
+                                        <CardTitle className="text-2xl sm:text-3xl font-black tracking-tight">Your Medical Reports</CardTitle>
                                         <CardDescription className="text-base font-medium">Select a screening year to view your detailed diagnostic results.</CardDescription>
                                     </div>
                                 </div>

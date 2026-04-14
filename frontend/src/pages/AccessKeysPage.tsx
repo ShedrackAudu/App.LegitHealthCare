@@ -166,7 +166,7 @@ const AccessKeysPage = () => {
                             <Key className="w-8 h-8 font-black" />
                         </div>
                         <div>
-                            <h1 className="text-3xl font-black tracking-tight text-primary uppercase">Security Access Keys</h1>
+                            <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-primary uppercase">Security Access Keys</h1>
                             <p className="text-muted-foreground font-bold italic text-sm">Temporary authentication overrides for clinical and administrative staff.</p>
                         </div>
                     </div>

@@ -176,12 +176,12 @@ const LandingPage = () => {
               </p>
               <div className="flex flex-row items-center space-x-3 sm:space-x-4 justify-start pt-4">
                 <Link to="/signup">
-                  <Button size="lg" className="w-auto h-16 px-6 sm:px-10 text-base sm:text-lg font-bold shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform">
+                  <Button size="lg" className="w-auto h-16 px-8 sm:px-12 text-base sm:text-lg font-black shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform bg-primary">
                     Get Started <ArrowRight className="ml-2 h-5 w-5" />
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="outline" size="lg" className="w-auto h-16 px-6 sm:px-10 text-base sm:text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
+                  <Button variant="outline" size="lg" className="w-auto h-16 px-8 sm:px-12 text-base sm:text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
                     Login
                   </Button>
                 </Link>

@@ -247,7 +247,7 @@ const UserManagementPage: React.FC = () => {
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-extrabold tracking-tight text-primary">User Management</h1>
+            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-primary">User Management</h1>
             <p className="text-muted-foreground italic">Comprehensive directory of clinical personnel and registered patients.</p>
           </div>
           <div className="flex items-center gap-2">

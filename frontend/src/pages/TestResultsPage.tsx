@@ -212,7 +212,7 @@ const TestResultsPage: React.FC = () => {
             <MainLayout>
                 <div className="space-y-8 animate-in fade-in duration-500">
                     <div className="text-center space-y-2">
-                        <h1 className="text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
                         <p className="text-muted-foreground text-lg">Select a test type to record or view patient results.</p>
                     </div>
 

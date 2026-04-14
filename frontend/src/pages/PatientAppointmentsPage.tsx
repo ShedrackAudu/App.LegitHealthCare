@@ -142,7 +142,7 @@ const PatientAppointmentsPage = () => {
                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/20 text-[10px] font-bold uppercase tracking-widest backdrop-blur-md">
                  <Clock className="w-3 h-3" /> Real-time Scheduling
                </div>
-               <h1 className="text-4xl md:text-5xl font-black tracking-tight leading-none">Book Clinical Appointment</h1>
+               <h1 className="text-2xl sm:text-5xl font-black tracking-tight leading-none">Book Clinical Appointment</h1>
                <p className="text-lg text-white/80 max-w-xl font-medium leading-relaxed">
                   Need a follow-up or a new screening? Schedule your visit here. Your request will be forwarded to the Head Doctor immediately.
                </p>
@@ -170,7 +170,7 @@ const PatientAppointmentsPage = () => {
                                     <User className="h-8 w-8" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <CardTitle className="text-2xl font-black leading-none truncate">{profile?.first_name} {profile?.last_name}</CardTitle>
+                                    <CardTitle className="text-xl sm:text-2xl font-black leading-none truncate">{profile?.first_name} {profile?.last_name}</CardTitle>
                                     <div className="flex items-center gap-2 mt-2">
                                         <span className="px-2 py-0.5 rounded-lg bg-primary/10 text-primary text-[10px] font-black uppercase tracking-widest">
                                             {profile?.staff_id}
@@ -200,7 +200,7 @@ const PatientAppointmentsPage = () => {
                 <div className="lg:col-span-2">
                     <Card className="border-2 shadow-2xl rounded-[3rem] overflow-hidden border-primary/5">
                         <CardHeader className="p-8 md:p-12 pb-4">
-                            <CardTitle className="text-3xl font-black">Slot Selection</CardTitle>
+                            <CardTitle className="text-2xl sm:text-3xl font-black">Slot Selection</CardTitle>
                             <CardDescription className="text-base font-medium">Please provide a preferred date and reason for your visit.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 md:p-12 pt-4 space-y-8">

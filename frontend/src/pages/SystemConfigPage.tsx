@@ -400,7 +400,7 @@ const SystemConfigPage: React.FC = () => {
                             <Settings2 className="text-white h-9 w-9" />
                         </div>
                         <div>
-                            <h1 className="text-4xl font-black tracking-tight text-foreground">System Configuration</h1>
+                            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">System Configuration</h1>
                             <p className="text-base text-muted-foreground font-medium flex items-center gap-2">
                                 Manage registration dropdowns and system settings
                             </p>

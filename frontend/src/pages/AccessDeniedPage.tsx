@@ -100,7 +100,7 @@ const AccessDeniedPage: React.FC = () => {
                                     <ShieldAlert className="w-10 h-10 text-rose-500" />
                                 </motion.div>
                             </div>
-                            <CardTitle className="text-3xl font-black tracking-tight text-foreground">
+                            <CardTitle className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
                                 Access Denied
                             </CardTitle>
                             <CardDescription className="text-sm font-bold text-muted-foreground mt-2 px-6">

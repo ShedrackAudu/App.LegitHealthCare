@@ -151,7 +151,7 @@ const AppointmentsPage = () => {
                 <Calendar className="text-primary h-8 w-8" />
             </div>
             <div>
-                <h1 className="text-2xl font-black tracking-tight">Appointments Booking</h1>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight">Appointments Booking</h1>
                 <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
           </div>
@@ -205,7 +205,7 @@ const AppointmentsPage = () => {
                                 <Clock className="h-6 w-6" />
                                 <span className="text-xs font-black uppercase tracking-widest">Appointment Scheduler</span>
                             </div>
-                            <CardTitle className="text-3xl font-black">Book New Appointment</CardTitle>
+                            <CardTitle className="text-2xl sm:text-3xl font-black">Book New Appointment</CardTitle>
                             <CardDescription className="text-base font-medium">Schedule a callback or follow-up for this patient.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pt-4 space-y-6">

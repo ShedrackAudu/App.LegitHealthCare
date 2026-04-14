@@ -115,7 +115,7 @@ const PatientManageAccountPage = () => {
         >
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
             <div>
-              <h1 className="text-4xl font-black tracking-tight">Account Settings</h1>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight">Account Settings</h1>
               <p className="text-muted-foreground font-medium mt-2">Manage your personal profile and security preferences.</p>
             </div>
             <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-xl border-2">
@@ -133,7 +133,7 @@ const PatientManageAccountPage = () => {
                       <User className="w-6 h-6" />
                     </div>
                     <div>
-                      <CardTitle className="text-2xl font-black tracking-tight">Personal Profile</CardTitle>
+                      <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Personal Profile</CardTitle>
                       <CardDescription className="text-sm font-medium">Update your contact information below.</CardDescription>
                     </div>
                   </div>
@@ -315,7 +315,7 @@ const PatientManageAccountPage = () => {
                     <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
                       <Key className="w-8 h-8" />
                     </div>
-                    <DialogTitle className="text-3xl font-black tracking-tight">Security Reset</DialogTitle>
+                    <DialogTitle className="text-2xl sm:text-3xl font-black tracking-tight">Security Reset</DialogTitle>
                     <DialogDescription className="text-base font-medium">
                       {resetStep === 1 
                         ? "We'll send a 6-digit verification code to your email to authenticate this password reset." 

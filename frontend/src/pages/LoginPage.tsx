@@ -156,7 +156,7 @@ const LoginPage = () => {
                    <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
                       <Activity className="w-7 h-7 text-white" />
                    </div>
-                   <span className="text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
+                   <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
                 </div>
             )}
           </Link>
@@ -194,7 +194,7 @@ const LoginPage = () => {
                     <Activity className="w-12 h-12 text-primary" />
                  )}
              </Link>
-             <h1 className="text-3xl font-black tracking-tight">Login</h1>
+             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Login</h1>
              <p className="text-muted-foreground font-medium">Log in to your account.</p>
           </div>
 

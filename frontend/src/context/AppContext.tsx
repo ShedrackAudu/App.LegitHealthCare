@@ -95,8 +95,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         setUnreadMessagesCount(total);
       }).catch(err => {});
 
+      // Global Heartbeat to keep status 'Active now' in the DB while portal is open
+      const hbInterval = setInterval(() => {
+          axios.post('/api/messages/heartbeat', {}, { headers: { 'X-User-ID': user.id } }).catch(() => {});
+      }, 45000); // Every 45 seconds
+
       return () => {
         newSocket.close();
+        clearInterval(hbInterval);
       };
     } else {
       localStorage.removeItem('user');

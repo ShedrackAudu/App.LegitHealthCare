@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
@@ -394,7 +394,7 @@ const Dashboard: React.FC = () => {
                   </Badge>
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
-                  <h3 className="text-3xl font-black tracking-tighter">
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tighter">
                     {queueStats?.[dept.id] || 0}
                   </h3>
                   <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">

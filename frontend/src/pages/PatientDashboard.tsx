@@ -162,7 +162,7 @@ const PatientDashboard = () => {
                <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white/20 text-xs font-bold uppercase tracking-widest backdrop-blur-md border border-white/10">
                  <Shield className="w-3.5 h-3.5" /> HIPAA Compliant Security
                </div>
-               <h1 className="text-4xl md:text-7xl font-black tracking-tight leading-[0.9]">
+               <h1 className="text-3xl md:text-7xl font-black tracking-tight leading-[0.9]">
                   Welcome back, <br />
                   <span className="text-white/70 italic">{profile?.first_name || user?.first_name}!</span>
                </h1>
@@ -239,7 +239,7 @@ const PatientDashboard = () => {
                     
                     <div className="flex-1 space-y-4 text-center md:text-left">
                         <div>
-                            <h2 className="text-2xl font-black tracking-tight">{reportProgress.year} Medical Report Status</h2>
+                            <h2 className="text-xl sm:text-2xl font-black tracking-tight">{reportProgress.year} Medical Report Status</h2>
                             <p className="text-lg font-bold text-primary flex items-center justify-center md:justify-start gap-2">
                                 <Activity className="h-5 w-5" />
                                 {reportProgress.status}
@@ -292,7 +292,7 @@ const PatientDashboard = () => {
                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Available Reports</span>
                 </div>
                 <div className="space-y-1">
-                   <h3 className="text-4xl font-black">{stats.totalReports}</h3>
+                   <h3 className="text-3xl sm:text-4xl font-black">{stats.totalReports}</h3>
                    <p className="text-sm text-muted-foreground font-medium">Digital Medical Findings</p>
                 </div>
               </CardContent>
@@ -309,7 +309,7 @@ const PatientDashboard = () => {
                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Profile Status</span>
                 </div>
                 <div className="space-y-3">
-                   <h3 className="text-4xl font-black">{stats.profileStatus}%</h3>
+                   <h3 className="text-3xl sm:text-4xl font-black">{stats.profileStatus}%</h3>
                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                       <div className="bg-amber-500 h-full rounded-full transition-all duration-1000" style={{ width: `${stats.profileStatus}%` }} />
                    </div>
@@ -328,7 +328,7 @@ const PatientDashboard = () => {
                    <span className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Last Screening</span>
                 </div>
                 <div className="space-y-1">
-                   <h3 className="text-4xl font-black">{stats.lastScreening}</h3>
+                   <h3 className="text-3xl sm:text-4xl font-black">{stats.lastScreening}</h3>
                    <p className="text-sm text-muted-foreground font-medium">Session Record Year</p>
                 </div>
               </CardContent>
