@@ -321,12 +321,12 @@ const LandingPage = () => {
                      </div>
 
                      <div className="flex flex-col sm:flex-row gap-4 pt-4">
-                        <Link to="/signup">
-                           <Button size="lg" className="h-16 px-10 text-lg font-black shadow-2xl shadow-primary/30 transition-transform active:scale-95">
+                        <Link to="/signup?portal=patient">
+                           <Button size="lg" className="h-16 px-10 text-lg font-black shadow-2xl shadow-primary/30 transition-transform active:scale-95 bg-primary">
                               Claim My Account
                            </Button>
                         </Link>
-                        <Link to="/login">
+                        <Link to="/login?portal=patient">
                            <Button variant="outline" size="lg" className="h-16 px-10 text-lg font-black border-2 hover:bg-primary/5 shadow-xl transition-transform active:scale-95">
                               Log in to Portal
                            </Button>

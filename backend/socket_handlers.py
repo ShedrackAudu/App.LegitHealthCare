@@ -75,8 +75,14 @@ def init_socket_handlers(socketio):
         chat_id = data.get('chat_id') # d_5 or group_1
         content = data.get('content')
         msg_type = data.get('message_type', 'text')
+        parent_id = data.get('parent_message_id')
         
-        msg = ChatMessage(sender_id=sender_id, content=content, message_type=msg_type)
+        msg = ChatMessage(
+            sender_id=sender_id, 
+            content=content, 
+            message_type=msg_type,
+            parent_message_id=parent_id
+        )
         
         if chat_id.startswith('dm_'):
             receiver_id = int(chat_id.split('_')[1])
@@ -94,12 +100,42 @@ def init_socket_handlers(socketio):
         # If it's a DM, also emit to receiver's private room for global unread count/notifications
         if msg.receiver_id:
             emit('message_notification', msg.to_dict(), to=f"user_{msg.receiver_id}")
-            # Note: We don't emit to user_{sender_id} here because the sender 
-            # already receives it via 'to=chat_id' if they are on the messaging page.
-            # If they have multiple tabs open not on the messaging page, they get it via background sync or refresh.
         else:
-            # Group message notification logic
-            pass
+            # For groups, notify all members who aren't currently in the room
+            members = ChatGroupMember.query.filter_by(group_id=msg.group_id).all()
+            for m in members:
+                if m.user_id != sender_id:
+                    emit('message_notification', msg.to_dict(), to=f"user_{m.user_id}")
+
+    @socketio.on('react_message')
+    def on_react(data):
+        msg_id = data.get('message_id')
+        emoji = data.get('emoji')
+        user_id = int(data.get('user_id'))
+        chat_id = data.get('chat_id')
+        
+        msg = ChatMessage.query.get(msg_id)
+        if not msg:
+            return
+            
+        reactions = json.loads(msg.reactions) if msg.reactions else []
+        
+        # Check if user already reacted with this emoji
+        existing = next((r for r in reactions if r['emoji'] == emoji and r['user_id'] == user_id), None)
+        
+        if existing:
+            reactions.remove(existing)
+        else:
+            reactions.append({"emoji": emoji, "user_id": user_id})
+            
+        msg.reactions = json.dumps(reactions)
+        db.session.commit()
+        
+        emit('message_reacted', {
+            'message_id': msg_id,
+            'reactions': reactions,
+            'chat_id': chat_id
+        }, to=chat_id)
 
     @socketio.on('mark_read')
     def on_read(data):

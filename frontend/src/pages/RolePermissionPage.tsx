@@ -178,30 +178,22 @@ const RolePermissionPage: React.FC = () => {
                           >
                             <ShieldAlert className="h-4 w-4" />
                           </Button> */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (role.name.toLowerCase() === 'admin') {
-                              toast.error("The core Admin role cannot be deleted.");
-                              return;
-                            }
-                            setDeleteModal({ open: true, id: role.id, name: role.name });
-                          }}
-                          disabled={role.name.toLowerCase() === 'admin'}
-                          className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     <Button
-                      onClick={() => saveRolePermissions(role)}
-                      disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
-                      className="rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (role.name.toLowerCase() === 'admin') {
+                          toast.error("The core Admin role cannot be deleted.");
+                          return;
+                        }
+                        setDeleteModal({ open: true, id: role.id, name: role.name });
+                      }}
+                      disabled={role.name.toLowerCase() === 'admin'}
+                      className="h-9 w-9 p-0 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30 transition-all"
                     >
-                      {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -240,6 +232,17 @@ const RolePermissionPage: React.FC = () => {
                           </div>
                         );
                       })}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t flex justify-end">
+                      <Button
+                        onClick={() => saveRolePermissions(role)}
+                        disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
+                        className="h-12 px-8 rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                      >
+                        {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>

@@ -19,7 +19,9 @@ import {
   Trash2,
   AlertTriangle,
   Mail,
-  ShieldCheck
+  ShieldCheck,
+  Reply,
+  X
 } from 'lucide-react';
 import { 
   Dialog,
@@ -85,9 +87,12 @@ export default function MessagingPage() {
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
   const [groupName, setGroupName] = useState('');
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [reactionMenu, setReactionMenu] = useState<{msgId: number, x: number, y: number} | null>(null);
+  const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
-  const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨'];
+  const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨', '🙏', '👏', '🎉', '💡', '🚀', '✅', '❌', '🤔', '👀', '💪'];
 
   useEffect(() => {
     fetchConversations();
@@ -100,6 +105,7 @@ export default function MessagingPage() {
       socket?.emit('join_chat', { chat_id: activeChat.id });
       socket?.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
     }
+    setReplyingTo(null);
   }, [activeChat]);
 
   useEffect(() => {
@@ -112,9 +118,10 @@ export default function MessagingPage() {
       )) {
         setMessages(prev => [...prev, msg]);
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
-      } else {
-        fetchConversations();
       }
+      
+      // Update sidebar regardless of whether it was the active chat
+      fetchConversations();
     });
 
     socket.on('typing_status', (data) => {
@@ -126,6 +133,12 @@ export default function MessagingPage() {
     socket.on('messages_read', (data) => {
       if (activeChat && data.chat_id === activeChat.id) {
         setMessages(prev => prev.map(m => m.sender_id === user.id ? { ...m, read_at: new Date().toISOString() } : m));
+      }
+    });
+
+    socket.on('message_reacted', (data) => {
+      if (activeChat && data.chat_id === activeChat.id) {
+        setMessages(prev => prev.map(m => m.id === data.message_id ? { ...m, reactions: data.reactions } : m));
       }
     });
 
@@ -152,6 +165,7 @@ export default function MessagingPage() {
       socket.off('new_message');
       socket.off('typing_status');
       socket.off('messages_read');
+      socket.off('message_reacted');
       socket.off('user_presence');
     };
   }, [socket, activeChat]);
@@ -284,10 +298,12 @@ export default function MessagingPage() {
       sender_id: user.id,
       chat_id: activeChat.id,
       content: newMessage,
-      message_type: 'text'
+      message_type: 'text',
+      parent_message_id: replyingTo?.id
     });
     
     setNewMessage('');
+    setReplyingTo(null);
     handleTyping(false);
   };
 
@@ -300,6 +316,31 @@ export default function MessagingPage() {
         status: status ? 'start' : 'stop'
       });
     }
+  };
+
+  const reactToMessage = (msgId: number, emoji: string) => {
+    socket?.emit('react_message', {
+      message_id: msgId,
+      emoji: emoji,
+      user_id: user.id,
+      chat_id: activeChat?.id
+    });
+    setReactionMenu(null);
+  };
+
+  const startLongPress = (e: React.PointerEvent, msgId: number) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      longPressTimer.current = setTimeout(() => {
+          setReactionMenu({ msgId, x, y });
+      }, 500);
+  };
+
+  const stopLongPress = () => {
+      if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+      }
   };
 
   const addEmoji = (emoji: string) => {
@@ -428,7 +469,16 @@ export default function MessagingPage() {
                       "text-xs truncate",
                       activeChat?.id === conv.id ? "text-primary-foreground/80" : "text-muted-foreground"
                     )}>
-                      {conv.last_message?.content || 'No messages yet'}
+                      {conv.last_message ? (
+                        <span className="flex items-center gap-1">
+                          {conv.type === 'group' && (
+                            <span className="font-black text-primary/70 shrink-0">
+                              {conv.last_message.sender_name?.split(' ')[0]}:
+                            </span>
+                          )}
+                          <span className="truncate">{conv.last_message.content}</span>
+                        </span>
+                      ) : 'No messages yet'}
                     </div>
                   </div>
                   {conv.unread_count > 0 && (
@@ -471,7 +521,8 @@ export default function MessagingPage() {
                 </Avatar>
                 <div>
                   <div className="font-bold text-sm">
-                    {activeChat.type === 'direct' ? `${activeChat.other_user.first_name} ${activeChat.other_user.last_name}` : activeChat.group.name}
+                    <span className="md:hidden">{activeChat.type === 'direct' ? activeChat.other_user.first_name : activeChat.group.name.split(' ')[0]}</span>
+                    <span className="hidden md:inline">{activeChat.type === 'direct' ? `${activeChat.other_user.first_name} ${activeChat.other_user.last_name}` : activeChat.group.name}</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
                     {partnerTyping ? (
@@ -512,12 +563,15 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1 p-6" onClick={() => setReactionMenu(null)}>
               <div className="space-y-6">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
                    const prevMsg = idx > 0 ? messages[idx-1] : null;
                    const showDate = !prevMsg || format(new Date(msg.created_at), 'yyyy-MM-dd') !== format(new Date(prevMsg.created_at), 'yyyy-MM-dd');
+                   
+                   // Find parent message for replies
+                   const parentMsg = msg.parent_message_id ? messages.find(m => m.id === msg.parent_message_id) : null;
 
                    return (
                      <div key={msg.id || idx}>
@@ -529,19 +583,43 @@ export default function MessagingPage() {
                          </div>
                        )}
                        <div className={cn(
-                         "flex group",
-                         isMe ? "justify-end" : "justify-start"
+                         "flex group items-center gap-2",
+                         isMe ? "flex-row-reverse" : "flex-row"
                        )}>
                           <div className={cn(
-                            "max-w-[85%] md:max-w-[450px] space-y-1",
-                            isMe ? "items-end" : "items-start"
+                            "max-w-[85%] md:max-w-[450px] space-y-1 relative",
+                            isMe ? "items-end text-right" : "items-start text-left"
                           )}>
-                             <div className={cn(
-                               "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words overflow-hidden",
-                               isMe 
-                                 ? "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20" 
-                                 : "bg-card border-2 rounded-tl-none hover:border-primary/20"
-                             )}>
+                             {!isMe && msg.group_id && (
+                                <span className="text-[10px] font-black uppercase text-primary ml-1 mb-1 block tracking-wider animate-in fade-in slide-in-from-left-2 duration-300">
+                                  <span className="md:hidden">{(msg.sender_name || 'Staff').split(' ')[0]}</span>
+                                  <span className="hidden md:inline">{msg.sender_name || 'Staff Member'}</span>
+                                </span>
+                             )}
+                             
+                             {/* Parent Message Preview (Reply) */}
+                             {parentMsg && (
+                               <div className={cn(
+                                 "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate max-w-[300px]",
+                                 isMe ? "border-primary/20 rounded-tr-none" : "border-muted-foreground/20 rounded-tl-none"
+                               )}>
+                                 <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
+                                   {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
+                                 </span>
+                                 {parentMsg.content}
+                               </div>
+                             )}
+
+                             <div 
+                               className={cn(
+                                 "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words overflow-hidden cursor-default",
+                                 isMe ? "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20" : "bg-card border-2 rounded-tl-none hover:border-primary/20"
+                               )}
+                               onPointerDown={(e) => startLongPress(e, msg.id)}
+                               onPointerUp={stopLongPress}
+                               onPointerLeave={stopLongPress}
+                               onClick={(e) => e.stopPropagation()}
+                             >
                               {msg.content}
                               <div className={cn(
                                 "flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px]",
@@ -553,6 +631,54 @@ export default function MessagingPage() {
                                 )}
                               </div>
                             </div>
+
+                            {/* Reactions display */}
+                            {msg.reactions && msg.reactions.length > 0 && (
+                                <div className={cn(
+                                    "flex flex-wrap gap-1 mt-1",
+                                    isMe ? "justify-end" : "justify-start"
+                                )}>
+                                    {/* Group reactions by emoji */}
+                                    {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
+                                        <div 
+                                            key={emoji} 
+                                            className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
+                                            onClick={() => reactToMessage(msg.id, emoji)}
+                                        >
+                                            {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                         </div>
+
+                         {/* Action buttons (Reply & React) */}
+                         <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-center">
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                onClick={(e) => { e.stopPropagation(); setReplyingTo(msg); }}
+                                title="Reply"
+                            >
+                                <Reply className="h-3.5 w-3.5" />
+                            </Button>
+                            <Button 
+                                variant="ghost" 
+                                size="icon" 
+                                className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                onClick={(e) => {
+                                    e.stopPropagation();
+                                    setReactionMenu({ 
+                                        msgId: msg.id, 
+                                        x: e.clientX, 
+                                        y: e.clientY 
+                                    });
+                                }}
+                                title="React"
+                            >
+                                <Smile className="h-3.5 w-3.5" />
+                            </Button>
                          </div>
                        </div>
                      </div>
@@ -560,28 +686,67 @@ export default function MessagingPage() {
                 })}
                 <div ref={scrollRef} />
               </div>
+
+              {/* Reaction Menu Portal-like component */}
+              {reactionMenu && (
+                  <div 
+                    className="fixed z-[1000] bg-card/95 backdrop-blur-md border-2 shadow-2xl rounded-2xl p-2.5 flex flex-wrap gap-2 animate-in zoom-in-50 slide-in-from-bottom-5 max-w-[280px] sm:max-w-none shadow-primary/10" 
+                    style={{ left: Math.min(reactionMenu.x, window.innerWidth - 300), top: reactionMenu.y - 70 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                      {commonEmojis.slice(0, 10).map(e => (
+                          <button 
+                            key={e} 
+                            className="text-2xl hover:scale-125 transition-transform p-1.5 rounded-xl hover:bg-primary/10" 
+                            onClick={() => reactToMessage(reactionMenu.msgId, e)}
+                          >
+                              {e}
+                          </button>
+                      ))}
+                  </div>
+              )}
             </ScrollArea>
 
             {/* Input Area */}
             <div className="p-4 bg-card/80 backdrop-blur-md border-t">
-              <div className="flex items-center gap-2 max-w-4xl mx-auto">
-                <div className="flex gap-1 relative">
+              <div className="max-w-4xl mx-auto space-y-2">
+                {/* Replying To Preview */}
+                {replyingTo && (
+                    <div className="flex items-center justify-between bg-muted/40 p-3 rounded-xl border-l-4 border-primary animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-0.5">Replying to {replyingTo.sender_id === user.id ? "Yourself" : replyingTo.sender_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setReplyingTo(null)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1 relative">
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className={cn("h-9 w-9 transition-colors", showEmojiPicker ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary")}
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEmojiPicker(!showEmojiPicker);
+                    }}
                   >
                     <Smile className="h-5 w-5" />
                   </Button>
                   
                   {showEmojiPicker && (
-                    <div className="absolute bottom-full mb-2 left-0 p-2 bg-card border-2 rounded-xl shadow-xl flex gap-1 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                    <div 
+                      className="absolute bottom-full mb-3 left-0 p-3 bg-card border-2 rounded-2xl shadow-2xl grid grid-cols-7 gap-1.5 z-50 animate-in slide-in-from-bottom-4 duration-300 w-[260px] shadow-primary/10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {commonEmojis.map(e => (
                         <button 
                           key={e} 
-                          onClick={() => addEmoji(e)}
-                          className="hover:scale-125 transition-transform p-1 text-lg"
+                          onClick={(ev) => { ev.stopPropagation(); addEmoji(e); }}
+                          className="h-8 w-8 flex items-center justify-center hover:scale-125 hover:bg-primary/10 rounded-lg transition-all text-xl"
                         >
                           {e}
                         </button>
@@ -589,7 +754,14 @@ export default function MessagingPage() {
                     </div>
                   )}
                   
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"><Paperclip className="h-5 w-5" /></Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => toast('Attachment feature coming soon!', { icon: '📂' })}
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
                 </div>
                 <div className="flex-1 relative group">
                   <Input 
@@ -607,7 +779,14 @@ export default function MessagingPage() {
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     {newMessage.trim() === '' ? (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"><Mic className="h-5 w-5" /></Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"
+                        onClick={() => toast('Voice notes coming soon!', { icon: '🎙️' })}
+                      >
+                        <Mic className="h-5 w-5" />
+                      </Button>
                     ) : (
                       <Button 
                         size="icon" 
@@ -621,6 +800,7 @@ export default function MessagingPage() {
                 </div>
               </div>
             </div>
+          </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">

@@ -624,10 +624,13 @@ class ChatMessage(db.Model):
     read_at = db.Column(db.DateTime)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
+    sender = db.relationship('StaffUser', foreign_keys=[sender_id], backref=db.backref('sent_messages', lazy=True))
+
     def to_dict(self):
         return {
             "id": self.id,
             "sender_id": self.sender_id,
+            "sender_name": f"{self.sender.first_name} {self.sender.last_name}" if self.sender else "Unknown User",
             "receiver_id": self.receiver_id,
             "group_id": self.group_id,
             "is_broadcast": self.is_broadcast,

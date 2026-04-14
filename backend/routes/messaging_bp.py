@@ -59,7 +59,11 @@ def get_conversations():
                 "type": "group",
                 "group": group.to_dict(),
                 "last_message": last_msg.to_dict() if last_msg else None,
-                "unread_count": 0 # TODO: Implement group unread tracking
+                "unread_count": ChatMessage.query.filter(
+                    ChatMessage.group_id == group.id,
+                    ChatMessage.sender_id != user_id,
+                    ChatMessage.created_at > m.last_read_at
+                ).count()
             })
             
     return jsonify(conversations)

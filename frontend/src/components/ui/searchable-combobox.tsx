@@ -42,12 +42,19 @@ export function SearchableCombobox({
         <input 
           className="flex-1 min-w-0 bg-transparent outline-none border-none font-semibold text-foreground placeholder:text-muted-foreground placeholder:font-normal"
           placeholder={placeholder}
-          value={open ? search : (value || search)}
-          onClick={() => { setOpen(true); setSearch(""); }}
+          value={open ? search : (value || "")}
+          onClick={() => { setOpen(true); if(!search) setSearch(""); }}
+          onFocus={() => { setOpen(true); }}
           onChange={(e) => {
             setSearch(e.target.value);
             setOpen(true);
-            onChange(e.target.value);
+            // We no longer call onChange(e.target.value) here
+          }}
+          onBlur={() => {
+            // Optional: reset search if no selection made
+            setTimeout(() => {
+              setSearch("");
+            }, 200);
           }}
         />
         <ChevronDown 
