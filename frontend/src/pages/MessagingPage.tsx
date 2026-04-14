@@ -470,13 +470,23 @@ export default function MessagingPage() {
                       activeChat?.id === conv.id ? "text-primary-foreground/80" : "text-muted-foreground"
                     )}>
                       {conv.last_message ? (
-                        <span className="flex items-center gap-1">
-                          {conv.type === 'group' && (
-                            <span className="font-black text-primary/70 shrink-0">
-                              {conv.last_message.sender_name?.split(' ')[0]}:
-                            </span>
+                        <span className="flex items-center gap-1 min-w-0">
+                          {conv.last_message.sender_id === user.id ? (
+                            <span className={cn(
+                              "font-black shrink-0",
+                              activeChat?.id === conv.id ? "text-primary-foreground" : "text-primary/70"
+                            )}>You:</span>
+                          ) : (
+                            conv.type === 'group' && (
+                              <span className={cn(
+                                "font-black shrink-0",
+                                activeChat?.id === conv.id ? "text-primary-foreground" : "text-primary/70"
+                              )}>
+                                {conv.last_message.sender_name?.split(' ')[0]}:
+                              </span>
+                            )
                           )}
-                          <span className="truncate">{conv.last_message.content}</span>
+                          <span className="truncate flex-1 min-w-0">{conv.last_message.content}</span>
                         </span>
                       ) : 'No messages yet'}
                     </div>
@@ -587,7 +597,7 @@ export default function MessagingPage() {
                          isMe ? "flex-row-reverse" : "flex-row"
                        )}>
                           <div className={cn(
-                            "max-w-[85%] md:max-w-[450px] space-y-1 relative",
+                            "max-w-[75%] md:max-w-[450px] space-y-1 relative",
                             isMe ? "items-end text-right" : "items-start text-left"
                           )}>
                              {!isMe && msg.group_id && (
