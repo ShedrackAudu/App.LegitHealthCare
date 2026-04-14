@@ -70,9 +70,9 @@ const AccordionSection = ({ title, description, children, defaultOpen = false }:
     );
 };
 
-const SelectField = ({ label, options, name, control }: any) => (
+const SelectField = ({ label, options, name, control, required = true }: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
+      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
       <Controller
         name={name}
         control={control}
@@ -92,9 +92,9 @@ const SelectField = ({ label, options, name, control }: any) => (
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, required = true, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
+      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
       <div className="relative group">
           <Input 
               ref={ref}
@@ -132,9 +132,9 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
   </div>
 ));
 
-const RadioField = ({ label, name, control }: any) => (
+const RadioField = ({ label, name, control, required = true }: any) => (
   <div className="space-y-2 lg:col-span-1">
-    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
+    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
     <Controller
       name={name}
       control={control}
@@ -287,11 +287,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground">{f.replace('_', ' ')}</Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
                                 {f.includes('REMARK') ? (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                    <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                                 ) : (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm font-mono" />
+                                    <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm font-mono" required />
                                 )}
                             </div>
                         ))}
@@ -302,8 +302,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'BICARBONATE_CA', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                             </div>
                         ))}
                     </div>
@@ -313,8 +313,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {['TOTAL_CHOLESTEROL', 'TRIGLYCERIDES', 'HDL', 'LDL', 'LP_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                             </div>
                         ))}
                     </div>
@@ -324,8 +324,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['AST', 'ALT', 'ALP', 'TB', 'CB', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                             </div>
                         ))}
                     </div>
@@ -344,8 +344,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             { id: 'height', label: 'Height (m)' }
                         ].map(f => (
                             <div key={f.id} className="space-y-1">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label}</Label>
-                                <Input {...register(f.id)} className="h-9 text-sm" />
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} <span className="text-red-500">*</span></Label>
+                                <Input {...register(f.id, { required: true })} className="h-9 text-sm" required />
                             </div>
                         ))}
                     </div>
@@ -392,9 +392,9 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="md:col-span-1">
                                 <SelectField name="htn_status" control={control} label="HTN" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P</Label><Input {...register('bp')} /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE</Label><Input {...register('pulse')} /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2%</Label><Input {...register('spo2')} /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2% <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
@@ -402,22 +402,18 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
                              <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} />
                              <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} />
-                             <SelectField name="fbs_rbs_remark" control={control} label="SUGAR REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                             <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
-                             <div className="space-y-1 md:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Lab Remark</Label>
-                                <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
+                             <div className="space-y-1 col-span-full lg:col-span-4">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
+                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
                              </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t">
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                                <div className="space-y-1 md:col-span-2">
-                                    <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Assessment(s)</Label>
-                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-emerald-500/20 rounded-xl p-4 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
-                                </div>
                                 <div className="space-y-1">
                                     <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Other Assessments</Label>
                                     <Input {...register('other_assessments')} placeholder="Secondary assessments..." />
@@ -426,24 +422,28 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                     <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Other Remarks</Label>
                                     <Input {...register('other_remarks')} placeholder="Miscellaneous notes..." />
                                 </div>
+                                <div className="space-y-1 col-span-full">
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Assessment(s)</Label>
+                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-emerald-500/20 rounded-xl p-4 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
+                                </div>
                             </div>
                             
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment One</Label>
-                                    <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One <span className="text-red-500">*</span></Label>
+                                    <textarea {...register('comment_one', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." required />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Two</Label>
-                                    <textarea {...register('comment_two')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two <span className="text-red-500">*</span></Label>
+                                    <textarea {...register('comment_two', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." required />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Three</Label>
-                                    <textarea {...register('comment_three')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three <span className="text-red-500">*</span></Label>
+                                    <textarea {...register('comment_three', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." required />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment Four</Label>
-                                    <textarea {...register('comment_four')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four <span className="text-red-500">*</span></Label>
+                                    <textarea {...register('comment_four', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." required />
                                 </div>
                             </div>
                         </div>
@@ -459,12 +459,19 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         disabled={generatingAI || loading}
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-blue-500/20 h-12 rounded-xl border-0 w-full sm:w-auto order-2 sm:order-1"
                     >
-                        {generatingAI ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="mr-2 h-5 w-5" />}
-                        AI Overview
+                        {generatingAI ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (
+                            <div className="flex items-center justify-center whitespace-nowrap">
+                                <Sparkles className="mr-2 h-5 w-5 shrink-0" /> AI Overview
+                            </div>
+                        )}
                     </Button>
                     
                     <Button type="submit" size="lg" className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={loading || generatingAI}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Submit Final Review</>}
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                            <div className="flex items-center justify-center whitespace-nowrap">
+                                <Save className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
+                            </div>
+                        )}
                     </Button>
                 </div>
             </form>
@@ -539,9 +546,9 @@ const DirectorPage: React.FC = () => {
                             <ShieldCheck className="h-8 w-8 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight">Director Review Panel</h1>
+                            <h1 className="text-lg sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
                             <div className="flex items-center gap-2 mt-1">
-                                <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                             </div>
                         </div>
                     </div>

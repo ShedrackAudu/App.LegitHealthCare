@@ -3,6 +3,7 @@ from models import db, User, ChatMessage, ChatGroup, ChatGroupMember
 from datetime import datetime
 from decorators import require_permission
 import json
+from socket_handlers import connected_users
 
 messaging_bp = Blueprint('messaging', __name__)
 
@@ -31,10 +32,12 @@ def get_conversations():
         if other_id not in seen_users:
             other_user = User.query.get(other_id)
             if other_user:
+                other_dict = other_user.to_dict()
+                other_dict['is_online'] = other_id in connected_users
                 conversations.append({
                     "id": f"dm_{other_id}",
                     "type": "direct",
-                    "other_user": other_user.to_dict(),
+                    "other_user": other_dict,
                     "last_message": msg.to_dict(),
                     "unread_count": ChatMessage.query.filter_by(
                         sender_id=other_id, receiver_id=user_id, read_at=None
@@ -103,7 +106,12 @@ def search_users():
         # Default: list first 20 other users
         users = User.query.filter(User.id != user_id).limit(20).all()
     
-    return jsonify([u.to_dict() for u in users])
+    def user_with_status(u):
+        d = u.to_dict()
+        d['is_online'] = u.id in connected_users
+        return d
+
+    return jsonify([user_with_status(u) for u in users])
 
 @messaging_bp.route('/groups', methods=['POST'])
 @require_permission('messaging')

@@ -64,8 +64,11 @@ const sharedItems: SidebarItem[] = [
 export const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('legit_sidebar_collapsed');
-    // Default to uncollapsed (false), but respect saved preference
-    return saved !== null ? JSON.parse(saved) : false;
+    if (saved !== null) return JSON.parse(saved);
+    
+    // Fallback for new visitors or cleared storage: auto-collapse on small screens
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return true;
+    return false;
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
   const { isAdmin, hasPermission } = usePermissions();
@@ -74,21 +77,15 @@ export const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      // Only auto-collapse if user hasn't set a manual preference in this session yet
-      // or if we're on a very small screen where expanded is unusable
+      // Auto-collapse only on resize if width drops below threshold
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
         const saved = localStorage.getItem('legit_sidebar_collapsed');
-        if (saved !== null) {
-          setIsCollapsed(JSON.parse(saved));
-        } else {
-          setIsCollapsed(false);
-        }
+        setIsCollapsed(saved !== null ? JSON.parse(saved) : false);
       }
     };
 
-    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);

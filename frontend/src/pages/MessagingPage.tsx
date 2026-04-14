@@ -17,7 +17,9 @@ import {
   Plus,
   Loader2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  ShieldCheck
 } from 'lucide-react';
 import { 
   Dialog,
@@ -45,6 +47,23 @@ import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
+const ProfileInfoItem = ({ label, value, icon: Icon, isLink = false }: any) => (
+  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/10 transition-colors">
+    <div className="p-2 bg-background rounded-lg text-primary shadow-sm mt-0.5">
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="flex-1 min-w-0">
+      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-tight">{label}</p>
+      <p className={cn(
+        "text-sm font-bold truncate",
+        isLink ? "text-primary underline underline-offset-4 decoration-primary/30" : "text-foreground"
+      )}>
+        {value || 'Not specified'}
+      </p>
+    </div>
+  </div>
+);
+
 export default function MessagingPage() {
   const { user, socket, setUnreadMessagesCount } = useAppContext();
   const [conversations, setConversations] = useState<any[]>([]);
@@ -61,6 +80,10 @@ export default function MessagingPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨'];
@@ -106,11 +129,22 @@ export default function MessagingPage() {
     });
 
     socket.on('user_presence', (data) => {
-      if (activeChat && activeChat.type === 'direct' && data.user_id === activeChat.other_user.id) {
-        setConversations(prev => prev.map(c => 
-          c.id === `dm_${data.user_id}` ? { ...c, other_user: { ...c.other_user, last_seen_at: data.status === 'online' ? new Date().toISOString() : null } } : c
-        ));
-      }
+      const isOnline = data.status === 'online';
+      
+      // Update conversations list
+      setConversations(prev => prev.map(c => 
+        c.id === `dm_${data.user_id}` 
+          ? { ...c, other_user: { ...c.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : c.other_user.last_seen_at } } 
+          : c
+      ));
+
+      // Update active chat if it matches this user
+      setActiveChat(prev => {
+        if (prev && prev.type === 'direct' && prev.other_user.id === data.user_id) {
+          return { ...prev, other_user: { ...prev.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : prev.other_user.last_seen_at } };
+        }
+        return prev;
+      });
     });
 
     return () => {
@@ -160,6 +194,9 @@ export default function MessagingPage() {
 
   const openNewChat = () => {
     setIsNewChatOpen(true);
+    setIsCreatingGroup(false);
+    setGroupName('');
+    setSelectedMembers([]);
     fetchAvailableUsers();
   };
 
@@ -192,6 +229,43 @@ export default function MessagingPage() {
     }
     setSearchQuery('');
     setSearchResults([]);
+  };
+
+  const createGroup = async () => {
+    if (!groupName.trim() || selectedMembers.length === 0) {
+      toast.error("Please provide a name and select at least one member");
+      return;
+    }
+
+    try {
+      const resp = await axios.post('/api/messages/groups', {
+        name: groupName,
+        members: selectedMembers
+      }, {
+        headers: { 'X-User-ID': user.id }
+      });
+      
+      const newGroupConv = {
+        id: `group_${resp.data.id}`,
+        type: 'group',
+        group: resp.data,
+        last_message: null,
+        unread_count: 0
+      };
+      
+      setConversations(prev => [newGroupConv, ...prev]);
+      setActiveChat(newGroupConv);
+      setIsNewChatOpen(false);
+      toast.success(`Group "${groupName}" created!`);
+    } catch (err) {
+      toast.error("Failed to create group");
+    }
+  };
+
+  const toggleMemberSelection = (uid: number) => {
+    setSelectedMembers(prev => 
+      prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+    );
   };
 
   const sendMessage = () => {
@@ -318,7 +392,7 @@ export default function MessagingPage() {
                     {conv.type === 'direct' && (
                       <div className={cn(
                         "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
-                        conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 60000) ? "bg-green-500" : "bg-zinc-400"
+                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
                       )} />
                     )}
                   </div>
@@ -393,9 +467,9 @@ export default function MessagingPage() {
                         <>
                           <div className={cn(
                             "w-1.5 h-1.5 rounded-full",
-                            activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 60000) ? "bg-green-500" : "bg-zinc-400"
+                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
                           )} />
-                          {activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 60000) ? "Active now" : "Offline"}
+                          {activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "Active now" : "Offline"}
                         </>
                       )
                     )}
@@ -410,7 +484,7 @@ export default function MessagingPage() {
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><MoreVertical className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile</DropdownMenuItem>
                     <DropdownMenuItem>Search Chat</DropdownMenuItem>
                     <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
                     <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
@@ -562,9 +636,37 @@ export default function MessagingPage() {
       <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
         <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
           <DialogHeader className="p-6 bg-primary text-primary-foreground">
-            <DialogTitle className="text-2xl font-black">New Conversation</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl font-black">{isCreatingGroup ? 'Create Group' : 'New Conversation'}</DialogTitle>
+              <Button 
+                size="sm" 
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest rounded-full px-4 h-8 transition-all duration-300 shadow-lg",
+                  isCreatingGroup 
+                    ? "bg-rose-500 text-white hover:bg-rose-600 shadow-rose-500/20" 
+                    : "bg-white text-primary hover:bg-white/90 hover:scale-105 shadow-black/10"
+                )}
+                onClick={() => {
+                  setIsCreatingGroup(!isCreatingGroup);
+                  setSelectedMembers([]);
+                }}
+              >
+                {isCreatingGroup ? 'Cancel Group' : 'New Group Chat'}
+              </Button>
+            </div>
           </DialogHeader>
           <div className="p-4 space-y-4">
+            {isCreatingGroup && (
+              <div className="space-y-2 animate-in slide-in-from-top-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Group Name</p>
+                <Input 
+                  placeholder="Enter group name..." 
+                  className="h-11 font-bold"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+              </div>
+            )}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -573,40 +675,71 @@ export default function MessagingPage() {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <ScrollArea className="h-[300px] pr-4">
-              {loadingUsers ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {(searchQuery.length >= 2 ? searchResults : availableUsers).map((u: any) => (
-                    <button
-                      key={u.id}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all text-left group"
-                      onClick={() => {
-                        startDirectChat(u);
-                        setIsNewChatOpen(false);
-                      }}
-                    >
-                      <Avatar className="h-10 w-10 border-2 border-background group-hover:border-primary/20">
-                        <AvatarFallback className="bg-primary/5 text-primary font-bold">
-                          {u.first_name?.[0]}{u.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="text-sm font-bold">{u.first_name} {u.last_name}</div>
-                        <div className="text-xs text-muted-foreground">@{u.username}</div>
-                      </div>
-                    </button>
-                  ))}
-                  {(searchQuery.length >= 2 ? searchResults : availableUsers).length === 0 && (
-                     <div className="text-center py-8 text-muted-foreground italic text-sm">No users found</div>
-                  )}
-                </div>
-              )}
-            </ScrollArea>
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">
+                {isCreatingGroup ? `Select Members (${selectedMembers.length} selected)` : 'Recent Contacts'}
+              </p>
+              <ScrollArea className="h-[250px] pr-4">
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-1 pt-1">
+                    {(searchQuery.length >= 2 ? searchResults : availableUsers).map((u: any) => (
+                      <button
+                        key={u.id}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
+                          selectedMembers.includes(u.id) ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-primary/5"
+                        )}
+                        onClick={() => {
+                          if (isCreatingGroup) {
+                            toggleMemberSelection(u.id);
+                          } else {
+                            startDirectChat(u);
+                            setIsNewChatOpen(false);
+                          }
+                        }}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-10 w-10 border-2 border-background group-hover:border-primary/20">
+                            <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                              {u.first_name?.[0]}{u.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          {selectedMembers.includes(u.id) && (
+                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 animate-in zoom-in">
+                              <Check className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-bold">{u.first_name} {u.last_name}</div>
+                          <div className="text-xs text-muted-foreground">@{u.username}</div>
+                        </div>
+                      </button>
+                    ))}
+                    {(searchQuery.length >= 2 ? searchResults : availableUsers).length === 0 && (
+                       <div className="text-center py-8 text-muted-foreground italic text-sm">No users found</div>
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
+          {isCreatingGroup && (
+            <div className="p-4 bg-muted/30 border-t flex gap-2">
+               <Button variant="ghost" className="flex-1 font-bold h-11" onClick={() => setIsCreatingGroup(false)}>Back</Button>
+               <Button 
+                className="flex-[2] font-black h-11 shadow-lg shadow-primary/20" 
+                disabled={!groupName.trim() || selectedMembers.length === 0}
+                onClick={createGroup}
+              >
+                Create Group Chat
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -620,6 +753,71 @@ export default function MessagingPage() {
         variant="danger"
         loading={isDeleting}
       />
+
+      {/* User Profile Dialog */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          {activeChat?.type === 'direct' && (
+            <div className="flex flex-col">
+              {/* Profile Background & Avatar Header */}
+              <div className="h-32 bg-gradient-to-br from-primary via-primary/80 to-primary/40 relative">
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+                  <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                    <AvatarFallback className="bg-muted text-primary text-2xl font-black">
+                      {activeChat.other_user.first_name[0]}{activeChat.other_user.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className={cn(
+                    "absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-background",
+                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                  )} />
+                </div>
+              </div>
+
+              {/* Profile Content */}
+              <div className="pt-14 pb-8 px-6 text-center space-y-6">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black tracking-tight">
+                    {activeChat.other_user.first_name} {activeChat.other_user.last_name}
+                  </h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">
+                       @{activeChat.other_user.username}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 text-left">
+                  <ProfileInfoItem label="Email Address" value={activeChat.other_user.email} icon={Mail} isLink />
+                  <ProfileInfoItem label="Phone Number" value={activeChat.other_user.phone} icon={Phone} isLink />
+                  
+                  <div className="space-y-2 mt-2 pt-4 border-t">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                       <ShieldCheck className="h-3 w-3" /> System Roles
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {activeChat.other_user.roles?.map((role: string) => (
+                        <Badge key={role} className="rounded-lg bg-indigo-500/10 text-indigo-600 border-none hover:bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold">
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button 
+                    className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    Close Profile
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
 
       </div>
     </MainLayout>

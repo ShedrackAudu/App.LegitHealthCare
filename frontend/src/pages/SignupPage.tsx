@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
@@ -10,9 +10,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Activity, Loader2, User, Phone, Mail, Lock, ShieldCheck, AtSign, Eye, EyeOff, CheckCircle2, X } from 'lucide-react';
+import { 
+  Activity, Loader2, User, Phone, Mail, Lock, ShieldCheck, 
+  AtSign, Eye, EyeOff, CheckCircle2, X, Search, Building2, 
+  HelpCircle, Calendar, ArrowLeft 
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Search, Building2, HelpCircle, ShieldCheck as ShieldCheckIcon } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 import { ModeToggle } from '@/components/mode-toggle';
@@ -48,15 +51,23 @@ const SignupPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
-  const { user, branding } = useAppContext();
+  const { user, branding, setUser } = useAppContext();
 
   // Patient Claim State
-  const [patientStep, setPatientStep] = useState<'search' | 'claim'>('search');
+  const [patientStep, setPatientStep] = useState<'search' | 'claim' | 'verify'>('search');
   const [patientData, setPatientData] = useState<any>(null);
   const [patientStaffId, setPatientStaffId] = useState('');
   const [searchLoading, setSearchLoading] = useState(false);
   const [existingUser, setExistingUser] = useState(false);
   
+  // OTP State
+  const [otp, setOtp] = useState('');
+  const [otpTimer, setOtpTimer] = useState(60);
+  const [canResendOtp, setCanResendOtp] = useState(false);
+  const [resendingOtp, setResendingOtp] = useState(false);
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifySuccess, setVerifySuccess] = useState(false);
+
   const [claimData, setClaimData] = useState({
     phone: '',
     email: '',
@@ -65,6 +76,64 @@ const SignupPage: React.FC = () => {
   });
   const [isStaffSignupEnabled, setIsStaffSignupEnabled] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
+
+  // OTP Timer Effect
+  useEffect(() => {
+    let interval: any;
+    if (patientStep === 'verify' && otpTimer > 0 && !canResendOtp) {
+      interval = setInterval(() => {
+        setOtpTimer((prev) => prev - 1);
+      }, 1000);
+    } else if (otpTimer === 0) {
+      setCanResendOtp(true);
+      clearInterval(interval);
+    }
+    return () => clearInterval(interval);
+  }, [patientStep, otpTimer, canResendOtp]);
+
+  const handleResendOTP = async () => {
+    if (!canResendOtp) return;
+    setResendingOtp(true);
+    try {
+      await axios.post('/api/patient/resend-otp', {
+        email: claimData.email || patientData.email,
+        first_name: patientData.first_name
+      });
+      toast.success('New code sent!');
+      setOtpTimer(60);
+      setCanResendOtp(false);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Failed to resend');
+    } finally {
+      setResendingOtp(false);
+    }
+  };
+
+  const handlePatientVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length < 6) {
+      toast.error('Enter 6-digit code');
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      const resp = await axios.post('/api/patient/verify-otp', {
+        ...patientData,
+        ...claimData,
+        otp
+      });
+      setVerifySuccess(true);
+      toast.success('Verified successfully!');
+      setTimeout(() => {
+        setUser(resp.data.user);
+        navigate('/patient/dashboard');
+      }, 2000);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Invalid OTP');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
 
   useEffect(() => {
     const checkSignupStatus = async () => {
@@ -157,19 +226,14 @@ const SignupPage: React.FC = () => {
 
     setLoading(true);
     try {
-      const response = await axios.post('/api/patient/claim', {
+      await axios.post('/api/patient/claim', {
         staff_id: patientStaffId,
         email: claimData.email,
         password: claimData.password,
         first_name: patientData.first_name
       });
-      toast.success(response.data.message);
-      navigate('/patient/verify-otp', { 
-        state: { 
-          patientData, 
-          claimData 
-        } 
-      });
+      setPatientStep('verify');
+      toast.success('Verification code sent to your email!');
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Failed to claim account.');
     } finally {
@@ -399,7 +463,7 @@ const SignupPage: React.FC = () => {
                     <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-2">
                        <Card className="border-2 border-rose-500/20 bg-rose-500/5 rounded-2xl">
                          <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                            <ShieldCheckIcon className="w-8 h-8 text-rose-500" />
+                            <ShieldCheck className="w-8 h-8 text-rose-500" />
                             <div className="space-y-1">
                                 <h4 className="text-sm font-black">Account Exists</h4>
                                 <p className="text-[10px] font-medium text-muted-foreground">You already have an account registered with this Staff ID.</p>
@@ -410,45 +474,87 @@ const SignupPage: React.FC = () => {
                     </motion.div>
                   )}
                 </div>
-              ) : (
-                <form onSubmit={handlePatientClaim} className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center font-black text-primary uppercase">
-                        {patientData?.first_name?.[0]}{patientData?.last_name?.[0]}
+              ) : patientStep === 'claim' ? (
+                <form onSubmit={handlePatientClaim} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl overflow-hidden">
+                    <div className="p-4 flex items-center justify-between border-b border-primary/10">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center font-black text-primary uppercase">
+                          {patientData?.first_name?.[0]}{patientData?.last_name?.[0]}
+                        </div>
+                        <div>
+                          <p className="text-sm font-black leading-none">{patientData?.first_name} {patientData?.middle_name ? patientData.middle_name + ' ' : ''}{patientData?.last_name}</p>
+                          <p className="text-[10px] text-muted-foreground font-bold mt-1">Record Found • {patientData?.staff_id}</p>
+                        </div>
                       </div>
-                      <div>
-                        <p className="text-sm font-black leading-none">{patientData?.first_name} {patientData?.last_name}</p>
-                        <p className="text-[11px] text-muted-foreground font-bold mt-1">Record Found • {patientData?.staff_id}</p>
+                      <Badge className="bg-primary text-white font-black text-[10px]">{patientData?.section || 'DCP'}</Badge>
+                    </div>
+
+                    <div className="p-4 grid grid-cols-2 gap-4 bg-muted/10 border-t border-primary/5">
+                      <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Building2 className="w-3 h-3" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest">Department</Label>
+                          </div>
+                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.department || 'N/A'}</p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <User className="w-3 h-3" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest">Gender</Label>
+                          </div>
+                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.gender || 'N/A'}</p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <Calendar className="w-3 h-3" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest">Date of Birth</Label>
+                          </div>
+                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.dob || 'N/A'}</p>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                          <div className="flex items-center gap-1.5 text-muted-foreground">
+                            <ShieldCheck className="w-3 h-3" />
+                            <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
+                          </div>
+                          <div className="pl-4.5 flex items-center gap-1.5">
+                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+                             <span className="text-xs font-black text-emerald-500 uppercase tracking-tight">Verified</span>
+                          </div>
                       </div>
                     </div>
-                    <Badge className="bg-primary text-white font-black">{patientData?.section || 'DCP'}</Badge>
                   </div>
 
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone</Label>
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Phone</Label>
                           <div className="relative group">
                             <Input value={claimData.phone} onChange={e => setClaimData({...claimData, phone: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20 font-bold" />
                             <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                           </div>
                        </div>
                        <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email</Label>
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Email Address</Label>
                           <div className="relative group">
-                            <Input value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
+                            <Input type="email" value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                             <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                           </div>
                        </div>
                     </div>
 
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                        <div className="space-y-2">
                           <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Create Password</Label>
                           <div className="relative group">
                             <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                             <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground">
+                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
                           </div>
                        </div>
                        <div className="space-y-2">
@@ -456,7 +562,32 @@ const SignupPage: React.FC = () => {
                           <div className="relative group">
                             <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                             <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground">
+                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                            </button>
                           </div>
+                       </div>
+                    </div>
+
+                    {/* Password Strength & Match Indicators */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                       <div className="space-y-2">
+                          <PasswordStrength password={claimData.password} />
+                       </div>
+                       <div className="space-y-2">
+                          {(claimData.password || claimData.confirm_password) && (
+                            <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
+                              claimData.password === claimData.confirm_password && claimData.password.length > 0
+                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-xl shadow-emerald-500/10' 
+                                : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
+                            }`}>
+                              {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
+                                <><CheckCircle2 className="w-4 h-4" /> Passwords Match</>
+                              ) : (
+                                <><X className="w-4 h-4" /> Passwords Do Not Match</>
+                              )}
+                            </div>
+                          )}
                        </div>
                     </div>
                   </div>
@@ -469,6 +600,89 @@ const SignupPage: React.FC = () => {
                     ← Back to Search
                   </button>
                 </form>
+              ) : (
+                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                  <AnimatePresence mode="wait">
+                    {!verifySuccess ? (
+                      <motion.form
+                        key="verify-form"
+                        initial={{ opacity: 1 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        onSubmit={handlePatientVerify}
+                        className="space-y-6"
+                      >
+                        <div className="text-center space-y-2">
+                           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
+                             <Mail className="w-8 h-8" />
+                           </div>
+                           <h3 className="text-xl font-black tracking-tight">Check Your Email</h3>
+                           <p className="text-sm text-muted-foreground font-medium">
+                             We sent a 6-digit code to <br/>
+                             <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
+                           </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          <Input
+                            type="text"
+                            inputMode="numeric"
+                            placeholder="000000"
+                            className="h-20 text-center text-4xl font-black tracking-[1.2rem] border-4 focus:border-primary rounded-2xl bg-muted/20"
+                            value={otp}
+                            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                            maxLength={6}
+                            autoFocus
+                          />
+                          
+                          <Button 
+                            type="submit"
+                            className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                            disabled={verifyLoading || otp.length < 6}
+                          >
+                            {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Finish'}
+                          </Button>
+                        </div>
+
+                        <div className="flex flex-col items-center gap-4 pt-2">
+                          <Button 
+                            variant="link" 
+                            type="button"
+                            className="text-primary font-black uppercase tracking-widest text-[10px] h-auto p-0"
+                            disabled={!canResendOtp || resendingOtp}
+                            onClick={handleResendOTP}
+                          >
+                            {resendingOtp ? 'Sending...' : canResendOtp ? 'Resend New Code' : `Resend available in ${otpTimer}s`}
+                          </Button>
+
+                          <button 
+                            type="button" 
+                            onClick={() => setPatientStep('claim')} 
+                            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                          >
+                             <ArrowLeft className="w-3 h-3" /> Change Profile Email / Password
+                          </button>
+                        </div>
+                      </motion.form>
+                    ) : (
+                      <motion.div
+                        key="success"
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        className="flex flex-col items-center py-10 space-y-6"
+                      >
+                        <div className="w-24 h-24 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                          <CheckCircle2 className="w-14 h-14" />
+                        </div>
+                        <div className="text-center space-y-2">
+                          <h3 className="text-2xl font-black text-emerald-600 tracking-tight">Identity Verified!</h3>
+                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-emerald-200">
+                             Claim successful. Syncing your medical <br/> records to your personal dashboard...
+                          </p>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+                </div>
               )}
             </TabsContent>
           </Tabs>

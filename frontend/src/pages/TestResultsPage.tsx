@@ -231,15 +231,15 @@ const TestResultsPage: React.FC = () => {
                                 className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50"
                                 onClick={() => navigate(`/tests/${test.id}`)}
                             >
-                                <CardContent className="p-6 flex items-center gap-4">
-                                    <div className={`p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
-                                        <test.icon className="h-8 w-8" />
+                                <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+                                    <div className={`p-2.5 sm:p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
+                                        <test.icon className="h-6 w-6 sm:h-8 sm:w-8" />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold">{test.title}</h3>
-                                        <p className="text-sm text-muted-foreground">Record diagnostic findings</p>
+                                        <h3 className="text-base sm:text-xl font-bold">{test.title}</h3>
+                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Record diagnostic findings</p>
                                     </div>
-                                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </CardContent>
                             </Card>
                         ))}
@@ -261,12 +261,12 @@ const TestResultsPage: React.FC = () => {
                         {/* Top Search Bar Style from Consultation */}
                         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 bg-primary/10 rounded-2xl">
-                                    <FlaskConical className="text-primary h-8 w-8" />
+                                <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+                                    <FlaskConical className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
-                                    <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                                    <h1 className="text-lg sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
+                                    <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                                     <TempAccessCountdown />
                                 </div>
                             </div>
@@ -585,7 +585,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
-                        <Label>{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
+                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
                         <Input {...register(f, { required: true })} type="number" step="any" placeholder="0.00" required />
                     </div>
                 ))}
@@ -629,13 +629,13 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
-                <div className="space-y-2"><Label>UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
@@ -673,10 +673,10 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
-                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>

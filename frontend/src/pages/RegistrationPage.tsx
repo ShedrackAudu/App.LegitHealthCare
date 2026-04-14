@@ -289,11 +289,11 @@ const RegistrationPage: React.FC = () => {
               </Button>
             )}
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                {isEditMode ? <Users className="text-primary h-6 w-6" /> : <UserPlus className="text-primary h-6 w-6" />}
+              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+                {isEditMode ? <Users className="text-primary h-5 w-5 sm:h-6 sm:w-6" /> : <UserPlus className="text-primary h-5 w-5 sm:h-6 sm:w-6" />}
                 {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[10px] sm:text-sm text-muted-foreground">
                 {isEditMode ? `Updating ${editStaffId}` : `Manage patient Bio-Data for ${activeSection} - ${activeYear}`}
               </p>
             </div>

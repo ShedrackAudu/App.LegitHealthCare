@@ -34,15 +34,15 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   if (!patient) return null;
 
   const DetailItem = ({ icon: Icon, label, value, colorClass = "text-muted-foreground" }: any) => (
-    <div className="flex items-start gap-3 p-2.5 rounded-xl bg-muted/30 border-2 border-transparent hover:border-emerald-500/10 hover:bg-emerald-500/5 transition-all group">
-      <div className={`p-2 rounded-lg bg-background border shadow-sm group-hover:shadow-emerald-500/10 transition-all ${colorClass}`}>
-        <Icon className="w-4 h-4" />
+    <div className="flex items-start gap-2 p-2 rounded-xl bg-muted/30 border-2 border-transparent hover:border-emerald-500/10 hover:bg-emerald-500/5 transition-all group overflow-hidden">
+      <div className={`p-1.5 rounded-lg bg-background border shadow-sm group-hover:shadow-emerald-500/10 transition-all shrink-0 ${colorClass}`}>
+        <Icon className="w-3.5 h-3.5" />
       </div>
-      <div className="space-y-0.5">
-        <p className="text-[9px] font-black uppercase tracking-[0.1em] text-muted-foreground/70">
+      <div className="space-y-0.5 overflow-hidden">
+        <p className="text-[8px] font-black uppercase tracking-[0.1rem] text-muted-foreground/70 truncate">
           {label}
         </p>
-        <p className="text-xs font-bold tracking-tight text-foreground">
+        <p className="text-[11px] font-bold tracking-tight text-foreground truncate">
           {value || 'N/A'}
         </p>
       </div>
@@ -78,14 +78,14 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                 </div>
             </div>
 
-            <div className="p-6 pb-4 space-y-6">
+            <div className="p-4 sm:p-6 pb-4 space-y-6">
                 {/* Section 1: Basic Bio */}
                 <div className="space-y-3">
                     <div className="flex items-center gap-2 mb-1">
                         <div className="h-5 w-1 bg-emerald-500 rounded-full" />
                         <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-emerald-600">Personal Information</h3>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                         <DetailItem icon={User} label="Full Names" value={`${patient.first_name} ${patient.middle_name || ''} ${patient.last_name}`} colorClass="text-emerald-600" />
                         <DetailItem icon={Calendar} label="Date of Birth" value={patient.dob} colorClass="text-teal-600" />
                         <DetailItem icon={Hash} label="Age" value={`${patient.age} Years`} colorClass="text-blue-600" />
@@ -97,25 +97,28 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
 
                 <Separator className="bg-primary/5" />
 
-                {/* Section 2: Institutional & Contact */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-6">
+                    {/* Section 2: Institutional */}
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-1">
                             <div className="h-5 w-1 bg-blue-500 rounded-full" />
                             <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-blue-600">Institutional Details</h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <DetailItem icon={Briefcase} label="Department" value={patient.department} colorClass="text-blue-600" />
                             <DetailItem icon={Hash} label="Staff Identification" value={patient.staff_id} colorClass="text-blue-500" />
                         </div>
                     </div>
 
+                    <Separator className="bg-primary/5" />
+
+                    {/* Section 3: Contact */}
                     <div className="space-y-3">
                         <div className="flex items-center gap-2 mb-1">
                             <div className="h-5 w-1 bg-purple-500 rounded-full" />
                             <h3 className="text-[9px] font-black uppercase tracking-[0.2em] text-purple-600">Contact Channels</h3>
                         </div>
-                        <div className="grid grid-cols-1 gap-3">
+                        <div className="grid grid-cols-2 gap-3">
                             <DetailItem icon={Phone} label="Primary Phone" value={patient.phone} colorClass="text-purple-600" />
                             <DetailItem icon={Mail} label="Official Email" value={patient.email} colorClass="text-purple-500" />
                         </div>

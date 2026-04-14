@@ -113,93 +113,95 @@ const PatientClaimPage = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Form Fields */}
-            <Card className="lg:col-span-2 border-2 border-border/50 shadow-xl shadow-foreground/5 bg-card/50 backdrop-blur-xl">
-              <CardHeader className="border-b bg-muted/30">
-                <div className="flex justify-between items-start mb-6">
-                  {branding?.logo_light ? (
-                    <img 
-                      src={`${branding.logo_light}`} 
-                      alt="Logo" 
-                      className="h-12 w-auto object-contain" 
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                        <ShieldCheck className="w-6 h-6" />
+            <Card className="lg:col-span-2 border-2 border-border/50 shadow-xl shadow-foreground/5 bg-card/50 backdrop-blur-xl overflow-hidden">
+              {/* Premium Patient Result Header (Matches Screenshot) */}
+              <div className="p-8 bg-emerald-500/5 border-b-2 border-emerald-500/10 relative overflow-hidden">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-4">
+                    <div className="w-16 h-16 rounded-2xl bg-emerald-500/10 flex items-center justify-center border-2 border-emerald-500/20 text-emerald-600 font-bold text-2xl">
+                      {formData.first_name?.[0]}{formData.last_name?.[0]}
                     </div>
-                  )}
-                  <div className="text-right">
-                    <CardTitle className="text-2xl font-black">Complete Your Profile</CardTitle>
-                    <CardDescription>Finish claiming your account by verifying your info.</CardDescription>
+                    <div>
+                      <h2 className="text-2xl font-black tracking-tight text-foreground">
+                        {formData.first_name} {formData.middle_name ? formData.middle_name + ' ' : ''}{formData.last_name}
+                      </h2>
+                      <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm font-bold text-emerald-600">Record Found</span>
+                        <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                        <span className="text-sm font-medium text-muted-foreground tracking-widest">{formData.staff_id}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`px-4 py-1.5 rounded-lg text-white font-black text-sm tracking-wider shadow-lg ${formData.section?.toUpperCase() === 'DCP' ? 'bg-emerald-500 shadow-emerald-500/20' : 'bg-blue-500 shadow-blue-500/20'}`}>
+                    {formData.section?.toUpperCase() || 'N/A'}
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-                <div className="space-y-2">
-                  <FieldLabel>Staff ID</FieldLabel>
-                  <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="staff_id" value={formData.staff_id} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed font-medium" />
-                  </div>
-                </div>
+              </div>
 
-                <div className="space-y-2">
-                    <FieldLabel>Section</FieldLabel>
-                    <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input name="section" value={formData.section} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed font-medium" />
+              <CardContent className="space-y-8 pt-8 px-8">
+                {/* 1. Verified Bio-Data (read-only) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Department</Label>
+                        <p className="font-bold text-foreground flex items-center gap-2">
+                           <Building className="w-4 h-4 text-primary" /> {formData.department || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Gender</Label>
+                        <p className="font-bold text-foreground flex items-center gap-2">
+                           <User className="w-4 h-4 text-primary" /> {formData.gender || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Date of Birth</Label>
+                        <p className="font-bold text-foreground flex items-center gap-2">
+                           <Calendar className="w-4 h-4 text-primary" /> {formData.dob || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-4 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Staff ID</Label>
+                        <p className="font-bold text-foreground flex items-center gap-2">
+                           <Hash className="w-4 h-4 text-primary" /> {formData.staff_id}
+                        </p>
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                  <FieldLabel>First Name</FieldLabel>
-                  <Input name="first_name" value={formData.first_name} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
+                <div className="h-px bg-border/50 w-full" />
 
-                <div className="space-y-2">
-                  <FieldLabel>Last Name</FieldLabel>
-                  <Input name="last_name" value={formData.last_name} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
+                {/* 2. Contact Verification (Editable) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-3">
+                      <Label className="text-sm font-bold tracking-tight">Current Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                            name="phone" 
+                            value={formData.phone} 
+                            onChange={handleChange} 
+                            required 
+                            className="h-14 pl-11 rounded-2xl border-2 focus-visible:ring-primary/20 transition-all font-medium" 
+                            placeholder="e.g. 0803 000 0000" 
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <FieldLabel>Middle Name</FieldLabel>
-                  <Input name="middle_name" value={formData.middle_name || ''} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Department</FieldLabel>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="department" value={formData.department} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Gender</FieldLabel>
-                  <Input name="gender" value={formData.gender} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Date of Birth</FieldLabel>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="dob" value={formData.dob} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Contact Phone</FieldLabel>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="phone" value={formData.phone} onChange={handleChange} required className="pl-10 border-2 focus:border-primary transition-all" placeholder="Enter phone number" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Email Address</FieldLabel>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="email" type="email" value={formData.email} onChange={handleChange} required className="pl-10 border-2 focus:border-primary transition-all" placeholder="Enter email address" />
-                  </div>
+                    <div className="space-y-3">
+                      <Label className="text-sm font-bold tracking-tight">Current Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                            name="email" 
+                            type="email" 
+                            value={formData.email} 
+                            onChange={handleChange} 
+                            required 
+                            className="h-14 pl-11 rounded-2xl border-2 focus-visible:ring-primary/20 transition-all font-medium" 
+                            placeholder="e.g. name@company.com" 
+                        />
+                      </div>
+                    </div>
                 </div>
               </CardContent>
             </Card>

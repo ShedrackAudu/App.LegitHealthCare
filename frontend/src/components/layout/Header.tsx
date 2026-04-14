@@ -193,7 +193,7 @@ export const Header: React.FC = () => {
         </div>
 
         {/* Right Side: Options and Auth */}
-        <div className="flex items-center gap-1.5 md:gap-4 shrink-0 transition-all duration-300">
+        <div className="flex items-center gap-0.5 sm:gap-4 shrink-0 transition-all duration-300">
           {timeLeft && (
             <div className="hidden sm:flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
               <Clock className="h-4 w-4" />
@@ -208,7 +208,7 @@ export const Header: React.FC = () => {
               value={activeSection} 
               onValueChange={(val) => setActiveSection(val as SectionID)}
             >
-              <SelectTrigger className="w-[85px] sm:w-[130px] h-9 border-2 font-semibold bg-card px-2">
+              <SelectTrigger className="w-[72px] sm:w-[130px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
                 <SelectValue placeholder="Section" />
               </SelectTrigger>
               <SelectContent>
@@ -221,10 +221,10 @@ export const Header: React.FC = () => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
-              <SelectTrigger className="w-[75px] sm:w-[110px] h-9 border-2 font-semibold bg-card px-2">
+              <SelectTrigger className="w-[60px] sm:w-[110px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
                 <SelectValue placeholder="Year" />
               </SelectTrigger>
               <SelectContent>
@@ -241,7 +241,7 @@ export const Header: React.FC = () => {
             <Button
               variant="outline"
               size="icon"
-              className="h-9 w-9 border-2 rounded-lg bg-card"
+              className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card"
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             >
               <label className="sr-only">Toggle theme</label>
@@ -260,8 +260,8 @@ export const Header: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" size="icon" className="h-9 w-9 border-2 rounded-lg flex bg-card group relative">
-                <Bell className="h-4 w-4 group-hover:text-primary transition-colors" />
+              <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg flex bg-card group relative">
+                <Bell className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border border-background"></span>
                 )}
@@ -324,9 +324,9 @@ export const Header: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 w-auto px-2 border-2 rounded-lg ml-1 bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 group">
-                <div className="p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <User className="h-4 w-4 text-primary" />
+              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg ml-0.5 sm:ml-1 bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
+                <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
                 {user && (
                   <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors hidden md:inline-block pr-1 text-nowrap">
