@@ -76,7 +76,7 @@ const RegistrationPage: React.FC = () => {
       const fetchPatient = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}`, {
+          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           const p = response.data;
@@ -185,7 +185,7 @@ const RegistrationPage: React.FC = () => {
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           setSearchResults(res.data);
@@ -205,7 +205,7 @@ const RegistrationPage: React.FC = () => {
     if (!cleanId) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/patient/${cleanId}`, {
+      const response = await axios.get(`http://localhost:5000/patient/${cleanId}?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
 
@@ -361,7 +361,7 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <StatCard
             title="Total Registered"
             value={stats?.total_comprehensive?.toLocaleString() || '0'}
@@ -417,14 +417,15 @@ const RegistrationPage: React.FC = () => {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Row 1: IDs */}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6">
+              <div className="grid grid-cols-2 gap-3 sm:gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6">
                 <div className="space-y-2">
-                  <Label className="text-primary font-bold">Staff ID (Company ID) <span className="text-destructive">*</span></Label>
+                  <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
                   <Input
-                    {...register('staff_id')}
+                    {...register('staff_id', { required: true })}
                     className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
                     placeholder="e.g. 123456"
                     inputMode="numeric"
+                    required
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '');
                       e.target.value = val;
@@ -435,12 +436,13 @@ const RegistrationPage: React.FC = () => {
                   {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-emerald-600 font-bold">Patient ID (Clinic ID) <span className="text-destructive">*</span></Label>
+                  <Label className="text-emerald-600 font-bold">Patient ID <span className="text-rose-500">*</span></Label>
                   <Input 
-                    {...register('patient_id')} 
+                    {...register('patient_id', { required: true })} 
                     className="h-11 border-emerald-500/30 font-bold text-lg uppercase tracking-wider" 
                     placeholder="e.g. 12345" 
                     inputMode="numeric"
+                    required
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '');
                       e.target.value = val;
@@ -452,21 +454,21 @@ const RegistrationPage: React.FC = () => {
               </div>
 
               {/* Main Form Fields: 4 per row */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="space-y-2">
-                  <Label>First Name</Label>
-                  <Input {...register('first_name')} placeholder="First Name" />
+                  <Label>First Name <span className="text-rose-500">*</span></Label>
+                  <Input {...register('first_name', { required: true })} placeholder="First Name" required />
                 </div>
                 <div className="space-y-2">
                   <Label>Middle Name</Label>
                   <Input {...register('middle_name')} placeholder="Middle Name" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Last Name</Label>
-                  <Input {...register('last_name')} placeholder="Last Name" />
+                  <Label>Last Name <span className="text-rose-500">*</span></Label>
+                  <Input {...register('last_name', { required: true })} placeholder="Last Name" required />
                 </div>
                 <div className="space-y-2">
-                  <Label>Department</Label>
+                  <Label>Department <span className="text-rose-500">*</span></Label>
                   <Controller
                     name="department"
                     control={control}
@@ -482,7 +484,7 @@ const RegistrationPage: React.FC = () => {
                 </div>
 
                 <div className="space-y-2">
-                  <Label>Gender</Label>
+                  <Label>Gender <span className="text-rose-500">*</span></Label>
                   <Controller
                     name="gender"
                     control={control}
@@ -497,13 +499,14 @@ const RegistrationPage: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Date of Birth</Label>
+                  <Label>Date of Birth <span className="text-rose-500">*</span></Label>
                   <div className="relative group">
                     <Input
                       type="text"
-                      {...register('dob')}
+                      {...register('dob', { required: true })}
                       placeholder="DD/MM/YYYY"
                       className="pr-12"
+                      required
                       onChange={(e) => {
                         let val = e.target.value.replace(/\D/g, '');
                         if (val.length > 8) val = val.slice(0, 8);
@@ -537,8 +540,8 @@ const RegistrationPage: React.FC = () => {
                   <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Contact Phone</Label>
-                  <Input {...register('phone')} placeholder="+234..." />
+                  <Label>Contact Phone <span className="text-rose-500">*</span></Label>
+                  <Input {...register('phone', { required: true })} placeholder="+234..." required />
                 </div>
 
                 <div className="space-y-2">
@@ -546,7 +549,7 @@ const RegistrationPage: React.FC = () => {
                   <Input type="email" {...register('email')} placeholder="email@example.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Race (Continent)</Label>
+                  <Label>Race (Continent) <span className="text-rose-500">*</span></Label>
                   <Controller
                     name="race"
                     control={control}
@@ -561,7 +564,7 @@ const RegistrationPage: React.FC = () => {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Nationality</Label>
+                  <Label>Nationality <span className="text-rose-500">*</span></Label>
                   <Controller
                     name="nationality"
                     control={control}
@@ -610,16 +613,16 @@ const RegistrationPage: React.FC = () => {
 };
 
 const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border-2 shadow-sm hover:shadow-md transition-all">
-    <CardContent className="p-4 flex items-center gap-4">
-      <div className={`p-3 rounded-xl bg-muted/50 ${color}`}>
-        <Icon className="h-6 w-6" />
+  <Card className="border-2 shadow-sm hover:shadow-md transition-all overflow-hidden">
+    <CardContent className="p-2 sm:p-4 flex items-center gap-2 sm:gap-4 h-full">
+      <div className={`p-2 sm:p-3 rounded-xl bg-muted/50 ${color} shrink-0`}>
+        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
       </div>
-      <div>
-        <p className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{title}</p>
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-2xl font-bold">{value}</h3>
-          {sub && <span className="text-[10px] font-medium text-muted-foreground">{sub}</span>}
+      <div className="min-w-0">
+        <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider truncate">{title}</p>
+        <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
+          <h3 className="text-sm sm:text-2xl font-black truncate">{value}</h3>
+          {sub && <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground truncate opacity-80">{sub}</span>}
         </div>
       </div>
     </CardContent>

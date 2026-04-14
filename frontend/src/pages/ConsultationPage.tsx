@@ -80,8 +80,7 @@ const consultationSchema = z.object({
   abdomen: z.string().min(1, 'Abdomen is required'),
   assessment_hx_pe: z.string().min(1, 'Assessment HX/PE is required'),
   other_assessments: z.string().min(1, 'Other Assessments is required'),
-  overall_lab_remark: z.string().min(1, 'Overall Lab Remark is required'),
-  other_remarks: z.string().min(1, 'Other Remarks is required'),
+  other_remarks: z.string().optional().or(z.literal('')),
   overall_assessment: z.string().optional().or(z.literal('')),
 });
 
@@ -89,7 +88,7 @@ type ConsultationValues = z.infer<typeof consultationSchema>;
 
 const SelectField = ({ label, options, name, control }: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label} <span className="text-red-500">*</span></Label>
+    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} <span className="text-red-500">*</span></Label>
     <Controller
       name={name}
       control={control}
@@ -114,7 +113,7 @@ const SelectField = ({ label, options, name, control }: any) => (
 
 const RadioField = ({ label, name, control }: any) => (
   <div className="space-y-2 lg:col-span-1">
-    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label} <span className="text-red-500">*</span></Label>
+    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} <span className="text-red-500">*</span></Label>
     <Controller
       name={name}
       control={control}
@@ -143,7 +142,7 @@ const RadioField = ({ label, name, control }: any) => (
 
 const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label} <span className="text-red-500">*</span></Label>
+    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} <span className="text-red-500">*</span></Label>
     <div className="relative group">
       <Input
         ref={ref}
@@ -277,7 +276,6 @@ const ConsultationPage: React.FC = () => {
       spo2: '',
       other_assessments: '',
       psa_remark: '',
-      overall_lab_remark: '',
       other_remarks: '',
       overall_assessment: ''
     }
@@ -331,7 +329,7 @@ const ConsultationPage: React.FC = () => {
           htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
           breast_exam: '', breast_remark: '', abdomen: '',
           assessment_hx_pe: '', other_assessments: '',
-          overall_lab_remark: '', other_remarks: '', overall_assessment: ''
+          other_remarks: '', overall_assessment: ''
         } as any);
         toast.success(`New consultation for ${fullData.first_name}`);
       }
@@ -430,7 +428,7 @@ const ConsultationPage: React.FC = () => {
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 mt-8">
             <Card className="border-2 border-emerald-500/20 shadow-lg bg-emerald-500/[0.02]">
               <CardContent className="p-4 md:p-6">
-                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
                   <div className="lg:col-span-2">
                     <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
@@ -460,7 +458,7 @@ const ConsultationPage: React.FC = () => {
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Medical History & Screening</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
                         <RadioField name="luts" control={control} label="LUTS" />
                         <RadioField name="chronic_cough" control={control} label="Chronic Cough" />
                         <RadioField name="chronic_chest_pain" control={control} label="Chronic Chest Pain" />
@@ -478,18 +476,18 @@ const ConsultationPage: React.FC = () => {
 
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Vital Signs & Core Metrics</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+                      <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2"><Activity className="h-4 w-4 text-emerald-600" /> B.P <span className="text-red-500">*</span></Label>
-                          <Input {...register('bp')} className="h-12 text-lg font-bold" />
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-emerald-600" /> B.P <span className="text-red-500">*</span></Label>
+                            <Input {...register('bp')} className="h-12 text-lg font-bold" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2"><Heart className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Heart className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
                           <Input {...register('pulse')} className="h-12 text-lg font-bold" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 % <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 % <span className="text-red-500">*</span></Label>
                           <Input {...register('spo2')} className="h-12 text-lg font-bold" />
                         </div>
                       </div>
@@ -497,7 +495,7 @@ const ConsultationPage: React.FC = () => {
 
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Systematic Findings & Lab Data</h3>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
@@ -518,11 +516,7 @@ const ConsultationPage: React.FC = () => {
                         <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
                       </div>
                       <div className="space-y-2">
-                        <Label className="font-bold text-emerald-600">Overall Lab Remark <span className="text-red-500">*</span></Label>
-                        <textarea {...register('overall_lab_remark')} className="w-full min-h-[100px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="General laboratory findings..." />
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="font-bold text-emerald-600">Other Remarks <span className="text-red-500">*</span></Label>
+                        <Label className="font-bold">Other Remarks</Label>
                         <textarea {...register('other_remarks')} className="w-full min-h-[100px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Any other clinical notes..." />
                       </div>
 
@@ -591,14 +585,19 @@ const ConsultationPage: React.FC = () => {
                         >
                           Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                         </Button>
-                        <div className="text-right">
-                          <div className="flex items-center gap-1 text-muted-foreground mb-1">
+                        <div className="text-right space-y-2">
+                          <div className="flex items-center gap-1.5 justify-end">
+                            <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
+                              #{entry.queue_number || '--'}
+                            </Badge>
+                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-600 border-emerald-600/20 h-auto">
+                              WAITING
+                            </Badge>
+                          </div>
+                          <div className="flex items-center gap-1 text-muted-foreground justify-end">
                             <Clock className="w-3 h-3" />
                             <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
                           </div>
-                          <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-600 border-emerald-600/20">
-                            WAITING
-                          </Badge>
                         </div>
                       </div>
                     </div>

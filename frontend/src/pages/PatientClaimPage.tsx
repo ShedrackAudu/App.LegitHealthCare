@@ -73,7 +73,12 @@ const PatientClaimPage = () => {
       });
       toast.success(resp.data.message);
       // Navigate to OTP verification page
-      navigate('/patient/verify-otp', { state: { userId: resp.data.user_id, email: formData.email } });
+      navigate('/patient/verify-otp', { 
+        state: { 
+          patientData: formData, 
+          claimData: { email: formData.email, password: formData.password } 
+        } 
+      });
     } catch (err: any) {
       console.error('Claim error:', err);
       toast.error(err.response?.data?.error || 'Failed to initiate account claiming.');

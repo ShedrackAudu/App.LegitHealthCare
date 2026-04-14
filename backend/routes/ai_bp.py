@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult
 from openai import OpenAI
+from decorators import require_permission
 import json
 import traceback
 import os
@@ -8,6 +9,7 @@ import os
 ai_bp = Blueprint('ai', __name__)
 
 @ai_bp.route('/settings', methods=['GET'])
+@require_permission('manage_ai')
 def get_settings():
     settings = AISettings.query.first()
     if not settings:
@@ -51,6 +53,7 @@ def update_env_file(key, value):
         f.writelines(new_lines)
 
 @ai_bp.route('/settings', methods=['POST'])
+@require_permission('manage_ai')
 def update_settings():
     try:
         data = request.json
@@ -81,6 +84,7 @@ def update_settings():
         return jsonify({"error": str(e)}), 400
 
 @ai_bp.route('/generate', methods=['POST'])
+@require_permission('manage_ai')
 def generate_overview():
     try:
         data = request.json

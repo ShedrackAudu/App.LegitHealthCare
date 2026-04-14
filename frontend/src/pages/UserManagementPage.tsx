@@ -221,7 +221,7 @@ const UserManagementPage: React.FC = () => {
   const handleDeactivateUser = async () => {
     const targetUser = confirmDeactivation.user;
     if (!targetUser) return;
-    
+
     if (targetUser.username === 'admin') {
       toast.error("Security Lock: Primary Administrator cannot be deactivated.");
       setConfirmDeactivation({ open: false, user: null });
@@ -263,11 +263,11 @@ const UserManagementPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="staff" className="w-full">
-          <TabsList className="bg-muted/50 p-1 mb-6 border-2 border-border/50 rounded-2xl h-14 w-full md:w-auto">
-            <TabsTrigger value="staff" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg font-bold transition-all">
+          <TabsList className="flex flex-wrap bg-muted/50 p-1 mb-6 border-2 border-border/50 rounded-2xl h-auto min-h-[56px] w-fit mx-auto md:mx-0 overflow-hidden">
+            <TabsTrigger value="staff" className="flex-1 md:flex-none rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-bold transition-all whitespace-nowrap">
               Clinical Staff
             </TabsTrigger>
-            <TabsTrigger value="patient" className="rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg font-bold transition-all">
+            <TabsTrigger value="patient" className="flex-1 md:flex-none rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-bold transition-all whitespace-nowrap">
               Patient Directory
             </TabsTrigger>
           </TabsList>
@@ -295,10 +295,10 @@ const UserManagementPage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <UserTable 
-                  users={filteredUsers.filter(u => !u.roles.includes('Patient'))} 
-                  loading={loading} 
-                  handleAction={handleAction} 
+                <UserTable
+                  users={filteredUsers.filter(u => !u.roles.includes('Patient'))}
+                  loading={loading}
+                  handleAction={handleAction}
                 />
               </CardContent>
             </Card>
@@ -327,10 +327,10 @@ const UserManagementPage: React.FC = () => {
                 </div>
               </CardHeader>
               <CardContent className="p-0">
-                <UserTable 
-                  users={filteredUsers.filter(u => u.roles.includes('Patient'))} 
-                  loading={loading} 
-                  handleAction={handleAction} 
+                <UserTable
+                  users={filteredUsers.filter(u => u.roles.includes('Patient'))}
+                  loading={loading}
+                  handleAction={handleAction}
                 />
               </CardContent>
             </Card>
@@ -387,10 +387,17 @@ const UserManagementPage: React.FC = () => {
                         <div className="flex gap-3 items-center">
                           <Checkbox
                             checked={userRolesInput.includes(role.name)}
+                            onCheckedChange={() => handleToggleRole(role.name)}
+                            disabled={selectedUser?.username === 'admin' && role.name === 'Admin'}
                             className="h-5 w-5"
                           />
                           <div>
-                            <p className={`font-bold text-sm ${userRolesInput.includes(role.name) ? "text-primary" : ""}`}>{role.name}</p>
+                            <p className={`font-bold text-sm ${userRolesInput.includes(role.name) ? "text-primary" : ""} ${(selectedUser?.username === 'admin' && role.name === 'Admin') ? "opacity-50" : ""}`}>
+                              {role.name}
+                              {selectedUser?.username === 'admin' && role.name === 'Admin' && (
+                                <span className="ml-2 text-[8px] bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded-full border border-rose-500/20">SYSTEM LOCKED</span>
+                              )}
+                            </p>
                             <p className="text-[10px] text-muted-foreground font-medium mt-0.5 italic">{role.description}</p>
                           </div>
                         </div>
@@ -489,7 +496,7 @@ const UserManagementPage: React.FC = () => {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-      
+
       <Dialog open={isAddModalOpen} onOpenChange={setIsAddModalOpen}>
         <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
@@ -509,7 +516,7 @@ const UserManagementPage: React.FC = () => {
                   id="first_name"
                   placeholder="John"
                   value={newUser.first_name}
-                  onChange={(e) => setNewUser({...newUser, first_name: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, first_name: e.target.value })}
                 />
               </div>
               <div className="space-y-2">
@@ -518,7 +525,7 @@ const UserManagementPage: React.FC = () => {
                   id="last_name"
                   placeholder="Doe"
                   value={newUser.last_name}
-                  onChange={(e) => setNewUser({...newUser, last_name: e.target.value})}
+                  onChange={(e) => setNewUser({ ...newUser, last_name: e.target.value })}
                 />
               </div>
             </div>
@@ -528,7 +535,7 @@ const UserManagementPage: React.FC = () => {
                 id="username"
                 placeholder="jdoe"
                 value={newUser.username}
-                onChange={(e) => setNewUser({...newUser, username: e.target.value})}
+                onChange={(e) => setNewUser({ ...newUser, username: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -538,7 +545,7 @@ const UserManagementPage: React.FC = () => {
                 type="email"
                 placeholder="john.doe@legit-healthcare.com"
                 value={newUser.email}
-                onChange={(e) => setNewUser({...newUser, email: e.target.value})}
+                onChange={(e) => setNewUser({ ...newUser, email: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -547,7 +554,7 @@ const UserManagementPage: React.FC = () => {
                 id="phone"
                 placeholder="+234..."
                 value={newUser.phone}
-                onChange={(e) => setNewUser({...newUser, phone: e.target.value})}
+                onChange={(e) => setNewUser({ ...newUser, phone: e.target.value })}
               />
             </div>
             <div className="space-y-2">
@@ -555,14 +562,14 @@ const UserManagementPage: React.FC = () => {
               <div className="grid grid-cols-2 gap-2 mt-2">
                 {roles.map((role) => (
                   <div key={role.id} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer"
-                       onClick={() => {
-                         const currentRoles = newUser.roles;
-                         if (currentRoles.includes(role.name)) {
-                           setNewUser({...newUser, roles: currentRoles.filter(r => r !== role.name)});
-                         } else {
-                           setNewUser({...newUser, roles: [...currentRoles, role.name]});
-                         }
-                       }}>
+                    onClick={() => {
+                      const currentRoles = newUser.roles;
+                      if (currentRoles.includes(role.name)) {
+                        setNewUser({ ...newUser, roles: currentRoles.filter(r => r !== role.name) });
+                      } else {
+                        setNewUser({ ...newUser, roles: [...currentRoles, role.name] });
+                      }
+                    }}>
                     <Checkbox checked={newUser.roles.includes(role.name)} />
                     <span className="text-sm font-medium">{role.name}</span>
                   </div>
@@ -572,7 +579,7 @@ const UserManagementPage: React.FC = () => {
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsAddModalOpen(false)}>Cancel</Button>
-            <Button 
+            <Button
               onClick={handleAddUser}
               className="font-bold gap-2"
               disabled={saving}

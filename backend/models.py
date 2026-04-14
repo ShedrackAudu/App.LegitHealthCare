@@ -25,7 +25,13 @@ class RoutingSession(Session):
                 model_class = getattr(mapper, 'class_', None)
                 
                 # Check for global system tables
-                if table_name in ['ai_settings', 'app_branding', 'users', 'departments', 'roles', 'permissions', 'user_roles', 'role_permissions', 'audit_logs', 'temp_access_codes', 'access_requests', 'system_config', 'appointments', 'report_verifications']:
+                if table_name in [
+                    'ai_settings', 'app_branding', 'users', 'departments', 'roles', 
+                    'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
+                    'temp_access_codes', 'access_requests', 'system_config', 
+                    'appointments', 'report_verifications', 'chat_messages', 
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications'
+                ]:
                     return _db.engine
                 
                 # Check for explicit bind keys (e.g., 'patients')
@@ -88,8 +94,8 @@ class StaffUser(db.Model):
 
     section = db.Column(db.String(10), nullable=True) # DCP or DCT
     department = db.Column(db.String(100), nullable=True)
-    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_seen_at = db.Column(db.DateTime, default=datetime.now)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     contacts = db.relationship('UserContact', backref='user', lazy=True, cascade="all, delete-orphan")
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('assigned_users', lazy='dynamic'))
@@ -122,7 +128,14 @@ class StaffUser(db.Model):
             "must_reset_password": self.must_reset_password,
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None,
             "roles": [role.name for role in self.roles],
-            "permissions": list(set([p.name for role in self.roles for p in role.permissions]))
+            "permissions": list(set([p.name for role in self.roles for p in role.permissions])),
+            "temp_access": [
+                {
+                    "permission_name": t.permission.name,
+                    "is_revoked": t.is_revoked,
+                    "expires_at": t.expires_at.isoformat() if t.expires_at else None
+                } for t in self.temp_codes
+            ] if hasattr(self, 'temp_codes') else []
         }
 
 # Isolated Patient Portal users - Uses 'patients' bind
@@ -148,8 +161,8 @@ class PatientPortalUser(db.Model):
     otp_expiry = db.Column(db.DateTime, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    last_seen_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    last_seen_at = db.Column(db.DateTime, default=datetime.now)
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -183,7 +196,7 @@ class Notification(db.Model):
     message = db.Column(db.Text, nullable=False)
     link = db.Column(db.String(255), nullable=True) # Optional link to redirect
     is_read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     user = db.relationship('StaffUser', backref=db.backref('notifications', lazy=True, cascade="all, delete-orphan"))
 
@@ -211,7 +224,7 @@ class TempAccessCode(db.Model):
     expires_at = db.Column(db.DateTime, nullable=True)
     is_revoked = db.Column(db.Boolean, default=False)
     generated_by = db.Column(db.Integer, db.ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', foreign_keys=[user_id], backref=db.backref('temp_codes', lazy=True))
     permission = db.relationship('Permission', backref=db.backref('temp_codes', lazy=True))
@@ -241,7 +254,7 @@ class TestResultArchive(db.Model):
     screening_year = db.Column(db.Integer, nullable=False)
     test_type = db.Column(db.String(50), nullable=False) # e.g., 'fbc', 'lft', 'ecg'
     test_data = db.Column(db.JSON, nullable=False)       # JSON dump of results
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class AISettings(db.Model):
     __tablename__ = 'ai_settings'
@@ -252,7 +265,7 @@ class AISettings(db.Model):
     api_key = db.Column(db.String(255), nullable=True)
     model_selection = db.Column(db.String(50), default="gpt-4o")
     sample_comments = db.Column(db.Text, default="[]") 
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 class AppBranding(db.Model):
     __tablename__ = 'app_branding'
@@ -262,6 +275,9 @@ class AppBranding(db.Model):
     logo_dark = db.Column(db.String(255), nullable=True)
     favicon = db.Column(db.String(255), nullable=True)
     clinic_slogan = db.Column(db.String(255), default="Excellence.")
+    
+    auth_branding_image = db.Column(db.String(255), nullable=True)
+    auth_logo = db.Column(db.String(255), nullable=True)
     
     # Hero Illustration Images
     hero_image_1 = db.Column(db.String(255), nullable=True)
@@ -282,7 +298,7 @@ class AppBranding(db.Model):
     doctor_name = db.Column(db.String(100), default="Dr. Anyanwu Ugochukwu D. FMCPath")
     doctor_post = db.Column(db.String(100), default="Consultant in Charge")
     
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
     def to_dict(self):
         social_links = []
@@ -297,6 +313,8 @@ class AppBranding(db.Model):
             "logo_light": self.logo_light,
             "logo_dark": self.logo_dark,
             "favicon": self.favicon,
+            "auth_branding_image": self.auth_branding_image,
+            "auth_logo": self.auth_logo,
             "hero_image_1": self.hero_image_1,
             "hero_image_2": self.hero_image_2,
             "hero_image_team": self.hero_image_team,
@@ -315,7 +333,7 @@ class Department(db.Model):
     __tablename__ = 'departments'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class QueueTracker(db.Model):
     __tablename__ = 'queue_tracker'
@@ -324,21 +342,21 @@ class QueueTracker(db.Model):
     audiometry = db.Column(db.Integer, default=0)
     spirometry = db.Column(db.Integer, default=0)
     ecg = db.Column(db.Integer, default=0)
-    last_updated = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
-    last_reset = db.Column(db.DateTime, default=datetime.utcnow)
+    last_updated = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+    last_reset = db.Column(db.DateTime, default=datetime.now)
 
 
 class Race(db.Model):
     __tablename__ = 'races'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(50), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class Nationality(db.Model):
     __tablename__ = 'nationalities'
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class BioData(db.Model):
     __tablename__ = 'bio_data'
@@ -355,7 +373,7 @@ class BioData(db.Model):
     email = db.Column(db.String(100))
     race = db.Column(db.String(50))
     nationality = db.Column(db.String(100))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class ScreeningYearBioData(db.Model):
     __tablename__ = 'screening_year_bio_data'
@@ -370,7 +388,7 @@ class ScreeningYearBioData(db.Model):
     department = db.Column(db.String(50))
     gender = db.Column(db.String(10))
     age = db.Column(db.Integer)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     
     __table_args__ = (
         db.UniqueConstraint('staff_id', 'screening_year', name='_staff_year_uc'),
@@ -383,7 +401,8 @@ class QueueEntry(db.Model):
     screening_year = db.Column(db.Integer, nullable=False)
     department = db.Column(db.String(50), nullable=False) # Consultation, Audiometry, Spirometry, ECG
     status = db.Column(db.String(20), default='Waiting') # Waiting, Completed
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    queue_number = db.Column(db.Integer, nullable=True)
 
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'
@@ -423,7 +442,7 @@ class ConsultationData(db.Model):
     other_remarks = db.Column(db.Text)
     overall_assessment = db.Column(db.Text)
     
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
     consulted_by_name = db.Column(db.String(100), nullable=True)
 
 class FBCResult(db.Model):
@@ -449,7 +468,7 @@ class FBCResult(db.Model):
     hgb = db.Column(db.String(20))
     fbc_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class KFTResult(db.Model):
     __tablename__ = 'kft_results'
@@ -465,7 +484,7 @@ class KFTResult(db.Model):
     creatinine = db.Column(db.String(20))
     kft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class LipidResult(db.Model):
     __tablename__ = 'lipid_results'
@@ -478,7 +497,7 @@ class LipidResult(db.Model):
     ldl = db.Column(db.String(20))
     lp_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class LFTResult(db.Model):
     __tablename__ = 'lft_results'
@@ -492,7 +511,7 @@ class LFTResult(db.Model):
     cb = db.Column(db.String(20))
     lft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class SpecialTestsResult(db.Model):
     __tablename__ = 'special_tests_results'
@@ -507,7 +526,7 @@ class SpecialTestsResult(db.Model):
     spirometry_remark = db.Column(db.Text)
     audiometry_result = db.Column(db.String(50))
     audiometry_remark = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
 class DirectorReview(db.Model):
     __tablename__ = 'director_reviews'
@@ -556,8 +575,8 @@ class DirectorReview(db.Model):
     
     # Immutable timestamp
     first_submitted_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, onupdate=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, onupdate=datetime.now)
 
 class ChatGroup(db.Model):
     __tablename__ = 'chat_groups'
@@ -565,7 +584,7 @@ class ChatGroup(db.Model):
     name = db.Column(db.String(100), nullable=False)
     avatar = db.Column(db.String(255), nullable=True)
     created_by = db.Column(db.Integer, db.ForeignKey('users.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
@@ -583,7 +602,7 @@ class ChatGroupMember(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
     role = db.Column(db.String(20), default='Member') # Admin, Moderator, Member
     is_muted = db.Column(db.Boolean, default=False)
-    last_read_at = db.Column(db.DateTime, default=datetime.utcnow)
+    last_read_at = db.Column(db.DateTime, default=datetime.now)
 
 class ChatMessage(db.Model):
     __tablename__ = 'chat_messages'
@@ -600,10 +619,10 @@ class ChatMessage(db.Model):
     deleted_at = db.Column(db.DateTime)
     is_edited = db.Column(db.Boolean, default=False)
     parent_message_id = db.Column(db.Integer, db.ForeignKey('chat_messages.id'), nullable=True)
-    reactions = db.Column(db.Text, default='[]') # JSON string of reactions: [{"emoji": "👍", "user_id": 1}]
+    reactions = db.Column(db.Text, default='[]') # JSON string of reactions: [{"emoji": "ðŸ‘", "user_id": 1}]
     
     read_at = db.Column(db.DateTime)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
@@ -629,7 +648,7 @@ class UserContact(db.Model):
     label = db.Column(db.String(50), nullable=False) # e.g. 'Email', 'WhatsApp'
     value = db.Column(db.String(255), nullable=False)
     contact_type = db.Column(db.String(20), default='text') # text, link, email, phone
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
@@ -678,7 +697,7 @@ class AuditLog(db.Model):
     resource = db.Column(db.String(100))
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
-    timestamp = db.Column(db.DateTime, default=datetime.utcnow)
+    timestamp = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', foreign_keys='AuditLog.user_id', backref=db.backref('audit_logs', lazy=True))
 
@@ -690,10 +709,29 @@ class AuditLog(db.Model):
             except (ValueError, TypeError, json.JSONDecodeError):
                 details_data = {"message": self.details}
 
+        user_name = "System"
+        if self.user:
+            user_name = f"{self.user.first_name} {self.user.last_name}"
+        elif self.user_id:
+            # Fallback check for Patient Portal users
+            portal = details_data.get('portal', 'staff')
+            if portal == 'patient':
+                try:
+                    # Look up in PatientPortalUser (which uses 'patients' bind)
+                    patient = PatientPortalUser.query.get(self.user_id)
+                    if patient:
+                        user_name = f"{patient.first_name} {patient.last_name} (Patient)"
+                    else:
+                        user_name = f"Patient {self.user_id}"
+                except:
+                    user_name = f"User {self.user_id}"
+            else:
+                user_name = f"User {self.user_id}"
+
         return {
             "id": self.id,
             "user_id": self.user_id,
-            "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "System",
+            "user_name": user_name,
             "action": self.action,
             "resource": self.resource,
             "details": details_data,
@@ -709,7 +747,7 @@ class AccessRequest(db.Model):
     permission_name = db.Column(db.String(100), nullable=False)
     is_reviewed = db.Column(db.Boolean, default=False)
     review_notes = db.Column(db.Text)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', foreign_keys='AccessRequest.user_id', backref=db.backref('access_requests', lazy=True, cascade="all, delete-orphan"))
 
@@ -728,7 +766,7 @@ class SystemConfig(db.Model):
     key = db.Column(db.String(100), primary_key=True)
     value = db.Column(db.Text)
     description = db.Column(db.String(255))
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 class Appointment(db.Model):
     __tablename__ = 'appointments'
@@ -745,7 +783,7 @@ class Appointment(db.Model):
     appointment_date = db.Column(db.DateTime, nullable=False)
     time_slot = db.Column(db.String(50)) # e.g. 10:00 AM - 10:30 AM
     reason = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {
@@ -772,7 +810,7 @@ class ReportVerification(db.Model):
     screening_year = db.Column(db.Integer, nullable=False)
     section = db.Column(db.String(50), nullable=False) # e.g. 'DCP' or 'DCT' so we can look back up the patient
     verification_code = db.Column(db.String(100), unique=True, nullable=False)
-    generated_at = db.Column(db.DateTime, default=datetime.utcnow)
+    generated_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
         return {

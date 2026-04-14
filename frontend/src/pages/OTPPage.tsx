@@ -57,11 +57,11 @@ const OTPPage = () => {
       <div className="w-full max-w-sm">
         <Card className="border-border shadow-xl bg-card">
           <CardHeader className="py-4 text-center">
-            <div className="flex items-center justify-center mb-3">
+            <Link to="/" className="flex items-center justify-center mb-3 hover:opacity-80 transition-opacity">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Activity className="w-8 h-8 text-primary" />
               </div>
-            </div>
+            </Link>
             <CardTitle className="text-2xl font-bold tracking-tight">Verify Email</CardTitle>
             <CardDescription className="text-muted-foreground mt-1 text-sm">
               Enter the code sent to your email.

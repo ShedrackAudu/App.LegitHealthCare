@@ -3,10 +3,12 @@ from models import db, Appointment, ScreeningYearBioData
 from datetime import datetime
 import os
 from utils.email_utils import EmailService
+from decorators import require_permission
 
 appointments_bp = Blueprint('appointments', __name__)
 
 @appointments_bp.route('/appointments', methods=['POST'])
+@require_permission('manage_appointments')
 def create_appointment():
     data = request.json
     staff_id = data.get('staff_id')
@@ -127,6 +129,7 @@ def create_appointment():
     return jsonify({"message": "Appointment booked successfully", "appointment": appointment.to_dict()}), 201
 
 @appointments_bp.route('/appointments', methods=['GET'])
+@require_permission('view_appointments')
 def get_appointments():
     appointments = Appointment.query.order_by(Appointment.appointment_date.desc()).all()
     return jsonify([a.to_dict() for a in appointments]), 200

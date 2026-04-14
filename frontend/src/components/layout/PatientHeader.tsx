@@ -24,7 +24,7 @@ const getPageTitle = (pathname: string) => {
 
 export const PatientHeader: React.FC = () => {
   const { user, setUser } = useAppContext();
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
@@ -46,7 +46,17 @@ export const PatientHeader: React.FC = () => {
     fetchName();
   }, [fetchName]);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    if (user) {
+        try {
+            await axios.post('http://localhost:5000/api/logout', { 
+                user_id: user.id,
+                portal: 'patient' 
+            });
+        } catch (err) {
+            console.error("Logout logging failed", err);
+        }
+    }
     setUser(null);
     navigate('/login');
   };
@@ -73,10 +83,18 @@ export const PatientHeader: React.FC = () => {
             variant="outline"
             size="icon"
             className="h-9 w-9 border-2 rounded-lg bg-card"
-            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           >
-            <Sun className="h-[1.2rem] w-[1.2rem] rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-            <Moon className="absolute h-[1.2rem] w-[1.2rem] rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+            <Sun className={`h-[1.2rem] w-[1.2rem] transition-all ${
+              resolvedTheme === "dark" 
+                ? "-rotate-90 scale-0 opacity-0" 
+                : "rotate-0 scale-100 opacity-100"
+            }`} />
+            <Moon className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
+              resolvedTheme === "dark" 
+                ? "rotate-0 scale-100 opacity-100" 
+                : "rotate-90 scale-0 opacity-0"
+            }`} />
           </Button>
 
           <Button variant="outline" size="icon" className="h-9 w-9 border-2 rounded-lg bg-card group">

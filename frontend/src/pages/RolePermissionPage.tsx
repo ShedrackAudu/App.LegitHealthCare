@@ -32,10 +32,10 @@ const RolePermissionPage: React.FC = () => {
     try {
       const [rolesResp, permsResp] = await Promise.all([
         axios.get('http://localhost:5000/api/admin/roles', {
-            headers: { 'X-User-ID': user?.id?.toString() }
+          headers: { 'X-User-ID': user?.id?.toString() }
         }),
         axios.get('http://localhost:5000/api/admin/permissions', {
-            headers: { 'X-User-ID': user?.id?.toString() }
+          headers: { 'X-User-ID': user?.id?.toString() }
         })
       ]);
       setRoles(rolesResp.data);
@@ -55,7 +55,7 @@ const RolePermissionPage: React.FC = () => {
     setRoles(prevRoles => prevRoles.map(role => {
       if (role.id === roleId) {
         const hasPerm = role.permissions.includes(permName);
-        const newPermissions = hasPerm 
+        const newPermissions = hasPerm
           ? role.permissions.filter((p: string) => p !== permName)
           : [...role.permissions, permName];
         return { ...role, permissions: newPermissions };
@@ -85,20 +85,20 @@ const RolePermissionPage: React.FC = () => {
     e.preventDefault();
     setCreatingRole(true);
     try {
-        await axios.post('http://localhost:5000/api/admin/roles', {
-            name: newRoleName,
-            description: newRoleDesc
-        }, {
-            headers: { 'X-User-ID': user?.id?.toString() }
-        });
-        toast.success("Role created successfully.");
-        setNewRoleName('');
-        setNewRoleDesc('');
-        fetchData();
+      await axios.post('http://localhost:5000/api/admin/roles', {
+        name: newRoleName,
+        description: newRoleDesc
+      }, {
+        headers: { 'X-User-ID': user?.id?.toString() }
+      });
+      toast.success("Role created successfully.");
+      setNewRoleName('');
+      setNewRoleDesc('');
+      fetchData();
     } catch (err: any) {
-        toast.error(err.response?.data?.error || "Failed to create role.");
+      toast.error(err.response?.data?.error || "Failed to create role.");
     } finally {
-        setCreatingRole(false);
+      setCreatingRole(false);
     }
   };
 
@@ -108,15 +108,15 @@ const RolePermissionPage: React.FC = () => {
 
     setDeleting(true);
     try {
-        const headers = { 'X-User-ID': user?.id?.toString() };
-        await axios.delete(`http://localhost:5000/api/admin/roles/${roleId}`, { headers });
-        toast.success(`Role '${roleName}' deleted successfully.`);
-        setDeleteModal({ open: false, id: 0, name: '' });
-        fetchData(); // Refresh list
+      const headers = { 'X-User-ID': user?.id?.toString() };
+      await axios.delete(`http://localhost:5000/api/admin/roles/${roleId}`, { headers });
+      toast.success(`Role '${roleName}' deleted successfully.`);
+      setDeleteModal({ open: false, id: 0, name: '' });
+      fetchData(); // Refresh list
     } catch (err: any) {
-        toast.error(err.response?.data?.error || "Failed to delete role.");
+      toast.error(err.response?.data?.error || "Failed to delete role.");
     } finally {
-        setDeleting(false);
+      setDeleting(false);
     }
   };
 
@@ -146,12 +146,12 @@ const RolePermissionPage: React.FC = () => {
         </div>
 
         <Tabs defaultValue="matrix" className="w-full">
-          <TabsList className="grid grid-cols-2 w-full md:w-[400px] mb-8 bg-muted/20 p-1 border-2 rounded-2xl h-14">
-            <TabsTrigger value="matrix" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all h-full">
-               <ShieldCheck className="w-4 h-4" /> Role Matrix
+          <TabsList className="grid grid-cols-2 w-full md:w-[400px] mb-8 bg-muted/20 p-1 border-2 rounded-2xl h-auto min-h-[56px]">
+            <TabsTrigger value="matrix" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all h-11">
+              <ShieldCheck className="w-4 h-4" /> Role Matrix
             </TabsTrigger>
-            <TabsTrigger value="create" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-white data-[state=active]:shadow-lg transition-all h-full">
-               <Plus className="w-4 h-4" /> Add Role
+            <TabsTrigger value="create" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all h-11">
+              <Plus className="w-4 h-4" /> Add Role
             </TabsTrigger>
           </TabsList>
 
@@ -159,18 +159,18 @@ const RolePermissionPage: React.FC = () => {
             <div className="grid grid-cols-1 gap-6">
               {roles.map(role => (
                 <Card key={role.id} className="border-2 shadow-sm overflow-hidden group hover:border-primary/30 transition-all rounded-2xl">
-                   <CardHeader className="bg-muted/5 border-b flex flex-row items-center justify-between py-4 px-6">
-                      <div className="flex items-center gap-4">
-                        <div>
-                          <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2 uppercase">
-                            {role.name}
-                          </CardTitle>
-                          <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
-                            {role.description || "Administrative access profile"}
-                          </CardDescription>
-                        </div>
-                        <div className="flex items-center gap-1">
-                          {/* <Button 
+                  <CardHeader className="bg-muted/5 border-b flex flex-row items-center justify-between py-4 px-6">
+                    <div className="flex items-center gap-4">
+                      <div>
+                        <CardTitle className="text-xl font-black tracking-tight flex items-center gap-2 uppercase">
+                          {role.name}
+                        </CardTitle>
+                        <CardDescription className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
+                          {role.description || "Administrative access profile"}
+                        </CardDescription>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        {/* <Button 
                             variant="ghost" 
                             size="sm" 
                             onClick={() => setSelectedRole(role)} // Assuming setSelectedRole is defined elsewhere if needed
@@ -178,60 +178,70 @@ const RolePermissionPage: React.FC = () => {
                           >
                             <ShieldAlert className="h-4 w-4" />
                           </Button> */}
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => {
-                                if (role.name.toLowerCase() === 'admin') {
-                                    toast.error("The core Admin role cannot be deleted.");
-                                    return;
-                                }
-                                setDeleteModal({ open: true, id: role.id, name: role.name });
-                            }}
-                            disabled={role.name.toLowerCase() === 'admin'}
-                            className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            if (role.name.toLowerCase() === 'admin') {
+                              toast.error("The core Admin role cannot be deleted.");
+                              return;
+                            }
+                            setDeleteModal({ open: true, id: role.id, name: role.name });
+                          }}
+                          disabled={role.name.toLowerCase() === 'admin'}
+                          className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    <Button
+                      onClick={() => saveRolePermissions(role)}
+                      disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
+                      className="rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                    >
+                      {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                      {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}
+                    </Button>
+                  </CardHeader>
+                  <CardContent className="p-6">
+                    <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-y-8 gap-x-6">
+                      {role.name.toLowerCase() === 'admin' && (
+                        <div className="col-span-full bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 flex gap-3 mb-2 animate-pulse">
+                          <ShieldCheck className="h-5 w-5 text-rose-500 shrink-0" />
+                          <p className="text-[10px] text-rose-700 leading-relaxed font-black uppercase tracking-wider">
+                            Architectural Safeguard Active: The core Admin role's access tokens are immutable to ensure system-wide operational stability.
+                          </p>
                         </div>
-                      </div>
-                      <Button 
-                        onClick={() => saveRolePermissions(role)}
-                        disabled={saving === role.name}
-                        className="rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none"
-                      >
-                        {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                        Assign Roles
-                      </Button>
-                   </CardHeader>
-                   <CardContent className="p-6">
-                      <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-y-8 gap-x-6">
-                        {permissions.map(perm => {
-                          const isAssigned = role.permissions.includes(perm.name);
-                          return (
-                            <div key={perm.id} className="flex items-start space-x-3 group/item">
-                              <Checkbox 
-                                id={`role-${role.id}-perm-${perm.id}`}
-                                checked={isAssigned}
-                                onCheckedChange={() => handleTogglePermission(role.id, perm.name)}
-                                className="mt-1 border-2 h-5 w-5 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
-                              />
-                              <div className="grid gap-1.5 leading-none pt-1">
-                                <label
-                                  htmlFor={`role-${role.id}-perm-${perm.id}`}
-                                  className="text-[11px] font-black leading-tight cursor-pointer group-hover/item:text-primary transition-colors uppercase tracking-tight"
-                                >
-                                  {perm.name.replace(/_/g, ' ')}
-                                </label>
-                                <p className="text-[9px] text-muted-foreground font-medium italic opacity-70">
-                                  {perm.description || 'System right.'}
-                                </p>
-                              </div>
+                      )}
+                      {permissions.map(perm => {
+                        const isAssigned = role.permissions.includes(perm.name);
+                        const isAdminRole = role.name.toLowerCase() === 'admin';
+                        return (
+                          <div key={perm.id} className={`flex items-start space-x-3 group/item ${isAdminRole ? 'opacity-60 cursor-not-allowed' : ''}`}>
+                            <Checkbox
+                              id={`role-${role.id}-perm-${perm.id}`}
+                              checked={isAssigned}
+                              onCheckedChange={() => !isAdminRole && handleTogglePermission(role.id, perm.name)}
+                              disabled={isAdminRole}
+                              className="mt-1 border-2 h-5 w-5 data-[state=checked]:bg-primary data-[state=checked]:border-primary"
+                            />
+                            <div className="grid gap-1.5 leading-none pt-1">
+                              <label
+                                htmlFor={`role-${role.id}-perm-${perm.id}`}
+                                className={`text-[11px] font-black leading-tight uppercase tracking-tight ${isAdminRole ? 'cursor-not-allowed' : 'cursor-pointer group-hover/item:text-primary transition-colors'}`}
+                              >
+                                {perm.name.replace(/_/g, ' ')}
+                              </label>
+                              <p className="text-[9px] text-muted-foreground font-medium italic opacity-70">
+                                {perm.description || 'System right.'}
+                              </p>
                             </div>
-                          );
-                        })}
-                      </div>
-                   </CardContent>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </CardContent>
                 </Card>
               ))}
             </div>
@@ -239,53 +249,53 @@ const RolePermissionPage: React.FC = () => {
 
           <TabsContent value="create" className="animate-in slide-in-from-bottom-2 duration-300">
             <Card className="max-w-xl mx-auto border-2 shadow-xl rounded-2xl overflow-hidden mt-10">
-                <CardHeader className="bg-muted/5 border-b pt-8 pb-6 text-center">
-                    <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
-                        <Plus className="w-8 h-8 text-primary" />
-                    </div>
-                    <CardTitle className="text-2xl font-black uppercase tracking-tight">Create New Role</CardTitle>
-                    <CardDescription className="text-xs font-bold font-medium italic">Define architectural access buckets for your team</CardDescription>
-                </CardHeader>
-                <CardContent className="p-8">
-                    <form onSubmit={handleCreateRole} className="space-y-6">
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Role Primary Tag</Label>
-                            <Input 
-                                placeholder="E.g. REGISTRAR, SURGEON..." 
-                                value={newRoleName}
-                                onChange={(e) => setNewRoleName(e.target.value.toUpperCase())}
-                                className="rounded-xl border-2 font-black tracking-tight focus-visible:ring-primary/20 h-12"
-                            />
-                        </div>
-                        <div className="space-y-2">
-                            <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Description</Label>
-                            <Input 
-                                placeholder="What can this role do?" 
-                                value={newRoleDesc}
-                                onChange={(e) => setNewRoleDesc(e.target.value)}
-                                className="rounded-xl border-2 font-medium italic focus-visible:ring-primary/20 h-12 text-sm"
-                            />
-                        </div>
-                        <Button className="w-full h-14 rounded-2xl font-black text-sm gap-2 mt-4 shadow-xl shadow-primary/20 transition-all border-none" disabled={creatingRole}>
-                            {creatingRole ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
-                            Create & Finalize Role
-                        </Button>
-                    </form>
-                </CardContent>
+              <CardHeader className="bg-muted/5 border-b pt-8 pb-6 text-center">
+                <div className="bg-primary/10 w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-primary/20">
+                  <Plus className="w-8 h-8 text-primary" />
+                </div>
+                <CardTitle className="text-2xl font-black uppercase tracking-tight">Create New Role</CardTitle>
+                <CardDescription className="text-xs font-bold font-medium italic">Define architectural access buckets for your team</CardDescription>
+              </CardHeader>
+              <CardContent className="p-8">
+                <form onSubmit={handleCreateRole} className="space-y-6">
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Role Primary Tag</Label>
+                    <Input
+                      placeholder="E.g. REGISTRAR, SURGEON..."
+                      value={newRoleName}
+                      onChange={(e) => setNewRoleName(e.target.value.toUpperCase())}
+                      className="rounded-xl border-2 font-black tracking-tight focus-visible:ring-primary/20 h-12"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-xs font-black uppercase tracking-widest text-muted-foreground">Description</Label>
+                    <Input
+                      placeholder="What can this role do?"
+                      value={newRoleDesc}
+                      onChange={(e) => setNewRoleDesc(e.target.value)}
+                      className="rounded-xl border-2 font-medium italic focus-visible:ring-primary/20 h-12 text-sm"
+                    />
+                  </div>
+                  <Button className="w-full h-14 rounded-2xl font-black text-sm gap-2 mt-4 shadow-xl shadow-primary/20 transition-all border-none" disabled={creatingRole}>
+                    {creatingRole ? <Loader2 className="w-5 h-5 animate-spin" /> : <Save className="w-5 h-5" />}
+                    Create & Finalize Role
+                  </Button>
+                </form>
+              </CardContent>
             </Card>
           </TabsContent>
 
         </Tabs>
 
         <ActionConfirmModal
-            isOpen={deleteModal.open}
-            onClose={() => setDeleteModal({ open: false, id: 0, name: '' })}
-            onConfirm={handleDeleteRole}
-            title="Delete System Role"
-            description={`Are you sure you want to delete the role '${deleteModal.name}'? This action cannot be undone and may affect users assigned to this role.`}
-            confirmText="Delete Role"
-            variant="danger"
-            loading={deleting}
+          isOpen={deleteModal.open}
+          onClose={() => setDeleteModal({ open: false, id: 0, name: '' })}
+          onConfirm={handleDeleteRole}
+          title="Delete System Role"
+          description={`Are you sure you want to delete the role '${deleteModal.name}'? This action cannot be undone and may affect users assigned to this role.`}
+          confirmText="Delete Role"
+          variant="danger"
+          loading={deleting}
         />
       </div>
     </MainLayout>

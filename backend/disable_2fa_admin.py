@@ -1,7 +1,7 @@
 import sqlite3
 import os
 
-db_path = 'c:\\Users\\DELL\\Documents\\Legit HealthCare\\Legit HealthCare App\\backend\\instance\\hc_system.db'
+db_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'instance', 'hc_system.db')
 
 def disable_admin_2fa():
     if not os.path.exists(db_path):

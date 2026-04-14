@@ -15,7 +15,9 @@ import {
   ArrowLeft,
   Bot,
   Plus,
-  Loader2
+  Loader2,
+  Trash2,
+  AlertTriangle
 } from 'lucide-react';
 import { 
   Dialog,
@@ -40,6 +42,8 @@ import {
 import { cn } from '@/lib/utils';
 import axios from 'axios';
 import { format } from 'date-fns';
+import { toast } from 'react-hot-toast';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 export default function MessagingPage() {
   const { user, socket, setUnreadMessagesCount } = useAppContext();
@@ -55,6 +59,8 @@ export default function MessagingPage() {
   const [isNewChatOpen, setIsNewChatOpen] = useState(false);
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
   
   const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨'];
@@ -216,6 +222,27 @@ export default function MessagingPage() {
   const addEmoji = (emoji: string) => {
     setNewMessage(prev => prev + emoji);
     setShowEmojiPicker(false);
+  };
+
+  const confirmDeleteChat = async () => {
+    if (!activeChat) return;
+    setIsDeleting(true);
+
+    try {
+      await axios.delete(`http://localhost:5000/api/messages/conversations/${activeChat.id}`, {
+        headers: { 'X-User-ID': user.id }
+      });
+      setActiveChat(null);
+      setMessages([]);
+      fetchConversations();
+      setIsDeleteModalOpen(false);
+      toast.success("Conversation deleted successfully");
+    } catch (err: any) {
+      const errorMsg = err.response?.data?.error || "Failed to delete conversation";
+      toast.error(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -386,7 +413,11 @@ export default function MessagingPage() {
                     <DropdownMenuItem>View Profile</DropdownMenuItem>
                     <DropdownMenuItem>Search Chat</DropdownMenuItem>
                     <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                    <DropdownMenuItem className="text-rose-500">Block User</DropdownMenuItem>
+                    <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
+                      <Trash2 className="h-4 w-4 mr-2" />
+                      Delete Chat
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-zinc-500 opacity-50">Block User</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -578,6 +609,17 @@ export default function MessagingPage() {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ActionConfirmModal 
+        isOpen={isDeleteModalOpen}
+        onClose={() => setIsDeleteModalOpen(false)}
+        onConfirm={confirmDeleteChat}
+        title="Delete Conversation?"
+        description="This will permanently remove all messages and the chat session for everyone involved. This action cannot be undone."
+        confirmText="Permanently Delete"
+        variant="danger"
+        loading={isDeleting}
+      />
 
       </div>
     </MainLayout>

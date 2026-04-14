@@ -26,7 +26,7 @@ def init_socket_handlers(socketio):
         # Mark user as online in DB
         user = User.query.get(user_id)
         if user:
-            user.last_seen_at = datetime.utcnow()
+            user.last_seen_at = datetime.now()
             db.session.commit()
             
         # Join global user-specific room for notifications
@@ -110,7 +110,7 @@ def init_socket_handlers(socketio):
             other_id = int(chat_id.split('_')[1])
             # Mark all unread messages from other_id to user_id as read
             ChatMessage.query.filter_by(sender_id=other_id, receiver_id=user_id, read_at=None).update({
-                'read_at': datetime.utcnow()
+                'read_at': datetime.now()
             })
             db.session.commit()
             emit('messages_read', {'chat_id': chat_id, 'user_id': user_id}, to=chat_id)
@@ -119,6 +119,6 @@ def init_socket_handlers(socketio):
             group_id = int(chat_id.split('_')[1])
             member = ChatGroupMember.query.filter_by(group_id=group_id, user_id=user_id).first()
             if member:
-                member.last_read_at = datetime.utcnow()
+                member.last_read_at = datetime.now()
                 db.session.commit()
                 emit('messages_read', {'chat_id': chat_id, 'user_id': user_id}, to=chat_id)

@@ -72,7 +72,7 @@ const AccordionSection = ({ title, description, children, defaultOpen = false }:
 
 const SelectField = ({ label, options, name, control }: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label}</Label>
+      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
       <Controller
         name={name}
         control={control}
@@ -94,7 +94,7 @@ const SelectField = ({ label, options, name, control }: any) => (
 
 const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
-      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label}</Label>
+      <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
       <div className="relative group">
           <Input 
               ref={ref}
@@ -134,7 +134,7 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
 
 const RadioField = ({ label, name, control }: any) => (
   <div className="space-y-2 lg:col-span-1">
-    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{label}</Label>
+    <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label}</Label>
     <Controller
       name={name}
       control={control}
@@ -279,12 +279,12 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                 <AccordionSection title="Full Blood Count" description="Hematology results and remarks">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
                             'PCV', 'WBC', 'PLT', 'HGB', 'RBC',
                             'LYMP_PERCENT', 'LYMP_ABS', 'MID_PERCENT', 'MID_ABS', 'GRA_PERCENT', 'GRA_ABS',
                             'MCV', 'MCH', 'MCHC', 'RDW', 'PDW',
-                            'FBC_REMARK', 'OTHER_REMARKS'
+                            'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
                                 <Label className="text-[10px] uppercase font-bold text-muted-foreground">{f.replace('_', ' ')}</Label>
@@ -299,7 +299,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Urea, and Creatinine">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'BICARBONATE_CA', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs">{f.replace('_', ' ')}</Label>
@@ -310,7 +310,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Lipid Profile Test" description="Cholesterol, HDL, and LDL levels">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {['TOTAL_CHOLESTEROL', 'TRIGLYCERIDES', 'HDL', 'LDL', 'LP_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs">{f.replace('_', ' ')}</Label>
@@ -321,7 +321,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Liver Function Test" description="AST, ALT, ALP, and Bilirubin">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['AST', 'ALT', 'ALP', 'TB', 'CB', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs">{f.replace('_', ' ')}</Label>
@@ -332,7 +332,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
+                    <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
                             { id: 'ecg_result', label: 'ECG Status' },
                             { id: 'ecg_remark', label: 'ECG Remark' },
@@ -352,7 +352,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Medical Assessments" description="Clinical findings and diagnosis">
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {[
                             { id: 'luts', label: 'LUTS (Y/N)' },
                             { id: 'chronic_cough', label: 'Chronic Cough' },
@@ -374,7 +374,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 </AccordionSection>
 
                 <AccordionSection title="Clinical Assessment" description="Physical examination results">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 p-4">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-6 p-4">
                         <SelectField name="chest_status" control={control} label="Chest Status" options={['Clinically Clear', 'Not Clinically Clear']} />
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Normal', 'Abnormal', 'Not Applicable']} />
@@ -385,7 +385,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
                 <AccordionSection title="Final Review" description="Comprehensive medical assessment and comments" defaultOpen={true}>
                     <div className="space-y-6 p-4">
-                        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                        <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                             <div className="md:col-span-1">
                                 <SelectField name="dm_status" control={control} label="DM" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
@@ -397,7 +397,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2%</Label><Input {...register('spo2')} /></div>
                         </div>
 
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
+                        <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
                              <SelectField name="psa" control={control} label="PSA RESULT" options={['Negative', 'Not Applicable', 'Positive']} />
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
                              <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} />
@@ -405,17 +405,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="fbs_rbs_remark" control={control} label="SUGAR REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
-                             <div className="space-y-1">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Overall Lab Remark</Label>
-                                <Input {...register('overall_lab_remark')} />
+                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                             <div className="space-y-1 md:col-span-4">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Lab Remark</Label>
+                                <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
                              </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-1">
-                                    <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
-                                </div>
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
                                 <div className="space-y-1 md:col-span-2">
                                     <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Assessment(s)</Label>
                                     <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-emerald-500/20 rounded-xl p-4 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
@@ -430,7 +428,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 </div>
                             </div>
                             
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
+                            <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
                                 <div className="space-y-1">
                                     <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Director Comment One</Label>
                                     <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
@@ -452,20 +450,20 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     </div>
                 </AccordionSection>
 
-                <div className="flex justify-end items-center gap-4 pt-6 border-t">
+                <div className="flex flex-col sm:flex-row justify-end items-stretch sm:items-center gap-3 sm:gap-4 pt-6 border-t">
                     <Button 
                         type="button" 
                         variant="default"
                         size="lg" 
                         onClick={handleAIGenerate}
                         disabled={generatingAI || loading}
-                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-blue-500/20 h-12 rounded-xl border-0"
+                        className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-blue-500/20 h-12 rounded-xl border-0 w-full sm:w-auto order-2 sm:order-1"
                     >
                         {generatingAI ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : <Sparkles className="mr-2 h-5 w-5" />}
                         AI Overview
                     </Button>
                     
-                    <Button type="submit" size="lg" className="px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl" disabled={loading || generatingAI}>
+                    <Button type="submit" size="lg" className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={loading || generatingAI}>
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Submit Final Review</>}
                     </Button>
                 </div>
@@ -523,7 +521,8 @@ const DirectorPage: React.FC = () => {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Director Review saved successfully!");
-            handleSearch();
+            setPatient(null);
+            setHistory(null);
         } catch (err) {
             toast.error("Failed to save review");
         } finally {

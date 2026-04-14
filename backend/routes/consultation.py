@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, ConsultationData, ScreeningYearBioData
 from sqlalchemy.orm import Session
+from decorators import require_permission
 import sys
 
 consultation_bp = Blueprint('consultation', __name__)
@@ -10,6 +11,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @consultation_bp.route('/screening/<int:year>/patient/<staff_id>', methods=['GET'])
+@require_permission('consultation')
 def get_screening_patient(year, staff_id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid section context"}), 400
@@ -69,6 +71,7 @@ def get_screening_patient(year, staff_id):
     return jsonify(data), 200
 
 @consultation_bp.route('/consultation', methods=['POST'])
+@require_permission('consultation')
 def save_consultation():
     data = request.json
     staff_id = data.get('staff_id')

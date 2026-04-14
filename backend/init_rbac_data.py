@@ -29,7 +29,15 @@ def init_rbac():
             ('manage_branding', 'Update system branding/logo'),
             ('manage_departments', 'Manage clinic departments'),
             ('messaging', 'Access to internal messaging system'),
-            ('system_maintenance', 'Access to core system settings')
+            ('manage_appointments', 'Manage clinic appointment schedules'),
+            ('view_appointments', 'View internal appointment directory'),
+            ('manage_queues', 'Manage patient departmental queues'),
+            ('change_roles', 'Assign or revoke roles from users'),
+            ('system_maintenance', 'Access to core system settings'),
+            ('edit_patient', 'Permission to modify patient bio-data'),
+            ('delete_patient', 'Permission to permanently remove a patient account'),
+            ('delete_record', 'Permission to delete screening results from matrix'),
+            ('manage_access_keys', 'Generate and manage temporary access codes')
         ]
         
         perm_objs = {}
@@ -43,33 +51,18 @@ def init_rbac():
         
         db.session.commit()
 
-        # 2. Define Roles - ONLY ADMIN as requested
-        # Delete all existing roles that are not Admin
-        existing_roles = Role.query.all()
-        for r in existing_roles:
-            if r.name != 'Admin':
-                print(f"Deleting role: {r.name}")
-                # Remove association first if needed (relationships usually handle this but sqlalchemy can be picky)
-                r.assigned_users = []
-                r.permissions = []
-                db.session.delete(r)
-        db.session.commit()
-
-        roles_metadata = {
-            'Admin': list(perm_objs.keys())
-        }
-
-        for role_name, perms in roles_metadata.items():
-            role = Role.query.filter_by(name=role_name).first()
-            if not role:
-                role = Role(name=role_name, description=f"{role_name} role with full system access.")
-                db.session.add(role)
-                print(f"Created Role: {role_name}")
-            
-            # Dynamically assign ALL permissions to Admin
-            role.permissions = Permission.query.all()
-            print(f"Synced all permissions to {role_name}")
-
+        # 2. Define Roles
+        perm_objs = {p.name: p for p in Permission.query.all()}
+        
+        # Ensure Admin role exists and has all permissions
+        admin_role = Role.query.filter_by(name='Admin').first()
+        if not admin_role:
+            admin_role = Role(name='Admin', description='Admin role with full system access.')
+            db.session.add(admin_role)
+            print("Created Role: Admin")
+        
+        admin_role.permissions = list(perm_objs.values())
+        print("Synced all permissions to Admin")
         db.session.commit()
 
         # 3. Assign Admin role to 'admin' user

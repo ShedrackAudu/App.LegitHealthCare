@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify, g
 from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, AuditLog
 from datetime import datetime
 from sqlalchemy import func
+from decorators import require_permission
 
 registration_bp = Blueprint('registration', __name__)
 
@@ -10,6 +11,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @registration_bp.route('/patient/<staff_id>', methods=['GET'])
+@require_permission('registration')
 def get_patient(staff_id):
     # Comprehensive search (always in the context's main bio_data)
     bind = get_bind()
@@ -22,8 +24,19 @@ def get_patient(staff_id):
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
         
-    # NEW: Pull patient_id from the most recent screening record
-    yearly_record = ScreeningYearBioData.query.filter_by(staff_id=patient.staff_id).order_by(ScreeningYearBioData.screening_year.desc()).first()
+    # NEW: Pull patient_id from the specific screening record if year is provided,
+    # otherwise fall back to most recent (for generic lookup)
+    year = request.args.get('year')
+    if year:
+        yearly_record = ScreeningYearBioData.query.filter_by(
+            staff_id=patient.staff_id, 
+            screening_year=int(year)
+        ).first()
+    else:
+        yearly_record = ScreeningYearBioData.query.filter_by(
+            staff_id=patient.staff_id
+        ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+        
     patient_id = yearly_record.patient_id if yearly_record else None
     
     return jsonify({
@@ -43,6 +56,7 @@ def get_patient(staff_id):
     }), 200
 
 @registration_bp.route('/register-patient', methods=['POST'])
+@require_permission('registration')
 def register_patient():
     try:
         data = request.json
@@ -117,11 +131,18 @@ def register_patient():
         QueueEntry.query.filter_by(staff_id=staff_id, screening_year=screening_year).delete()
         
         for dept in ['Consultation', 'Audiometry', 'Spirometry', 'ECG']:
+            # Auto-assign next queue number for this department and year
+            max_num = db.session.query(func.max(QueueEntry.queue_number)).filter_by(
+                department=dept, 
+                screening_year=screening_year
+            ).scalar() or 0
+            
             q_entry = QueueEntry(
                 staff_id=staff_id,
                 screening_year=screening_year,
                 department=dept,
-                status='Waiting'
+                status='Waiting',
+                queue_number=max_num + 1
             )
             db.session.add(q_entry)
 
@@ -142,6 +163,7 @@ def register_patient():
         return jsonify({"error": f"Internal Server Error: {str(e)}"}), 500
 
 @registration_bp.route('/stats', methods=['GET'])
+@require_permission('view_dashboard')
 def get_registration_stats():
     bind = get_bind()
     year = request.args.get('year')
@@ -154,8 +176,8 @@ def get_registration_stats():
     base_query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     from datetime import time
-    today_start = datetime.combine(datetime.utcnow().date(), time.min)
-    today_end = datetime.combine(datetime.utcnow().date(), time.max)
+    today_start = datetime.combine(datetime.now().date(), time.min)
+    today_end = datetime.combine(datetime.now().date(), time.max)
     # Number registered today
     day_count = base_query.filter(ScreeningYearBioData.created_at >= today_start, ScreeningYearBioData.created_at <= today_end).count()
     

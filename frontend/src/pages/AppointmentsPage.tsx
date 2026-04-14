@@ -24,6 +24,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { generateAppointmentSlots } from '@/lib/timeUtils';
 
 const appointmentSchema = z.object({
@@ -54,6 +55,9 @@ const BioItem = ({ label, value, icon: Icon }: any) => (
 
 const AppointmentsPage = () => {
   const { activeSection, activeYear } = useAppContext();
+  const { hasPermission } = usePermissions();
+  const canManage = hasPermission('manage_appointments');
+  
   const [patient, setPatient] = useState<any>(null);
   const [isSearching, setIsSearching] = useState(false);
   const [isBooking, setIsBooking] = useState(false);
@@ -297,8 +301,8 @@ const AppointmentsPage = () => {
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
-                                disabled={isBooking}
-                                className="w-full h-16 rounded-2xl text-xl font-black gap-3 shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all bg-primary shadow-primary/20"
+                                disabled={isBooking || !canManage}
+                                className={`w-full h-16 rounded-2xl text-xl font-black gap-3 shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all bg-primary shadow-primary/20 ${!canManage ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                             >
                                 {isBooking ? (
                                     <>
@@ -307,8 +311,17 @@ const AppointmentsPage = () => {
                                     </>
                                 ) : (
                                     <>
-                                        <Calendar className="h-6 w-6" />
-                                        Schedule Appointment
+                                        {canManage ? (
+                                            <>
+                                                <Calendar className="h-6 w-6" />
+                                                Schedule Appointment
+                                            </>
+                                        ) : (
+                                            <>
+                                                <AlertCircle className="h-6 w-6" />
+                                                Permission Required to Schedule
+                                            </>
+                                        )}
                                     </>
                                 )}
                             </Button>

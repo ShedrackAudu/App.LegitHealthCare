@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory
 from models import db, AppBranding
 from werkzeug.utils import secure_filename
+from decorators import require_permission
 import os
 
 branding_bp = Blueprint('branding_bp', __name__)
@@ -26,6 +27,7 @@ def get_branding():
 
 @branding_bp.route('', methods=['POST'], strict_slashes=False)
 @branding_bp.route('/', methods=['POST'], strict_slashes=False)
+@require_permission('manage_branding')
 def update_branding():
     branding = AppBranding.query.first()
     if not branding:
@@ -109,6 +111,14 @@ def update_branding():
     if signature_url:
         branding.signature_image = signature_url
 
+    auth_url = save_upload('auth_branding_image')
+    if auth_url:
+        branding.auth_branding_image = auth_url
+
+    auth_logo_url = save_upload('auth_logo')
+    if auth_logo_url:
+        branding.auth_logo = auth_logo_url
+
     db.session.commit()
     return jsonify({"message": "Branding updated successfully"}), 200
 
@@ -118,11 +128,16 @@ def uploaded_file(filename):
     return send_from_directory(upload_folder, filename)
 
 @branding_bp.route('/clear', methods=['POST'])
+@require_permission('manage_branding')
 def clear_branding_asset():
     data = request.json
     field = data.get('field')
     
-    valid_fields = ['logo_light', 'logo_dark', 'favicon', 'hero_image_1', 'hero_image_2', 'hero_image_team', 'header_image', 'footer_image', 'signature_image']
+    valid_fields = [
+        'logo_light', 'logo_dark', 'favicon', 'hero_image_1', 'hero_image_2', 
+        'hero_image_team', 'header_image', 'footer_image', 'signature_image',
+        'auth_branding_image', 'auth_logo'
+    ]
     if field not in valid_fields:
         return jsonify({"error": "Invalid field"}), 400
         

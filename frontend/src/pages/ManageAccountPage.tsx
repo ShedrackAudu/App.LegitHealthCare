@@ -152,6 +152,10 @@ const ManageAccountPage = () => {
                         </CardHeader>
                         <form onSubmit={handleUpdateInfo}>
                             <CardContent className="space-y-4">
+                                <div className="space-y-2 opacity-70">
+                                    <Label>Username</Label>
+                                    <Input value={user?.username || ''} disabled className="bg-muted/50 cursor-not-allowed font-medium" />
+                                </div>
                                 <div className="space-y-2">
                                     <Label>First Name</Label>
                                     <Input value={firstName} onChange={e => setFirstName(e.target.value)} required />

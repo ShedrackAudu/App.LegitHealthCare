@@ -114,7 +114,7 @@ const ForgotPasswordPage = () => {
                         >
                             <Card className="border-2 shadow-2xl">
                                 <CardHeader className="text-center">
-                                    <div className="flex justify-center mb-4">
+                                    <Link to="/" className="flex justify-center mb-4 hover:opacity-80 transition-opacity">
                                         {branding?.logo_light ? (
                                             <img 
                                                 src={`http://localhost:5000${branding.logo_light}`} 
@@ -126,7 +126,7 @@ const ForgotPasswordPage = () => {
                                                 <Activity className="w-7 h-7 text-primary" />
                                             </div>
                                         )}
-                                    </div>
+                                    </Link>
                                     <CardTitle className="text-2xl font-black">Password Reset</CardTitle>
                                     <CardDescription>Enter your Username, Email, or Phone to begin.</CardDescription>
                                 </CardHeader>
@@ -170,17 +170,19 @@ const ForgotPasswordPage = () => {
                             <Card className="border-2 shadow-2xl border-primary/20">
                                 <CardHeader className="text-center">
                                     <div className="flex justify-between items-start mb-4">
-                                        {branding?.logo_light ? (
-                                            <img 
-                                                src={`http://localhost:5000${branding.logo_light}`} 
-                                                alt="Logo" 
-                                                className="h-12 w-auto object-contain" 
-                                            />
-                                        ) : (
-                                            <div className="bg-primary/10 p-2.5 rounded-xl">
-                                                <Activity className="w-5 h-5 text-primary" />
-                                            </div>
-                                        )}
+                                        <Link to="/" className="hover:opacity-80 transition-opacity">
+                                            {branding?.logo_light ? (
+                                                <img 
+                                                    src={`http://localhost:5000${branding.logo_light}`} 
+                                                    alt="Logo" 
+                                                    className="h-12 w-auto object-contain" 
+                                                />
+                                            ) : (
+                                                <div className="bg-primary/10 p-2.5 rounded-xl">
+                                                    <Activity className="w-5 h-5 text-primary" />
+                                                </div>
+                                            )}
+                                        </Link>
                                         <div className="bg-primary/10 w-fit p-2 rounded-lg text-primary">
                                             <Key className="w-5 h-5" />
                                         </div>
@@ -224,17 +226,19 @@ const ForgotPasswordPage = () => {
                             <Card className="border-2 shadow-2xl border-emerald-500/20">
                                 <CardHeader className="text-center">
                                     <div className="flex justify-between items-start mb-4">
-                                        {branding?.logo_light ? (
-                                            <img 
-                                                src={`http://localhost:5000${branding.logo_light}`} 
-                                                alt="Logo" 
-                                                className="h-12 w-auto object-contain" 
-                                            />
-                                        ) : (
-                                            <div className="bg-emerald-500/10 p-2.5 rounded-xl">
-                                                <Activity className="w-5 h-5 text-emerald-500" />
-                                            </div>
-                                        )}
+                                        <Link to="/" className="hover:opacity-80 transition-opacity">
+                                            {branding?.logo_light ? (
+                                                <img 
+                                                    src={`http://localhost:5000${branding.logo_light}`} 
+                                                    alt="Logo" 
+                                                    className="h-12 w-auto object-contain" 
+                                                />
+                                            ) : (
+                                                <div className="bg-emerald-500/10 p-2.5 rounded-xl">
+                                                    <Activity className="w-5 h-5 text-emerald-500" />
+                                                </div>
+                                            )}
+                                        </Link>
                                         <div className="flex items-center gap-2 text-emerald-500">
                                             <ShieldCheck className="w-4 h-4" />
                                             <span className="text-[10px] font-black uppercase tracking-widest">Final Step</span>

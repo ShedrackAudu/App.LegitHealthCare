@@ -5,10 +5,12 @@ import {
   Edit, 
   Trash2, 
   Loader2,
-  Plus
+  Plus,
+  Eye
 } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { PatientDetailsModal } from '@/components/PatientDetailsModal';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -26,11 +28,13 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
 const ViewPatientsPage: React.FC = () => {
-    const { activeSection, activeYear } = useAppContext();
+    const { user, activeSection, activeYear } = useAppContext();
     const navigate = useNavigate();
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
+    const [selectedPatient, setSelectedPatient] = useState<any>(null);
+    const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
     const fetchPatients = async (query = '') => {
@@ -55,10 +59,10 @@ const ViewPatientsPage: React.FC = () => {
         fetchPatients();
     }, [activeSection, activeYear]);
 
-    // REMOVED deprecated ad-hoc search logic
-
-
-
+    const handlePatientClick = (patient: any) => {
+        setSelectedPatient(patient);
+        setDetailsModalOpen(true);
+    };
 
     const handleDelete = async () => {
         if (!deleteModal.staffId) return;
@@ -149,8 +153,12 @@ const ViewPatientsPage: React.FC = () => {
                                             </TableRow>
                                         ) : (
                                             patients.map((p) => (
-                                                <TableRow key={p.staff_id} className="group hover:bg-muted/30 transition-colors">
-                                                    <TableCell>
+                                                <TableRow 
+                                                    key={p.staff_id} 
+                                                    className="group hover:bg-muted/30 transition-colors cursor-pointer"
+                                                    onClick={() => handlePatientClick(p)}
+                                                >
+                                                    <TableCell onClick={(e) => e.stopPropagation()}>
                                                         <code className="bg-primary/10 text-primary px-2 py-1 rounded-md font-bold text-xs whitespace-nowrap">
                                                             {p.staff_id}
                                                         </code>
@@ -174,24 +182,36 @@ const ViewPatientsPage: React.FC = () => {
                                                     <TableCell className="text-[10px] font-medium text-muted-foreground italic truncate max-w-[120px]">{p.email || '-'}</TableCell>
                                                     <TableCell className="text-[10px] font-medium text-muted-foreground">{p.race || '-'}</TableCell>
                                                     <TableCell className="text-[10px] font-medium text-muted-foreground">{p.nationality || '-'}</TableCell>
-                                                    <TableCell className="text-right">
+                                                    <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                                                         <div className="flex justify-end gap-1 transition-opacity">
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="sm" 
-                                                                className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
-                                                                onClick={() => navigate(`/registration?edit=${p.staff_id}`)}
+                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                                onClick={() => handlePatientClick(p)}
                                                             >
-                                                                <Edit className="h-4 w-4" />
+                                                                <Eye className="h-4 w-4" />
                                                             </Button>
-                                                            <Button 
-                                                                variant="ghost" 
-                                                                size="sm" 
-                                                                className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                                                onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
-                                                            >
-                                                                <Trash2 className="h-4 w-4" />
-                                                            </Button>
+                                                            {user?.permissions?.includes('edit_patient') && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
+                                                                    onClick={() => navigate(`/registration?edit=${p.staff_id}`)}
+                                                                >
+                                                                    <Edit className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
+                                                            {user?.permissions?.includes('delete_patient') && (
+                                                                <Button 
+                                                                    variant="ghost" 
+                                                                    size="sm" 
+                                                                    className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                                                    onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
+                                                                >
+                                                                    <Trash2 className="h-4 w-4" />
+                                                                </Button>
+                                                            )}
                                                         </div>
                                                     </TableCell>
                                                 </TableRow>
@@ -213,6 +233,12 @@ const ViewPatientsPage: React.FC = () => {
                     confirmText="Delete Record"
                     variant="danger"
                     loading={deleting}
+                />
+
+                <PatientDetailsModal 
+                    isOpen={detailsModalOpen} 
+                    onClose={() => setDetailsModalOpen(false)} 
+                    patient={selectedPatient} 
                 />
             </div>
         </MainLayout>

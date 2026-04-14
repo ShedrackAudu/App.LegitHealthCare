@@ -9,13 +9,22 @@ import uuid
 
 from sqlalchemy import func
 from datetime import datetime
+from decorators import require_permission
 
 view_data_bp = Blueprint('view_data', __name__)
 
 @view_data_bp.route('/patients/search', methods=['GET'])
+@require_permission([
+    'view_patients', 'registration', 'consultation', 'lab_tests', 
+    'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 
+    'lab_spirometry', 'lab_audiometry', 'director_review', 
+    'manage_appointments', 'view_appointments', 'edit_patient', 
+    'delete_patient', 'manage_access_keys'
+])
 def search_patients():
     query = request.args.get('q', '')
-    if len(query) < 2: return jsonify([]), 200
+    print(f"DEBUG: Search query received: '{query}'")
+    if len(query) < 1: return jsonify([]), 200
     
     search = f"%{query}%"
     
@@ -48,8 +57,19 @@ def search_patients():
         ).limit(20).all()
         
         for p in patients_global:
-            # NEW: Pull patient_id from the most recent screening record within current section
-            yearly_record = ScreeningYearBioData.query.filter_by(staff_id=p.staff_id).order_by(ScreeningYearBioData.screening_year.desc()).first()
+            # NEW: Pull patient_id from the specific screening record if year is provided,
+            # otherwise fall back to most recent (for generic lookup/compatibility)
+            year = request.args.get('year')
+            if year:
+                yearly_record = ScreeningYearBioData.query.filter_by(
+                    staff_id=p.staff_id, 
+                    screening_year=int(year)
+                ).first()
+            else:
+                yearly_record = ScreeningYearBioData.query.filter_by(
+                    staff_id=p.staff_id
+                ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+                
             p_id = yearly_record.patient_id if yearly_record else None
 
             p_dict = {
@@ -76,6 +96,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @view_data_bp.route('/patients/all', methods=['GET'])
+@require_permission('view_patients')
 def get_all_patients():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -98,6 +119,19 @@ def get_all_patients():
 
 @view_data_bp.route('/patients/<staff_id>', methods=['PUT', 'DELETE'])
 def handle_patient(staff_id):
+    user_id = request.headers.get('X-User-ID')
+    from models import StaffUser
+    user = StaffUser.query.get(user_id)
+    if not user:
+        return jsonify({"error": "Staff authentication required"}), 401
+
+    if request.method == 'DELETE':
+        if not user.has_permission('delete_patient') and user.username != 'admin':
+            return jsonify({"error": "Permission 'delete_patient' required"}), 403
+    elif request.method == 'PUT':
+        if not user.has_permission('edit_patient') and user.username != 'admin':
+            return jsonify({"error": "Permission 'edit_patient' required"}), 403
+
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
@@ -219,6 +253,7 @@ def handle_patient(staff_id):
         return jsonify({"message": "Patient profile updated successfully"}), 200
 
 @view_data_bp.route('/records/screening/<int:year>', methods=['GET'])
+@require_permission('view_records')
 def get_screening_records(year):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -338,6 +373,7 @@ def get_screening_records(year):
     }), 200
 
 @view_data_bp.route('/records/screening/<int:id>', methods=['DELETE'])
+@require_permission('delete_record')
 def delete_screening_record(id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -378,6 +414,7 @@ def delete_screening_record(id):
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
 @view_data_bp.route('/patient-report/<staff_id>/<int:year>', methods=['GET'])
+@require_permission('view_records')
 def get_patient_report(staff_id, year):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -432,31 +469,39 @@ def get_patient_report(staff_id, year):
     if c:
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
-            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment
+            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment,
+            "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
+            "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "psa": c.psa, "psa_remark": c.psa_remark,
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam
         }
     
     f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if f:
         results["fbc"] = {
-            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark
+            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
+            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
         }
     
     k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if k:
         results["kft"] = {
-            "potassium": k.potassium, "sodium": k.sodium, "urea": k.urea, "creatinine": k.creatinine, "hco3": k.hco3
+            "potassium": k.potassium, "sodium": k.sodium, "urea": k.urea, "creatinine": k.creatinine, "hco3": k.hco3,
+            "chloride": k.chloride, "remark": k.kft_remark
         }
     
     li = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if li:
         results["lipid"] = {
-            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl
+            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl,
+            "remark": li.lp_remark
         }
     
     lf = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if lf:
         results["lft"] = {
-            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb
+            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
+            "remark": lf.lft_remark
         }
     
     s = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -503,7 +548,7 @@ def get_patient_report(staff_id, year):
         "timing": {
             "reg_date_time": reg_date_time,
             "report_date_time": report_date_time,
-            "gen_date_time": datetime.utcnow().isoformat()
+            "gen_date_time": datetime.now().isoformat()
         },
         "branding": branding_data
     }), 200
@@ -523,6 +568,7 @@ def verify_report(token):
     }), 200
 
 @view_data_bp.route('/dashboard/stats', methods=['GET'])
+@require_permission('view_dashboard')
 def get_dashboard_stats():
     bind = get_bind()
     year = request.args.get('year')
@@ -536,8 +582,8 @@ def get_dashboard_stats():
     base_query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     from datetime import time
-    today_start = datetime.combine(datetime.utcnow().date(), time.min)
-    today_end = datetime.combine(datetime.utcnow().date(), time.max)
+    today_start = datetime.combine(datetime.now().date(), time.min)
+    today_end = datetime.combine(datetime.now().date(), time.max)
     day_count = base_query.filter(ScreeningYearBioData.created_at >= today_start, ScreeningYearBioData.created_at <= today_end).count()
     
     males = base_query.filter_by(gender='Male').count()
@@ -582,7 +628,7 @@ def get_report_progress():
         if not staff_id:
             return jsonify({"error": "Staff ID required"}), 400
         
-        year = datetime.utcnow().year
+        year = datetime.now().year
         from models import (
             ConsultationData, FBCResult, KFTResult, LipidResult, 
             LFTResult, SpecialTestsResult, DirectorReview
@@ -723,7 +769,7 @@ def get_report_progress():
             "points": 0,
             "total": 42,
             "status": "Registration Data Preparing",
-            "year": datetime.utcnow().year,
+            "year": datetime.now().year,
             "missing_count": 42,
             "missing_preview": []
         }), 200
