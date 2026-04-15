@@ -525,7 +525,8 @@ def get_patient_report(staff_id, year):
             "comment_one": d.comment_one,
             "comment_two": d.comment_two,
             "comment_three": d.comment_three,
-            "comment_four": d.comment_four
+            "comment_four": d.comment_four,
+            "lab_remark": d.overall_lab_remark
         }
     
     # Determine Timing

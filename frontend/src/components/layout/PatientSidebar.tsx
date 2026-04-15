@@ -62,7 +62,7 @@ export const PatientSidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
@@ -88,7 +88,7 @@ export const PatientSidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
-        <div className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {patientItems.map((item) => (
             <NavLink
               key={item.path}

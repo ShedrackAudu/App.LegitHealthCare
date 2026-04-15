@@ -456,7 +456,7 @@ with app.app_context():
     init_db()
     try:
         from setup_system import setup_system
-        setup_system(purge=False)
+        setup_system(app, purge=False)
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")
 

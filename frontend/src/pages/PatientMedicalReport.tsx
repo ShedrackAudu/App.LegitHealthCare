@@ -561,7 +561,7 @@ const PatientMedicalReport: React.FC = () => {
                                         <tr style={{ padding: '5px 0', borderBottom: '1px solid #ccc' }}>
                                             <td className="font-bold border-0 text-center">2.</td>
                                             <td className="border-0">Relevant Laboratory Investigations:</td>
-                                            <td className="border-0">{reportData.results.consultation?.lab_remark || '-'}</td>
+                                            <td className="border-0">{reportData.results.director?.lab_remark || reportData.results.consultation?.lab_remark || '-'}</td>
                                         </tr>
                                         <tr style={{ padding: '5px 0', borderBottom: '1px solid #ccc' }}>
                                             <td className="font-bold border-0 text-center">3.</td>
