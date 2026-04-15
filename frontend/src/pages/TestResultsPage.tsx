@@ -366,13 +366,6 @@ const TestResultsPage: React.FC = () => {
                             </div>
                         </div>
                         
-                        <div className="mt-8 space-y-6">
-                        <BulkUploadSection 
-                            testType={selectedTest} 
-                            activeYear={activeYear} 
-                            activeSection={activeSection} 
-                        />
-                        
                         <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                             <div className="text-center space-y-2">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -382,7 +375,6 @@ const TestResultsPage: React.FC = () => {
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">Context: {activeSection} Clinic • {activeYear}</p>
                             </div>
                         </Card>
-                        </div>
                     </div>
                 ) : (
                     <TestFormContainer 
@@ -397,6 +389,15 @@ const TestResultsPage: React.FC = () => {
                         }}
                     />
                 )}
+
+                {/* Bulk Upload Feature shifted to bottom */}
+                <div className="mt-12 mb-8">
+                    <BulkUploadSection 
+                        testType={selectedTest} 
+                        activeYear={activeYear} 
+                        activeSection={activeSection} 
+                    />
+                </div>
             </div>
 
             <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
