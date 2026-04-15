@@ -3,7 +3,8 @@ import { motion } from 'framer-motion';
 import { 
   User, Mail, Phone, Shield, ShieldCheck, 
   Save, ArrowLeft, Building2, Calendar, IdCard,
-  Lock, Key, Fingerprint, ShieldEllipsis, Flag, Compass, Globe
+  Lock, Key, Fingerprint, ShieldEllipsis, Flag, Compass, Globe,
+  Loader2
 } from 'lucide-react';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
