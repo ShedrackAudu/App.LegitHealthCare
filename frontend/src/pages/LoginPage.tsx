@@ -8,12 +8,13 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Loader2, Lock, User, Activity } from 'lucide-react';
+import { Eye, EyeOff, Loader2, Lock, User, Activity, ArrowLeft } from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'react-hot-toast';
 
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
+import { PasswordStrength } from '@/components/ui/PasswordStrength';
 
 const loginSchema = z.object({
   identity: z.string().min(3, 'Username, Email, or Phone must be at least 3 characters'),
@@ -37,7 +38,21 @@ const LoginPage = () => {
 
   const [activePortal, setActivePortal] = useState<'staff' | 'patient'>(initialPortal === 'patient' ? 'patient' : 'staff');
 
+  // Forgot Password State
+  const [isForgotPassword, setIsForgotPassword] = useState(false);
+  const [forgotPasswordStep, setForgotPasswordStep] = useState<'identify' | 'verify' | 'reset'>('identify');
+  const [identifier, setIdentifier] = useState('');
+  const [otp, setOtp] = useState('');
+  const [resetPassword, setResetPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [fpUserId, setFpUserId] = useState<string | null>(null);
+
   useEffect(() => {
+    if (searchParams.get('forgot') === 'true') {
+      setIsForgotPassword(true);
+      setForgotPasswordStep('identify');
+    }
+
     if (user) {
       if (user.roles?.includes('Patient')) {
         navigate('/patient/dashboard');
@@ -45,7 +60,7 @@ const LoginPage = () => {
         navigate('/dashboard');
       }
     }
-  }, [user, navigate]);
+  }, [user, navigate, searchParams]);
 
   const { register, handleSubmit, formState: { errors } } = useForm<LoginValues>({
     resolver: zodResolver(loginSchema),
@@ -63,11 +78,9 @@ const LoginPage = () => {
       if (response.data.requires_2fa) {
           setRequires2FA(true);
           setTempUserId(response.data.user_id);
-          // Don't auto-login yet
           return;
       }
       
-      // Success - Update context and redirect to Dashboard
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
       
@@ -80,7 +93,7 @@ const LoginPage = () => {
       navigate(target); 
     } catch (err: any) {
         if (err.response?.status === 403) {
-            setError(err.response?.data?.error || "Your account is not verified. Please check your email.");
+            setError(err.response?.data?.error || "Your account is not verified.");
         } else {
             setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
         }
@@ -113,6 +126,91 @@ const LoginPage = () => {
         navigate(target);
     } catch (err: any) {
         setError(err.response?.data?.error || "Invalid 2FA code");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleIdentify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!identifier) return;
+    setLoading(true);
+    setError(null);
+    try {
+        const resp = await axios.post('/forgot-password', { 
+            identity: identifier,
+            portal: activePortal
+        });
+        setFpUserId(resp.data.user_id);
+        toast.success(resp.data.message);
+        setForgotPasswordStep('verify');
+    } catch (err: any) {
+        setError(err.response?.data?.error || "Account not found");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleVerifyOTP = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!otp) return;
+    setLoading(true);
+    setError(null);
+    try {
+        await axios.post('/forgot-password/verify', { 
+            user_id: fpUserId, 
+            otp,
+            portal: activePortal
+        });
+        toast.success("OTP Verified Successfully");
+        setForgotPasswordStep('reset');
+    } catch (err: any) {
+        setError(err.response?.data?.error || "Invalid OTP");
+    } finally {
+        setLoading(false);
+    }
+  };
+
+  const handleResetPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    // System-wide strong password validation
+    const isStrong = (pw: string) => {
+        return pw.length >= 8 && 
+               /[A-Z]/.test(pw) && 
+               /[a-z]/.test(pw) && 
+               /[0-9]/.test(pw) && 
+               /[^A-Za-z0-9]/.test(pw);
+    };
+
+    if (!isStrong(resetPassword)) {
+        toast.error("Password must be at least 8 chars long with uppercase, lowercase, digit, and symbol.");
+        return;
+    }
+
+    if (resetPassword !== confirmPassword) {
+        toast.error("Passwords do not match");
+        return;
+    }
+
+    setLoading(true);
+    setError(null);
+    try {
+        await axios.post('/forgot-password/reset', { 
+            user_id: fpUserId, 
+            otp: otp,
+            password: resetPassword,
+            portal: activePortal
+        });
+        toast.success("Password Reset Successful! You can now log in.");
+        setIsForgotPassword(false);
+        setForgotPasswordStep('identify');
+        setIdentifier('');
+        setOtp('');
+        setResetPassword('');
+        setConfirmPassword('');
+    } catch (err: any) {
+        setError(err.response?.data?.error || "Failed to reset password");
     } finally {
         setLoading(false);
     }
@@ -194,207 +292,338 @@ const LoginPage = () => {
                     <Activity className="w-12 h-12 text-primary" />
                  )}
              </Link>
-             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Login</h1>
-             <p className="text-muted-foreground font-medium">Log in to your account.</p>
+             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+               {isForgotPassword ? (
+                  forgotPasswordStep === 'identify' ? 'Password Reset' : 
+                  forgotPasswordStep === 'verify' ? 'Verify Identity' : 'New Password'
+               ) : 'Login'}
+             </h1>
+             <p className="text-muted-foreground font-medium">
+               {isForgotPassword ? (
+                  forgotPasswordStep === 'identify' ? 'Enter your details to begin.' : 
+                  forgotPasswordStep === 'verify' ? 'Check your email for the code.' : 'Set your new secure password.'
+               ) : 'Log in to your account.'}
+             </p>
           </div>
 
-          <Tabs 
-            value={activePortal} 
-            onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1.5 rounded-2xl h-16 border-2">
-              <TabsTrigger value="staff" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Clinical Staff</TabsTrigger>
-              <TabsTrigger value="patient" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Patient Portal</TabsTrigger>
-            </TabsList>
+          {!isForgotPassword ? (
+            <Tabs 
+              value={activePortal} 
+              onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
+              className="w-full"
+            >
+              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1.5 rounded-2xl h-16 border-2">
+                <TabsTrigger value="staff" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Clinical Staff</TabsTrigger>
+                <TabsTrigger value="patient" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Patient Portal</TabsTrigger>
+              </TabsList>
 
-            <TabsContent value="staff">
-              <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
-                {error && (
+              <TabsContent value="staff">
+                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
+                  {error && (
+                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                      {error}
+                    </div>
+                  )}
+                  
+                  {!requires2FA ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email or Username</Label>
+                        <div className="relative group">
+                          <Input 
+                              id="identity" 
+                              placeholder="Enter your credentials" 
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              {...register('identity')} 
+                              disabled={loading} 
+                          />
+                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        </div>
+                        {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between ml-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Password</Label>
+                        </div>
+                        <div className="relative group">
+                          <Input 
+                              id="password" 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="••••••••"
+                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              {...register('password')} 
+                              disabled={loading} 
+                          />
+                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                            disabled={loading}
+                          >
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
+                        </div>
+                        {errors.password && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.password.message}</p>}
+                      </div>
+
+                      <div className="flex justify-end pt-1">
+                        <button 
+                            type="button"
+                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); identifier && setIdentifier(identifier); }}
+                            className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
+                        >
+                            Forgot Password?
+                        </button>
+                      </div>
+
+                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Log In'}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
+                      <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary leading-relaxed">
+                          Two-Factor Authentication is enabled. Enter the 6-digit code from your authenticator app.
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Authenticator Code</Label>
+                        <Input 
+                            value={totpCode}
+                            onChange={e => setTotpCode(e.target.value)}
+                            placeholder="000 000" 
+                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
+                            maxLength={6}
+                            disabled={loading} 
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                          <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
+                              Cancel
+                          </Button>
+                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
+                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify'}
+                          </Button>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </TabsContent>
+              
+              <TabsContent value="patient">
+                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
+                  {error && (
+                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
+                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                      {error}
+                    </div>
+                  )}
+                  
+                  {!requires2FA ? (
+                    <>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Patient ID (Staff ID)</Label>
+                        <div className="relative group">
+                          <Input 
+                              id="identity-patient" 
+                              placeholder="e.g. 310520" 
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20 font-black"
+                              {...register('identity')} 
+                              disabled={loading} 
+                              onChange={(e) => {
+                                e.target.value = e.target.value.replace(/\D/g, '');
+                                register('identity').onChange(e);
+                              }}
+                          />
+                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                        <div className="relative group">
+                          <Input 
+                              id="password-patient" 
+                              type={showPassword ? "text" : "password"} 
+                              placeholder="••••••••"
+                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              {...register('password')} 
+                              disabled={loading} 
+                          />
+                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                            disabled={loading}
+                          >
+                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="flex justify-end pt-1">
+                        <button 
+                            type="button"
+                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); }}
+                            className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
+                        >
+                            Forgot Password?
+                        </button>
+                      </div>
+
+                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Enter Portal'}
+                      </Button>
+                    </>
+                  ) : (
+                    <div className="space-y-5">
+                      <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary">
+                          Security verification required. Enter the code to continue.
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Verification Code</Label>
+                        <Input 
+                            value={totpCode}
+                            onChange={e => setTotpCode(e.target.value)}
+                            placeholder="000 000" 
+                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
+                            maxLength={6}
+                            disabled={loading} 
+                        />
+                      </div>
+                      <div className="flex gap-3">
+                          <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
+                              Cancel
+                          </Button>
+                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
+                            Verify
+                          </Button>
+                      </div>
+                    </div>
+                  )}
+                </form>
+              </TabsContent>
+            </Tabs>
+          ) : (
+            <div className="space-y-6 animate-in slide-in-from-left-8 duration-500">
+               {error && (
                   <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
                     <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
                     {error}
                   </div>
-                )}
-                
-                {!requires2FA ? (
-                  <>
+               )}
+
+               {forgotPasswordStep === 'identify' && (
+                  <form onSubmit={handleIdentify} className="space-y-5">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email or Username</Label>
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Account Identity</Label>
                       <div className="relative group">
                         <Input 
-                            id="identity" 
-                            placeholder="Enter your credentials" 
-                            className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
-                            {...register('identity')} 
+                            placeholder="Username, Email, or Phone" 
+                            className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                            value={identifier}
+                            onChange={(e) => setIdentifier(e.target.value)}
                             disabled={loading} 
                         />
-                        <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <User className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
-                      {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
+                      <p className="text-[10px] text-muted-foreground font-medium px-2">Enter your registered details to receive an OTP.</p>
                     </div>
-
-                    <div className="space-y-2">
-                      <div className="flex items-center justify-between ml-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Password</Label>
-                      </div>
-                      <div className="relative group">
-                        <Input 
-                            id="password" 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••"
-                            className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
-                            {...register('password')} 
-                            disabled={loading} 
-                        />
-                        <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                          disabled={loading}
-                        >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                      {errors.password && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.password.message}</p>}
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                       <Link to="/forgot-password?portal=staff" className="text-xs text-primary hover:underline font-black uppercase tracking-tighter">
-                          Forgot Password?
-                       </Link>
-                    </div>
-
-                    <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Log In'}
+                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify Identity'}
                     </Button>
-                  </>
-                ) : (
-                  <div className="space-y-5 animate-in slide-in-from-right-4 duration-300">
+                    <button 
+                        type="button" 
+                        onClick={() => setIsForgotPassword(false)} 
+                        className="w-full text-center text-xs font-black uppercase tracking-tighter text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                    >
+                        <ArrowLeft className="w-3 h-3" /> Back to Login
+                    </button>
+                  </form>
+               )}
+
+               {forgotPasswordStep === 'verify' && (
+                  <form onSubmit={handleVerifyOTP} className="space-y-6">
                     <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary leading-relaxed">
-                        Two-Factor Authentication is enabled. Enter the 6-digit code from your authenticator app.
+                        Identity confirmed! We've sent a 6-digit code to your registered contact.
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Authenticator Code</Label>
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 text-center block">One-Time Password</Label>
                       <Input 
-                          value={totpCode}
-                          onChange={e => setTotpCode(e.target.value)}
                           placeholder="000 000" 
-                          className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
+                          className="h-20 text-center text-4xl tracking-[0.3em] font-black rounded-3xl border-4 focus:border-primary/50 bg-muted/20"
+                          value={otp}
+                          onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                           maxLength={6}
                           disabled={loading} 
                       />
                     </div>
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                          {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify'}
-                        </Button>
-                    </div>
-                  </div>
-                )}
-              </form>
-            </TabsContent>
-            
-            <TabsContent value="patient">
-              <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
-                {error && (
-                  <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                    {error}
-                  </div>
-                )}
-                
-                {!requires2FA ? (
-                  <>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Patient ID (Staff ID)</Label>
-                      <div className="relative group">
-                        <Input 
-                            id="identity-patient" 
-                            placeholder="e.g. 310520" 
-                            className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20 font-black"
-                            {...register('identity')} 
-                            disabled={loading} 
-                            onChange={(e) => {
-                              e.target.value = e.target.value.replace(/\D/g, '');
-                              register('identity').onChange(e);
-                            }}
-                        />
-                        <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                      </div>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
-                      <div className="relative group">
-                        <Input 
-                            id="password-patient" 
-                            type={showPassword ? "text" : "password"} 
-                            placeholder="••••••••"
-                            className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
-                            {...register('password')} 
-                            disabled={loading} 
-                        />
-                        <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        <button
-                          type="button"
-                          onClick={() => setShowPassword(!showPassword)}
-                          className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                          disabled={loading}
-                        >
-                          {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                        </button>
-                      </div>
-                    </div>
-
-                    <div className="flex justify-end pt-1">
-                       <Link to="/forgot-password?portal=patient" className="text-xs text-primary hover:underline font-black uppercase tracking-tighter">
-                          Forgot Password?
-                       </Link>
-                    </div>
-
-                    <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Enter Portal'}
+                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || otp.length < 6}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm OTP'}
                     </Button>
-                  </>
-                ) : (
-                  <div className="space-y-5">
-                    <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary">
-                        Security verification required. Enter the code to continue.
-                    </div>
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Verification Code</Label>
-                      <Input 
-                          value={totpCode}
-                          onChange={e => setTotpCode(e.target.value)}
-                          placeholder="000 000" 
-                          className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
-                          maxLength={6}
-                          disabled={loading} 
-                      />
-                    </div>
-                    <div className="flex gap-3">
-                        <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
-                            Cancel
-                        </Button>
-                        <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                          Verify
-                        </Button>
-                    </div>
-                  </div>
-                )}
-              </form>
-            </TabsContent>
-          </Tabs>
+                    <button 
+                        type="button" 
+                        onClick={() => setForgotPasswordStep('identify')} 
+                        className="w-full text-center text-[10px] font-black uppercase tracking-tighter text-muted-foreground hover:underline"
+                    >
+                        Wrong Account? Try again.
+                    </button>
+                  </form>
+               )}
 
-          <p className="text-center text-[11px] text-muted-foreground font-bold">
-            Don't have an account?{' '}
-            <Link to={`/signup?portal=${activePortal}`} className="text-primary hover:underline transition-all">Sign Up</Link>
-          </p>
+               {forgotPasswordStep === 'reset' && (
+                  <form onSubmit={handleResetPassword} className="space-y-5">
+                    <div className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Password</Label>
+                        <div className="relative group">
+                          <Input 
+                              type="password" 
+                              placeholder="••••••••"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              value={resetPassword}
+                              onChange={(e) => setResetPassword(e.target.value)}
+                              disabled={loading} 
+                          />
+                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        </div>
+                        <PasswordStrength password={resetPassword} />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm New Password</Label>
+                        <div className="relative group">
+                          <Input 
+                              type="password" 
+                              placeholder="••••••••"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              disabled={loading} 
+                          />
+                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        </div>
+                        {confirmPassword && resetPassword !== confirmPassword && <p className="text-[10px] text-destructive font-black ml-1 uppercase">Passwords do not match</p>}
+                      </div>
+                    </div>
+                    
+                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !resetPassword || resetPassword !== confirmPassword}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Finish'}
+                    </Button>
+                  </form>
+               )}
+            </div>
+          )}
+
+          {!isForgotPassword && (
+            <p className="text-center text-[11px] text-muted-foreground font-bold italic">
+              Don't have an account?{' '}
+              <Link to={`/signup?portal=${activePortal}`} className="text-primary hover:underline transition-all">Sign Up</Link>
+            </p>
+          )}
         </div>
 
         <div className="absolute bottom-8 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">

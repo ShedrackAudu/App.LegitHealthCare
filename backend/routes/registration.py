@@ -3,6 +3,7 @@ from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, 
 from datetime import datetime
 from sqlalchemy import func
 from decorators import require_permission
+from utils.ip import get_client_ip
 
 registration_bp = Blueprint('registration', __name__)
 
@@ -148,11 +149,11 @@ def register_patient():
 
         # Create Audit Log
         audit = AuditLog(
-            user_id=data.get('user_id'), # Optional: frontend should send X-User-ID or similar
+            user_id=request.headers.get('X-User-ID'),
             action='Register Patient',
             resource=f"Patient:{staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} registered for year {screening_year}.",
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(audit)
         db.session.commit()

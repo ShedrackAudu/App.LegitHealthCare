@@ -49,23 +49,8 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDialog';
 
-const ProfileInfoItem = ({ label, value, icon: Icon, isLink = false }: any) => (
-  <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/10 transition-colors">
-    <div className="p-2 bg-background rounded-lg text-primary shadow-sm mt-0.5">
-      <Icon className="h-4 w-4" />
-    </div>
-    <div className="flex-1 min-w-0">
-      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-tight">{label}</p>
-      <p className={cn(
-        "text-sm font-bold truncate",
-        isLink ? "text-primary underline underline-offset-4 decoration-primary/30" : "text-foreground"
-      )}>
-        {value || 'Not specified'}
-      </p>
-    </div>
-  </div>
-);
 
 export default function MessagingPage() {
   const { user, socket, setUnreadMessagesCount } = useAppContext();
@@ -89,6 +74,8 @@ export default function MessagingPage() {
   const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
   const [replyingTo, setReplyingTo] = useState<any>(null);
   const [reactionMenu, setReactionMenu] = useState<{msgId: number, x: number, y: number} | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   
@@ -98,6 +85,18 @@ export default function MessagingPage() {
     fetchConversations();
     setUnreadMessagesCount(0); // Reset global unread when opening the page
   }, []);
+
+  const viewProfile = async (userId: number) => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`/api/users/${userId}/profile`);
+      setSelectedUserProfile(response.data);
+      setIsUserProfileOpen(true);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Could not load user profile');
+    }
+  };
 
   useEffect(() => {
     if (activeChat) {
@@ -597,7 +596,7 @@ export default function MessagingPage() {
                          isMe ? "flex-row-reverse" : "flex-row"
                        )}>
                           <div className={cn(
-                            "max-w-[75%] md:max-w-[450px] space-y-1 relative",
+                            "max-w-[75%] md:max-w-[450px] space-y-1 relative min-w-0",
                             isMe ? "items-end text-right" : "items-start text-left"
                           )}>
                              {!isMe && msg.group_id && (
@@ -622,7 +621,7 @@ export default function MessagingPage() {
 
                              <div 
                                className={cn(
-                                 "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words overflow-hidden cursor-default",
+                                 "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0",
                                  isMe ? "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20" : "bg-card border-2 rounded-tl-none hover:border-primary/20"
                                )}
                                onPointerDown={(e) => startLongPress(e, msg.id)}
@@ -1024,6 +1023,14 @@ export default function MessagingPage() {
       </Dialog>
 
       </div>
+      {/* User Profile Dialog */}
+      <UserProfileDialog 
+        userProfile={selectedUserProfile}
+        isOpen={isUserProfileOpen}
+        onOpenChange={setIsUserProfileOpen}
+      />
     </MainLayout>
   );
 }
+
+// Add viewProfile helper (should be inside MessagingPage)

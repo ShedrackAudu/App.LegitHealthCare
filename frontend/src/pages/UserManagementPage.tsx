@@ -56,6 +56,7 @@ import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/context/AppContext';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { UserProfileDialog } from '@/components/UserProfileDialog';
 
 interface User {
   id: number;
@@ -106,6 +107,8 @@ const UserManagementPage: React.FC = () => {
     user: null
   });
   const [deactivating, setDeactivating] = useState(false);
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
 
   const fetchData = async () => {
     setLoading(true);
@@ -242,6 +245,17 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
+  const viewProfile = async (uId: number) => {
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      const response = await axios.get(`/api/users/${uId}/profile`, { headers });
+      setSelectedUserProfile(response.data);
+      setIsUserProfileOpen(true);
+    } catch (err) {
+      toast.error("Failed to load user profile");
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
@@ -299,6 +313,7 @@ const UserManagementPage: React.FC = () => {
                   users={filteredUsers.filter(u => !u.roles.includes('Patient'))}
                   loading={loading}
                   handleAction={handleAction}
+                  onViewProfile={viewProfile}
                 />
               </CardContent>
             </Card>
@@ -331,6 +346,7 @@ const UserManagementPage: React.FC = () => {
                   users={filteredUsers.filter(u => u.roles.includes('Patient'))}
                   loading={loading}
                   handleAction={handleAction}
+                  onViewProfile={viewProfile}
                 />
               </CardContent>
             </Card>
@@ -601,11 +617,17 @@ const UserManagementPage: React.FC = () => {
         confirmText="Deactivate Account"
         variant="danger"
       />
+
+      <UserProfileDialog 
+        userProfile={selectedUserProfile} 
+        isOpen={isUserProfileOpen} 
+        onOpenChange={setIsUserProfileOpen} 
+      />
     </MainLayout>
   );
 };
 
-const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (action: string, u: User) => void }> = ({ users, loading, handleAction }) => (
+const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (action: string, u: User) => void, onViewProfile: (id: number) => void }> = ({ users, loading, handleAction, onViewProfile }) => (
   <div className="overflow-x-auto">
     <Table>
       <TableHeader className="bg-muted/50">
@@ -640,7 +662,11 @@ const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (acti
           </TableRow>
         ) : (
           users.map((user) => (
-            <TableRow key={user.id} className="group hover:bg-muted/30 transition-colors">
+            <TableRow 
+              key={user.id} 
+              className="group hover:bg-muted/10 transition-colors cursor-pointer"
+              onClick={() => onViewProfile(user.id)}
+            >
               <TableCell className="py-4">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-full bg-primary/10 border-2 border-primary/20 flex items-center justify-center font-black text-primary group-hover:bg-primary group-hover:text-white transition-all transform group-hover:scale-105">

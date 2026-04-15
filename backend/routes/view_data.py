@@ -11,10 +11,16 @@ import uuid
 from sqlalchemy import func
 from datetime import datetime
 from decorators import require_permission
+from utils.ip import get_client_ip
 
 view_data_bp = Blueprint('view_data', __name__)
 
-@view_data_bp.route('/patients/search', methods=['GET'])
+@view_data_bp.route('/users/<int:user_id>/profile', methods=['GET'])
+@require_permission('view_users')
+def get_user_profile(user_id):
+    from models import User
+    user = User.query.get_or_404(user_id)
+    return jsonify(user.to_dict()), 200
 @require_permission([
     'view_patients', 'registration', 'consultation', 'lab_tests', 
     'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 
@@ -160,7 +166,7 @@ def handle_patient(staff_id):
             action='Delete Patient (Full)',
             resource=f"Patient:{clean_staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} and all data deleted.",
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(audit)
         db.session.commit()
@@ -244,7 +250,7 @@ def handle_patient(staff_id):
                 action='Update Patient Profile',
                 resource=f"Patient:{patient.staff_id}",
                 details=f"Updated profile for {patient.first_name} {patient.last_name}.",
-                ip_address=request.remote_addr
+                ip_address=get_client_ip()
             )
             db.session.add(audit)
             db.session.commit()

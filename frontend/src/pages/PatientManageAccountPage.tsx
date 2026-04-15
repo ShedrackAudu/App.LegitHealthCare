@@ -379,6 +379,19 @@ const PatientManageAccountPage = () => {
                       <Button 
                         className="h-14 w-full rounded-2xl font-black text-lg shadow-xl shadow-primary/20"
                         onClick={async () => {
+                          const isStrong = (pw: string) => {
+                              return pw.length >= 8 && 
+                                     /[A-Z]/.test(pw) && 
+                                     /[a-z]/.test(pw) && 
+                                     /[0-9]/.test(pw) && 
+                                     /[^A-Za-z0-9]/.test(pw);
+                          };
+
+                          if (!isStrong(newPassword)) {
+                              toast.error("Password must be at least 8 chars long with 1 uppercase, 1 lowercase, 1 digit, and 1 special symbol.");
+                              return;
+                          }
+
                           setResetLoading(true);
                           try {
                             await axios.post('/api/patient/reset-password/verify', { 

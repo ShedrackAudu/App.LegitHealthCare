@@ -10,6 +10,8 @@ import random
 import string
 from datetime import datetime
 from utils.email_utils import EmailService
+from utils.ip import get_client_ip
+from auth_utils import is_password_strong
 
 admin_bp = Blueprint('admin_bp', __name__)
 
@@ -76,7 +78,7 @@ def update_user_roles(user_id):
         action="UPDATE_USER_ROLES",
         resource=f"User:{user_id}",
         details=json.dumps({"new_roles": role_names}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -118,7 +120,7 @@ def manage_roles():
         action="CREATE_ROLE",
         resource=f"Role:{name}",
         details=json.dumps({"name": name, "description": description}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -148,7 +150,7 @@ def delete_role(role_id):
         action="DELETE_ROLE",
         resource=f"Role:{role.name}",
         details=json.dumps({"role_id": role_id, "name": role.name}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -264,7 +266,7 @@ def request_access():
         action="REQUEST_ACCESS",
         resource=path,
         details=json.dumps({"permission": perm_name}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -313,7 +315,7 @@ def verify_access_code():
         action='Activate Access Code',
         resource=f"TempAccessCode:{code_obj.code}",
         details=f"Activated temporary access to {code_obj.permission.name} for {code_obj.duration_minutes} minutes.",
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(audit)
     db.session.commit()
@@ -361,7 +363,7 @@ def update_role_permissions(role_id):
         action="UPDATE_ROLE_PERMISSIONS",
         resource=f"Role:{role.name}",
         details=json.dumps({"new_permissions": permission_names}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -593,7 +595,7 @@ def import_data():
             action="IMPORT_BIO_DATA",
             resource="Excel",
             details=json.dumps({"total_rows": count, "new_patients": added_new}),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(log)
         db.session.commit()
@@ -661,7 +663,7 @@ def generate_access_code():
             "duration": duration,
             "multi_use": is_multi
         }),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -682,7 +684,7 @@ def revoke_access_code(code_id):
         action="REVOKE_ACCESS_CODE",
         resource=f"Code:{code_obj.code}",
         details=json.dumps({"code_id": code_id}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -743,7 +745,7 @@ def delete_user(target_user_id):
             action="DEACTIVATE_USER",
             resource=f"User:{target_user.username}",
             details=json.dumps({"user_id": target_user_id, "username": target_user.username}),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(log)
         db.session.commit()
@@ -769,6 +771,9 @@ def admin_reset_password(target_user_id):
     if not new_password:
         return jsonify({"error": "New password is required"}), 400
         
+    if not is_password_strong(new_password):
+        return jsonify({"error": "Password must be at least 8 chars long with 1 uppercase, 1 lowercase, 1 digit, and 1 special symbol."}), 400
+
     # Set the password
     target_user.set_password(new_password)
     db.session.commit()
@@ -779,7 +784,7 @@ def admin_reset_password(target_user_id):
         action="ADMIN_RESET_PASSWORD",
         resource=f"User:{target_user.username}",
         details=json.dumps({"user_id": target_user_id, "username": target_user.username}),
-        ip_address=request.remote_addr
+        ip_address=get_client_ip()
     )
     db.session.add(log)
     db.session.commit()
@@ -815,7 +820,7 @@ def clear_audit_logs():
                 "timestamp": datetime.now().isoformat(),
                 "performed_by": admin_id
             }),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(log)
         db.session.commit()

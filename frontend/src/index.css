@@ -129,6 +129,11 @@
     font-family: inherit;
   }
 
+  button {
+    white-space: nowrap;
+  }
+
+
   input::placeholder,
   textarea::placeholder {
     opacity: 0.35;

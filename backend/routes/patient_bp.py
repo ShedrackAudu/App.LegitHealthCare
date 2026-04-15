@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from models import db, PatientPortalUser
-from auth_utils import generate_otp
+from auth_utils import generate_otp, is_password_strong
 import os
 from sqlalchemy import text
 from datetime import datetime, timedelta
@@ -100,6 +100,9 @@ def claim_account():
     
     if not all([staff_id, email, password]):
         return jsonify({"error": "Missing required fields"}), 400
+        
+    if not is_password_strong(password):
+        return jsonify({"error": "Password must be at least 8 chars long with 1 uppercase, 1 lowercase, 1 digit, and 1 special symbol."}), 400
         
     # Check if user already exists in ISOLATED database
     existing_user = PatientPortalUser.query.filter(

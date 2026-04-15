@@ -3,6 +3,7 @@ from flask_cors import CORS, cross_origin
 from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
 import json
 from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
+from utils.ip import get_client_ip
 from routes.registration import registration_bp
 from routes.consultation import consultation_bp
 from routes.tests import tests_bp
@@ -271,7 +272,7 @@ def login():
                 "portal": portal,
                 "timestamp": datetime.now().isoformat()
             }),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(login_log)
         db.session.commit()
@@ -412,7 +413,7 @@ def login_2fa():
                 "portal": portal,
                 "timestamp": datetime.now().isoformat()
             }),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(login_2fa_log)
         db.session.commit()
@@ -439,7 +440,7 @@ def logout():
                     "portal": portal,
                     "timestamp": datetime.now().isoformat()
                 }),
-                ip_address=request.remote_addr
+                ip_address=get_client_ip()
             )
             db.session.add(logout_log)
             db.session.commit()
