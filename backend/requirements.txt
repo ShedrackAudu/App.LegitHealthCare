@@ -60,3 +60,5 @@ wsproto
 psycopg2-binary
 gunicorn
 sendgrid
+pandas
+openpyxl

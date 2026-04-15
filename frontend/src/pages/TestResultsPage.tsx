@@ -15,7 +15,14 @@ import {
   ArrowLeft,
   Search,
   Users,
-  Clock3
+  Clock3,
+  Download,
+  UploadCloud,
+  FileSpreadsheet,
+  Info,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -359,6 +366,13 @@ const TestResultsPage: React.FC = () => {
                             </div>
                         </div>
                         
+                        <div className="mt-8 space-y-6">
+                        <BulkUploadSection 
+                            testType={selectedTest} 
+                            activeYear={activeYear} 
+                            activeSection={activeSection} 
+                        />
+                        
                         <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                             <div className="text-center space-y-2">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
@@ -368,6 +382,7 @@ const TestResultsPage: React.FC = () => {
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">Context: {activeSection} Clinic • {activeYear}</p>
                             </div>
                         </Card>
+                        </div>
                     </div>
                 ) : (
                     <TestFormContainer 
@@ -469,6 +484,212 @@ const TestResultsPage: React.FC = () => {
                 </DialogContent>
             </Dialog>
         </MainLayout>
+    );
+};
+
+const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
+    const { user } = useAppContext();
+    const [uploading, setUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState<any>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Only show for specific test types and if user has permission
+    const supportedTests = ['fbc', 'kft', 'lft', 'lipid'];
+    if (!testType || !supportedTests.includes(testType)) return null;
+    
+    const permissionName = `upload_bulk_${testType}`;
+    const hasPermission = user?.permissions?.includes(permissionName) || user?.username === 'admin';
+    if (!hasPermission) return null;
+
+    const testMetadata: Record<string, { title: string, columns: string[] }> = {
+        fbc: {
+            title: "Full Blood Count",
+            columns: ["PatientID", "PCV", "WBC", "PLT", "LYMPH_PERCENT", "LYMPH_ABS", "GRA_PERCENT", "GRA_ABS", "MID_PERCENT", "MID_ABS", "RBC", "MCV", "MCH", "MCHC", "RDW", "PDW", "HGB", "REMARK"]
+        },
+        kft: {
+            title: "Kidney Function Test",
+            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "Urea", "Creatinine", "REMARK"]
+        },
+        lft: {
+            title: "Liver Function Test",
+            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "REMARK"]
+        },
+        lipid: {
+            title: "Lipid Profile",
+            columns: ["PatientID", "TotalCholesterol", "Triglycerides", "REMARK"]
+        }
+    };
+
+    const handleDownloadTemplate = async () => {
+        try {
+            const response = await axios.get(`/api/tests/download-template/${testType}`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${testType.toUpperCase()}_Bulk_Upload_Template.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            toast.error("Failed to download template");
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('year', activeYear);
+
+        setUploading(true);
+        setUploadResult(null);
+        try {
+            const resp = await axios.post(`/api/tests/bulk-upload/${testType}`, formData, {
+                headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    'X-Company-Context': activeSection
+                }
+            });
+            setUploadResult(resp.data);
+            toast.success("Bulk upload processed!");
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Bulk upload failed");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <Card className="border-2 border-primary/20 shadow-lg bg-primary/5 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+            <CardHeader className="bg-primary/10 border-b py-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-xl shrink-0">
+                            <UploadCloud className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg font-black tracking-tight uppercase leading-none">Bulk Result Upload</CardTitle>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Excel Batch Processor</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleDownloadTemplate}
+                        className="w-full sm:w-auto gap-2 font-black text-[10px] uppercase border-primary/30 hover:bg-primary/10 transition-colors h-9"
+                    >
+                        <Download className="h-3.5 w-3.5" /> Download Template
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/50 border-2 border-dashed border-primary/20">
+                            <div className="p-2 bg-amber-500/10 rounded-xl">
+                                <Info className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-black text-sm uppercase tracking-tight">Instructions</h4>
+                                <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-4 font-medium">
+                                    <li>Use the **official .xlsx template** for the best results.</li>
+                                    <li>**PatientID** must exactly match the IDs in the screening matrix.</li>
+                                    <li>Do not change the column order or naming as defined in the template.</li>
+                                    <li>System will **auto-recalculate** dependent parameters (e.g. LDL, HCO3).</li>
+                                    <li>Only existing patient records for **{activeYear}** will be updated.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="relative group">
+                            <input 
+                                type="file" 
+                                accept=".xlsx" 
+                                onChange={handleFileUpload}
+                                ref={fileInputRef}
+                                className="hidden"
+                                id="bulk-file-upload"
+                                disabled={uploading}
+                            />
+                            <label 
+                                htmlFor="bulk-file-upload"
+                                className={`flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer bg-card group-hover:border-primary/50 group-hover:bg-primary/5 ${uploading ? 'opacity-50 cursor-wait' : 'border-muted-foreground/20'}`}
+                            >
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                                        <p className="text-sm font-bold animate-pulse">Processing Batch Data...</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                                        <p className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">Click to Select Excel File</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-black mt-1">Only .xlsx supported</p>
+                                    </>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="h-full rounded-2xl bg-muted/30 p-4 border border-muted-foreground/10">
+                            <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground mb-4">Upload Summary</h4>
+                            
+                            {uploadResult ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <span className="text-[10px] font-black uppercase">Success</span>
+                                            </div>
+                                            <p className="text-2xl font-black text-emerald-700">{uploadResult.success_count}</p>
+                                        </div>
+                                        <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+                                            <div className="flex items-center gap-2 text-rose-600 mb-1">
+                                                <XCircle className="h-4 w-4" />
+                                                <span className="text-[10px] font-black uppercase">Skipped</span>
+                                            </div>
+                                            <p className="text-2xl font-black text-rose-700">{uploadResult.skip_count}</p>
+                                        </div>
+                                    </div>
+
+                                    {uploadResult.errors && uploadResult.errors.length > 0 && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-amber-600">
+                                                <AlertCircle className="h-3 w-3" />
+                                                <span className="text-[9px] font-black uppercase italic">Processing Notes</span>
+                                            </div>
+                                            <ScrollArea className="h-[120px] rounded-lg bg-muted/50 p-2 border">
+                                                <ul className="space-y-1.5">
+                                                    {uploadResult.errors.map((err: string, i: number) => (
+                                                        <li key={i} className="text-[10px] text-muted-foreground font-medium flex gap-2">
+                                                            <span className="text-primary font-bold">•</span> {err}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </ScrollArea>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-48 text-center px-6">
+                                    <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                                        <Search className="h-6 w-6 text-muted-foreground/30" />
+                                    </div>
+                                    <p className="text-xs font-bold text-muted-foreground/50 italic">No upload data available. Upload a file to view a detailed summary of the processed results.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
     );
 };
 

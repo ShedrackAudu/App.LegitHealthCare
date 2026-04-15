@@ -21,6 +21,7 @@ def get_user_profile(user_id):
     from models import User
     user = User.query.get_or_404(user_id)
     return jsonify(user.to_dict()), 200
+@view_data_bp.route('/patients/search', methods=['GET'])
 @require_permission([
     'view_patients', 'registration', 'consultation', 'lab_tests', 
     'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 

@@ -37,7 +37,11 @@ def init_rbac():
             ('edit_patient', 'Permission to modify patient bio-data'),
             ('delete_patient', 'Permission to permanently remove a patient account'),
             ('delete_record', 'Permission to delete screening results from matrix'),
-            ('manage_access_keys', 'Generate and manage temporary access codes')
+            ('manage_access_keys', 'Generate and manage temporary access codes'),
+            ('upload_bulk_fbc', 'Bulk Upload FBC Results'),
+            ('upload_bulk_kft', 'Bulk Upload KFT Results'),
+            ('upload_bulk_lft', 'Bulk Upload LFT Results'),
+            ('upload_bulk_lipid', 'Bulk Upload Lipid Profile Results')
         ]
         
         perm_objs = {}

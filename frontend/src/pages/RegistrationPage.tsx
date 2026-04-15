@@ -444,7 +444,7 @@ const RegistrationPage: React.FC = () => {
                     inputMode="numeric"
                     required
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
+                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
                       e.target.value = val;
                       register('patient_id').onChange(e);
                     }}
