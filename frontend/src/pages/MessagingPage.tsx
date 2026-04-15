@@ -78,6 +78,7 @@ export default function MessagingPage() {
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   
   const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨', '🙏', '👏', '🎉', '💡', '🚀', '✅', '❌', '🤔', '👀', '💪'];
 
@@ -592,11 +593,11 @@ export default function MessagingPage() {
                          </div>
                        )}
                        <div className={cn(
-                         "flex group items-center gap-2",
-                         isMe ? "flex-row-reverse" : "flex-row"
+                         "flex group items-center gap-2 w-full",
+                         isMe ? "flex-row-reverse justify-start" : "flex-row justify-start"
                        )}>
                           <div className={cn(
-                            "max-w-[75%] md:max-w-[450px] space-y-1 relative min-w-0",
+                            "max-w-[75%] space-y-1 relative min-w-0 flex flex-col",
                             isMe ? "items-end text-right" : "items-start text-left"
                           )}>
                              {!isMe && msg.group_id && (
@@ -607,11 +608,11 @@ export default function MessagingPage() {
                              )}
                              
                              {/* Parent Message Preview (Reply) */}
-                             {parentMsg && (
-                               <div className={cn(
-                                 "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate max-w-[300px]",
-                                 isMe ? "border-primary/20 rounded-tr-none" : "border-muted-foreground/20 rounded-tl-none"
-                               )}>
+                              {parentMsg && (
+                                <div className={cn(
+                                  "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                  isMe ? "border-primary/20 rounded-tr-none text-right" : "border-muted-foreground/20 rounded-tl-none text-left"
+                                )}>
                                  <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
                                    {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
                                  </span>
@@ -667,7 +668,11 @@ export default function MessagingPage() {
                                 variant="ghost" 
                                 size="icon" 
                                 className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                onClick={(e) => { e.stopPropagation(); setReplyingTo(msg); }}
+                                onClick={(e) => { 
+                                    e.stopPropagation(); 
+                                    setReplyingTo(msg); 
+                                    messageInputRef.current?.focus();
+                                }}
                                 title="Reply"
                             >
                                 <Reply className="h-3.5 w-3.5" />
@@ -774,6 +779,7 @@ export default function MessagingPage() {
                 </div>
                 <div className="flex-1 relative group">
                   <Input 
+                    ref={messageInputRef}
                     placeholder="Type a message..." 
                     className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 h-11 rounded-xl transition-all font-medium py-3"
                     value={newMessage}
