@@ -19,6 +19,7 @@ import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
 
 const PatientDashboard = () => {
   const { user } = useAppContext();
@@ -26,7 +27,6 @@ const PatientDashboard = () => {
   const [currentTime, setCurrentTime] = useState(new Date());
   const [stats, setStats] = useState({
     totalReports: 0,
-    profileStatus: 85,
     lastScreening: 'N/A'
   });
 
@@ -131,19 +131,20 @@ const PatientDashboard = () => {
 
   return (
     <PatientLayout>
-      <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="space-y-5 animate-in fade-in duration-700">
         {/* Header Section with Live Clock */}
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+        {/* Header Section - More Compact */}
+        <div className="flex flex-row items-center justify-between gap-2 border-b border-primary/5 pb-3">
           <div>
-            <h2 className="text-[10px] font-black uppercase tracking-[0.3em] text-primary mb-1">Patient Portal Overview</h2>
-            <div className="flex items-center gap-2 text-muted-foreground font-bold text-xs">
-               <Clock className="w-3.5 h-3.5 text-primary" />
-               <span className="tabular-nums">{formatDateTime(currentTime)}</span>
+            <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/70">Patient Overview</h2>
+            <div className="flex items-center gap-1.5 text-muted-foreground font-bold text-[10px]">
+               <Clock className="w-3 h-3 text-primary" />
+               <span className="tabular-nums">{formatDateTime(currentTime).replace(' - ', ' | ')}</span>
             </div>
           </div>
-          <div className="flex gap-2">
-             <div className="px-3 py-1.5 bg-emerald-500/10 text-emerald-600 rounded-xl border border-emerald-500/20 flex items-center gap-2 text-[10px] font-black">
-                <CheckCircle2 className="w-3.5 h-3.5" /> Account Verified
+          <div className="flex gap-1.5">
+             <div className="px-2 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg border border-emerald-500/10 flex items-center gap-1 text-[9px] font-black">
+                <CheckCircle2 className="w-3 h-3" /> Verified
              </div>
           </div>
         </div>
@@ -152,7 +153,7 @@ const PatientDashboard = () => {
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-5 md:p-8 text-primary-foreground shadow-xl shadow-primary/20"
+          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-5 md:p-6 text-primary-foreground shadow-xl shadow-primary/20"
         >
           {/* Background Integrated Icon and Decorative Circles */}
           <div className="absolute -right-12 -bottom-12 w-64 h-64 text-white/[0.07] pointer-events-none -rotate-12 transition-transform duration-1000 group-hover:rotate-0">
@@ -166,44 +167,62 @@ const PatientDashboard = () => {
                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
                  <Shield className="w-2.5 h-2.5" /> HIPAA Secured
                </div>
-               <h1 className="text-xl md:text-4xl font-black tracking-tight leading-[1.1]">
+               <h1 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
                   Welcome back, <br />
                   <span className="text-white/60 italic">{profile?.first_name || user?.first_name}!</span>
                </h1>
                
-               <p className="text-xs md:text-sm text-primary-foreground/75 max-w-lg font-medium leading-relaxed">
-                  Access your screening reports, schedule clinical visits, and track your wellness progress right here.
+               <p className="text-[10px] md:text-xs text-primary-foreground/75 max-w-lg font-medium leading-relaxed hidden sm:block">
+                  Access your screening reports, schedule clinical visits, and track your wellness progress.
                </p>
             </div>
 
-            <div className="flex lg:flex-row gap-2.5 shrink-0 w-full lg:w-auto mt-1.5 lg:mt-0">
-               <button className="flex-[1.4] lg:flex-none bg-white text-primary hover:bg-white/90 rounded-xl font-black px-2 md:px-5 h-10 text-[10px] md:text-[11px] uppercase tracking-wider shadow-lg active:scale-95 transition-all whitespace-nowrap" onClick={() => navigate('/patient/records')}>
-                 Medical Reports
+            <div className="flex flex-row gap-2 shrink-0 w-full lg:w-auto mt-0">
+               <button 
+                 className={`flex-1 lg:flex-none rounded-lg font-black px-3 h-8 text-[9px] uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
+                   (reportProgress?.percentage || 0) < 100 
+                   ? 'bg-muted text-muted-foreground/50 border border-muted-foreground/10 cursor-not-allowed opacity-80' 
+                   : 'bg-white text-primary hover:bg-white/90'
+                 }`} 
+                 onClick={() => {
+                   if ((reportProgress?.percentage || 0) < 100) {
+                     toast.error("Your report is being compiled, please check back later");
+                   } else {
+                     navigate('/patient/records');
+                   }
+                 }}
+               >
+                 {(reportProgress?.percentage || 0) < 100 ? <Shield className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+                 Reports
                </button>
-               <button className="flex-1 lg:flex-none bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-xl font-black px-2 md:px-5 h-10 text-[10px] md:text-[11px] uppercase tracking-wider active:scale-95 transition-all whitespace-nowrap" onClick={() => navigate('/patient/appointments')}>
-                 Book Visit
+               <button className="flex-1 lg:flex-none bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg font-black px-3 h-8 text-[9px] uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1.5" onClick={() => navigate('/patient/appointments')}>
+                 <Calendar className="w-3 h-3" /> Book Visit
                </button>
             </div>
           </div>
         </motion.div>
 
+
+
+
+
         {/* Report Progress Card - Compact Redesign */}
         <motion.div variants={item} initial="hidden" animate="show" className="grid grid-cols-1 gap-6">
-          <Card className="border shadow-lg rounded-2xl overflow-hidden bg-gradient-to-br from-card to-primary/5 border-primary/10 transition-colors hover:bg-muted/30">
-            <CardContent className="p-4 md:p-6">
+          <Card className="border shadow-lg rounded-xl overflow-hidden bg-gradient-to-br from-card to-primary/5 border-primary/10 transition-colors hover:bg-muted/30">
+            <CardContent className="p-3 md:p-5">
               {!reportProgress ? (
                 <div className="flex items-center justify-center h-24">
-                  <Activity className="h-5 w-5 animate-spin text-primary/30" />
-                  <span className="ml-2.5 text-xs font-black text-muted-foreground uppercase tracking-wider">Analyzing...</span>
+                  <Activity className="h-4 w-4 animate-spin text-primary/30" />
+                  <span className="ml-2.5 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Analyzing...</span>
                 </div>
               ) : (
-                <div className="flex flex-row items-center gap-4 md:gap-10">
+                <div className="flex flex-row items-center gap-3 md:gap-10">
                     {/* Compact Circular Progress */}
-                    <div className="relative h-20 w-20 md:h-32 md:w-32 shrink-0">
+                    <div className="relative h-16 w-16 md:h-28 md:w-28 shrink-0">
                         <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                            <circle className="text-muted/10" strokeWidth="10" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
+                            <circle className="text-muted/10" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
                             <motion.circle 
-                                strokeWidth="10" 
+                                strokeWidth="12" 
                                 strokeDasharray={251.2}
                                 initial={{ strokeDashoffset: 251.2 }}
                                 animate={{ strokeDashoffset: 251.2 - (251.2 * (reportProgress.percentage || 0)) / 100 }}
@@ -215,56 +234,69 @@ const PatientDashboard = () => {
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-lg md:text-3xl font-black tracking-tighter" style={{ color: getProgressColor(reportProgress.percentage) }}>
+                            <span className="text-sm md:text-3xl font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
                                 {reportProgress.percentage}%
                             </span>
-                            <span className="text-[7px] md:text-[9px] font-black uppercase tracking-widest text-muted-foreground hidden md:block">Done</span>
                         </div>
                     </div>
                     
                     {/* Information Grid */}
-                    <div className="flex-1 min-w-0 space-y-2 md:space-y-4">
-                        <div className="space-y-0.5">
-                            <h2 className="text-xs md:text-xl font-black tracking-tight text-muted-foreground uppercase">{reportProgress.year} Medical Status</h2>
-                            <p className="text-sm md:text-2xl font-black text-foreground truncate">
+                    <div className="flex-1 min-w-0 space-y-1.5 md:space-y-4">
+                        <div className="space-y-0">
+                            <h2 className="text-[8px] md:text-xl font-black tracking-tight text-muted-foreground uppercase">{reportProgress.year} Medical Status</h2>
+                            <p className="text-xs md:text-2xl font-black text-foreground truncate">
                                 {reportProgress.status}
                             </p>
                         </div>
                         
-                        <div className="flex flex-wrap gap-1.5 md:gap-2">
-                            <div className="px-2 py-0.5 md:px-3 md:py-1 bg-emerald-500/10 rounded-lg border border-emerald-500/20 text-[9px] md:text-[11px] font-black text-emerald-600 flex items-center gap-1.5">
-                                <CheckCircle2 className="h-2.5 w-2.5 md:h-3.5 md:w-3.5" />
+                        <div className="flex flex-wrap gap-1 md:gap-2">
+                            <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-emerald-500/10 rounded-md border border-emerald-500/20 text-[8px] md:text-[11px] font-black text-emerald-600 flex items-center gap-1">
+                                <CheckCircle2 className="h-2 w-2 md:h-3.5 md:w-3.5" />
                                 {reportProgress.points}/{reportProgress.total} Items
                             </div>
                             {reportProgress.missing_count > 0 && (
-                                <div className="px-2 py-0.5 md:px-3 md:py-1 bg-amber-500/10 rounded-lg border border-amber-500/20 text-[9px] md:text-[11px] font-black text-amber-600 flex items-center gap-1.5">
-                                    <AlertCircle className="h-2.5 w-2.5 md:h-3.5 md:w-3.5" />
+                                <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-amber-500/10 rounded-md border border-amber-500/20 text-[8px] md:text-[11px] font-black text-amber-600 flex items-center gap-1">
+                                    <AlertCircle className="h-2 w-2 md:h-3.5 md:w-3.5" />
                                     {reportProgress.missing_count} Pending
                                 </div>
                             )}
                         </div>
                     </div>
                     
-                    {/* Action - Hidden on super small mobile if needed, or compact */}
+                    {/* Action - Desktop only */}
                     <div className="hidden sm:flex shrink-0">
                         <Button 
-                          className="rounded-xl font-black h-11 px-6 shadow-xl shadow-primary/10 text-xs active:scale-95 transition-all" 
-                          onClick={() => navigate('/patient/records')}
+                          className="rounded-lg font-black h-9 px-4 shadow-xl shadow-primary/10 text-[10px] active:scale-95 transition-all" 
+                          onClick={() => {
+                            if ((reportProgress?.percentage || 0) < 100) {
+                              toast.error("Your report is being compiled, please check back later");
+                            } else {
+                              navigate('/patient/records');
+                            }
+                          }}
+                          disabled={(reportProgress?.percentage || 0) < 100}
                         >
-                            View Details
+                            {(reportProgress?.percentage || 0) < 100 ? 'Locked' : 'View Details'}
                         </Button>
                     </div>
                 </div>
               )}
               
-              {/* Mobile Only Button */}
+              {/* Mobile Only Button - Even more compact */}
               {reportProgress && (
-                <div className="mt-4 flex sm:hidden">
+                <div className="mt-3 flex sm:hidden">
                     <Button 
-                      className="w-full rounded-xl font-black h-10 shadow-lg text-xs active:scale-95 transition-all" 
-                      onClick={() => navigate('/patient/records')}
+                      className="w-full rounded-lg font-black h-8 shadow-md text-[9px] uppercase tracking-wider active:scale-95 transition-all" 
+                      onClick={() => {
+                        if ((reportProgress?.percentage || 0) < 100) {
+                          toast.error("Your report is being compiled, please check back later");
+                        } else {
+                          navigate('/patient/records');
+                        }
+                      }}
+                      disabled={(reportProgress?.percentage || 0) < 100}
                     >
-                        View Details
+                        {(reportProgress?.percentage || 0) < 100 ? 'Medical Findings Locked' : 'View Screening Details'}
                     </Button>
                 </div>
               )}
@@ -272,132 +304,46 @@ const PatientDashboard = () => {
           </Card>
         </motion.div>
 
-        {/* Dynamic Metrics */}
+        {/* Stats Grid - 2 columns even on mobile */}
         <motion.div 
           variants={container}
           initial="hidden"
           animate="show"
-          className="grid grid-cols-1 md:grid-cols-3 gap-5"
+          className="grid grid-cols-2 gap-3"
         >
           <motion.div variants={item}>
-            <Card className="border shadow-lg rounded-xl overflow-hidden bg-card/50 backdrop-blur-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                   <div className="p-2.5 bg-blue-500/10 rounded-xl text-blue-600">
-                      <FileText className="w-5 h-5" />
+            <Card className="border shadow-md rounded-lg overflow-hidden bg-card/40 backdrop-blur-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                   <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-600">
+                      <FileText className="w-3.5 h-3.5" />
                    </div>
-                   <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Available Reports</span>
+                   <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">Reports</span>
                 </div>
-                <div className="space-y-1">
-                   <h3 className="text-2xl sm:text-3xl font-black">{stats.totalReports}</h3>
-                   <p className="text-xs text-muted-foreground font-medium">Medical Findings</p>
+                <div className="space-y-0">
+                   <h3 className="text-lg md:text-xl font-black">{stats.totalReports}</h3>
+                   <p className="text-[8px] text-muted-foreground font-black uppercase tracking-tighter">Medical Findings</p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
 
           <motion.div variants={item}>
-            <Card className="border shadow-lg rounded-xl overflow-hidden bg-card/50 backdrop-blur-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                   <div className="p-2.5 bg-amber-500/10 rounded-xl text-amber-600">
-                      <TrendingUp className="w-5 h-5" />
+            <Card className="border shadow-md rounded-lg overflow-hidden bg-card/40 backdrop-blur-sm">
+              <CardContent className="p-3">
+                <div className="flex items-center justify-between mb-1">
+                   <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-600">
+                      <Calendar className="w-3.5 h-3.5" />
                    </div>
-                   <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Profile Status</span>
+                   <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">Last Screening</span>
                 </div>
-                <div className="space-y-2">
-                   <h3 className="text-2xl sm:text-3xl font-black">{stats.profileStatus}%</h3>
-                   <div className="w-full bg-muted rounded-full h-1.5 overflow-hidden">
-                      <div className="bg-amber-500 h-full rounded-full transition-all duration-1000" style={{ width: `${stats.profileStatus}%` }} />
-                   </div>
+                <div className="space-y-0">
+                   <h3 className="text-lg md:text-xl font-black">{stats.lastScreening}</h3>
+                   <p className="text-[8px] text-muted-foreground font-black uppercase tracking-tighter">Session Record</p>
                 </div>
               </CardContent>
             </Card>
           </motion.div>
-
-          <motion.div variants={item}>
-            <Card className="border shadow-lg rounded-xl overflow-hidden bg-card/50 backdrop-blur-md">
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between mb-4">
-                   <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600">
-                      <Calendar className="w-5 h-5" />
-                   </div>
-                   <span className="text-[8px] font-black uppercase text-muted-foreground tracking-widest">Last Screening</span>
-                </div>
-                <div className="space-y-1">
-                   <h3 className="text-2xl sm:text-3xl font-black">{stats.lastScreening}</h3>
-                   <p className="text-xs text-muted-foreground font-medium">Session Record</p>
-                </div>
-              </CardContent>
-            </Card>
-          </motion.div>
-        </motion.div>
-
-        {/* Card Links (Similar to Login Style) */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 pt-2">
-           <motion.div 
-             whileHover={{ y: -4, scale: 1.01 }}
-             className="group cursor-pointer"
-             onClick={() => navigate('/patient/records')}
-           >
-              <Card className="h-full border border-primary/10 hover:border-primary/40 transition-all rounded-2xl shadow-lg overflow-hidden">
-                 <div className="p-6 flex flex-col md:flex-row gap-6 items-center">
-                    <div className="w-16 h-16 shrink-0 bg-blue-500/10 rounded-2xl flex items-center justify-center text-blue-600 group-hover:bg-blue-500 group-hover:text-white transition-all duration-500">
-                       <FileText className="w-7 h-7" />
-                    </div>
-                    <div className="space-y-1.5 text-center md:text-left">
-                       <h3 className="text-lg font-black tracking-tight">Medical Reports</h3>
-                       <p className="text-[13px] text-muted-foreground font-medium leading-relaxed">
-                          Access your comprehensive health screening reports for all years. Download and verify your results.
-                       </p>
-                       <div className="pt-1.5 flex items-center justify-center md:justify-start gap-1.5 text-primary font-bold text-[10px] uppercase tracking-wider">
-                          Enter Folder <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
-                       </div>
-                    </div>
-                 </div>
-              </Card>
-           </motion.div>
-
-           <motion.div 
-             whileHover={{ y: -4, scale: 1.01 }}
-             className="group cursor-pointer"
-             onClick={() => navigate('/patient/appointments')}
-           >
-              <Card className="h-full border border-primary/10 hover:border-primary/40 transition-all rounded-2xl shadow-lg overflow-hidden">
-                 <div className="p-6 flex flex-col md:flex-row gap-6 items-center">
-                    <div className="w-16 h-16 shrink-0 bg-amber-500/10 rounded-2xl flex items-center justify-center text-amber-600 group-hover:bg-amber-500 group-hover:text-white transition-all duration-500">
-                       <Calendar className="w-7 h-7" />
-                    </div>
-                    <div className="space-y-1.5 text-center md:text-left">
-                       <h3 className="text-lg font-black tracking-tight">Appointments</h3>
-                       <p className="text-[13px] text-muted-foreground font-medium leading-relaxed">
-                          Schedule new screenings or consultations with our medical staff. Manage your existing bookings.
-                       </p>
-                       <div className="pt-1.5 flex items-center justify-center md:justify-start gap-1.5 text-amber-600 font-bold text-[10px] uppercase tracking-wider">
-                          Schedule Now <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-1.5 transition-transform" />
-                       </div>
-                    </div>
-                 </div>
-              </Card>
-           </motion.div>
-        </div>
-
-        {/* Support Alert */}
-        <motion.div 
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="bg-muted/30 border border-dashed rounded-2xl p-6 flex flex-col md:flex-row items-center gap-4"
-        >
-           <div className="p-3 bg-primary/10 rounded-xl text-primary">
-              <AlertCircle className="w-6 h-6" />
-           </div>
-           <div className="flex-1 text-center md:text-left">
-              <h4 className="text-base font-bold">Important Notice</h4>
-              <p className="text-xs text-muted-foreground font-medium">Please ensure your contact information is up to date in the Profile section to receive timely notifications.</p>
-           </div>
-           <Button variant="outline" className="rounded-xl font-bold h-10 px-6 text-xs" onClick={() => navigate('/patient/account')}>
-              Update Profile
-           </Button>
         </motion.div>
       </div>
     </PatientLayout>
@@ -405,4 +351,5 @@ const PatientDashboard = () => {
 };
 
 export default PatientDashboard;
+
 

@@ -633,10 +633,12 @@ def get_dashboard_stats():
 def get_report_progress():
     try:
         staff_id = request.headers.get('X-Staff-ID')
+        year_param = request.args.get('year')
+        
         if not staff_id:
             return jsonify({"error": "Staff ID required"}), 400
         
-        year = datetime.now().year
+        year = int(year_param) if year_param else datetime.now().year
         from models import (
             ConsultationData, FBCResult, KFTResult, LipidResult, 
             LFTResult, SpecialTestsResult, DirectorReview

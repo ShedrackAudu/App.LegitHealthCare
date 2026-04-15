@@ -65,12 +65,23 @@ const PatientMedicalReport: React.FC = () => {
 
         setLoading(true);
         try {
-            // Fetch profile first to get nationality/section
+            // First verify 100% progress for the selected year
+            const progressRes = await axios.get(`/api/patient/report-progress?year=${selectedYear}`, {
+                headers: { 'X-Staff-ID': user?.username }
+            });
+            
+            if (progressRes.data && progressRes.data.percentage < 100) {
+                toast.error("Your report is being compiled, please check back later");
+                setLoading(false);
+                return;
+            }
+
+            // Fetch profile to get section
             const profileRes = await axios.get('/api/patient/profile', {
                 headers: { 'X-Staff-ID': user?.username }
             });
 
-            const section = profileRes.data.section || 'DCP'; // Fallback if somehow missing
+            const section = profileRes.data.section || 'DCP';
 
             const res = await axios.get(`/api/patient-report/${user?.username}/${selectedYear}`, {
                 headers: { 'X-Company-Context': section }
@@ -79,7 +90,7 @@ const PatientMedicalReport: React.FC = () => {
             setReportData(res.data);
             toast.success(`Report for ${selectedYear} generated!`);
         } catch (err) {
-            toast.error("Clinical data not found for the selected year");
+            toast.error("Clinical data not found or screening incomplete");
             setReportData(null);
         } finally {
             setLoading(false);
