@@ -76,6 +76,7 @@ export default function MessagingPage() {
   const [reactionMenu, setReactionMenu] = useState<{msgId: number, x: number, y: number} | null>(null);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [activeActionsId, setActiveActionsId] = useState<number | null>(null);
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
@@ -573,7 +574,7 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6" onClick={() => setReactionMenu(null)}>
+            <ScrollArea className="flex-1 p-6" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
               <div className="space-y-6">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
@@ -628,7 +629,11 @@ export default function MessagingPage() {
                                onPointerDown={(e) => startLongPress(e, msg.id)}
                                onPointerUp={stopLongPress}
                                onPointerLeave={stopLongPress}
-                               onClick={(e) => e.stopPropagation()}
+                               onClick={(e) => {
+                                 e.stopPropagation();
+                                 setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
+                                 setReactionMenu(null);
+                               }}
                              >
                               {msg.content}
                               <div className={cn(
@@ -663,7 +668,10 @@ export default function MessagingPage() {
                          </div>
 
                          {/* Action buttons (Reply & React) */}
-                         <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-center">
+                         <div className={cn(
+                           "transition-opacity flex flex-col gap-1 items-center",
+                           activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                         )}>
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
