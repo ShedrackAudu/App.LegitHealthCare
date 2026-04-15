@@ -172,7 +172,7 @@ export const Header: React.FC = () => {
         }
     }
     setUser(null);
-    navigate('/login');
+    navigate('/login?portal=staff');
   };
 
   return (

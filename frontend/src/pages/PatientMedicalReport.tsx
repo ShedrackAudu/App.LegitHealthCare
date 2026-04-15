@@ -241,25 +241,25 @@ const PatientMedicalReport: React.FC = () => {
             <div className="space-y-8 animate-in fade-in duration-700">
                 <div className="no-print space-y-8">
                     {/* Header Selector Card */}
-                    <Card className="border-2 shadow-2xl rounded-[2.5rem] overflow-hidden bg-card/50 backdrop-blur-md">
-                        <CardHeader className="p-8 md:p-10">
-                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
-                                <div className="flex items-center gap-4">
-                                    <div className="p-4 bg-primary/10 rounded-3xl text-primary">
-                                        <FileText className="h-8 w-8" />
+                    <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md">
+                        <CardHeader className="p-6 md:p-8">
+                            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
+                                        <FileText className="h-6 w-6" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-2xl sm:text-3xl font-black tracking-tight">Your Medical Reports</CardTitle>
-                                        <CardDescription className="text-base font-medium">Select a screening year to view your detailed diagnostic results.</CardDescription>
+                                        <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
+                                        <CardDescription className="text-sm font-medium">Select a screening year to view your results.</CardDescription>
                                     </div>
                                 </div>
 
-                                <div className="flex flex-col sm:flex-row items-center gap-4 w-full md:w-auto">
-                                    <div className="w-full sm:w-48">
+                                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                                    <div className="w-full sm:w-44">
                                         <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
-                                            <SelectTrigger className="h-12 rounded-xl border-2 font-bold">
-                                                <Calendar className="mr-2 h-4 w-4 text-primary" />
-                                                <SelectValue placeholder={fetchingYears ? "Loading history..." : "Select Year"} />
+                                            <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
+                                                <Calendar className="mr-2 h-3.5 w-3.5 text-primary" />
+                                                <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl font-bold">
                                                 {availableYears.map(year => (
@@ -272,12 +272,12 @@ const PatientMedicalReport: React.FC = () => {
                                         </Select>
                                     </div>
                                     <Button
-                                        size="lg"
-                                        className="h-12 rounded-xl px-8 font-black shadow-xl transition-all active:scale-95"
+                                        size="default"
+                                        className="h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
                                         onClick={handleGenerateReport}
                                         disabled={!selectedYear || loading || fetchingYears}
                                     >
-                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <ChevronRight className="mr-2 h-4 w-4" />}
+                                        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="mr-2 h-3.5 w-3.5" />}
                                         Retrieve Report
                                     </Button>
                                 </div>
@@ -287,7 +287,7 @@ const PatientMedicalReport: React.FC = () => {
 
                     {/* Report Actions Banner */}
                     {reportData && !loading && (
-                        <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 md:p-4 rounded-2xl border-2 border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-lg gap-4 md:gap-0">
+                        <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-3 md:p-3 rounded-xl border border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-md gap-3 md:gap-0">
                             <div className="flex items-center gap-3 px-2 md:px-4">
                                 <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
@@ -307,32 +307,36 @@ const PatientMedicalReport: React.FC = () => {
                     )}
 
                     {!reportData && !loading && (
-                        <div className="flex flex-col items-center justify-center py-32 bg-muted/10 rounded-[3rem] border-2 border-dashed">
+                        <div className="flex flex-col items-center justify-center py-10 md:py-20 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6">
                             {fetchingYears ? (
-                                <Loader2 className="h-12 w-12 animate-spin text-primary opacity-20 mb-4" />
+                                <Loader2 className="h-8 w-8 animate-spin text-primary/30 mb-4" />
                             ) : (
-                                <FileText className="h-20 w-20 text-muted-foreground opacity-10 mb-6" />
+                                <div className="w-14 h-14 rounded-2xl bg-muted-foreground/5 flex items-center justify-center mb-5">
+                                    <FileText className="h-7 w-7 text-muted-foreground/20" />
+                                </div>
                             )}
-                            <h3 className="text-xl font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                {fetchingYears ? "Accessing Archives..." : "No Report Generated"}
-                            </h3>
-                            <p className="text-muted-foreground font-medium mt-2">
-                                {availableYears.length > 0
-                                    ? "Please select a screening session from the menu above."
-                                    : "No historical medical screenings found in our database."}
-                            </p>
+                            <div className="space-y-2">
+                                <h3 className="text-sm md:text-lg font-black text-muted-foreground/40 uppercase tracking-[0.2em]">
+                                    {fetchingYears ? "Accessing Archives" : "No Report Selected"}
+                                </h3>
+                                <p className="text-[10px] md:text-xs text-muted-foreground font-medium max-w-[240px] md:max-w-none leading-relaxed">
+                                    {availableYears.length > 0
+                                        ? "Please select a screening session from the menu above to view results."
+                                        : "No historical medical screenings found in our database."}
+                                </p>
+                            </div>
                         </div>
                     )}
 
                     {loading && (
-                        <div className="flex flex-col items-center justify-center py-40">
-                            <div className="relative">
-                                <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <div className="flex flex-col items-center justify-center py-20 md:py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
+                            <div className="relative mb-6">
+                                <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <FileText className="h-6 w-6 text-primary/40" />
+                                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
                                 </div>
                             </div>
-                            <p className="mt-6 text-sm font-black uppercase tracking-[0.3em] text-primary animate-pulse">Compiling Diagnostic Tables...</p>
+                            <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>
                         </div>
                     )}
                 </div>{/* end no-print helper wrapper */}

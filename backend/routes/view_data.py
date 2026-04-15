@@ -648,127 +648,147 @@ def get_report_progress():
         for bind in ['dcp', 'dct']:
             try:
                 engine = db.engines[bind]
-                # Use a RAW SQL check to be 100% sure we don't trigger model/session bind issues during detection
+                # Use a RAW SQL check on screening_year_bio_data as the primary anchor
                 with engine.connect() as conn:
-                    res = conn.execute(db.text("SELECT id FROM consultation_data WHERE staff_id = :s_id AND screening_year = :year LIMIT 1"), {"s_id": staff_id, "year": year}).fetchone()
+                    res = conn.execute(db.text("SELECT id FROM screening_year_bio_data WHERE staff_id = :s_id AND screening_year = :year LIMIT 1"), {"s_id": staff_id, "year": year}).fetchone()
                     if res:
                          found_bind = bind
                          break
-            except:
+            except Exception as e:
+                print(f"Bind detection error for {bind}: {e}")
                 continue
 
         if found_bind:
             engine = db.engines[found_bind]
-            # Use the explicit bind on the query object
-            queries = {
-                 'c': db.session.query(ConsultationData).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 'f': db.session.query(FBCResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 'k': db.session.query(KFTResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 'li': db.session.query(LipidResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 'lf': db.session.query(LFTResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 's': db.session.query(SpecialTestsResult).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first(),
-                 'd': db.session.query(DirectorReview).bind(engine).filter_by(staff_id=staff_id, screening_year=year).first()
-            }
+            with engine.connect() as conn:
+                # Optimized single-pass query for all 42 points
+                query = db.text("""
+                    SELECT 
+                        c.fbs, c.rbs, c.sugar_remark, c.ua_result, c.ua_remark, c.psa, c.psa_remark, 
+                        c.bp, c.pulse, c.spo2, c.assessment_hx_pe, c.overall_lab_remark, c.breast_exam,
+                        f.pcv, f.wbc, f.lymp_percent, f.gra_percent, f.mid_percent, f.plt, f.fbc_remark,
+                        k.potassium, k.sodium, k.chloride, k.hco3, k.urea, k.creatinine, k.kft_remark,
+                        li.total_cholesterol, li.triglycerides, li.hdl, li.ldl, li.lp_remark,
+                        lf.ast, lf.alt, lf.alp, lf.tb, lf.cb, lf.lft_remark,
+                        s.ecg_result, s.spirometry_result, s.audiometry_result,
+                        d.comment_one, d.comment_two, d.comment_three, d.comment_four
+                    FROM screening_year_bio_data y
+                    LEFT JOIN consultation_data c ON y.staff_id = c.staff_id AND y.screening_year = c.screening_year
+                    LEFT JOIN fbc_results f ON y.staff_id = f.staff_id AND y.screening_year = f.screening_year
+                    LEFT JOIN kft_results k ON y.staff_id = k.staff_id AND y.screening_year = k.screening_year
+                    LEFT JOIN lipid_results li ON y.staff_id = li.staff_id AND y.screening_year = li.screening_year
+                    LEFT JOIN lft_results lf ON y.staff_id = lf.staff_id AND y.screening_year = lf.screening_year
+                    LEFT JOIN special_tests_results s ON y.staff_id = s.staff_id AND y.screening_year = s.screening_year
+                    LEFT JOIN director_reviews d ON y.staff_id = d.staff_id AND y.screening_year = d.screening_year
+                    WHERE y.staff_id = :s_id AND y.screening_year = :year
+                    LIMIT 1
+                """)
+                row = conn.execute(query, {"s_id": staff_id, "year": year}).fetchone()
+                
+                if row:
+                    # 42 Point Logic Check
+                    points = 0
+                    total_possible = 42
+                    missing_fields = []
+                    
+                    def check_val(val, label, cat):
+                        if val is not None and str(val).strip() != "" and str(val).strip().lower() != "n/a":
+                            return 1
+                        missing_fields.append({"label": label, "category": cat})
+                        return 0
 
-        # 42 Point Logic Check
-        points = 0
-        total_possible = 42
-        missing_fields = []
-        
-        def check_field(val, label, cat):
-            if val is not None and str(val).strip() != "" and str(val).strip().lower() != "n/a":
-                return 1
-            missing_fields.append({"label": label, "category": cat})
-            return 0
+                    # Map row indices to point logic (matching the 42 point schema)
+                    # Consultation (0-12)
+                    points += check_val(row[0], "FBS", "Sugar")
+                    points += check_val(row[1], "RBS", "Sugar")
+                    points += check_val(row[2], "Sugar Remark", "Sugar")
+                    points += check_val(row[3], "Urine Result", "UA")
+                    points += check_val(row[4], "Urine Remark", "UA")
+                    points += check_val(row[5], "PSA", "PSA")
+                    points += check_val(row[6], "PSA Remark", "PSA")
+                    points += check_val(row[7], "Blood Pressure", "Vitals")
+                    points += check_val(row[8], "Pulse Rate", "Vitals")
+                    points += check_val(row[9], "SPO2", "Vitals")
+                    points += check_val(row[10], "Hx/PE", "Clinical")
+                    points += check_val(row[11], "Lab Remark", "Clinical")
+                    points += check_val(row[12], "Breast Exam", "Clinical")
 
-        c = queries.get('c')
-        f = queries.get('f')
-        k = queries.get('k')
-        li = queries.get('li')
-        lf = queries.get('lf')
-        s = queries.get('s')
-        d = queries.get('d')
+                    # FBC (13-19)
+                    points += check_val(row[13], "PCV", "FBC")
+                    points += check_val(row[14], "WBC", "FBC")
+                    points += check_val(row[15], "Lymphocytes", "FBC")
+                    points += check_val(row[16], "Neutrophils", "FBC")
+                    points += check_val(row[17], "Mixed Cells", "FBC")
+                    points += check_val(row[18], "Platelets", "FBC")
+                    points += check_val(row[19], "FBC Remark", "FBC")
 
-        # 1. Consultation (Vitals + clinical)
-        points += check_field(c.fbs if c else None, "FBS", "Blood Sugar")
-        points += check_field(c.rbs if c else None, "RBS", "Blood Sugar")
-        points += check_field(c.sugar_remark if c else None, "Sugar Remark", "Blood Sugar")
-        points += check_field(c.ua_result if c else None, "Urine Result", "UA")
-        points += check_field(c.ua_remark if c else None, "Urine Remark", "UA")
-        points += check_field(c.psa if c else None, "PSA", "PSA")
-        points += check_field(c.psa_remark if c else None, "PSA Remark", "PSA")
-        points += check_field(c.bp if c else None, "Blood Pressure", "Vitals")
-        points += check_field(c.pulse if c else None, "Pulse Rate", "Vitals")
-        points += check_field(c.spo2 if c else None, "SPO2", "Vitals")
-        points += check_field(c.assessment_hx_pe if c else None, "Hx/PE", "Clinical")
-        points += check_field(c.overall_lab_remark if c else None, "Lab Remark", "Clinical")
-        points += check_field(c.breast_exam if c else None, "Breast Exam", "Clinical")
+                    # KFT (20-26)
+                    points += check_val(row[20], "Potassium", "KFT")
+                    points += check_val(row[21], "Sodium", "KFT")
+                    points += check_val(row[22], "Chloride", "KFT")
+                    points += check_val(row[23], "Bicarbonate", "KFT")
+                    points += check_val(row[24], "Urea", "KFT")
+                    points += check_val(row[25], "Creatinine", "KFT")
+                    points += check_val(row[26], "KFT Remark", "KFT")
 
-        # 2. FBC
-        points += check_field(f.pcv if f else None, "PCV", "FBC")
-        points += check_field(f.wbc if f else None, "WBC", "FBC")
-        points += check_field(f.lymp_percent if f else None, "Lymphocytes", "FBC")
-        points += check_field(f.gra_percent if f else None, "Neutrophils", "FBC")
-        points += check_field(f.mid_percent if f else None, "Mixed", "FBC")
-        points += check_field(f.plt if f else None, "Platelets", "FBC")
-        points += check_field(f.fbc_remark if f else None, "FBC Remark", "FBC")
+                    # Lipid (27-31)
+                    points += check_val(row[27], "Total Chol.", "Lipid")
+                    points += check_val(row[28], "Triglycerides", "Lipid")
+                    points += check_val(row[29], "HDL-c", "Lipid")
+                    points += check_val(row[30], "LDL-c", "Lipid")
+                    points += check_val(row[31], "Lipid Remark", "Lipid")
 
-        # 3. KFT
-        points += check_field(k.potassium if k else None, "Potassium", "KFT")
-        points += check_field(k.sodium if k else None, "Sodium", "KFT")
-        points += check_field(k.chloride if k else None, "Chloride", "KFT")
-        points += check_field(k.hco3 if k else None, "Bicarbonate", "KFT")
-        points += check_field(k.urea if k else None, "Urea", "KFT")
-        points += check_field(k.creatinine if k else None, "Creatinine", "KFT")
-        points += check_field(k.kft_remark if k else None, "KFT Remark", "KFT")
+                    # LFT (32-37)
+                    points += check_val(row[32], "AST", "LFT")
+                    points += check_val(row[33], "ALT", "LFT")
+                    points += check_val(row[34], "ALP", "LFT")
+                    points += check_val(row[35], "TB", "LFT")
+                    points += check_val(row[36], "CB", "LFT")
+                    points += check_val(row[37], "LFT Remark", "LFT")
 
-        # 4. Lipid
-        points += check_field(li.total_cholesterol if li else None, "Total Cholesterol", "Lipid")
-        points += check_field(li.triglycerides if li else None, "Triglycerides", "Lipid")
-        points += check_field(li.hdl if li else None, "HDL-c", "Lipid")
-        points += check_field(li.ldl if li else None, "LDL-c", "Lipid")
-        points += check_field(li.lp_remark if li else None, "Lipid Remark", "Lipid")
+                    # Special (38-40)
+                    points += check_val(row[38], "ECG", "Special")
+                    points += check_val(row[39], "Spirometry", "Special")
+                    points += check_val(row[40], "Audiometry", "Special")
 
-        # 5. LFT
-        points += check_field(lf.ast if lf else None, "AST", "LFT")
-        points += check_field(lf.alt if lf else None, "ALT", "LFT")
-        points += check_field(lf.alp if lf else None, "ALP", "LFT")
-        points += check_field(lf.tb if lf else None, "TB", "LFT")
-        points += check_field(lf.cb if lf else None, "CB", "LFT")
-        points += check_field(lf.lft_remark if lf else None, "LFT Remark", "LFT")
+                    # Final Advice (41) - Check if ANY comment exists
+                    has_comment = 0
+                    if row[41] or row[42] or row[43] or row[44]:
+                        has_comment = 1
+                    
+                    points += has_comment
+                    if not has_comment:
+                        missing_fields.append({"label": "Medical Advice", "category": "Review"})
 
-        # 6. Special
-        points += check_field(s.ecg_result if s else None, "ECG", "Special")
-        points += check_field(s.spirometry_result if s else None, "Spirometry", "Special")
-        points += check_field(s.audiometry_result if s else None, "Audiometry", "Special")
+                    percentage = round((points / total_possible) * 100)
+                    
+                    # Status logic
+                    status = "Registration Only"
+                    if points > 1: status = "Lab Testing Stage"
+                    if points > 15: status = "Diagnostic Stage"
+                    if points > 31: status = "Medical Review Stage"
+                    if points >= 41 and not has_comment: status = "Awaiting Final Advice"
+                    if percentage == 100: status = "Report Ready"
 
-        # 7. Comments (1 point logic)
-        has_comment = 0
-        if d and (d.comment_one or d.comment_two or d.comment_three or d.comment_four):
-            has_comment = 1
-        
-        points += has_comment
-        if not has_comment:
-            missing_fields.append({"label": "Final Medical Advice", "category": "Review"})
+                    return jsonify({
+                        "percentage": percentage,
+                        "points": points,
+                        "total": total_possible,
+                        "status": status,
+                        "year": year,
+                        "missing_count": len(missing_fields),
+                        "missing_preview": missing_fields[:5]
+                    }), 200
 
-        percentage = round((points / total_possible) * 100) if points > 0 else 0
-        
-        # Dynamic status labels
-        status = "Registration Only"
-        if points > 1: status = "Lab Testing In Progress"
-        if points > 15: status = "Diagnostic Stage"
-        if points > 31: status = "Medical Review Stage"
-        if points >= 41 and not has_comment: status = "Awaiting Final Advice"
-        if percentage == 100: status = "Report Ready"
-
+        # Fallback if no record found (Registered but no clinical data started)
         return jsonify({
-            "percentage": percentage,
-            "points": points,
-            "total": total_possible,
-            "status": status,
+            "percentage": 0,
+            "points": 0,
+            "total": 42,
+            "status": "Registration Data Preparing",
             "year": year,
-            "missing_count": len(missing_fields),
-            "missing_preview": missing_fields[:5]
+            "missing_count": 42,
+            "missing_preview": []
         }), 200
     except Exception as e:
         print(f"CRITICAL PROGRESS ERROR: {e}")

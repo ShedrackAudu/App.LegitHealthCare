@@ -48,6 +48,13 @@ const LoginPage = () => {
   const [fpUserId, setFpUserId] = useState<string | null>(null);
 
   useEffect(() => {
+    const portal = searchParams.get('portal');
+    if (portal === 'patient') {
+      setActivePortal('patient');
+    } else if (portal === 'staff') {
+      setActivePortal('staff');
+    }
+
     if (searchParams.get('forgot') === 'true') {
       setIsForgotPassword(true);
       setForgotPasswordStep('identify');
