@@ -572,7 +572,7 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6" onClick={() => setReactionMenu(null)}>
+            <ScrollArea className="flex-1 p-3 md:p-6" onClick={() => setReactionMenu(null)}>
               <div className="space-y-6">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
@@ -596,7 +596,7 @@ export default function MessagingPage() {
                          isMe ? "flex-row-reverse" : "flex-row"
                        )}>
                           <div className={cn(
-                            "max-w-[75%] md:max-w-[450px] space-y-1 relative min-w-0",
+                            "max-w-[85%] md:max-w-[450px] flex-1 min-w-0 space-y-1 relative",
                             isMe ? "items-end text-right" : "items-start text-left"
                           )}>
                              {!isMe && msg.group_id && (
@@ -609,7 +609,7 @@ export default function MessagingPage() {
                              {/* Parent Message Preview (Reply) */}
                              {parentMsg && (
                                <div className={cn(
-                                 "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate max-w-[300px]",
+                                 "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-70 bg-muted/50 border-x-2 border-t-2 truncate w-full",
                                  isMe ? "border-primary/20 rounded-tr-none" : "border-muted-foreground/20 rounded-tl-none"
                                )}>
                                  <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
@@ -662,7 +662,7 @@ export default function MessagingPage() {
                          </div>
 
                          {/* Action buttons (Reply & React) */}
-                         <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-center">
+                         <div className="opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex flex-col gap-1 items-center shrink-0">
                             <Button 
                                 variant="ghost" 
                                 size="icon" 
