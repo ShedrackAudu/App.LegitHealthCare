@@ -327,6 +327,7 @@ export default function MessagingPage() {
       chat_id: activeChat?.id
     });
     setReactionMenu(null);
+    setActiveActionsId(null);
   };
 
   const startLongPress = (e: React.PointerEvent, msgId: number) => {
@@ -593,117 +594,193 @@ export default function MessagingPage() {
                            </span>
                          </div>
                        )}
-                       <div className={cn(
-                         "flex group items-center gap-2 w-full",
-                         isMe ? "flex-row-reverse justify-start" : "flex-row justify-start"
-                       )}>
-                          <div className={cn(
-                            "max-w-[75%] space-y-1 relative min-w-0 flex flex-col",
-                            isMe ? "items-end text-right" : "items-start text-left"
-                          )}>
-                             {!isMe && msg.group_id && (
-                                <span className="text-[10px] font-black uppercase text-primary ml-1 mb-1 block tracking-wider animate-in fade-in slide-in-from-left-2 duration-300">
-                                  <span className="md:hidden">{(msg.sender_name || 'Staff').split(' ')[0]}</span>
-                                  <span className="hidden md:inline">{msg.sender_name || 'Staff Member'}</span>
-                                </span>
-                             )}
-                             
-                             {/* Parent Message Preview (Reply) */}
-                              {parentMsg && (
-                                <div className={cn(
-                                  "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
-                                  isMe ? "border-primary/20 rounded-tr-none text-right" : "border-muted-foreground/20 rounded-tl-none text-left"
-                                )}>
-                                 <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
-                                   {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
-                                 </span>
-                                 {parentMsg.content}
-                               </div>
-                             )}
-
-                             <div 
-                               className={cn(
-                                 "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0",
-                                 isMe ? "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20" : "bg-card border-2 rounded-tl-none hover:border-primary/20"
-                               )}
-                               onPointerDown={(e) => startLongPress(e, msg.id)}
-                               onPointerUp={stopLongPress}
-                               onPointerLeave={stopLongPress}
-                               onClick={(e) => {
-                                 e.stopPropagation();
-                                 setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
-                                 setReactionMenu(null);
-                               }}
-                             >
-                              {msg.content}
-                              <div className={cn(
-                                "flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px]",
-                                isMe ? "text-primary-foreground" : "text-muted-foreground"
-                              )}>
-                                {format(new Date(msg.created_at), 'HH:mm')}
-                                {isMe && (
-                                  msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />
+                        <div className={cn(
+                          "flex group items-center gap-2 w-full",
+                          isMe ? "justify-end" : "justify-start"
+                        )}>
+                            {!isMe ? (
+                                <>
+                                    <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-start text-left">
+                                {parentMsg && (
+                                  <div className={cn(
+                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "border-muted-foreground/20 rounded-tl-none text-left"
+                                  )}>
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
+                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
+                                   </span>
+                                   {parentMsg.content}
+                                  </div>
                                 )}
-                              </div>
+  
+                                <div 
+                                  className={cn(
+                                    "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0",
+                                    "bg-card border-2 rounded-tl-none hover:border-primary/20"
+                                  )}
+                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerUp={stopLongPress}
+                                  onPointerLeave={stopLongPress}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
+                                    setReactionMenu(null);
+                                  }}
+                                >
+                                 {msg.content}
+                                 <div className={cn(
+                                   "flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px]",
+                                   "text-muted-foreground"
+                                 )}>
+                                   {format(new Date(msg.created_at), 'HH:mm')}
+                                 </div>
+                               </div>
+  
+                               {/* Reactions display */}
+                               {msg.reactions && msg.reactions.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mt-1 justify-start">
+                                       {/* Group reactions by emoji */}
+                                       {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
+                                           <div 
+                                               key={emoji} 
+                                               className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
+                                               onClick={() => reactToMessage(msg.id, emoji)}
+                                           >
+                                               {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
+                                           </div>
+                                       ))}
+                                   </div>
+                               )}
+                            </div>
+                            
+                            {/* Action buttons (Reply & React) */}
+                            <div className={cn(
+                              "transition-opacity flex flex-col gap-1 items-center",
+                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                            )}>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => { 
+                                       e.stopPropagation(); 
+                                       setReplyingTo(msg); 
+                                       messageInputRef.current?.focus();
+                                       setActiveActionsId(null);
+                                   }}
+                                   title="Reply"
+                               >
+                                   <Reply className="h-3.5 w-3.5" />
+                               </Button>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       setReactionMenu({ 
+                                           msgId: msg.id, 
+                                           x: e.clientX, 
+                                           y: e.clientY 
+                                       });
+                                   }}
+                                   title="React"
+                               >
+                                   <Smile className="h-3.5 w-3.5" />
+                               </Button>
+                            </div>
+                         </>
+                      ) : (
+                         <>
+                            {/* Action buttons (Reply & React) - Left of bubble for Sent */}
+                            <div className={cn(
+                              "transition-opacity flex flex-col gap-1 items-center",
+                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                            )}>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => { 
+                                       e.stopPropagation(); 
+                                       setReplyingTo(msg); 
+                                       messageInputRef.current?.focus();
+                                       setActiveActionsId(null);
+                                   }}
+                                   title="Reply"
+                               >
+                                   <Reply className="h-3.5 w-3.5" />
+                               </Button>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       setReactionMenu({ 
+                                           msgId: msg.id, 
+                                           x: e.clientX, 
+                                           y: e.clientY 
+                                       });
+                                   }}
+                                   title="React"
+                               >
+                                   <Smile className="h-3.5 w-3.5" />
+                               </Button>
                             </div>
 
-                            {/* Reactions display */}
-                            {msg.reactions && msg.reactions.length > 0 && (
-                                <div className={cn(
-                                    "flex flex-wrap gap-1 mt-1",
-                                    isMe ? "justify-end" : "justify-start"
-                                )}>
-                                    {/* Group reactions by emoji */}
-                                    {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
-                                        <div 
-                                            key={emoji} 
-                                            className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
-                                            onClick={() => reactToMessage(msg.id, emoji)}
-                                        >
-                                            {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
-                                        </div>
-                                    ))}
-                                </div>
-                            )}
-                         </div>
-
-                         {/* Action buttons (Reply & React) */}
-                         <div className={cn(
-                           "transition-opacity flex flex-col gap-1 items-center",
-                           activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
-                         )}>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                onClick={(e) => { 
-                                    e.stopPropagation(); 
-                                    setReplyingTo(msg); 
-                                    messageInputRef.current?.focus();
-                                }}
-                                title="Reply"
-                            >
-                                <Reply className="h-3.5 w-3.5" />
-                            </Button>
-                            <Button 
-                                variant="ghost" 
-                                size="icon" 
-                                className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                onClick={(e) => {
+                            <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-end text-right">
+                                {parentMsg && (
+                                  <div className={cn(
+                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "border-primary/20 rounded-tr-none text-right"
+                                  )}>
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">Your Message</span>
+                                   {parentMsg.content}
+                                  </div>
+                                )}
+  
+                                <div 
+                                  className={cn(
+                                    "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0 font-medium",
+                                    "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20"
+                                  )}
+                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerUp={stopLongPress}
+                                  onPointerLeave={stopLongPress}
+                                  onClick={(e) => {
                                     e.stopPropagation();
-                                    setReactionMenu({ 
-                                        msgId: msg.id, 
-                                        x: e.clientX, 
-                                        y: e.clientY 
-                                    });
-                                }}
-                                title="React"
-                            >
-                                <Smile className="h-3.5 w-3.5" />
-                            </Button>
-                         </div>
-                       </div>
-                     </div>
+                                    setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
+                                    setReactionMenu(null);
+                                  }}
+                                >
+                                 {msg.content}
+                                 <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
+                                   {format(new Date(msg.created_at), 'HH:mm')}
+                                   {msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                 </div>
+                               </div>
+  
+                               {/* Reactions display */}
+                               {msg.reactions && msg.reactions.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mt-1 justify-end">
+                                       {/* Group reactions by emoji */}
+                                       {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
+                                           <div 
+                                               key={emoji} 
+                                               className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
+                                               onClick={() => reactToMessage(msg.id, emoji)}
+                                           >
+                                               {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
+                                           </div>
+                                       ))}
+                                   </div>
+                               )}
+                            </div>
+                         </>
+                       )}
+                        </div>
+                      </div>
                    );
                 })}
                 <div ref={scrollRef} />
