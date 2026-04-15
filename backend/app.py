@@ -28,6 +28,7 @@ from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+from setup_system import setup_system
 
 
 load_dotenv()
@@ -455,7 +456,6 @@ def logout():
 with app.app_context():
     init_db()
     try:
-        from setup_system import setup_system
         setup_system(app, purge=False)
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")

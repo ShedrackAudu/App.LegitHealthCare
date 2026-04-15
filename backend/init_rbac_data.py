@@ -1,8 +1,7 @@
-from app import app
 from models import db, User, Role, Permission
 import json
 
-def init_rbac():
+def init_rbac(app):
     with app.app_context():
         # 1. Define all permissions
         perms_metadata = [
@@ -85,4 +84,5 @@ def init_rbac():
         print("\nRBAC Initialization Complete.")
 
 if __name__ == "__main__":
-    init_rbac()
+    from app import app
+    init_rbac(app)

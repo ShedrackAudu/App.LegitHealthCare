@@ -23,7 +23,7 @@ def setup_system(app, purge=False):
             db.session.commit()
 
         # 1. Initialize RBAC (Roles & Permissions)
-        init_rbac()
+        init_rbac(app)
 
         # 2. Ensure Admin Role has all permissions
         admin_role = Role.query.filter_by(name='Admin').first()
