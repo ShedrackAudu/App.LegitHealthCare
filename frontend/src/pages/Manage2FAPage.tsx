@@ -140,31 +140,51 @@ const Manage2FAPage = () => {
                         )}
 
                         {qrUri && backupCodes.length === 0 && (
-                            <Card className="border-2 shadow-lg animate-in slide-in-from-bottom-4">
-                                <CardHeader>
-                                    <CardTitle>Configure Authenticator</CardTitle>
-                                    <CardDescription>1. Scan the QR code below with Google Authenticator or Authy.</CardDescription>
+                            <Card className="border shadow-lg rounded-2xl overflow-hidden animate-in slide-in-from-bottom-8 duration-700">
+                                <CardHeader className="p-5 border-b bg-primary/5">
+                                    <h3 className="text-base font-black">Configure Authenticator</h3>
+                                    <p className="text-[10px] font-medium text-muted-foreground">Link your device below.</p>
                                 </CardHeader>
-                                <CardContent className="flex flex-col items-center space-y-6">
-                                    <div className="bg-white p-4 rounded-xl shadow-inner border">
-                                        <QRCodeSVG value={qrUri} size={200} />
-                                    </div>
-                                    <p className="text-xs text-muted-foreground text-center">
-                                        Or manually enter this secret key into your app:<br/>
-                                        <code className="font-mono font-bold text-primary text-base select-all bg-primary/10 px-2 py-1 rounded mt-1 inline-block">{secret}</code>
-                                    </p>
-                                    
-                                    <div className="w-full max-w-sm space-y-2 border-t pt-6">
-                                        <p className="text-sm font-semibold mb-2">2. Enter the 6-digit code to verify:</p>
-                                        <div className="flex gap-2">
-                                            <Input 
-                                                value={code} 
-                                                onChange={e => setCode(e.target.value)} 
-                                                placeholder="000000" 
-                                                className="text-center font-mono text-xl tracking-widest h-12"
-                                                maxLength={6}
-                                            />
-                                            <Button onClick={verifyAndEnable} size="lg" className="h-12 px-8">Verify</Button>
+                                <CardContent className="p-5 space-y-8">
+                                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-10">
+                                        <div className="space-y-4 flex-1 w-full max-w-sm lg:max-w-none">
+                                            <div className="flex items-center justify-center lg:justify-start gap-2.5">
+                                                <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black shrink-0">1</div>
+                                                <p className="font-black text-[11px] leading-relaxed text-muted-foreground uppercase opacity-80">Scan QR Code</p>
+                                            </div>
+                                            <div className="p-4 bg-muted/10 rounded-xl border border-dashed flex flex-col items-center">
+                                                <div className="bg-white p-3 rounded-xl shadow-lg border border-white mb-3">
+                                                    <QRCodeSVG value={qrUri} size={150} />
+                                                </div>
+                                                <div className="text-center w-full px-2">
+                                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Manual Key:</p>
+                                                    <code className="text-[8.5px] sm:text-[10px] font-mono font-black bg-primary/10 text-primary px-2 py-1.5 rounded-lg border border-primary/20 select-all tracking-wider block truncate">{secret}</code>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div className="w-px self-stretch bg-border hidden lg:block" />
+
+                                        <div className="space-y-4 flex-1 w-full max-w-sm lg:max-w-none">
+                                            <div className="flex items-center justify-center lg:justify-start gap-2.5">
+                                                <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black shrink-0">2</div>
+                                                <p className="font-black text-[11px] leading-relaxed text-muted-foreground uppercase opacity-80">Verify Code</p>
+                                            </div>
+                                            <div className="p-5 bg-card rounded-2xl border shadow-inner space-y-5 flex flex-col justify-center h-full min-h-[160px]">
+                                                <div className="space-y-2">
+                                                    <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center block opacity-60">Verification Code</p>
+                                                    <Input 
+                                                        value={code} 
+                                                        onChange={e => setCode(e.target.value)} 
+                                                        placeholder="000 000" 
+                                                        className="text-center font-black text-2xl tracking-[0.3em] h-12 rounded-xl border focus:border-primary transition-all shadow-sm"
+                                                        maxLength={6}
+                                                    />
+                                                </div>
+                                                <Button onClick={verifyAndEnable} className="w-full h-11 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
+                                                   Enable Secure Access
+                                                </Button>
+                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>

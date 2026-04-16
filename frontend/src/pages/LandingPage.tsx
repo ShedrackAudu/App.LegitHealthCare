@@ -373,14 +373,14 @@ const LandingPage = () => {
       {/* Workflow Section */}
       <section className="py-32 bg-muted/50">
         <div className="container mx-auto px-8 md:px-12 lg:px-20">
-           <div className="columns-1 lg:columns-2 gap-16 space-y-12">
+           <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div className="space-y-6">
                  <h2 className="text-4xl font-bold">The Modern Health Experience</h2>
                  <p className="text-lg text-muted-foreground">We've revolutionized how medical screenings are handled at Legit HealthCare Services Ltd. No more paper trails—just pure digital efficiency.</p>
                  <div className="space-y-8 pt-4">
-                    <WorkflowStep number="01" title="Secure Registration" text="Verify your DCP/DCT identity via OTP and 2FA for maximum security." />
+                    <WorkflowStep number="01" title="Secure Registration" text="Verify your patient profile identity via OTP and 2FA for maximum security." />
                     <WorkflowStep number="02" title="Professional Screening" text="Complete your yearly medical evaluation with our expert clinical team." />
-                    <WorkflowStep number="03" title="Real-Time Access" text="Receive instant notifications when results are ready for secure viewing." />
+                    <WorkflowStep number="03" title="Real-Time Access" text="Receive instant notifications and view your medical reports as soon as they are finalized." />
                  </div>
               </div>
               <div className="relative rounded-3xl overflow-hidden border-2 shadow-2xl h-[400px] lg:h-full bg-card flex items-center justify-center p-12">

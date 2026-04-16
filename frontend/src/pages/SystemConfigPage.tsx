@@ -93,7 +93,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         <p className="text-xl font-bold">No items found</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-muted">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-muted">
                         {items.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-4 bg-background hover:bg-primary/5 transition-colors group">
                                 <span className="font-bold text-base tracking-tight">{item.name}</span>
@@ -395,13 +395,13 @@ const SystemConfigPage: React.FC = () => {
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
                 <div className="flex flex-col gap-3 border-b pb-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-2.5 sm:p-4 bg-gradient-to-br from-primary to-primary/60 rounded-xl sm:rounded-3xl shadow-lg shadow-primary/20 shrink-0">
-                            <Settings2 className="text-white h-6 w-6 sm:h-9 sm:w-9" />
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                            <Settings2 className="h-6 w-6 sm:h-8 sm:w-8" />
                         </div>
-                        <h1 className="text-xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
                     </div>
-                    <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/10 ml-1 py-1">
+                    <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
                         Manage registration dropdowns and system settings
                     </p>
                 </div>

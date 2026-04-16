@@ -196,7 +196,7 @@ const PatientManage2FAPage = () => {
                                                 </div>
                                                 <div className="text-center w-full px-2">
                                                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Manual Key:</p>
-                                                    <code className="text-[10px] font-mono font-black bg-primary/10 text-primary px-3 py-1.5 rounded-lg border border-primary/20 select-all tracking-wider block truncate">{secret}</code>
+                                                    <code className="text-[8.5px] sm:text-[10px] font-mono font-black bg-primary/10 text-primary px-2 py-1.5 rounded-lg border border-primary/20 select-all tracking-wider block truncate">{secret}</code>
                                                 </div>
                                             </div>
                                         </div>

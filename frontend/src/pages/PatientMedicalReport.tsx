@@ -255,14 +255,16 @@ const PatientMedicalReport: React.FC = () => {
                     <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md">
                         <CardHeader className="p-6 md:p-8">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-3 bg-primary/10 rounded-2xl text-primary">
-                                        <FileText className="h-6 w-6" />
-                                    </div>
-                                    <div>
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                                            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+                                        </div>
                                         <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
-                                        <CardDescription className="text-sm font-medium">Select a screening year to view your results.</CardDescription>
                                     </div>
+                                    <CardDescription className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+                                        Select a screening year to view your results.
+                                    </CardDescription>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">

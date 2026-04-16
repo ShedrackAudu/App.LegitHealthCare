@@ -259,17 +259,24 @@ const UserManagementPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-primary">User Management</h1>
-            <p className="text-muted-foreground italic">Comprehensive directory of clinical personnel and registered patients.</p>
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                <Users className="h-6 w-6 sm:h-8 sm:w-8" />
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">User Management</h1>
+            </div>
+            <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+              Comprehensive directory of clinical personnel and registered patients.
+            </p>
           </div>
-          <div className="flex items-center gap-2">
-            <Button variant="outline" size="sm" onClick={fetchData} className="gap-2">
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin" : "h-4 w-4"} />
+          <div className="flex items-center gap-3 w-full lg:w-auto">
+            <Button variant="outline" size="sm" onClick={fetchData} className="flex-1 lg:flex-none gap-2 h-10 rounded-xl border-2 font-bold transition-all hover:bg-primary/5">
+              <RefreshCw className={loading ? "h-4 w-4 animate-spin text-primary" : "h-4 w-4 text-primary"} />
               Reload
             </Button>
-            <Button size="sm" className="gap-2 shadow-lg shadow-primary/20" onClick={() => setIsAddModalOpen(true)}>
+            <Button size="sm" className="flex-1 lg:flex-none gap-2 h-10 rounded-xl font-black shadow-lg shadow-primary/20 px-6" onClick={() => setIsAddModalOpen(true)}>
               <UserCog className="h-4 w-4" />
               Add User
             </Button>

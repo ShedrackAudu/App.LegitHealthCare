@@ -169,7 +169,7 @@ const PatientDashboard = () => {
                </div>
                <h1 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
                   Welcome back, <br />
-                  <span className="text-white/60 italic">{profile?.first_name || user?.first_name}!</span>
+                  <span className="text-white/60">{profile?.first_name || user?.first_name}!</span>
                </h1>
                
                <p className="text-[10px] md:text-xs text-primary-foreground/75 max-w-lg font-medium leading-relaxed hidden sm:block">

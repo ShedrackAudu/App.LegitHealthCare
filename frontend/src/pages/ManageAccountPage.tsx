@@ -159,9 +159,18 @@ const ManageAccountPage = () => {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <Card className="border-2 shadow-sm">
-                        <CardHeader>
-                            <CardTitle>Personal Information</CardTitle>
-                            <CardDescription>Update your contact details and name.</CardDescription>
+                        <CardHeader className="p-5 border-b bg-muted/5">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                        <User className="w-5 h-5" />
+                                    </div>
+                                    <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Personal Information</CardTitle>
+                                </div>
+                                <CardDescription className="text-xs font-medium pl-4 border-l-4 border-primary/20 ml-1 py-1">
+                                    Update your contact details and name.
+                                </CardDescription>
+                            </div>
                         </CardHeader>
                         <form onSubmit={handleUpdateInfo}>
                             <CardContent className="space-y-4">
@@ -194,27 +203,32 @@ const ManageAccountPage = () => {
 
                     <div className="space-y-6">
                         <Card className="border-2 shadow-sm">
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    <Lock className="h-5 w-5 text-primary" /> Change Password
-                                </CardTitle>
-                                <CardDescription>
-                                    Password must be at least 8 characters long, include an uppercase letter, a lowercase letter, a digit, and a special symbol.
-                                </CardDescription>
+                            <CardHeader className="p-5 border-b bg-muted/5">
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-2 rounded-xl bg-primary/10 text-primary">
+                                            <Lock className="w-5 h-5" />
+                                        </div>
+                                        <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Change Password</CardTitle>
+                                    </div>
+                                    <CardDescription className="text-xs font-medium pl-4 border-l-4 border-primary/20 ml-1 py-1 leading-relaxed">
+                                        Secure your account with a unique passcode.
+                                    </CardDescription>
+                                </div>
                             </CardHeader>
                             <form onSubmit={handleUpdatePassword}>
                                 <CardContent className="space-y-4">
                                     <div className="space-y-2">
-                                        <Label>Current Password</Label>
+                                        <Label>Current Password <span className="text-destructive">*</span></Label>
                                         <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>New Password</Label>
+                                        <Label>New Password <span className="text-destructive">*</span></Label>
                                         <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
                                         <PasswordStrength password={newPassword} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Confirm New Password</Label>
+                                        <Label>Confirm New Password <span className="text-destructive">*</span></Label>
                                         <div className="relative">
                                             <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
                                             <div className="absolute right-3 top-2.5">
@@ -234,14 +248,18 @@ const ManageAccountPage = () => {
                         </Card>
 
                         <Card className={`border-2 shadow-sm ${user?.is_2fa_enabled ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-rose-500/50 bg-rose-500/5'}`}>
-                            <CardHeader>
-                                <CardTitle className="flex items-center gap-2">
-                                    {user?.is_2fa_enabled ? <ShieldCheck className="h-5 w-5 text-emerald-600" /> : <ShieldAlert className="h-5 w-5 text-rose-600" />}
-                                    Two-Factor Authentication (2FA)
-                                </CardTitle>
-                                <CardDescription>
-                                    {user?.is_2fa_enabled ? "2FA is currently active for your account." : "Enhance your account security with an authenticator app."}
-                                </CardDescription>
+                            <CardHeader className={`p-5 border-b ${user?.is_2fa_enabled ? 'bg-emerald-500/5' : 'bg-rose-500/5'}`}>
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-3">
+                                        <div className={`p-2 rounded-xl ${user?.is_2fa_enabled ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                                            {user?.is_2fa_enabled ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                                        </div>
+                                        <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Two-Factor Auth</CardTitle>
+                                    </div>
+                                    <CardDescription className={`text-xs font-medium pl-4 border-l-4 ml-1 py-1 ${user?.is_2fa_enabled ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
+                                        {user?.is_2fa_enabled ? "2FA is currently active for your account." : "Enhance security with second-step verification."}
+                                    </CardDescription>
+                                </div>
                             </CardHeader>
                             <CardContent>
                                 <Button 
