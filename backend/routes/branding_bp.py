@@ -143,12 +143,37 @@ def clear_branding_asset():
         
     branding = AppBranding.query.first()
     if branding:
-        # Optionally delete file from static/uploads if needed
-        # current_val = getattr(branding, field)
-        # if current_val:
-        #    ... logic to parse filename and delete ...
-        
         setattr(branding, field, None)
         db.session.commit()
     
     return jsonify({"message": f"Cleared {field}"}), 200
+
+@branding_bp.route('/manifest.json', methods=['GET'])
+def get_pwa_manifest():
+    branding = AppBranding.query.first()
+    clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
+    # Use the primary logo for manifest icons
+    logo_url = branding.logo_light if branding and branding.logo_light else "/favicon.svg"
+    
+    # Ensure URL is absolute for manifest if it's a relative path starting with /api
+    # (Though browsers usually handle relative URLs in manifest, absolute can be safer)
+    
+    manifest = {
+        "name": clinic_name,
+        "short_name": clinic_name[:12],
+        "description": "Premium Healthcare Management System",
+        "start_url": "/",
+        "display": "standalone",
+        "background_color": "#ffffff",
+        "theme_color": "#0d9488",
+        "orientation": "portrait",
+        "icons": [
+            {
+                "src": logo_url,
+                "sizes": "192x192 512x512",
+                "type": "image/png" if not logo_url.endswith('.svg') else "image/svg+xml",
+                "purpose": "any maskable"
+            }
+        ]
+    }
+    return jsonify(manifest), 200
