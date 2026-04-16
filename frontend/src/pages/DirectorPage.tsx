@@ -142,7 +142,7 @@ const RadioField = ({ label, name, control, required = true }: any) => (
         <RadioGroup
           onValueChange={field.onChange}
           value={field.value}
-          className="flex gap-4 p-1 bg-muted/30 rounded-xl border-2 h-11 items-center px-4"
+          className="flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all"
         >
           <div className="flex items-center space-x-2">
             <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />

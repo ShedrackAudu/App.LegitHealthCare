@@ -47,20 +47,20 @@ const quickActions = [
     permission: 'registration'
   },
   { 
-    title: 'Lab Test Results', 
-    description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
-    icon: FlaskConical, 
-    path: '/tests',
-    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    permission: 'lab_entry'
-  },
-  { 
     title: 'Consultation', 
     description: 'Enter clinical assessments and recommendations.',
     icon: Stethoscope, 
     path: '/consultation',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     permission: 'consultation'
+  },
+  { 
+    title: 'Lab Test Results', 
+    description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
+    icon: FlaskConical, 
+    path: '/tests',
+    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    permission: 'lab_entry'
   },
   { 
     title: 'Director Review', 
@@ -71,12 +71,12 @@ const quickActions = [
     permission: 'director_review'
   },
   { 
-    title: 'View Patients', 
-    description: 'Access complete registry of registered patients.',
-    icon: Users, 
-    path: '/view-patients',
-    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-    permission: 'view_patients'
+    title: 'Patient Reports', 
+    description: 'Generate and export individual patient reports.',
+    icon: User, 
+    path: '/patient-report',
+    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    permission: 'view_records'
   },
   { 
     title: 'Clinical Records', 
@@ -87,12 +87,12 @@ const quickActions = [
     permission: 'view_records'
   },
   { 
-    title: 'Patient Reports', 
-    description: 'Generate and export individual patient reports.',
-    icon: User, 
-    path: '/patient-report',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    permission: 'view_records'
+    title: 'Patient Directory', 
+    description: 'Access complete registry of registered patients.',
+    icon: Users, 
+    path: '/view-patients',
+    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    permission: 'view_patients'
   },
   { 
     title: 'Secure Messaging', 

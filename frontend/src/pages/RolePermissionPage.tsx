@@ -134,14 +134,14 @@ const RolePermissionPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-black tracking-tight">System Access Control</h1>
-            <p className="text-muted-foreground font-medium italic mt-1">Manage roles, granular permissions, and security entrance keys.</p>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-end gap-4">
+          <div className="space-y-1">
+            <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-tight">System Access Control</h1>
+            <p className="text-muted-foreground font-medium italic text-xs sm:text-sm">Manage roles, granular permissions, and security entrance keys.</p>
           </div>
-          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-2">
+          <div className="bg-primary/10 border border-primary/20 px-3 py-1.5 rounded-xl flex items-center gap-2 w-fit shrink-0">
             <ShieldCheck className="w-4 h-4 text-primary" />
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Security Override Enabled</span>
+            <span className="text-[9px] sm:text-[10px] font-black uppercase text-primary tracking-widest leading-none">Security Override Enabled</span>
           </div>
         </div>
 

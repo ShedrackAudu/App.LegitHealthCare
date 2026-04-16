@@ -128,14 +128,16 @@ export const AISettingsPage = () => {
     return (
         <MainLayout>
             <div className="max-w-4xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <div className="flex items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-blue-500/10 mb-8">
-                    <div className="p-4 bg-blue-500/10 rounded-2xl">
-                        <Bot className="text-blue-600 h-8 w-8" />
+                <div className="flex flex-col gap-3 bg-card p-6 rounded-2xl border-2 shadow-xl border-blue-500/10 mb-8">
+                    <div className="flex items-center gap-4">
+                        <div className="p-2.5 sm:p-4 bg-blue-500/10 rounded-xl sm:rounded-2xl shrink-0">
+                            <Bot className="text-blue-600 h-6 w-6 sm:h-8 sm:w-8" />
+                        </div>
+                        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-foreground leading-tight">AI Director Insights</h1>
                     </div>
-                    <div>
-                        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">AI Director Insights</h1>
-                        <p className="text-muted-foreground font-medium mt-1">Configure OpenAI ChatGPT behavior for automated result overviews and recommendations.</p>
-                    </div>
+                    <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-blue-500/10 ml-1 py-1">
+                        Configure OpenAI ChatGPT behavior for automated result overviews and recommendations.
+                    </p>
                 </div>
 
                 <form onSubmit={handleSave} className="space-y-6 pb-20">

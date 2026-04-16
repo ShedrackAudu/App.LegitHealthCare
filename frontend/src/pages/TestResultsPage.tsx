@@ -818,9 +818,9 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
                     <Input {...register('fbc_remark')} placeholder="Remarks..." />
                 </div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save FBC Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -862,9 +862,9 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save KFT Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -903,9 +903,9 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save Lipid Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -932,9 +932,9 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save LFT Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -952,14 +952,14 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Spirometry Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Spirometry Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
                 <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save Spirometry Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                 </Button>
             </div>
         </form>
@@ -980,12 +980,12 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>{test} Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
+                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
                 <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save {test} Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                 </Button>
             </div>
         </form>

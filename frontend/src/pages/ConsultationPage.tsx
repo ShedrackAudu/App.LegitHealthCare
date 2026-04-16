@@ -415,13 +415,20 @@ const ConsultationPage: React.FC = () => {
         </div>
 
         {!patient ? (
-          <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5 mt-8">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-muted-foreground/50" />
+          <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 mt-8 p-6">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
               </div>
-              <p className="text-muted-foreground font-bold text-lg italic">Enter a Patient ID to begin consultation.</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">Searching in {activeYear} Screening Data</p>
+              <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
+                Enter a Patient ID to begin consultation.
+              </p>
+              <div className="flex flex-col items-center gap-1 sm:gap-2">
+                <div className="h-px w-8 bg-muted-foreground/20" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">
+                  Searching in {activeYear} Screening Data
+                </p>
+              </div>
             </div>
           </Card>
         ) : (

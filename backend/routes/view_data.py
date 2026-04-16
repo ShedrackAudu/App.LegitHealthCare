@@ -526,7 +526,8 @@ def get_patient_report(staff_id, year):
             "comment_two": d.comment_two,
             "comment_three": d.comment_three,
             "comment_four": d.comment_four,
-            "lab_remark": d.overall_lab_remark
+            "lab_remark": d.overall_lab_remark,
+            "hx_pe": d.assessment_hx_pe
         }
     
     # Determine Timing
@@ -667,8 +668,19 @@ def get_report_progress():
                 # Optimized single-pass query for all 42 points
                 query = db.text("""
                     SELECT 
-                        c.fbs, c.rbs, c.sugar_remark, c.ua_result, c.ua_remark, c.psa, c.psa_remark, 
-                        c.bp, c.pulse, c.spo2, c.assessment_hx_pe, c.overall_lab_remark, c.breast_exam,
+                        COALESCE(d.fbs, c.fbs) as fbs, 
+                        COALESCE(d.rbs, c.rbs) as rbs, 
+                        COALESCE(d.fbs_rbs_remark, c.sugar_remark) as sugar_remark, 
+                        COALESCE(d.ua_result, c.ua_result) as ua_result, 
+                        COALESCE(d.ua_remark, c.ua_remark) as ua_remark, 
+                        COALESCE(d.psa, c.psa) as psa, 
+                        COALESCE(d.psa_remark, c.psa_remark) as psa_remark, 
+                        COALESCE(d.bp, c.bp) as bp, 
+                        COALESCE(d.pulse, c.pulse) as pulse, 
+                        COALESCE(d.spo2, c.spo2) as spo2, 
+                        COALESCE(d.assessment_hx_pe, c.assessment_hx_pe) as assessment_hx_pe, 
+                        COALESCE(d.overall_lab_remark, c.overall_lab_remark) as overall_lab_remark, 
+                        COALESCE(d.breast_exam, c.breast_exam) as breast_exam,
                         f.pcv, f.wbc, f.lymp_percent, f.gra_percent, f.mid_percent, f.plt, f.fbc_remark,
                         k.potassium, k.sodium, k.chloride, k.hco3, k.urea, k.creatinine, k.kft_remark,
                         li.total_cholesterol, li.triglycerides, li.hdl, li.ldl, li.lp_remark,

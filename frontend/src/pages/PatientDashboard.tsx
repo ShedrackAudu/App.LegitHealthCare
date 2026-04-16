@@ -234,7 +234,7 @@ const PatientDashboard = () => {
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-sm md:text-3xl font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
+                            <span className="text-[13px] md:text-[27px] font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
                                 {reportProgress.percentage}%
                             </span>
                         </div>

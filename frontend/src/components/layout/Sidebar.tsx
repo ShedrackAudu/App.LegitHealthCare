@@ -39,8 +39,8 @@ const medicalItems: SidebarItem[] = [
   { title: 'Test Results', path: '/tests', icon: FlaskConical, permission: 'lab_tests' },
   { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
   { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
-  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
   { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
+  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
   { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
   { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'view_appointments' },
 ];
