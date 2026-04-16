@@ -79,7 +79,7 @@ const AppointmentsPage = () => {
             // Re-format to DD-MM-YYYY for backend consistency
             const [y, m, d] = selectedDate.split('-');
             const formattedDate = `${d}-${m}-${y}`;
-            const res = await axios.get(`http://localhost:5000/api/appointments/booked?date=${formattedDate}`);
+            const res = await axios.get(`/api/appointments/booked?date=${formattedDate}`);
             setBookedSlots(res.data);
             setValue('time_slot', ''); // Reset slot when date changes
         } catch (err) {
@@ -95,7 +95,7 @@ const AppointmentsPage = () => {
     if (!query) return;
     setIsSearching(true);
     try {
-      const res = await axios.get(`http://localhost:5000/api/patients/search?q=${query}`, {
+      const res = await axios.get(`/api/patients/search?q=${query}`, {
           headers: { 'X-Company-Context': activeSection }
       });
       if (res.data && res.data.length > 0) {
@@ -121,7 +121,7 @@ const AppointmentsPage = () => {
       const [y, m, d] = data.appointment_date.split('-');
       const formattedDate = `${d}-${m}-${y}`;
       
-      await axios.post('http://localhost:5000/api/appointments', {
+      await axios.post('/api/appointments', {
         ...data,
         appointment_date: formattedDate,
         staff_id: patient.staff_id
@@ -151,7 +151,7 @@ const AppointmentsPage = () => {
                 <Calendar className="text-primary h-8 w-8" />
             </div>
             <div>
-                <h1 className="text-2xl font-black tracking-tight">Appointments Booking</h1>
+                <h1 className="text-xl sm:text-2xl font-black tracking-tight">Appointments Booking</h1>
                 <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
           </div>
@@ -205,7 +205,7 @@ const AppointmentsPage = () => {
                                 <Clock className="h-6 w-6" />
                                 <span className="text-xs font-black uppercase tracking-widest">Appointment Scheduler</span>
                             </div>
-                            <CardTitle className="text-3xl font-black">Book New Appointment</CardTitle>
+                            <CardTitle className="text-2xl sm:text-3xl font-black">Book New Appointment</CardTitle>
                             <CardDescription className="text-base font-medium">Schedule a callback or follow-up for this patient.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-8 pt-4 space-y-6">

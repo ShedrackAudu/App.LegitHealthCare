@@ -27,8 +27,10 @@ def send_otp_email(user, otp, subject="Your Legit HealthCare OTP Code"):
     
     # Ensure logo_url is absolute for email clients
     if logo_url and logo_url.startswith('/'):
-        # Note: request is imported in auth_utils.py from flask
+        # On Render, we want to ensure HTTPS even if internal request is HTTP
         base_url = request.url_root.rstrip('/')
+        if 'onrender.com' in base_url and base_url.startswith('http:'):
+            base_url = base_url.replace('http:', 'https:')
         logo_url = f"{base_url}{logo_url}"
     
     html_content = EmailService.get_otp_template(user.first_name, otp, logo_url=logo_url)

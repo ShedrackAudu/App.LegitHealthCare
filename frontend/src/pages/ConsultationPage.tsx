@@ -122,15 +122,15 @@ const RadioField = ({ label, name, control }: any) => (
           <RadioGroup
             onValueChange={field.onChange}
             value={field.value}
-            className={`flex gap-4 p-1 bg-muted/30 rounded-xl border-2 h-11 items-center px-4 ${fieldState.error ? 'border-red-500' : ''}`}
+            className={`flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all ${fieldState.error ? 'border-red-500' : ''}`}
           >
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 py-1 sm:py-0">
               <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-emerald-600 border-2" />
-              <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer">Yes</Label>
+              <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer text-sm">Yes</Label>
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center space-x-2 py-1 sm:py-0">
               <RadioGroupItem value="No" id={`${name}-no`} className="text-rose-600 border-2" />
-              <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer">No</Label>
+              <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer text-sm">No</Label>
             </div>
           </RadioGroup>
           {fieldState.error && <p className="text-[10px] text-red-500 font-bold ml-1">{fieldState.error.message}</p>}
@@ -199,7 +199,7 @@ const ConsultationPage: React.FC = () => {
   // Fetch queue count
   const fetchQueue = async () => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueCount(resp.data.consultation || 0);
@@ -211,7 +211,7 @@ const ConsultationPage: React.FC = () => {
   const fetchQueueList = async () => {
     setLoadingQueue(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/consultation/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/consultation/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
@@ -310,7 +310,7 @@ const ConsultationPage: React.FC = () => {
     if (!idToSearch) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/screening/${activeYear}/patient/${idToSearch}`, {
+      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       const fullData = response.data;
@@ -344,7 +344,7 @@ const ConsultationPage: React.FC = () => {
     if (!patient) return;
     setSaving(true);
     try {
-      await axios.post('http://localhost:5000/consultation', {
+      await axios.post('/consultation', {
         ...data,
         staff_id: patient.staff_id,
         screening_year: activeYear
@@ -371,12 +371,12 @@ const ConsultationPage: React.FC = () => {
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-emerald-500/10">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-emerald-500/10 rounded-2xl">
-              <Stethoscope className="text-emerald-600 h-8 w-8" />
+            <div className="p-2 sm:p-3 bg-emerald-500/10 rounded-2xl">
+              <Stethoscope className="text-emerald-600 h-6 w-6 sm:h-8 sm:w-8" />
             </div>
             <div>
-              <h1 className="text-2xl font-black tracking-tight">Doctor's Consultation</h1>
-              <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
           </div>          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
             {/* Queue Status Card */}
@@ -415,13 +415,20 @@ const ConsultationPage: React.FC = () => {
         </div>
 
         {!patient ? (
-          <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5 mt-8">
-            <div className="text-center space-y-2">
-              <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                <User className="w-8 h-8 text-muted-foreground/50" />
+          <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 mt-8 p-6">
+            <div className="text-center space-y-3">
+              <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
+                <User className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
               </div>
-              <p className="text-muted-foreground font-bold text-lg italic">Enter a Patient ID to begin consultation.</p>
-              <p className="text-xs text-muted-foreground uppercase tracking-widest">Searching in {activeYear} Screening Data</p>
+              <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
+                Enter a Patient ID to begin consultation.
+              </p>
+              <div className="flex flex-col items-center gap-1 sm:gap-2">
+                <div className="h-px w-8 bg-muted-foreground/20" />
+                <p className="text-[10px] sm:text-xs text-muted-foreground uppercase tracking-[0.2em] font-black">
+                  Searching in {activeYear} Screening Data
+                </p>
+              </div>
             </div>
           </Card>
         ) : (

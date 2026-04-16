@@ -47,20 +47,20 @@ const quickActions = [
     permission: 'registration'
   },
   { 
-    title: 'Lab Test Results', 
-    description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
-    icon: FlaskConical, 
-    path: '/tests',
-    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
-    permission: 'lab_entry'
-  },
-  { 
     title: 'Consultation', 
     description: 'Enter clinical assessments and recommendations.',
     icon: Stethoscope, 
     path: '/consultation',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     permission: 'consultation'
+  },
+  { 
+    title: 'Lab Test Results', 
+    description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
+    icon: FlaskConical, 
+    path: '/tests',
+    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    permission: 'lab_entry'
   },
   { 
     title: 'Director Review', 
@@ -71,12 +71,12 @@ const quickActions = [
     permission: 'director_review'
   },
   { 
-    title: 'View Patients', 
-    description: 'Access complete registry of registered patients.',
-    icon: Users, 
-    path: '/view-patients',
-    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
-    permission: 'view_patients'
+    title: 'Patient Reports', 
+    description: 'Generate and export individual patient reports.',
+    icon: User, 
+    path: '/patient-report',
+    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    permission: 'view_records'
   },
   { 
     title: 'Clinical Records', 
@@ -87,12 +87,12 @@ const quickActions = [
     permission: 'view_records'
   },
   { 
-    title: 'Patient Reports', 
-    description: 'Generate and export individual patient reports.',
-    icon: User, 
-    path: '/patient-report',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
-    permission: 'view_records'
+    title: 'Patient Directory', 
+    description: 'Access complete registry of registered patients.',
+    icon: Users, 
+    path: '/view-patients',
+    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    permission: 'view_patients'
   },
   { 
     title: 'Secure Messaging', 
@@ -184,7 +184,7 @@ const Dashboard: React.FC = () => {
   
   const fetchDashboardStats = async () => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/dashboard/stats?year=${activeYear}`, {
+      const resp = await axios.get(`/api/dashboard/stats?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setStats(resp.data);
@@ -195,7 +195,7 @@ const Dashboard: React.FC = () => {
 
   const fetchQueueStats = async () => {
     try {
-        const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+        const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
         });
         setQueueStats(resp.data);
@@ -208,7 +208,7 @@ const Dashboard: React.FC = () => {
     setSelectedDept(dept);
     setLoadingQueue(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
+      const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
@@ -262,7 +262,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
@@ -394,7 +394,7 @@ const Dashboard: React.FC = () => {
                   </Badge>
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
-                  <h3 className="text-3xl font-black tracking-tighter">
+                  <h3 className="text-2xl sm:text-3xl font-black tracking-tighter">
                     {queueStats?.[dept.id] || 0}
                   </h3>
                   <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">

@@ -68,7 +68,7 @@ const PatientClaimPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('http://localhost:5000/api/patient/claim', {
+      const resp = await axios.post('/api/patient/claim', {
         ...formData
       });
       toast.success(resp.data.message);
@@ -113,139 +113,140 @@ const PatientClaimPage = () => {
         <form onSubmit={handleSubmit}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Form Fields */}
-            <Card className="lg:col-span-2 border-2 border-border/50 shadow-xl shadow-foreground/5 bg-card/50 backdrop-blur-xl">
-              <CardHeader className="border-b bg-muted/30">
-                <div className="flex justify-between items-start mb-6">
-                  {branding?.logo_light ? (
-                    <img 
-                      src={`http://localhost:5000${branding.logo_light}`} 
-                      alt="Logo" 
-                      className="h-12 w-auto object-contain" 
-                    />
-                  ) : (
-                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
-                        <ShieldCheck className="w-6 h-6" />
+            <Card className="lg:col-span-2 border shadow-lg bg-card/50 backdrop-blur-xl overflow-hidden rounded-2xl">
+              {/* Premium Patient Result Header */}
+              <div className="p-6 bg-emerald-500/5 border-b border-emerald-500/10 relative overflow-hidden">
+                <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  <div className="flex items-center gap-3">
+                    <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 font-bold text-xl">
+                      {formData.first_name?.[0]}{formData.last_name?.[0]}
                     </div>
-                  )}
-                  <div className="text-right">
-                    <CardTitle className="text-2xl font-black">Complete Your Profile</CardTitle>
-                    <CardDescription>Finish claiming your account by verifying your info.</CardDescription>
+                    <div>
+                      <h2 className="text-xl font-black tracking-tight text-foreground leading-none">
+                        {formData.first_name} {formData.middle_name ? formData.middle_name + ' ' : ''}{formData.last_name}
+                      </h2>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Verified Record</span>
+                        <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
+                        <span className="text-[10px] font-black text-muted-foreground tracking-[0.2em]">{formData.staff_id}</span>
+                      </div>
+                    </div>
+                  </div>
+                  
+                  <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-[0.2em] shadow-md shadow-primary/10 ${formData.section?.toUpperCase() === 'DCP' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                    {formData.section?.toUpperCase() || 'N/A'}
                   </div>
                 </div>
-              </CardHeader>
-              <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6">
-                <div className="space-y-2">
-                  <FieldLabel>Staff ID</FieldLabel>
-                  <div className="relative">
-                    <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="staff_id" value={formData.staff_id} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed font-medium" />
-                  </div>
-                </div>
+              </div>
 
-                <div className="space-y-2">
-                    <FieldLabel>Section</FieldLabel>
-                    <div className="relative">
-                        <MapPin className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <Input name="section" value={formData.section} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed font-medium" />
+              <CardContent className="space-y-6 pt-6 px-6">
+                {/* 1. Verified Bio-Data (read-only) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Department</Label>
+                        <p className="font-bold text-foreground text-sm flex items-center gap-2">
+                           <Building className="w-3.5 h-3.5 text-primary" /> {formData.department || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Gender</Label>
+                        <p className="font-bold text-foreground text-sm flex items-center gap-2">
+                           <User className="w-3.5 h-3.5 text-primary" /> {formData.gender || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Date of Birth</Label>
+                        <p className="font-bold text-foreground text-sm flex items-center gap-2">
+                           <Calendar className="w-3.5 h-3.5 text-primary" /> {formData.dob || 'N/A'}
+                        </p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
+                        <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Staff ID</Label>
+                        <p className="font-bold text-foreground text-sm flex items-center gap-2">
+                           <Hash className="w-3.5 h-3.5 text-primary" /> {formData.staff_id}
+                        </p>
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                  <FieldLabel>First Name</FieldLabel>
-                  <Input name="first_name" value={formData.first_name} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
+                <div className="h-px bg-border/50 w-full" />
 
-                <div className="space-y-2">
-                  <FieldLabel>Last Name</FieldLabel>
-                  <Input name="last_name" value={formData.last_name} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
+                {/* 2. Contact Verification (Editable) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
+                      <div className="relative">
+                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                            name="phone" 
+                            value={formData.phone} 
+                            onChange={handleChange} 
+                            required 
+                            className="h-11 pl-10 rounded-xl border text-sm font-bold" 
+                            placeholder="0803 000 0000" 
+                        />
+                      </div>
+                    </div>
 
-                <div className="space-y-2">
-                  <FieldLabel>Middle Name</FieldLabel>
-                  <Input name="middle_name" value={formData.middle_name || ''} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Department</FieldLabel>
-                  <div className="relative">
-                    <Building className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="department" value={formData.department} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Gender</FieldLabel>
-                  <Input name="gender" value={formData.gender} readOnly className="bg-muted/50 cursor-not-allowed" />
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Date of Birth</FieldLabel>
-                  <div className="relative">
-                    <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="dob" value={formData.dob} readOnly className="pl-10 bg-muted/50 border-primary/20 cursor-not-allowed" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Contact Phone</FieldLabel>
-                  <div className="relative">
-                    <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="phone" value={formData.phone} onChange={handleChange} required className="pl-10 border-2 focus:border-primary transition-all" placeholder="Enter phone number" />
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <FieldLabel>Email Address</FieldLabel>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                    <Input name="email" type="email" value={formData.email} onChange={handleChange} required className="pl-10 border-2 focus:border-primary transition-all" placeholder="Enter email address" />
-                  </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Input 
+                            name="email" 
+                            type="email" 
+                            value={formData.email} 
+                            onChange={handleChange} 
+                            required 
+                            className="h-11 pl-10 rounded-xl border text-sm font-bold" 
+                            placeholder="name@company.com" 
+                        />
+                      </div>
+                    </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* Sidebar: Security */}
-            <div className="space-y-8">
-              <Card className="border-2 border-primary/30 shadow-xl shadow-primary/5 bg-primary/5 backdrop-blur-xl">
-                <CardHeader>
-                  <CardTitle className="text-xl flex items-center gap-2">
+            <div className="space-y-6">
+              <Card className="border shadow-lg bg-primary/5 backdrop-blur-xl rounded-2xl overflow-hidden border-primary/20">
+                <CardHeader className="p-6 pb-2">
+                  <CardTitle className="text-lg flex items-center gap-2 font-black">
                     <Lock className="w-5 h-5 text-primary" /> Security
                   </CardTitle>
-                  <CardDescription>Set your account access password.</CardDescription>
+                  <CardDescription className="text-xs font-medium">Set account access password.</CardDescription>
                 </CardHeader>
-                <CardContent className="space-y-6">
-                  <div className="space-y-2">
-                    <FieldLabel>New Password</FieldLabel>
+                <CardContent className="p-6 pt-2 space-y-4">
+                  <div className="space-y-1.5">
+                    <FieldLabel>Password</FieldLabel>
                     <Input 
                       name="password" 
                       type="password" 
                       required 
                       value={formData.password} 
                       onChange={handleChange} 
-                      className="border-2 focus:border-primary h-12" 
+                      className="border rounded-xl h-11 text-sm font-bold" 
                       placeholder="••••••••"
                     />
                   </div>
-                  <div className="space-y-2">
-                    <FieldLabel>Confirm Password</FieldLabel>
+                  <div className="space-y-1.5">
+                    <FieldLabel>Confirm</FieldLabel>
                     <Input 
                       name="confirm_password" 
                       type="password" 
                       required 
                       value={formData.confirm_password} 
                       onChange={handleChange} 
-                      className="border-2 focus:border-primary h-12"
+                      className="border rounded-xl h-11 text-sm font-bold"
                       placeholder="••••••••"
                     />
                   </div>
                 </CardContent>
-                <CardFooter>
-                  <div className="bg-card/80 p-4 rounded-xl border border-primary/10 w-full">
-                    <h5 className="text-[10px] font-bold uppercase tracking-widest text-primary mb-2">Password Requirements:</h5>
-                    <ul className="text-[10px] space-y-1 text-muted-foreground font-medium">
-                        <li className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-primary" /> At least 8 characters long</li>
-                        <li className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-primary" /> One uppercase & one lowercase</li>
-                        <li className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-primary" /> At least one number & special char</li>
+                <CardFooter className="p-6 pt-0">
+                  <div className="bg-card/80 p-3 rounded-lg border border-primary/10 w-full">
+                    <h5 className="text-[9px] font-black uppercase tracking-widest text-primary mb-1.5">Requirements:</h5>
+                    <ul className="text-[9px] space-y-1 text-muted-foreground font-semibold">
+                        <li className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-primary" /> 8+ characters long</li>
+                        <li className="flex items-center gap-1.5"><div className="w-1 h-1 rounded-full bg-primary" /> Case sensitive mixed</li>
                     </ul>
                   </div>
                 </CardFooter>
@@ -253,15 +254,15 @@ const PatientClaimPage = () => {
 
               <Button 
                 type="submit" 
-                className="w-full h-20 text-xl font-bold rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] transition-all"
+                className="w-full h-14 text-lg font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all"
                 disabled={loading}
               >
-                {loading ? 'Processing...' : 'Complete Registration'} <ArrowRight className="ml-2 w-6 h-6" />
+                {loading ? 'Processing...' : 'Complete Registration'} <ArrowRight className="ml-2 w-5 h-5" />
               </Button>
               
-              <div className="p-4 border-2 border-dashed rounded-2xl bg-muted/50 text-center">
-                 <p className="text-xs text-muted-foreground font-medium italic">
-                   "By completing this process, you agree to our Terms of Service and Privacy Policy regarding sensitive medical data."
+              <div className="p-4 border border-dashed rounded-xl bg-muted/50 text-center">
+                 <p className="text-[10px] text-muted-foreground font-medium italic leading-relaxed">
+                   "By completing this process, you agree to our Terms regarding sensitive medical data."
                  </p>
               </div>
             </div>

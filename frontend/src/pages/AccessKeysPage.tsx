@@ -82,9 +82,9 @@ const AccessKeysPage = () => {
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
             const [usersRes, permsRes, codesRes] = await Promise.all([
-                axios.get('http://localhost:5000/api/admin/users', { headers }),
-                axios.get('http://localhost:5000/api/admin/permissions', { headers }),
-                axios.get('http://localhost:5000/api/admin/access-codes', { headers })
+                axios.get('/api/admin/users', { headers }),
+                axios.get('/api/admin/permissions', { headers }),
+                axios.get('/api/admin/access-codes', { headers })
             ]);
             setUsers(usersRes.data);
             setPermissions(permsRes.data);
@@ -110,7 +110,7 @@ const AccessKeysPage = () => {
         setGeneratingCode(true);
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.post('http://localhost:5000/api/admin/access-codes/generate', {
+            await axios.post('/api/admin/access-codes/generate', {
                 permission_name: targetPerm,
                 user_id: targetUser === 'all' ? null : targetUser,
                 duration_minutes: parseInt(targetDuration),
@@ -132,7 +132,7 @@ const AccessKeysPage = () => {
     const handleRevokeCode = async (id: number) => {
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.put(`http://localhost:5000/api/admin/access-codes/${id}/revoke`, {}, { headers });
+            await axios.put(`/api/admin/access-codes/${id}/revoke`, {}, { headers });
             toast.success("Access Key successfully revoked.");
             fetchData();
         } catch (err: any) {
@@ -146,7 +146,7 @@ const AccessKeysPage = () => {
         setDeleting(true);
         try {
             const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.delete(`http://localhost:5000/api/admin/access-codes/${id}`, { headers });
+            await axios.delete(`/api/admin/access-codes/${id}`, { headers });
             toast.success("Access Key record deleted.");
             setDeleteModal({ open: false, id: 0 });
             fetchData();
@@ -161,15 +161,17 @@ const AccessKeysPage = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex flex-col gap-3">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl border-2 border-primary/20 text-primary">
-                            <Key className="w-8 h-8 font-black" />
+                        <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl border-2 border-primary/20 text-primary shrink-0">
+                            <Key className="w-6 h-6 sm:w-8 sm:h-8 font-black" />
                         </div>
-                        <div>
-                            <h1 className="text-3xl font-black tracking-tight text-primary uppercase">Security Access Keys</h1>
-                            <p className="text-muted-foreground font-bold italic text-sm">Temporary authentication overrides for clinical and administrative staff.</p>
-                        </div>
+                        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-primary uppercase leading-tight">Security Access Keys</h1>
                     </div>
+                    <p className="text-muted-foreground font-bold italic text-xs sm:text-sm pl-4 border-l-4 border-primary/10 ml-1 py-1">
+                        Temporary authentication overrides for clinical and administrative staff.
+                    </p>
+                </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
@@ -177,7 +179,7 @@ const AccessKeysPage = () => {
                     <Card className="lg:col-span-1 border-2 shadow-xl rounded-2xl h-fit border-primary/10 overflow-hidden">
                         <CardHeader className="bg-primary/[0.03] border-b pb-4">
                             <CardTitle className="text-lg font-black tracking-tight flex items-center gap-2">
-                                <Zap className="w-5 h-5 text-primary" /> Generate New Overrider
+                                <Zap className="w-5 h-5 text-primary" /> Generate New Token
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
@@ -245,11 +247,11 @@ const AccessKeysPage = () => {
 
                     {/* History Table */}
                     <Card className="lg:col-span-2 border-2 shadow-xl rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-muted/30 border-b flex flex-row items-center justify-between py-4">
-                            <CardTitle className="text-lg font-black tracking-tight flex items-center gap-2">
-                                <History className="w-5 h-5 text-primary" /> Active & Historical Keys
+                        <CardHeader className="bg-muted/30 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-3">
+                            <CardTitle className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2 shrink-0">
+                                <History className="w-5 h-5 text-primary shrink-0" /> Active & Historical Keys
                             </CardTitle>
-                            <Badge variant="outline" className="font-black text-[10px] bg-primary/5 text-primary border-primary/20">
+                            <Badge variant="outline" className="font-black text-[9px] sm:text-[10px] bg-primary/5 text-primary border-primary/20 py-1.5 px-3">
                                 {accessCodes.length} KEYS LOGGED
                             </Badge>
                         </CardHeader>

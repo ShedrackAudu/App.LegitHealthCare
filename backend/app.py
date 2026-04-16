@@ -3,6 +3,7 @@ from flask_cors import CORS, cross_origin
 from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
 import json
 from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
+from utils.ip import get_client_ip
 from routes.registration import registration_bp
 from routes.consultation import consultation_bp
 from routes.tests import tests_bp
@@ -27,6 +28,7 @@ from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 import os
 from dotenv import load_dotenv
+from setup_system import setup_system
 
 
 load_dotenv()
@@ -36,12 +38,28 @@ CORS(app)
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # Configuration
-app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
-app.config['SQLALCHEMY_BINDS'] = {
-    'dcp': f"sqlite:///{os.path.join(app.instance_path, 'dcp.db')}",
-    'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}",
-    'patients': f"sqlite:///{os.path.join(app.instance_path, 'hc_patients.db')}"
-}
+raw_db_url = os.getenv('DATABASE_URL')
+if raw_db_url:
+    # Render/Heroiku provides 'postgres://', but SQLAlchemy 1.4+ requires 'postgresql://'
+    if raw_db_url.startswith("postgres://"):
+        raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
+    
+    app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
+    # For Render/Production, consolidate all binds into the same main database
+    app.config['SQLALCHEMY_BINDS'] = {
+        'dcp': raw_db_url,
+        'dct': raw_db_url,
+        'patients': raw_db_url
+    }
+else:
+    # Use SQLite for local development
+    app.config['SQLALCHEMY_DATABASE_URI'] = f"sqlite:///{os.path.join(app.instance_path, 'hc_system.db')}"
+    app.config['SQLALCHEMY_BINDS'] = {
+        'dcp': f"sqlite:///{os.path.join(app.instance_path, 'dcp.db')}",
+        'dct': f"sqlite:///{os.path.join(app.instance_path, 'dct.db')}",
+        'patients': f"sqlite:///{os.path.join(app.instance_path, 'hc_patients.db')}"
+    }
+
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
 
@@ -165,7 +183,22 @@ def signup():
     db.session.add(new_user)
     db.session.commit()
     
-    send_otp_email(new_user, otp)
+    try:
+        success = send_otp_email(new_user, otp)
+        if not success:
+            app.logger.error(f"Failed to send welcome OTP to {new_user.email}")
+            return jsonify({
+                "message": "User created, but we couldn't send the verification email. Please contact IT to manually verify your account or check your SMTP settings.",
+                "user_id": new_user.id,
+                "email_error": True
+            }), 201
+    except Exception as e:
+        app.logger.error(f"SMTP Error during registration: {e}")
+        return jsonify({
+            "message": f"User created, but email service failed: {str(e)}",
+            "user_id": new_user.id,
+            "email_error": True
+        }), 201
     
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
@@ -240,7 +273,7 @@ def login():
                 "portal": portal,
                 "timestamp": datetime.now().isoformat()
             }),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(login_log)
         db.session.commit()
@@ -282,10 +315,10 @@ def forgot_password():
         success = send_otp_email(user, otp, subject="Password Recovery Code")
         if not success:
             app.logger.error(f"Failed to send recovery email to {user.email}")
-            return jsonify({"error": "System was unable to send the recovery email. Please check SMTP settings or contact IT."}), 500
+            return jsonify({"error": "The system could not connect to the email server. Please ensure MAIL_USERNAME and MAIL_PASSWORD are set correctly in your environment variables."}), 500
     except Exception as e:
-        app.logger.error(f"Failed to send recovery email: {e}")
-        return jsonify({"error": "An unexpected error occurred while sending the recovery email."}), 500
+        app.logger.error(f"Detailed SMTP error: {e}")
+        return jsonify({"error": f"Email Service Error: {str(e)}"}), 500
         
     return jsonify({
         "message": "Recovery code sent to your registered email.",
@@ -381,7 +414,7 @@ def login_2fa():
                 "portal": portal,
                 "timestamp": datetime.now().isoformat()
             }),
-            ip_address=request.remote_addr
+            ip_address=get_client_ip()
         )
         db.session.add(login_2fa_log)
         db.session.commit()
@@ -408,7 +441,7 @@ def logout():
                     "portal": portal,
                     "timestamp": datetime.now().isoformat()
                 }),
-                ip_address=request.remote_addr
+                ip_address=get_client_ip()
             )
             db.session.add(logout_log)
             db.session.commit()
@@ -419,15 +452,13 @@ def logout():
             
     return jsonify({"message": "Logout complete (client-only)"}), 200
 
-if __name__ == '__main__':
+# Initialize Database and System (Run on startup)
+with app.app_context():
     init_db()
-    
-    # Automatically ensure admin account exists
     try:
-        from setup_system import setup_system
-        with app.app_context():
-            setup_system(purge=False)
+        setup_system(app, purge=False)
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")
-        
-    socketio.run(app, debug=False, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)
+
+if __name__ == '__main__':
+    socketio.run(app, debug=True, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)

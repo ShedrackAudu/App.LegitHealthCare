@@ -48,7 +48,7 @@ const PatientOTPPage = () => {
     
     setResending(true);
     try {
-      await axios.post('http://localhost:5000/api/patient/resend-otp', {
+      await axios.post('/api/patient/resend-otp', {
         email,
         first_name: firstName
       });
@@ -71,7 +71,7 @@ const PatientOTPPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('http://localhost:5000/api/patient/verify-otp', {
+      const resp = await axios.post('/api/patient/verify-otp', {
         ...patientData,
         ...claimData,
         otp
@@ -108,7 +108,7 @@ const PatientOTPPage = () => {
             <Link to="/" className="flex justify-center mb-4 transition-opacity hover:opacity-80">
               {branding?.logo_light ? (
                 <img 
-                  src={`http://localhost:5000${branding.logo_light}`} 
+                  src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
                   alt="Logo" 
                   className="h-16 w-auto object-contain" 
                 />
@@ -138,8 +138,8 @@ const PatientOTPPage = () => {
                     <Input
                       type="text"
                       inputMode="numeric"
-                      placeholder="000000"
-                      className="h-16 text-center text-3xl font-black tracking-[1rem] border-2 focus:border-primary rounded-xl"
+                      placeholder="000 000"
+                      className="h-14 text-center text-3xl font-black tracking-[0.5em] border focus:border-primary rounded-xl"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                       maxLength={6}
@@ -148,7 +148,7 @@ const PatientOTPPage = () => {
                   </div>
 
                   <Button 
-                    className="w-full h-12 text-lg font-bold rounded-xl shadow-lg"
+                    className="w-full h-11 text-sm font-black rounded-xl shadow-lg active:scale-95 transition-all"
                     disabled={loading || otp.length < 6}
                   >
                     {loading ? 'Verifying...' : 'Verify Code'}

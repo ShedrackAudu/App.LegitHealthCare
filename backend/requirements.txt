@@ -57,3 +57,8 @@ typing_extensions
 urllib3
 Werkzeug
 wsproto
+psycopg2-binary
+gunicorn
+sendgrid
+pandas
+openpyxl

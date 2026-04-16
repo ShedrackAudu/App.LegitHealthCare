@@ -35,7 +35,7 @@ const OTPPage = () => {
     setLoading(true);
     setError(null);
     try {
-      await axios.post('http://localhost:5000/verify-otp', {
+      await axios.post('/verify-otp', {
         user_id: userId,
         otp
       });

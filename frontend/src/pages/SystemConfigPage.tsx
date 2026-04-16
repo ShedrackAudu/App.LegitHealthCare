@@ -93,7 +93,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         <p className="text-xl font-bold">No items found</p>
                     </div>
                 ) : (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-px bg-muted">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-muted">
                         {items.map((item) => (
                             <div key={item.id} className="flex items-center justify-between p-4 bg-background hover:bg-primary/5 transition-colors group">
                                 <span className="font-bold text-base tracking-tight">{item.name}</span>
@@ -167,9 +167,9 @@ const SystemConfigPage: React.FC = () => {
         setLoading(true);
         try {
             const [deptRes, raceRes, natRes] = await Promise.all([
-                axios.get(`http://localhost:5000/api/config/departments`),
-                axios.get(`http://localhost:5000/api/config/races`),
-                axios.get(`http://localhost:5000/api/config/nationalities`)
+                axios.get(`/api/config/departments`),
+                axios.get(`/api/config/races`),
+                axios.get(`/api/config/nationalities`)
             ]);
             setDepartments(deptRes.data);
             setRaces(raceRes.data);
@@ -184,7 +184,7 @@ const SystemConfigPage: React.FC = () => {
     const fetchEmailSettings = useCallback(async () => {
         setEmailLoading(true);
         try {
-            const response = await axios.get('http://localhost:5000/api/email/settings');
+            const response = await axios.get('/api/email/settings');
             setEmailSettings({ ...response.data, MAIL_PASSWORD: '' });
         } catch (err) {
             toast.error("Failed to load email settings");
@@ -196,7 +196,7 @@ const SystemConfigPage: React.FC = () => {
     const fetchBrandingSettings = useCallback(async () => {
         setBrandingLoading(true);
         try {
-            const response = await axios.get('http://localhost:5000/api/branding', {
+            const response = await axios.get('/api/branding', {
                 headers: { 'X-Company-Context': activeSection }
             });
             setBrandingData({
@@ -212,7 +212,7 @@ const SystemConfigPage: React.FC = () => {
 
     const fetchSystemConfig = useCallback(async () => {
         try {
-            const response = await axios.get('http://localhost:5000/api/admin/config', {
+            const response = await axios.get('/api/admin/config', {
                 headers: { 
                     'X-Company-Context': activeSection,
                     'X-User-ID': user?.id?.toString()
@@ -239,7 +239,7 @@ const SystemConfigPage: React.FC = () => {
 
         setAdding(true);
         try {
-            const resp = await axios.post(`http://localhost:5000/api/config/${type}`,
+            const resp = await axios.post(`/api/config/${type}`,
                 { name: trimmedName }
             );
             toast.success(`${type.slice(0, -1)} added successfully`);
@@ -261,7 +261,7 @@ const SystemConfigPage: React.FC = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/config/${type}/${id}`);
+            await axios.delete(`/api/config/${type}/${id}`);
             toast.success("Item deleted");
             setDeleteModal({ ...deleteModal, open: false });
 
@@ -279,7 +279,7 @@ const SystemConfigPage: React.FC = () => {
         e.preventDefault();
         setEmailSaving(true);
         try {
-            await axios.post('http://localhost:5000/api/email/settings', emailSettings);
+            await axios.post('/api/email/settings', emailSettings);
             toast.success("Email configuration saved successfully!");
             fetchEmailSettings();
         } catch (err) {
@@ -296,7 +296,7 @@ const SystemConfigPage: React.FC = () => {
         }
         setTesting(true);
         try {
-            const response = await axios.post('http://localhost:5000/api/email/test', {
+            const response = await axios.post('/api/email/test', {
                 ...emailSettings,
                 test_email: testEmail
             });
@@ -316,7 +316,7 @@ const SystemConfigPage: React.FC = () => {
             formData.append('doctor_name', brandingData.doctor_name);
             formData.append('doctor_post', brandingData.doctor_post);
 
-            await axios.post('http://localhost:5000/api/branding', formData, {
+            await axios.post('/api/branding', formData, {
                 headers: {
                     'X-Company-Context': activeSection,
                     'Content-Type': 'multipart/form-data'
@@ -334,7 +334,7 @@ const SystemConfigPage: React.FC = () => {
     const handleResetQueue = async () => {
         setMaintenanceSaving(true);
         try {
-            await axios.post('http://localhost:5000/api/queue/reset', {}, {
+            await axios.post('/api/queue/reset', {}, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Patient queues have been successfully reset to zero.");
@@ -350,7 +350,7 @@ const SystemConfigPage: React.FC = () => {
     const handleClearAudit = async () => {
         setMaintenanceSaving(true);
         try {
-            await axios.delete('http://localhost:5000/api/admin/audit-logs/clear', {
+            await axios.delete('/api/admin/audit-logs/clear', {
                 headers: { 'X-User-ID': user?.id?.toString() }
             });
             toast.success("System audit logs have been permanently cleared.");
@@ -366,7 +366,7 @@ const SystemConfigPage: React.FC = () => {
         setMaintenanceSaving(true);
         try {
             const newValue = !staffSignupEnabled;
-            await axios.post('http://localhost:5000/api/admin/config', 
+            await axios.post('/api/admin/config', 
                 { staff_signup_enabled: newValue.toString() },
                 { 
                     headers: { 
@@ -394,18 +394,16 @@ const SystemConfigPage: React.FC = () => {
     return (
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
-                <div className="flex items-center justify-between border-b pb-6">
-                    <div className="flex items-center gap-5">
-                        <div className="p-4 bg-gradient-to-br from-primary to-primary/60 rounded-3xl shadow-lg shadow-primary/20">
-                            <Settings2 className="text-white h-9 w-9" />
+                <div className="flex flex-col gap-3 border-b pb-6">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                            <Settings2 className="h-6 w-6 sm:h-8 sm:w-8" />
                         </div>
-                        <div>
-                            <h1 className="text-4xl font-black tracking-tight text-foreground">System Configuration</h1>
-                            <p className="text-base text-muted-foreground font-medium flex items-center gap-2">
-                                Manage registration dropdowns and system settings
-                            </p>
-                        </div>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
                     </div>
+                    <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+                        Manage registration dropdowns and system settings
+                    </p>
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">

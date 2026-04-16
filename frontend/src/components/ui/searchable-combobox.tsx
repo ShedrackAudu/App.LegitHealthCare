@@ -35,19 +35,26 @@ export function SearchableCombobox({
     <div className="relative w-full" ref={ref}>
       <div 
         className={cn(
-          "flex h-11 w-full items-center justify-between rounded-xl border-2 bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all",
+          "flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2 transition-all",
           open && "ring-2 ring-ring ring-offset-2 border-primary"
         )}
       >
         <input 
           className="flex-1 min-w-0 bg-transparent outline-none border-none font-semibold text-foreground placeholder:text-muted-foreground placeholder:font-normal"
           placeholder={placeholder}
-          value={open ? search : (value || search)}
-          onClick={() => { setOpen(true); setSearch(""); }}
+          value={open ? search : (value || "")}
+          onClick={() => { setOpen(true); if(!search) setSearch(""); }}
+          onFocus={() => { setOpen(true); }}
           onChange={(e) => {
             setSearch(e.target.value);
             setOpen(true);
-            onChange(e.target.value);
+            // We no longer call onChange(e.target.value) here
+          }}
+          onBlur={() => {
+            // Optional: reset search if no selection made
+            setTimeout(() => {
+              setSearch("");
+            }, 200);
           }}
         />
         <ChevronDown 
@@ -57,7 +64,7 @@ export function SearchableCombobox({
       </div>
       
       {open && (
-        <div className="absolute top-full left-0 z-[200] w-full mt-2 max-h-60 overflow-y-auto rounded-xl border-2 shadow-2xl bg-popover text-popover-foreground animate-in fade-in slide-in-from-top-2">
+        <div className="absolute top-full left-0 z-[200] w-full mt-2 max-h-60 overflow-y-auto rounded-md border border-input shadow-2xl bg-popover text-popover-foreground animate-in fade-in slide-in-from-top-2">
           <div className="p-1">
             {filteredOptions.length === 0 ? (
                 <div className="px-2 py-4 text-center text-sm text-muted-foreground font-medium">No results found.</div>

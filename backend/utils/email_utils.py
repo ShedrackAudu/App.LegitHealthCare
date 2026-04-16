@@ -12,7 +12,10 @@ ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 class EmailService:
     @staticmethod
     def _get_smtp_config():
-        load_dotenv(ENV_PATH, override=True)
+        # Load from .env if present, but DO NOT override system environment variables (like Render's)
+        if os.path.exists(ENV_PATH):
+            load_dotenv(ENV_PATH)
+            
         return {
             "server": os.getenv('MAIL_SERVER', 'smtp.gmail.com'),
             "port": int(os.getenv('MAIL_PORT', '587')),
@@ -24,6 +27,54 @@ class EmailService:
     @staticmethod
     def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
         config = custom_config or EmailService._get_smtp_config()
+        
+        # 1. Check for SendGrid (Bypasses Render SMTP Block)
+        sendgrid_api_key = os.getenv('SENDGRID_API_KEY')
+        if sendgrid_api_key:
+            try:
+                from sendgrid import SendGridAPIClient
+                from sendgrid.helpers.mail import Mail as SG_Mail, Attachment, FileContent, FileName, FileType, Disposition
+                import base64
+
+                print("--- SENDGRID API DELIVERY ---")
+                from_email = os.getenv('SENDGRID_FROM_EMAIL', config.get('username'))
+                message = SG_Mail(
+                    from_email=(from_email, config.get('display_name', 'Legit HealthCare')),
+                    to_emails=to_email,
+                    subject=subject,
+                    html_content=html_content
+                )
+
+                if attachment_data and attachment_filename:
+                    encoded_file = base64.b64encode(attachment_data).decode()
+                    attachedFile = Attachment(
+                        FileContent(encoded_file),
+                        FileName(attachment_filename),
+                        FileType('application/pdf'),
+                        Disposition('attachment')
+                    )
+                    message.add_attachment(attachedFile)
+
+                sg = SendGridAPIClient(sendgrid_api_key)
+                response = sg.send(message)
+                print(f"SendGrid Status: {response.status_code}")
+                return True
+            except Exception as e:
+                print(f"SendGrid API Error: {e}")
+                # If API fails, we Fallback to SMTP
+                print("Falling back to SMTP...")
+
+        # 2. Legacy SMTP Fallback (For Local Testing)
+        # Diagnostic Logging (Masked)
+        print(f"--- SMTP FALLBACK DELIVERY ---")
+        print(f"Server: {config.get('server')}")
+        print(f"Port: {config.get('port')}")
+        print(f"User: {config.get('username')[:3]}***")
+        print(f"------------------------")
+
+        if not config.get("username") or not config.get("password"):
+            raise Exception("No email service configured (Missing SENDGRID_API_KEY or SMTP credentials).")
+
         try:
             msg = MIMEMultipart()
             display_name = config.get("display_name", "Legit HealthCare")
@@ -41,29 +92,36 @@ class EmailService:
             smtp_server = str(config["server"])
             smtp_port = int(config["port"])
             
-            with smtplib.SMTP(smtp_server, smtp_port, timeout=15) as server:
-                server.starttls()
-                try:
-                    server.login(str(config["username"]), str(config["password"]))
-                except smtplib.SMTPAuthenticationError:
-                    raise Exception("Mail server authentication failed. Please check your credentials.")
-                except Exception as e:
-                    raise Exception(f"Mail server login failed: {str(e)}")
-                    
+            is_ssl = (smtp_port == 465)
+            server_conn = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=25) if is_ssl else smtplib.SMTP(smtp_server, smtp_port, timeout=25)
+
+            with server_conn as server:
+                if not is_ssl:
+                    server.ehlo(); server.starttls(); server.ehlo()
+                
+                server.login(str(config["username"]), str(config["password"]))
                 server.send_message(msg)
             
             return True
-        except socket.timeout:
-            raise Exception("Connection to mail server timed out. Please check your network or firewall.")
         except Exception as e:
-            if "authentication failed" in str(e).lower() or "timeout" in str(e).lower():
-                print(f"\n\n!!! DEVELOPMENT OTP FALLBACK !!!")
-                print(f"To: {to_email}")
-                print(f"Subject: {subject}")
-                print(f"Content: {html_content[:200]}...") # Print first part of HTML
-                print(f"!!! END FALLBACK !!!\n\n")
-                return True # Pretend it succeeded for development
-            print(f"Failed to send email: {e}")
+            print(f"SMTP Fallback Error: {e}")
+            return False
+        except Exception as e:
+            # Check for common dev/test overrides
+            error_str = str(e).lower()
+            if "authentication failed" in error_str or "timeout" in error_str or "connection refused" in error_str:
+                # If we suspect it's a dev machine without internet or config, log it nicely
+                print(f"\n\n!!! EMAIL SERVICE NOTICE !!!")
+                print(f"Failed to send real email to: {to_email}")
+                print(f"Reason: {str(e)}")
+                print(f"!!! Proceeding without sending email (Fallback) !!!\n\n")
+                
+                # We return False here if we want the caller to handle the failure, 
+                # or True if we want to swallow it for development. 
+                # For production safety, we should let the caller (app.py) know it failed.
+                return False 
+            
+            print(f"Critical Email Error: {e}")
             raise e
 
     @staticmethod
@@ -143,10 +201,12 @@ class EmailService:
         """
 
     @staticmethod
-    def get_appointment_template(patient_data, appointment_date, reason):
+    def get_appointment_template(patient_data, appointment_date, reason, logo_url=None):
         items_html = ""
         for label, value in patient_data.items():
             items_html += f"<tr><td style='padding: 8px; border-bottom: 1px solid #eee; font-weight: bold;'>{label}:</td><td style='padding: 8px; border-bottom: 1px solid #eee;'>{value}</td></tr>"
+
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
 
         return f"""
         <!DOCTYPE html>
@@ -164,6 +224,9 @@ class EmailService:
         </head>
         <body>
             <div class="container">
+                <div style="text-align: center;">
+                    {logo_html}
+                </div>
                 <div class="header">
                     <h1>New Appointment Booked</h1>
                 </div>

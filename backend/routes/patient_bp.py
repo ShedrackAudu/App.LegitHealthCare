@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from models import db, PatientPortalUser
-from auth_utils import generate_otp
+from auth_utils import generate_otp, is_password_strong
 import os
 from sqlalchemy import text
 from datetime import datetime, timedelta
@@ -48,37 +48,39 @@ def search_patient():
                 continue
             
             with engine.connect() as conn:
-                # Dynamically check for columns
-                check_cols_query = text("PRAGMA table_info(bio_data)")
-                actual_cols = [c[1] for c in conn.execute(check_cols_query).fetchall()]
+                # Portable way to check columns (works on Postgres and SQLite)
+                res_cols = conn.execute(text("SELECT * FROM bio_data LIMIT 0"))
+                actual_cols = res_cols.keys()
                 
                 # Columns we want to select
-                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email', 'section']
+                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email']
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
                 select_clause = ", ".join(available_cols)
-                query = text(f"SELECT {select_clause} FROM bio_data WHERE staff_id = :sid OR staff_id LIKE :sid_like")
-                res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}"})
+                # Robust search: Case-insensitive (LOWER), handles prefix/suffix, and trims
+                # Use LOWER(...) LIKE LOWER(...) for cross-DB case-insensitive partial match
+                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid) OR LOWER(staff_id) LIKE LOWER(:sid_like)")
+                res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}%"})
                 result = res.fetchone()
                 
                 if result:
-                    # Map result to dictionary
-                    row_dict = dict(zip(available_cols, result))
+                    # Map result to dictionary using ._mapping for SQLAlchemy 1.4/2.0
+                    row_dict = dict(result._mapping)
                     results.append({
                         "staff_id": str(row_dict.get('staff_id')),
                         "first_name": row_dict.get('first_name'),
-                        "middle_name": row_dict.get('middle_name'),
+                        "middle_name": row_dict.get('middle_name', ''),
                         "last_name": row_dict.get('last_name'),
                         "department": row_dict.get('department'),
                         "gender": row_dict.get('gender'),
                         "dob": str(row_dict.get('dob')) if row_dict.get('dob') else None,
                         "phone": row_dict.get('phone'),
-                        "email": row_dict.get('email'),
-                        "section": row_dict.get('section') or ctx.upper(),
+                        "email": row_dict.get('email', ''),
+                        "section": ctx.upper(),
                         "context": ctx
                     })
         except Exception as e:
-            print(f"Error searching in {ctx}: {str(e)}")
+            print(f"DEBUG: Error searching in {ctx}: {str(e)}")
             continue
             
     if not results:
@@ -98,6 +100,9 @@ def claim_account():
     
     if not all([staff_id, email, password]):
         return jsonify({"error": "Missing required fields"}), 400
+        
+    if not is_password_strong(password):
+        return jsonify({"error": "Password must be at least 8 chars long with 1 uppercase, 1 lowercase, 1 digit, and 1 special symbol."}), 400
         
     # Check if user already exists in ISOLATED database
     existing_user = PatientPortalUser.query.filter(
@@ -145,16 +150,31 @@ def claim_account():
         # Ensure logo_url is absolute for email clients
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "Patient Account Verification - Legit HealthCare"
         html_content = EmailService.get_patient_verification_template(first_name, otp, logo_url=logo_url)
-        EmailService.send_email(email, subject, html_content)
+        success = EmailService.send_email(email, subject, html_content)
+        
+        if not success:
+             return jsonify({
+                "message": "Account created, but we couldn't send the verification email. Please contact the administrator or check SMTP settings.",
+                "user_id": user.id,
+                "email_error": True
+            }), 201
+            
     except Exception as e:
         print(f"Failed to send email: {str(e)}")
+        return jsonify({
+            "message": f"Account created, but email service failed: {str(e)}",
+            "user_id": user.id,
+            "email_error": True
+        }), 201
     
     return jsonify({
-        "message": "OTP sent to your email. Please verify to complete registration.",
+        "message": "Verification code sent to your email. Please verify to complete registration.",
         "user_id": user.id,
         "otp_sent": True
     }), 200
@@ -181,13 +201,19 @@ def resend_otp():
         # Ensure logo_url is absolute for email clients
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "New Verification Code - Legit HealthCare"
         html_content = EmailService.get_patient_verification_template(user.first_name, otp, logo_url=logo_url)
-        EmailService.send_email(user.email, subject, html_content)
+        success = EmailService.send_email(user.email, subject, html_content)
+        
+        if not success:
+            return jsonify({"error": "Failed to connect to the email server. Please try again later or contact support."}), 500
+            
     except Exception as e:
-        return jsonify({"error": f"Error sending email: {str(e)}"}), 500
+        return jsonify({"error": f"Email service error: {str(e)}"}), 500
     
     return jsonify({
         "message": "A new verification code has been sent to your email.",
@@ -312,6 +338,8 @@ def reset_password_request():
         
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
             
         subject = "Password Reset Verification - Legit HealthCare"

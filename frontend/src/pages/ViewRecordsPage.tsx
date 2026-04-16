@@ -42,7 +42,7 @@ const ViewRecordsPage: React.FC = () => {
     const fetchRecords = async (page = 1, query = '') => {
         setLoading(true);
         try {
-            const url = `http://localhost:5000/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}`;
+            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}`;
             
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -75,7 +75,7 @@ const ViewRecordsPage: React.FC = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/records/screening/${id}`, {
+            await axios.delete(`/api/records/screening/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setRecordsData((prev: any) => ({
@@ -102,7 +102,7 @@ const ViewRecordsPage: React.FC = () => {
                             <Database className="text-primary h-8 w-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight">Screening Records Matrix</h1>
+                            <h1 className="text-xl sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
                             <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>

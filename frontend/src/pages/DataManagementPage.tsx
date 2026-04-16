@@ -19,7 +19,7 @@ const DataManagementPage: React.FC = () => {
       const endpoint = type === 'patients' ? 'export/patients' : 'export/screening';
       const yearParam = type === 'screening' ? `?year=${activeYear}` : '';
       
-      const resp = await axios.get(`http://localhost:5000/api/admin/${endpoint}${yearParam}`, {
+      const resp = await axios.get(`/api/admin/${endpoint}${yearParam}`, {
         headers: { 
             'X-User-ID': user?.id?.toString(),
             'X-Company-Context': activeSection 
@@ -68,7 +68,7 @@ const DataManagementPage: React.FC = () => {
     formData.append('file', file);
 
     try {
-      const resp = await axios.post('http://localhost:5000/api/admin/import', formData, {
+      const resp = await axios.post('/api/admin/import', formData, {
         headers: { 
           'X-User-ID': user?.id?.toString(),
           'X-Company-Context': activeSection,
@@ -88,22 +88,26 @@ const DataManagementPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <Database className="w-8 h-8 text-primary" />
-              Data Management Hub
-            </h1>
-            <p className="text-muted-foreground font-medium italic mt-1">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
+                <Database className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
+              </div>
+              <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-tight">
+                Data Management Hub
+              </h1>
+            </div>
+            <p className="text-muted-foreground font-medium italic text-xs sm:text-base pl-4 border-l-4 border-primary/10 ml-1 py-1">
                 Centralized hub for {activeSection} data operations • Session {activeYear}
             </p>
           </div>
 
-          <div className="flex bg-muted/50 p-1 rounded-2xl border-2 shadow-sm">
+          <div className="flex flex-col sm:flex-row bg-muted/50 p-1 sm:p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1 sm:gap-0">
             <button
               onClick={() => setActiveTab('export')}
-              className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
+              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
                 activeTab === 'export' 
-                ? 'bg-primary shadow-md text-white scale-105' 
+                ? 'bg-primary shadow-md text-white sm:scale-105' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -112,9 +116,9 @@ const DataManagementPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`px-6 py-2 rounded-xl font-black text-sm transition-all flex items-center gap-2 ${
+              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
                 activeTab === 'import' 
-                ? 'bg-primary shadow-md text-white scale-105' 
+                ? 'bg-primary shadow-md text-white sm:scale-105' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -274,7 +278,7 @@ const DataManagementPage: React.FC = () => {
                          ) : (
                           <>
                             <Upload className="w-5 h-5" />
-                            Upload Bio-Data Spreadsheet
+                            Upload Bio-Data
                           </>
                          )}
                        </Button>

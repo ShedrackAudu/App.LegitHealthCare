@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { io, Socket } from 'socket.io-client';
+import { API_BASE_URL } from '../lib/api';
 
 type Section = 'DCP' | 'DCT';
 
@@ -52,7 +53,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     if (user) {
       localStorage.setItem('user', JSON.stringify(user));
       
-      const newSocket = io('http://localhost:5000', {
+      const newSocket = io(API_BASE_URL, {
         query: { user_id: user.id }
       });
       
@@ -87,15 +88,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       // Initial fetch for unread count
-      axios.get('http://localhost:5000/api/messages/conversations', {
+      axios.get('/api/messages/conversations', {
         headers: { 'X-User-ID': user.id }
       }).then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
         setUnreadMessagesCount(total);
       }).catch(err => {});
 
+      // Global Heartbeat to keep status 'Active now' in the DB while portal is open
+      const hbInterval = setInterval(() => {
+          axios.post('/api/messages/heartbeat', {}, { headers: { 'X-User-ID': user.id } }).catch(() => {});
+      }, 45000); // Every 45 seconds
+
       return () => {
         newSocket.close();
+        clearInterval(hbInterval);
       };
     } else {
       localStorage.removeItem('user');
@@ -157,7 +164,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const fetchBranding = useCallback(async () => {
     try {
       setBrandingError(false);
-      const resp = await axios.get('http://localhost:5000/api/branding', {
+      const resp = await axios.get('/api/branding', {
         headers: { 'X-Company-Context': activeSection }
       });
       setBranding(resp.data);
@@ -172,7 +179,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           link.rel = 'icon';
           document.head.appendChild(link);
         }
-        link.href = `http://localhost:5000${resp.data.favicon}`;
+        link.href = `${API_BASE_URL}${resp.data.favicon}`;
       }
     } catch (err) {
       setBrandingError(true);

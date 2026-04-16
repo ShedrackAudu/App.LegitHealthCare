@@ -23,6 +23,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { 
+  Dialog, 
+  DialogContent, 
+  DialogHeader, 
+  DialogTitle, 
+  DialogDescription 
+} from '@/components/ui/dialog';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -60,6 +67,7 @@ const RegistrationPage: React.FC = () => {
   const [races, setRaces] = useState<string[]>([]);
   const [nationalities, setNationalities] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
+  const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
 
   const { register, handleSubmit, watch, setValue, control, reset, formState: { errors } } = useForm<RegistrationValues>({
     resolver: zodResolver(registrationSchema),
@@ -76,7 +84,7 @@ const RegistrationPage: React.FC = () => {
       const fetchPatient = async () => {
         setLoading(true);
         try {
-          const response = await axios.get(`http://localhost:5000/patient/${editStaffId}?year=${activeYear}`, {
+          const response = await axios.get(`/patient/${editStaffId}?year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           const p = response.data;
@@ -126,7 +134,7 @@ const RegistrationPage: React.FC = () => {
 
   const fetchStats = async () => {
     try {
-      const response = await axios.get(`http://localhost:5000/stats?year=${activeYear}`, {
+      const response = await axios.get(`/stats?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setStats(response.data);
@@ -162,9 +170,9 @@ const RegistrationPage: React.FC = () => {
     const fetchConfigs = async () => {
       try {
         const [deptRes, raceRes, natRes] = await Promise.all([
-          axios.get(`http://localhost:5000/api/config/departments`),
-          axios.get(`http://localhost:5000/api/config/races`),
-          axios.get(`http://localhost:5000/api/config/nationalities`)
+          axios.get(`/api/config/departments`),
+          axios.get(`/api/config/races`),
+          axios.get(`/api/config/nationalities`)
         ]);
         setDepartments(deptRes.data.map((d: any) => d.name));
         setRaces(raceRes.data.map((r: any) => r.name));
@@ -185,7 +193,7 @@ const RegistrationPage: React.FC = () => {
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}&year=${activeYear}`, {
+          const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           setSearchResults(res.data);
@@ -205,7 +213,7 @@ const RegistrationPage: React.FC = () => {
     if (!cleanId) return;
     setSearching(true);
     try {
-      const response = await axios.get(`http://localhost:5000/patient/${cleanId}?year=${activeYear}`, {
+      const response = await axios.get(`/patient/${cleanId}?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
 
@@ -249,7 +257,7 @@ const RegistrationPage: React.FC = () => {
       }
 
       if (isEditMode) {
-        await axios.put(`http://localhost:5000/api/patients/${editStaffId}`, {
+        await axios.put(`/api/patients/${editStaffId}`, {
           ...data,
           dob: formattedDob
         }, {
@@ -258,7 +266,7 @@ const RegistrationPage: React.FC = () => {
         toast.success("Patient profile updated successfully!");
         navigate('/view-patients');
       } else {
-        await axios.post('http://localhost:5000/register-patient', {
+        await axios.post('/register-patient', {
           ...data,
           dob: formattedDob,
           screening_year: Number(activeYear)
@@ -289,11 +297,11 @@ const RegistrationPage: React.FC = () => {
               </Button>
             )}
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                {isEditMode ? <Users className="text-primary h-6 w-6" /> : <UserPlus className="text-primary h-6 w-6" />}
+              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
+                {isEditMode ? <Users className="text-primary h-5 w-5 sm:h-6 sm:w-6" /> : <UserPlus className="text-primary h-5 w-5 sm:h-6 sm:w-6" />}
                 {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
               </h1>
-              <p className="text-sm text-muted-foreground">
+              <p className="text-[10px] sm:text-sm text-muted-foreground">
                 {isEditMode ? `Updating ${editStaffId}` : `Manage patient Bio-Data for ${activeSection} - ${activeYear}`}
               </p>
             </div>
@@ -444,7 +452,7 @@ const RegistrationPage: React.FC = () => {
                     inputMode="numeric"
                     required
                     onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
+                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
                       e.target.value = val;
                       register('patient_id').onChange(e);
                     }}
@@ -540,7 +548,7 @@ const RegistrationPage: React.FC = () => {
                   <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Contact Phone <span className="text-rose-500">*</span></Label>
+                  <Label>Phone No. <span className="text-rose-500">*</span></Label>
                   <Input {...register('phone', { required: true })} placeholder="+234..." required />
                 </div>
 
@@ -549,7 +557,7 @@ const RegistrationPage: React.FC = () => {
                   <Input type="email" {...register('email')} placeholder="email@example.com" />
                 </div>
                 <div className="space-y-2">
-                  <Label>Race (Continent) <span className="text-rose-500">*</span></Label>
+                  <Label>Race <span className="text-rose-500">*</span></Label>
                   <Controller
                     name="race"
                     control={control}
@@ -585,10 +593,10 @@ const RegistrationPage: React.FC = () => {
                 {!isEditMode && (
                   <Button
                     type="button"
-                    variant="ghost"
+                    variant="outline"
                     size="lg"
-                    className="h-12 px-8 font-bold text-destructive hover:bg-destructive/10 hover:text-destructive"
-                    onClick={handleClearForm}
+                    className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
+                    onClick={() => setIsClearDialogOpen(true)}
                   >
                     <Trash2 className="mr-2 h-5 w-5" /> Clear Form
                   </Button>
@@ -598,9 +606,9 @@ const RegistrationPage: React.FC = () => {
                     <X className="mr-2 h-5 w-5" /> Cancel
                   </Button>
                 )}
-                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-12 font-bold text-lg shadow-xl" disabled={loading}>
+                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg shadow-xl" disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
-                    <><Save className="mr-2 h-5 w-5" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                    <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
                   )}
                 </Button>
               </div>
@@ -608,6 +616,45 @@ const RegistrationPage: React.FC = () => {
           </CardContent>
         </Card>
       </div>
+
+      {/* Clear Form Confirmation Dialog */}
+      <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-2 shadow-2xl">
+          <div className="p-6 pt-8 flex flex-col items-center text-center">
+            <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
+                <Trash2 className="w-8 h-8" />
+            </div>
+            
+            <DialogHeader className="space-y-2 flex flex-col items-center text-center sm:text-center">
+                <DialogTitle className="text-2xl font-black tracking-tight text-foreground">Clear All Data?</DialogTitle>
+                <DialogDescription className="text-sm font-medium text-muted-foreground px-4">
+                    This will permanently remove all entered information from the form. This action cannot be undone.
+                </DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="flex flex-row gap-3 p-4 bg-muted/30 border-t">
+            <Button 
+                variant="ghost" 
+                onClick={() => setIsClearDialogOpen(false)} 
+                className="flex-1 font-bold h-11 hover:bg-background transition-colors"
+            >
+              No, Keep Data
+            </Button>
+            <Button 
+                variant="destructive" 
+                onClick={() => {
+                    handleClearForm();
+                    setIsClearDialogOpen(false);
+                    toast.success("Form cleared successfully");
+                }}
+                className="flex-1 font-black h-11 shadow-lg shadow-destructive/20 active:scale-95 transition-all px-8"
+            >
+              Yes, Clear Form
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };

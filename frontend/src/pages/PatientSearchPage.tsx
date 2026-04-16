@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { Search, ArrowRight, User, AlertCircle, Building2, HelpCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
 import axios from 'axios';
@@ -30,7 +31,7 @@ const PatientSearchPage = () => {
     setPatientData(null);
 
     try {
-      const response = await axios.get(`http://localhost:5000/api/patient/search?staff_id=${staffId.trim()}`);
+      const response = await axios.get(`/api/patient/search?staff_id=${staffId.trim()}`);
       setPatientData(response.data.data);
       toast.success('Record found successfully!');
     } catch (err: any) {
@@ -74,7 +75,7 @@ const PatientSearchPage = () => {
           <div className="flex justify-center mb-4">
             {branding?.logo_light ? (
               <img 
-                src={`http://localhost:5000${branding.logo_light}`} 
+                src={`${branding.logo_light}`} 
                 alt="Logo" 
                 className="h-16 w-auto object-contain" 
               />
@@ -137,30 +138,56 @@ const PatientSearchPage = () => {
             >
               <Card className="border-2 border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl overflow-hidden relative group">
                 <div className="absolute top-0 right-0 p-4">
-                    <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                        <User className="w-5 h-5 text-emerald-600 dark:text-emerald-400" />
+                    <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-widest shadow-lg ${patientData.section?.toUpperCase() === 'DCP' ? 'bg-emerald-500 shadow-emerald-500/10' : 'bg-blue-500 shadow-blue-500/10'}`}>
+                        {patientData.section?.toUpperCase() || 'N/A'}
                     </div>
                 </div>
-                <CardHeader>
-                  <CardTitle className="text-emerald-600 dark:text-emerald-400 flex items-center gap-2">
-                    <CheckCircle2 className="w-5 h-5" /> Account Found
-                  </CardTitle>
-                  <CardDescription className="text-lg font-semibold pt-2 text-foreground">
-                    {patientData.first_name} {patientData.last_name}
-                  </CardDescription>
+                <CardHeader className="pb-2">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                        <User className="w-5 h-5" />
+                    </div>
+                    <div>
+                      <CardTitle className="text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-1.5 font-black uppercase tracking-wider">
+                        <CheckCircle2 className="w-4 h-4" /> Account Found
+                      </CardTitle>
+                      <CardDescription className="text-lg font-black text-foreground">
+                        {patientData.first_name} {patientData.middle_name ? patientData.middle_name + ' ' : ''}{patientData.last_name}
+                      </CardDescription>
+                    </div>
+                  </div>
                 </CardHeader>
-                <CardContent>
-                  <p className="text-muted-foreground text-sm flex items-center gap-2">
-                    <HelpCircle className="w-4 h-4" /> 
-                    If these are not your records, kindly notify an admin or clinic personnel to rectify the issue.
+                <CardContent className="space-y-4">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="p-3 rounded-xl bg-background/50 border border-border/50">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Staff ID</Label>
+                        <p className="text-sm font-bold text-foreground">{patientData.staff_id}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-background/50 border border-border/50">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Department</Label>
+                        <p className="text-sm font-bold text-foreground truncate">{patientData.department || 'N/A'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-background/50 border border-border/50">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Gender</Label>
+                        <p className="text-sm font-bold text-foreground">{patientData.gender || 'N/A'}</p>
+                    </div>
+                    <div className="p-3 rounded-xl bg-background/50 border border-border/50">
+                        <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground block mb-1">Date of Birth</Label>
+                        <p className="text-sm font-bold text-foreground">{patientData.dob || 'N/A'}</p>
+                    </div>
+                  </div>
+
+                  <p className="text-muted-foreground text-[10px] flex items-center gap-2 italic">
+                    <HelpCircle className="w-3 h-3" /> 
+                    Not you? Please notify an IT admin to correct your records.
                   </p>
                 </CardContent>
                 <CardFooter className="pt-2">
                   <Button 
                     onClick={handleProceed}
-                    className="w-full h-12 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl shadow-lg shadow-emerald-600/20"
+                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02]"
                   >
-                    Proceed with Registration
+                    Proceed with Registration <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>
                 </CardFooter>
               </Card>

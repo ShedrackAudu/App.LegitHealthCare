@@ -110,6 +110,8 @@ def send_patient_report():
         logo_url = branding.logo_light if branding and branding.logo_light else None
         if logo_url and logo_url.startswith('/'):
             base_url = request.url_root.rstrip('/')
+            if 'onrender.com' in base_url and base_url.startswith('http:'):
+                base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
 
         html_content = EmailService.get_report_template(

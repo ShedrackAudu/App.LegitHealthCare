@@ -4,11 +4,10 @@ import sys
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app import app
 from models import db, StaffUser, PatientPortalUser, Role, Permission
 from init_rbac_data import init_rbac
 
-def setup_system(purge=False):
+def setup_system(app, purge=False):
     with app.app_context():
         # Create all tables in all binds
         print("Creating tables in all databases...")
@@ -24,7 +23,7 @@ def setup_system(purge=False):
             db.session.commit()
 
         # 1. Initialize RBAC (Roles & Permissions)
-        init_rbac()
+        init_rbac(app)
 
         # 2. Ensure Admin Role has all permissions
         admin_role = Role.query.filter_by(name='Admin').first()
@@ -62,5 +61,6 @@ def setup_system(purge=False):
         print(f"System setup complete for '{admin_user.username}'.")
 
 if __name__ == "__main__":
+    from app import app
     purge_requested = "--purge" in sys.argv
-    setup_system(purge=purge_requested)
+    setup_system(app, purge=purge_requested)

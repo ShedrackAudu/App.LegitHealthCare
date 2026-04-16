@@ -27,7 +27,7 @@ const ManageDepartmentsPage: React.FC = () => {
     const fetchDepartments = async () => {
         setLoading(true);
         try {
-            const response = await axios.get(`http://localhost:5000/api/departments`, {
+            const response = await axios.get(`/api/departments`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setDepartments(response.data);
@@ -51,7 +51,7 @@ const ManageDepartmentsPage: React.FC = () => {
 
         setAdding(true);
         try {
-            const resp = await axios.post(`http://localhost:5000/api/departments`,
+            const resp = await axios.post(`/api/departments`,
                 { name: trimmedName },
                 { headers: { 'X-Company-Context': activeSection } }
             );
@@ -70,7 +70,7 @@ const ManageDepartmentsPage: React.FC = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            await axios.delete(`http://localhost:5000/api/departments/${id}`, {
+            await axios.delete(`/api/departments/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Department deleted");

@@ -15,7 +15,14 @@ import {
   ArrowLeft,
   Search,
   Users,
-  Clock3
+  Clock3,
+  Download,
+  UploadCloud,
+  FileSpreadsheet,
+  Info,
+  CheckCircle2,
+  XCircle,
+  AlertCircle
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -121,7 +128,7 @@ const TestResultsPage: React.FC = () => {
             }
             const fetchResults = async () => {
                 try {
-                    const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+                    const res = await axios.get(`/api/patients/search?q=${searchId}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
                     setSearchResults(res.data);
@@ -139,7 +146,7 @@ const TestResultsPage: React.FC = () => {
     const [queueData, setQueueData] = useState<any>({});
     const fetchQueue = async () => {
         try {
-            const resp = await axios.get(`http://localhost:5000/api/queue/?year=${activeYear}`, {
+            const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueData(resp.data);
@@ -150,7 +157,7 @@ const TestResultsPage: React.FC = () => {
         setLoadingQueue(true);
         setSelectedQueueDept(dept);
         try {
-            const resp = await axios.get(`http://localhost:5000/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
+            const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueEntries(resp.data);
@@ -196,7 +203,7 @@ const TestResultsPage: React.FC = () => {
         if (!searchId) return;
         setSearching(true);
         try {
-            const response = await axios.get(`http://localhost:5000/patient/${searchId}`, {
+            const response = await axios.get(`/patient/${searchId}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
@@ -212,7 +219,7 @@ const TestResultsPage: React.FC = () => {
             <MainLayout>
                 <div className="space-y-8 animate-in fade-in duration-500">
                     <div className="text-center space-y-2">
-                        <h1 className="text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
+                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
                         <p className="text-muted-foreground text-lg">Select a test type to record or view patient results.</p>
                     </div>
 
@@ -231,15 +238,15 @@ const TestResultsPage: React.FC = () => {
                                 className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50"
                                 onClick={() => navigate(`/tests/${test.id}`)}
                             >
-                                <CardContent className="p-6 flex items-center gap-4">
-                                    <div className={`p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
-                                        <test.icon className="h-8 w-8" />
+                                <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
+                                    <div className={`p-2.5 sm:p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
+                                        <test.icon className="h-6 w-6 sm:h-8 sm:w-8" />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-xl font-bold">{test.title}</h3>
-                                        <p className="text-sm text-muted-foreground">Record diagnostic findings</p>
+                                        <h3 className="text-base sm:text-xl font-bold">{test.title}</h3>
+                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Record diagnostic findings</p>
                                     </div>
-                                    <ChevronRight className="h-6 w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </CardContent>
                             </Card>
                         ))}
@@ -261,12 +268,12 @@ const TestResultsPage: React.FC = () => {
                         {/* Top Search Bar Style from Consultation */}
                         <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
                             <div className="flex items-center gap-3">
-                                <div className="p-3 bg-primary/10 rounded-2xl">
-                                    <FlaskConical className="text-primary h-8 w-8" />
+                                <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+                                    <FlaskConical className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
-                                    <h1 className="text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
-                                    <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                                    <h1 className="text-lg sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
+                                    <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                                     <TempAccessCountdown />
                                 </div>
                             </div>
@@ -382,6 +389,15 @@ const TestResultsPage: React.FC = () => {
                         }}
                     />
                 )}
+
+                {/* Bulk Upload Feature shifted to bottom */}
+                <div className="mt-12 mb-8">
+                    <BulkUploadSection 
+                        testType={selectedTest} 
+                        activeYear={activeYear} 
+                        activeSection={activeSection} 
+                    />
+                </div>
             </div>
 
             <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
@@ -472,6 +488,212 @@ const TestResultsPage: React.FC = () => {
     );
 };
 
+const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
+    const { user } = useAppContext();
+    const [uploading, setUploading] = useState(false);
+    const [uploadResult, setUploadResult] = useState<any>(null);
+    const fileInputRef = React.useRef<HTMLInputElement>(null);
+
+    // Only show for specific test types and if user has permission
+    const supportedTests = ['fbc', 'kft', 'lft', 'lipid'];
+    if (!testType || !supportedTests.includes(testType)) return null;
+    
+    const permissionName = `upload_bulk_${testType}`;
+    const hasPermission = user?.permissions?.includes(permissionName) || user?.username === 'admin';
+    if (!hasPermission) return null;
+
+    const testMetadata: Record<string, { title: string, columns: string[] }> = {
+        fbc: {
+            title: "Full Blood Count",
+            columns: ["PatientID", "PCV", "WBC", "PLT", "LYMPH_PERCENT", "LYMPH_ABS", "GRA_PERCENT", "GRA_ABS", "MID_PERCENT", "MID_ABS", "RBC", "MCV", "MCH", "MCHC", "RDW", "PDW", "HGB", "REMARK"]
+        },
+        kft: {
+            title: "Kidney Function Test",
+            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "Urea", "Creatinine", "REMARK"]
+        },
+        lft: {
+            title: "Liver Function Test",
+            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "REMARK"]
+        },
+        lipid: {
+            title: "Lipid Profile",
+            columns: ["PatientID", "TotalCholesterol", "Triglycerides", "REMARK"]
+        }
+    };
+
+    const handleDownloadTemplate = async () => {
+        try {
+            const response = await axios.get(`/api/tests/download-template/${testType}`, {
+                responseType: 'blob',
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `${testType.toUpperCase()}_Bulk_Upload_Template.xlsx`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            toast.error("Failed to download template");
+        }
+    };
+
+    const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+        const file = event.target.files?.[0];
+        if (!file) return;
+
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('year', activeYear);
+
+        setUploading(true);
+        setUploadResult(null);
+        try {
+            const resp = await axios.post(`/api/tests/bulk-upload/${testType}`, formData, {
+                headers: { 
+                    'Content-Type': 'multipart/form-data',
+                    'X-Company-Context': activeSection
+                }
+            });
+            setUploadResult(resp.data);
+            toast.success("Bulk upload processed!");
+        } catch (err: any) {
+            toast.error(err.response?.data?.error || "Bulk upload failed");
+        } finally {
+            setUploading(false);
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    return (
+        <Card className="border-2 border-primary/20 shadow-lg bg-primary/5 overflow-hidden animate-in fade-in slide-in-from-top-4 duration-500">
+            <CardHeader className="bg-primary/10 border-b py-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 bg-primary/20 rounded-xl shrink-0">
+                            <UploadCloud className="h-5 w-5 text-primary" />
+                        </div>
+                        <div>
+                            <CardTitle className="text-lg font-black tracking-tight uppercase leading-none">Bulk Result Upload</CardTitle>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mt-1">Excel Batch Processor</p>
+                        </div>
+                    </div>
+                    <Button 
+                        variant="outline" 
+                        size="sm" 
+                        onClick={handleDownloadTemplate}
+                        className="w-full sm:w-auto gap-2 font-black text-[10px] uppercase border-primary/30 hover:bg-primary/10 transition-colors h-9"
+                    >
+                        <Download className="h-3.5 w-3.5" /> Download Template
+                    </Button>
+                </div>
+            </CardHeader>
+            <CardContent className="p-6 space-y-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div className="space-y-4">
+                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/50 border-2 border-dashed border-primary/20">
+                            <div className="p-2 bg-amber-500/10 rounded-xl">
+                                <Info className="h-5 w-5 text-amber-600" />
+                            </div>
+                            <div className="space-y-1">
+                                <h4 className="font-black text-sm uppercase tracking-tight">Instructions</h4>
+                                <ul className="text-xs text-muted-foreground space-y-2 list-disc pl-4 font-medium">
+                                    <li>Use the **official .xlsx template** for the best results.</li>
+                                    <li>**PatientID** must exactly match the IDs in the screening matrix.</li>
+                                    <li>Do not change the column order or naming as defined in the template.</li>
+                                    <li>System will **auto-recalculate** dependent parameters (e.g. LDL, HCO3).</li>
+                                    <li>Only existing patient records for **{activeYear}** will be updated.</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div className="relative group">
+                            <input 
+                                type="file" 
+                                accept=".xlsx" 
+                                onChange={handleFileUpload}
+                                ref={fileInputRef}
+                                className="hidden"
+                                id="bulk-file-upload"
+                                disabled={uploading}
+                            />
+                            <label 
+                                htmlFor="bulk-file-upload"
+                                className={`flex flex-col items-center justify-center h-32 rounded-2xl border-2 border-dashed transition-all cursor-pointer bg-card group-hover:border-primary/50 group-hover:bg-primary/5 ${uploading ? 'opacity-50 cursor-wait' : 'border-muted-foreground/20'}`}
+                            >
+                                {uploading ? (
+                                    <>
+                                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                                        <p className="text-sm font-bold animate-pulse">Processing Batch Data...</p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                                        <p className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">Click to Select Excel File</p>
+                                        <p className="text-[10px] text-muted-foreground uppercase font-black mt-1">Only .xlsx supported</p>
+                                    </>
+                                )}
+                            </label>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <div className="h-full rounded-2xl bg-muted/30 p-4 border border-muted-foreground/10">
+                            <h4 className="font-black text-xs uppercase tracking-widest text-muted-foreground mb-4">Upload Summary</h4>
+                            
+                            {uploadResult ? (
+                                <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
+                                            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                                <CheckCircle2 className="h-4 w-4" />
+                                                <span className="text-[10px] font-black uppercase">Success</span>
+                                            </div>
+                                            <p className="text-2xl font-black text-emerald-700">{uploadResult.success_count}</p>
+                                        </div>
+                                        <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
+                                            <div className="flex items-center gap-2 text-rose-600 mb-1">
+                                                <XCircle className="h-4 w-4" />
+                                                <span className="text-[10px] font-black uppercase">Skipped</span>
+                                            </div>
+                                            <p className="text-2xl font-black text-rose-700">{uploadResult.skip_count}</p>
+                                        </div>
+                                    </div>
+
+                                    {uploadResult.errors && uploadResult.errors.length > 0 && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center gap-2 text-amber-600">
+                                                <AlertCircle className="h-3 w-3" />
+                                                <span className="text-[9px] font-black uppercase italic">Processing Notes</span>
+                                            </div>
+                                            <ScrollArea className="h-[120px] rounded-lg bg-muted/50 p-2 border">
+                                                <ul className="space-y-1.5">
+                                                    {uploadResult.errors.map((err: string, i: number) => (
+                                                        <li key={i} className="text-[10px] text-muted-foreground font-medium flex gap-2">
+                                                            <span className="text-primary font-bold">•</span> {err}
+                                                        </li>
+                                                    ))}
+                                                </ul>
+                                            </ScrollArea>
+                                        </div>
+                                    )}
+                                </div>
+                            ) : (
+                                <div className="flex flex-col items-center justify-center h-48 text-center px-6">
+                                    <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
+                                        <Search className="h-6 w-6 text-muted-foreground/30" />
+                                    </div>
+                                    <p className="text-xs font-bold text-muted-foreground/50 italic">No upload data available. Upload a file to view a detailed summary of the processed results.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                </div>
+            </CardContent>
+        </Card>
+    );
+};
+
 const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuccess }: any) => {
     const [loading, setLoading] = useState(false);
     const [fetching, setFetching] = useState(false);
@@ -482,7 +704,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             setFetching(true);
             try {
                 const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-                const resp = await axios.get(`http://localhost:5000/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
+                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setInitialData(resp.data);
@@ -499,7 +721,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         setLoading(true);
         try {
             const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-            await axios.post(`http://localhost:5000/api/tests/save-test/${type}`, {
+            await axios.post(`/api/tests/save-test/${type}`, {
                 ...data,
                 staff_id: patient.staff_id,
                 screening_year: activeYear
@@ -585,7 +807,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
-                        <Label>{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
+                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
                         <Input {...register(f, { required: true })} type="number" step="any" placeholder="0.00" required />
                     </div>
                 ))}
@@ -596,9 +818,9 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
                     <Input {...register('fbc_remark')} placeholder="Remarks..." />
                 </div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save FBC Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -629,20 +851,20 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
-                <div className="space-y-2"><Label>UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save KFT Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -673,17 +895,17 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
-                <div className="space-y-2"><Label>LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">TOTAL CHOLESTEROL - TCHO <span className="text-rose-500">*</span></Label><Input {...register('total_cholesterol', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">TRIGLYCERIDES - TG <span className="text-rose-500">*</span></Label><Input {...register('triglycerides', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HDL (Auto)</Label><Input {...register('hdl')} type="number" step="any" className="font-bold" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">LDL (Auto)</Label><Input {...register('ldl')} type="number" step="any" className="font-bold" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save Lipid Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -710,9 +932,9 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save LFT Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -730,14 +952,14 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Spirometry Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Spirometry Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
+                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
                 <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save Spirometry Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                 </Button>
             </div>
         </form>
@@ -758,12 +980,12 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>{test} Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
+                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
                 <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
             </div>
-            <div className="flex justify-end pt-4">
-                <Button type="submit" className="h-11 px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5" /> Save {test} Results</>}
+            <div className="flex justify-center sm:justify-end pt-6">
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                 </Button>
             </div>
         </form>

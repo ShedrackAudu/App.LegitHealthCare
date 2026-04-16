@@ -33,7 +33,7 @@ const PatientManage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/generate?portal=patient`, {}, {
+            const resp = await axios.post(`/api/2fa/generate?portal=patient`, {}, {
                 headers: { 'X-User-ID': user?.id }
             });
             setQrUri(resp.data.uri);
@@ -51,7 +51,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/enable`, { code, portal: 'patient' }, {
+            const resp = await axios.post(`/api/2fa/enable`, { code, portal: 'patient' }, {
                 headers: { 'X-User-ID': user?.id }
             });
             toast.success(resp.data.message || "2FA successfully enabled!");
@@ -70,7 +70,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`http://localhost:5000/api/2fa/disable`, { code: disableCode, portal: 'patient' }, {
+            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' }, {
                 headers: { 'X-User-ID': user?.id }
             });
             toast.success(resp.data.message || "2FA has been disabled.");
@@ -89,137 +89,137 @@ const PatientManage2FAPage = () => {
 
     return (
         <PatientLayout>
-            <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
-                <Button variant="ghost" onClick={() => navigate('/patient/account')} className="mb-2 gap-2 font-bold group rounded-xl">
-                    <ArrowLeft className="w-4 h-4 group-hover:-translate-x-1 transition-transform" /> Back to Account Settings
+            <div className="max-w-4xl mx-auto space-y-5 animate-in fade-in duration-700 pb-20">
+                <Button variant="ghost" onClick={() => navigate('/patient/account')} className="mb-1 h-8 gap-2 font-black group rounded-xl text-[10px] text-muted-foreground hover:text-primary">
+                    <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" /> Back
                 </Button>
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="flex items-center gap-4">
-                        <div className="p-4 bg-emerald-500/10 rounded-2xl text-emerald-600">
-                           <ShieldCheck className="h-8 w-8" />
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                        <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600">
+                           <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
-                           <h1 className="text-3xl font-black tracking-tight">Email/Two-Factor Security</h1>
-                           <p className="text-muted-foreground font-medium">Protect your medical data with an extra layer of verification.</p>
+                           <h1 className="text-xl sm:text-2xl font-black tracking-tight">Two-Factor Security</h1>
+                           <p className="text-[10px] text-muted-foreground font-medium">Protect your medical data with an extra layer.</p>
                         </div>
                     </div>
                     {user?.is_2fa_enabled && (
-                        <div className="px-4 py-2 bg-emerald-500 text-white rounded-xl text-xs font-black uppercase tracking-widest flex items-center gap-2 shadow-lg shadow-emerald-500/20">
-                           <Check className="w-4 h-4" /> 2FA Active
+                        <div className="px-2.5 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+                           <Check className="w-3 h-3" /> 2FA Active
                         </div>
                     )}
                 </div>
 
                 {user?.is_2fa_enabled ? (
-                    <Card className="border-2 border-emerald-500/20 shadow-xl rounded-[2.5rem] overflow-hidden">
-                        <CardHeader className="bg-emerald-500/5 p-8 border-b">
-                            <CardTitle className="text-2xl font-black text-emerald-700">Multi-Factor Authentication is Enabled</CardTitle>
-                            <CardDescription className="text-base font-medium">Your account is currently protected. To disable this feature, confirm your identity below.</CardDescription>
+                    <Card className="border border-emerald-500/20 shadow-lg rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-emerald-500/5 p-5 border-b">
+                            <CardTitle className="text-lg font-black text-emerald-700">Authentication is enabled</CardTitle>
+                            <CardDescription className="text-[10px] font-medium">Your account is currently protected.</CardDescription>
                         </CardHeader>
-                        <CardContent className="p-8 space-y-6">
-                            <div className="p-6 bg-muted/40 rounded-2xl text-sm border-2 border-dashed flex items-start gap-4">
-                                <Info className="h-6 w-6 text-emerald-600 shrink-0" />
-                                <div className="space-y-1">
-                                    <p className="font-bold text-base text-foreground">Need to turn off 2FA?</p>
-                                    <p className="text-muted-foreground">If you switch devices or no longer wish to use an authenticator app, enter your 6-digit verification code to disable protection.</p>
+                        <CardContent className="p-5 space-y-5">
+                            <div className="p-4 bg-muted/40 rounded-2xl text-[13px] border-2 border-dashed flex items-start gap-4">
+                                <Info className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                                <div className="space-y-0.5">
+                                    <p className="font-black text-sm text-foreground">Need to turn off 2FA?</p>
+                                    <p className="text-muted-foreground leading-relaxed">Enter your 6-digit verification code to disable protection.</p>
                                 </div>
                             </div>
-                            <div className="flex flex-col sm:flex-row items-center gap-4">
+                            <div className="flex flex-col sm:flex-row items-center gap-3">
                                 <Input 
-                                    placeholder="Enter 6-digit verification code" 
+                                    placeholder="000 000" 
                                     value={disableCode} 
                                     onChange={e => setDisableCode(e.target.value)} 
-                                    className="h-14 rounded-xl border-2 font-black text-lg max-w-sm text-center tracking-[0.2em]"
+                                    className="h-10 rounded-xl border font-black text-sm max-w-sm text-center tracking-[0.2em]"
                                     maxLength={6}
                                 />
-                                <Button variant="destructive" onClick={verifyAndDisable} className="h-14 px-8 rounded-xl font-black text-lg shadow-xl shadow-red-500/20 transition-transform active:scale-95 w-full sm:w-auto">
+                                <Button variant="destructive" onClick={verifyAndDisable} className="h-10 px-6 rounded-xl font-black text-[11px] shadow-md transition-transform active:scale-95 w-full sm:w-auto">
                                    Disable Security
                                 </Button>
                             </div>
                         </CardContent>
                     </Card>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-6">
                         {!qrUri && (
-                            <Card className="border-2 border-primary/10 shadow-2xl rounded-[3rem] overflow-hidden">
-                                <CardHeader className="p-10 text-center space-y-4">
-                                    <div className="w-20 h-20 bg-primary/10 rounded-[2rem] flex items-center justify-center mx-auto text-primary">
-                                       <ShieldAlert className="w-10 h-10" />
+                            <Card className="border border-primary/10 shadow-lg rounded-2xl overflow-hidden">
+                                <CardHeader className="p-5 text-center space-y-2">
+                                    <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center mx-auto text-primary">
+                                       <ShieldAlert className="w-6 h-6" />
                                     </div>
-                                    <CardTitle className="text-4xl font-black">Secure Your Patient Portal</CardTitle>
-                                    <CardDescription className="text-lg font-medium max-w-xl mx-auto">
-                                        Take the lead in your data privacy. Enabling 2FA ensures that only you can access your clinical results and medical transcripts.
+                                    <CardTitle className="text-lg font-black tracking-tight">Secure Your Portal</CardTitle>
+                                    <CardDescription className="text-[11px] font-medium max-w-sm mx-auto leading-relaxed">
+                                        Take the lead in your data privacy. Ensuring only you can access your results.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-10 pb-0 flex flex-col items-center">
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 w-full text-center mb-10">
-                                        <div className="space-y-2">
-                                            <p className="text-primary font-black uppercase text-[10px] tracking-widest">Step 1</p>
-                                            <p className="text-sm font-bold">Install Authenticator App</p>
+                                <CardContent className="p-5 pb-0 flex flex-col items-center">
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 w-full text-center mb-6">
+                                        <div className="space-y-0.5">
+                                            <p className="text-primary font-black uppercase text-[8px] tracking-[0.2em] opacity-60">Step 1</p>
+                                            <p className="text-[11px] font-black">Install Authenticator App</p>
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-primary font-black uppercase text-[10px] tracking-widest">Step 2</p>
-                                            <p className="text-sm font-bold">Scan Private QR Code</p>
+                                        <div className="space-y-0.5">
+                                            <p className="text-primary font-black uppercase text-[8px] tracking-[0.2em] opacity-60">Step 2</p>
+                                            <p className="text-[11px] font-black">Scan Private QR Code</p>
                                         </div>
-                                        <div className="space-y-2">
-                                            <p className="text-primary font-black uppercase text-[10px] tracking-widest">Step 3</p>
-                                            <p className="text-sm font-bold">Confirm Verification</p>
+                                        <div className="space-y-0.5">
+                                            <p className="text-primary font-black uppercase text-[8px] tracking-[0.2em] opacity-60">Step 3</p>
+                                            <p className="text-[11px] font-black">Confirm Verification</p>
                                         </div>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="p-10 pt-0 bg-muted/20 flex justify-center border-t">
-                                    <Button onClick={beginSetup} disabled={isGenerating} size="lg" className="h-16 px-12 rounded-[2rem] text-xl font-black shadow-2xl shadow-primary/30 transition-all hover:scale-105 active:scale-95">
-                                        {isGenerating ? <Loader2 className="mr-2 h-6 w-6 animate-spin" /> : <ShieldCheck className="mr-2 h-6 w-6" />}
-                                        {isGenerating ? "Preparing Security Token..." : "Start Setup Now"}
+                                <CardFooter className="p-4 bg-muted/10 flex justify-center border-t">
+                                    <Button onClick={beginSetup} disabled={isGenerating} className="h-10 px-8 rounded-xl text-[11px] font-black shadow-lg shadow-primary/10 transition-all hover:scale-105 active:scale-95">
+                                        {isGenerating ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ShieldCheck className="mr-2 h-3.5 w-3.5" />}
+                                        {isGenerating ? "Preparing..." : "Start Setup"}
                                     </Button>
                                 </CardFooter>
                             </Card>
                         )}
 
                         {qrUri && backupCodes.length === 0 && (
-                            <Card className="border-2 shadow-2xl rounded-[3rem] overflow-hidden border-primary/20 animate-in slide-in-from-bottom-8 duration-700">
-                                <CardHeader className="p-10 md:p-12 border-b bg-primary/5">
-                                    <CardTitle className="text-3xl font-black">Configure Your App</CardTitle>
-                                    <CardDescription className="text-base font-medium">Follow the instructions below to link your device.</CardDescription>
+                            <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/20 animate-in slide-in-from-bottom-8 duration-700">
+                                <CardHeader className="p-5 border-b bg-primary/5">
+                                    <CardTitle className="text-base font-black">Configure App</CardTitle>
+                                    <CardDescription className="text-[10px] font-medium">Link your device below.</CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-10 md:p-12 space-y-12">
-                                    <div className="flex flex-col lg:flex-row items-center gap-12">
-                                        <div className="space-y-6 flex-1">
-                                            <div className="flex gap-4">
-                                                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black shrink-0">1</div>
-                                                <p className="font-bold text-lg leading-relaxed text-muted-foreground">Scan this QR code with <span className="text-foreground">Google Authenticator</span>, <span className="text-foreground">Authy</span>, or any TOTP app.</p>
+                                <CardContent className="p-5 space-y-6">
+                                    <div className="flex flex-col lg:flex-row items-center lg:items-start gap-8">
+                                        <div className="space-y-4 flex-1 w-full max-w-sm lg:max-w-none">
+                                            <div className="flex items-center justify-center lg:justify-start gap-2.5">
+                                                <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black shrink-0">1</div>
+                                                <p className="font-black text-[11px] leading-relaxed text-muted-foreground uppercase opacity-80">Scan QR Code</p>
                                             </div>
-                                            <div className="p-6 bg-muted/30 rounded-3xl border-2 border-dashed flex flex-col items-center">
-                                                <div className="bg-white p-6 rounded-[2rem] shadow-2xl border-4 border-white mb-6">
-                                                    <QRCodeSVG value={qrUri} size={240} />
+                                            <div className="p-4 bg-muted/10 rounded-xl border border-dashed flex flex-col items-center">
+                                                <div className="bg-white p-3 rounded-xl shadow-lg border border-white mb-3">
+                                                    <QRCodeSVG value={qrUri} size={150} />
                                                 </div>
-                                                <div className="text-center">
-                                                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-2">Can't scan the code?</p>
-                                                    <code className="text-sm font-mono font-black bg-primary/10 text-primary px-4 py-2 rounded-xl border border-primary/20 select-all tracking-wider block">{secret}</code>
+                                                <div className="text-center w-full px-2">
+                                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground mb-1">Manual Key:</p>
+                                                    <code className="text-[8.5px] sm:text-[10px] font-mono font-black bg-primary/10 text-primary px-2 py-1.5 rounded-lg border border-primary/20 select-all tracking-wider block truncate">{secret}</code>
                                                 </div>
                                             </div>
                                         </div>
 
-                                        <div className="w-px h-full bg-border hidden lg:block" />
+                                        <div className="w-px self-stretch bg-border hidden lg:block" />
 
-                                        <div className="space-y-6 flex-1 w-full">
-                                            <div className="flex gap-4">
-                                                <div className="w-8 h-8 rounded-full bg-primary text-primary-foreground flex items-center justify-center font-black shrink-0">2</div>
-                                                <p className="font-bold text-lg leading-relaxed text-muted-foreground">Confirm by entering the <span className="text-foreground">6-digit verification code</span> generated by your app.</p>
+                                        <div className="space-y-4 flex-1 w-full max-w-sm lg:max-w-none">
+                                            <div className="flex items-center justify-center lg:justify-start gap-2.5">
+                                                <div className="w-5 h-5 rounded-full bg-primary text-primary-foreground flex items-center justify-center text-[10px] font-black shrink-0">2</div>
+                                                <p className="font-black text-[11px] leading-relaxed text-muted-foreground uppercase opacity-80">Verify Code</p>
                                             </div>
-                                            <div className="p-8 bg-card rounded-[2.5rem] border-2 shadow-inner space-y-8 flex flex-col justify-center h-full min-h-[300px]">
-                                                <div className="space-y-2">
-                                                    <Label className="text-xs font-black uppercase tracking-[0.2em] text-muted-foreground text-center block">Verification Code</Label>
+                                            <div className="p-5 bg-card rounded-2xl border shadow-inner space-y-5 flex flex-col justify-center h-full min-h-[160px]">
+                                                <div className="space-y-1">
+                                                    <Label className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center block opacity-60">Verification Code</Label>
                                                     <Input 
                                                         value={code} 
                                                         onChange={e => setCode(e.target.value)} 
                                                         placeholder="000 000" 
-                                                        className="text-center font-black text-5xl tracking-[0.3em] h-28 rounded-2xl border-2 border-primary/20 focus:border-primary transition-all shadow-sm"
+                                                        className="text-center font-black text-2xl tracking-[0.3em] h-12 rounded-xl border focus:border-primary transition-all shadow-sm"
                                                         maxLength={6}
                                                     />
                                                 </div>
-                                                <Button onClick={verifyAndEnable} size="lg" className="w-full h-16 rounded-2xl font-black text-xl shadow-xl shadow-primary/30 active:scale-95 transition-all">
+                                                <Button onClick={verifyAndEnable} className="w-full h-11 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
                                                    Enable Secure Access
                                                 </Button>
                                             </div>
@@ -230,34 +230,33 @@ const PatientManage2FAPage = () => {
                         )}
 
                         {backupCodes.length > 0 && (
-                            <Card className="border-4 border-emerald-500 rounded-[3rem] bg-emerald-50/50 shadow-2xl overflow-hidden animate-in zoom-in-95 duration-500">
-                                <CardHeader className="p-10 md:p-12 bg-emerald-500 text-white">
-                                    <CardTitle className="text-4xl font-black flex items-center gap-4">
-                                        <CheckCircle2 className="h-10 w-10" /> Security Activated!
+                            <Card className="border-4 border-emerald-500 rounded-2xl bg-emerald-50/50 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500">
+                                <CardHeader className="p-8 bg-emerald-500 text-white">
+                                    <CardTitle className="text-xl sm:text-2xl font-black flex items-center gap-3">
+                                        <CheckCircle2 className="h-7 w-7" /> Activated!
                                     </CardTitle>
-                                    <CardDescription className="text-emerald-100 text-lg font-medium">
-                                        Your account is now fully protected. You must save these backup codes in a safe place.
+                                    <CardDescription className="text-emerald-100 text-sm font-medium">
+                                        Save these backup codes in a safe place.
                                     </CardDescription>
                                 </CardHeader>
-                                <CardContent className="p-10 md:p-12 space-y-8">
-                                    <div className="p-8 bg-white/80 backdrop-blur-xl rounded-[2rem] border-2 border-emerald-200 shadow-xl">
-                                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 font-mono text-center font-black text-2xl text-emerald-900 tracking-wider">
+                                <CardContent className="p-8 space-y-6">
+                                    <div className="p-6 bg-white/80 backdrop-blur-xl rounded-xl border border-emerald-200 shadow-md">
+                                        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-center font-black text-lg text-emerald-900 tracking-wider">
                                             {backupCodes.map((c, i) => (
-                                                <div key={i} className="py-4 bg-emerald-50 rounded-2xl border border-emerald-100 shadow-sm">{c}</div>
+                                                <div key={i} className="py-3 bg-emerald-50 rounded-lg border border-emerald-100 shadow-sm">{c}</div>
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="bg-emerald-500/10 p-6 rounded-[2rem] border-2 border-dashed border-emerald-500/30 flex items-start gap-4">
-                                        <Info className="w-6 h-6 text-emerald-600 shrink-0 mt-1" />
-                                        <p className="text-sm font-bold text-emerald-800 leading-relaxed">
-                                            These codes can be used to log in if you lose your phone or delete the authenticator app. 
-                                            Each code can only be used once. Keep them offline or in a secure password manager.
+                                    <div className="bg-emerald-500/10 p-5 rounded-xl border border-dashed border-emerald-500/30 flex items-start gap-4">
+                                        <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                        <p className="text-xs font-bold text-emerald-800 leading-relaxed">
+                                            Save these codes offline. Each code can only be used once. 
                                         </p>
                                     </div>
                                 </CardContent>
-                                <CardFooter className="p-10 pt-0">
-                                    <Button onClick={() => navigate('/patient/account')} variant="outline" className="w-full h-16 rounded-2xl font-black text-xl border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-50 transition-all">
-                                        I Have Safely Stored These Codes
+                                <CardFooter className="p-8 pt-0">
+                                    <Button onClick={() => navigate('/patient/account')} variant="outline" className="w-full h-12 rounded-xl font-black text-sm border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-50 transition-all">
+                                        Saved Safely
                                     </Button>
                                 </CardFooter>
                             </Card>

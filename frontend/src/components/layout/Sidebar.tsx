@@ -39,8 +39,8 @@ const medicalItems: SidebarItem[] = [
   { title: 'Test Results', path: '/tests', icon: FlaskConical, permission: 'lab_tests' },
   { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
   { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
-  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
   { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
+  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
   { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
   { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'view_appointments' },
 ];
@@ -64,8 +64,11 @@ const sharedItems: SidebarItem[] = [
 export const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('legit_sidebar_collapsed');
-    // Default to uncollapsed (false), but respect saved preference
-    return saved !== null ? JSON.parse(saved) : false;
+    if (saved !== null) return JSON.parse(saved);
+    
+    // Fallback for new visitors or cleared storage: auto-collapse on small screens
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) return true;
+    return false;
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
   const { isAdmin, hasPermission } = usePermissions();
@@ -74,21 +77,15 @@ export const Sidebar: React.FC = () => {
 
   useEffect(() => {
     const handleResize = () => {
-      // Only auto-collapse if user hasn't set a manual preference in this session yet
-      // or if we're on a very small screen where expanded is unusable
+      // Auto-collapse only on resize if width drops below threshold
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
         const saved = localStorage.getItem('legit_sidebar_collapsed');
-        if (saved !== null) {
-          setIsCollapsed(JSON.parse(saved));
-        } else {
-          setIsCollapsed(false);
-        }
+        setIsCollapsed(saved !== null ? JSON.parse(saved) : false);
       }
     };
 
-    handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
@@ -127,7 +124,7 @@ export const Sidebar: React.FC = () => {
         {/* Clinic Logo */}
         {!isCollapsed ? (
           (branding?.logo_dark && !brandingError) ? (
-            <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+            <img src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
           ) : (
             <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
               <Building2 className="h-5 w-5 shrink-0" />
@@ -136,7 +133,7 @@ export const Sidebar: React.FC = () => {
           )
         ) : (
           (branding?.logo_light && !brandingError) ? (
-            <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+            <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
           ) : (
             <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
               <Building2 className="h-5 w-5 shrink-0" />

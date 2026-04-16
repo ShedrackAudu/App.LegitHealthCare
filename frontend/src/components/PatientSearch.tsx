@@ -45,7 +45,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`http://localhost:5000/api/patients/search?q=${searchId}`, {
+          const res = await axios.get(`/api/patients/search?q=${searchId}`, {
             headers: { 'X-Company-Context': activeSection }
           });
           setSearchResults(res.data || []);

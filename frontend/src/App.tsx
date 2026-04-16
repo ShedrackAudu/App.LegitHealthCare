@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LandingPage from './pages/LandingPage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
@@ -28,15 +28,11 @@ import AuditLogPage from './pages/AuditLogPage';
 import DataManagementPage from './pages/DataManagementPage';
 import AccessKeysPage from './pages/AccessKeysPage';
 import AccessDeniedPage from './pages/AccessDeniedPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import PatientOTPPage from './pages/PatientOTPPage';
 import PatientManageAccountPage from './pages/PatientManageAccountPage';
 import PatientDashboard from './pages/PatientDashboard';
 import PatientMedicalReport from './pages/PatientMedicalReport';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import PatientManage2FAPage from './pages/PatientManage2FAPage';
-import PatientSearchPage from './pages/PatientSearchPage';
-import PatientClaimPage from './pages/PatientClaimPage';
 
 import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -53,7 +49,7 @@ function RootApp() {
             <Route path="/signup" element={<SignupPage />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/verify-otp" element={<OTPPage />} />
-            <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+            <Route path="/forgot-password" element={<Navigate to="/login?forgot=true" replace />} />
             <Route path="/verify/:token" element={<ReportVerificationPage />} />
             <Route path="/force-password-reset" element={
               <ProtectedRoute>
@@ -61,9 +57,7 @@ function RootApp() {
               </ProtectedRoute>
             } />
 
-            <Route path="/patient/verify-otp" element={<PatientOTPPage />} />
-            <Route path="/patient/search" element={<PatientSearchPage />} />
-            <Route path="/patient/claim" element={<PatientClaimPage />} />
+
 
 
             {/* Protected Routes */}

@@ -1,6 +1,5 @@
-@import "tailwindcss";
-
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+@import "tailwindcss";
 
 @theme {
   --font-sans: 'Open Sans', ui-sans-serif, system-ui, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
@@ -116,11 +115,24 @@
 
   * {
     border-color: hsl(var(--border));
+    font-family: var(--font-sans);
   }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
   }
+
+  input, button, select, textarea {
+    font-family: inherit;
+  }
+
+  button {
+    white-space: nowrap;
+  }
+
 
   input::placeholder,
   textarea::placeholder {

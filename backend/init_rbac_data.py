@@ -1,8 +1,7 @@
-from app import app
 from models import db, User, Role, Permission
 import json
 
-def init_rbac():
+def init_rbac(app):
     with app.app_context():
         # 1. Define all permissions
         perms_metadata = [
@@ -37,7 +36,11 @@ def init_rbac():
             ('edit_patient', 'Permission to modify patient bio-data'),
             ('delete_patient', 'Permission to permanently remove a patient account'),
             ('delete_record', 'Permission to delete screening results from matrix'),
-            ('manage_access_keys', 'Generate and manage temporary access codes')
+            ('manage_access_keys', 'Generate and manage temporary access codes'),
+            ('upload_bulk_fbc', 'Bulk Upload FBC Results'),
+            ('upload_bulk_kft', 'Bulk Upload KFT Results'),
+            ('upload_bulk_lft', 'Bulk Upload LFT Results'),
+            ('upload_bulk_lipid', 'Bulk Upload Lipid Profile Results')
         ]
         
         perm_objs = {}
@@ -81,4 +84,5 @@ def init_rbac():
         print("\nRBAC Initialization Complete.")
 
 if __name__ == "__main__":
-    init_rbac()
+    from app import app
+    init_rbac(app)

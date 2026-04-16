@@ -26,7 +26,7 @@ const AuditLogPage: React.FC = () => {
   const fetchLogs = async (pageNum: number) => {
     setLoading(true);
     try {
-      const resp = await axios.get(`http://localhost:5000/api/admin/audit-logs?page=${pageNum}&per_page=15`, {
+      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=15`, {
         headers: { 'X-User-ID': user?.id?.toString() }
       });
       setLogs(resp.data.logs);
@@ -98,22 +98,26 @@ const AuditLogPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight flex items-center gap-3">
-              <History className="w-8 h-8 text-primary" />
-              System Audit Trails
-            </h1>
-            <p className="text-muted-foreground font-medium italic mt-1">Monitor system activities, security events, and administrative overrides.</p>
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                <History className="h-6 w-6 sm:h-8 sm:w-8" />
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">System Audit Trails</h1>
+            </div>
+            <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+              Monitor system activities, security events, and administrative overrides.
+            </p>
           </div>
           
-          <div className="relative w-full md:w-72 group">
+          <div className="relative w-full lg:w-80 group">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input 
               placeholder="Search by action or user..." 
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="pl-10 rounded-xl border-2 focus-visible:ring-primary/20"
+              className="h-12 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
             />
           </div>
         </div>
@@ -237,7 +241,7 @@ const AuditLogPage: React.FC = () => {
                                 </span>
                             </div>
                             
-                            <h2 className="text-3xl font-black tracking-tighter mb-1">Activity Insight</h2>
+                            <h2 className="text-2xl sm:text-3xl font-black tracking-tighter mb-1">Activity Insight</h2>
                             <p className="text-sm text-muted-foreground font-medium italic">Detailed breakdown of the system interaction event.</p>
                         </div>
 

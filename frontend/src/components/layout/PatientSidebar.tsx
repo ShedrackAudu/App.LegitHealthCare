@@ -62,14 +62,14 @@ export const PatientSidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
       <div className="h-14 shrink-0 flex items-center px-4 border-b">
         {!isCollapsed ? (
           (branding?.logo_dark && !brandingError) ? (
-            <img src={`http://localhost:5000${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+            <img src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
           ) : (
             <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
               <Building2 className="h-5 w-5 shrink-0" />
@@ -78,7 +78,7 @@ export const PatientSidebar: React.FC = () => {
           )
         ) : (
           (branding?.logo_light && !brandingError) ? (
-            <img src={`http://localhost:5000${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+            <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
           ) : (
             <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
               <Building2 className="h-5 w-5 shrink-0" />
@@ -88,7 +88,7 @@ export const PatientSidebar: React.FC = () => {
       </div>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
-        <div className="flex-1 space-y-2 px-3 overflow-y-auto custom-scrollbar">
+        <div className="flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar">
           {patientItems.map((item) => (
             <NavLink
               key={item.path}

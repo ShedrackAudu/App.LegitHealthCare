@@ -17,7 +17,11 @@ import {
   Plus,
   Loader2,
   Trash2,
-  AlertTriangle
+  AlertTriangle,
+  Mail,
+  ShieldCheck,
+  Reply,
+  X
 } from 'lucide-react';
 import { 
   Dialog,
@@ -29,6 +33,7 @@ import {
 import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -44,6 +49,8 @@ import axios from 'axios';
 import { format } from 'date-fns';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDialog';
+
 
 export default function MessagingPage() {
   const { user, socket, setUnreadMessagesCount } = useAppContext();
@@ -61,14 +68,37 @@ export default function MessagingPage() {
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isCreatingGroup, setIsCreatingGroup] = useState(false);
+  const [groupName, setGroupName] = useState('');
+  const [selectedMembers, setSelectedMembers] = useState<number[]>([]);
+  const [replyingTo, setReplyingTo] = useState<any>(null);
+  const [reactionMenu, setReactionMenu] = useState<{msgId: number, x: number, y: number} | null>(null);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
+  const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
+  const [activeActionsId, setActiveActionsId] = useState<number | null>(null);
+  const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const messageInputRef = useRef<HTMLInputElement>(null);
   
-  const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨'];
+  const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨', '🙏', '👏', '🎉', '💡', '🚀', '✅', '❌', '🤔', '👀', '💪'];
 
   useEffect(() => {
     fetchConversations();
     setUnreadMessagesCount(0); // Reset global unread when opening the page
   }, []);
+
+  const viewProfile = async (userId: number) => {
+    if (!userId) return;
+    try {
+      const response = await axios.get(`/api/users/${userId}/profile`);
+      setSelectedUserProfile(response.data);
+      setIsUserProfileOpen(true);
+    } catch (error) {
+      console.error('Error fetching user profile:', error);
+      toast.error('Could not load user profile');
+    }
+  };
 
   useEffect(() => {
     if (activeChat) {
@@ -76,6 +106,7 @@ export default function MessagingPage() {
       socket?.emit('join_chat', { chat_id: activeChat.id });
       socket?.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
     }
+    setReplyingTo(null);
   }, [activeChat]);
 
   useEffect(() => {
@@ -88,9 +119,10 @@ export default function MessagingPage() {
       )) {
         setMessages(prev => [...prev, msg]);
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
-      } else {
-        fetchConversations();
       }
+      
+      // Update sidebar regardless of whether it was the active chat
+      fetchConversations();
     });
 
     socket.on('typing_status', (data) => {
@@ -105,18 +137,36 @@ export default function MessagingPage() {
       }
     });
 
-    socket.on('user_presence', (data) => {
-      if (activeChat && activeChat.type === 'direct' && data.user_id === activeChat.other_user.id) {
-        setConversations(prev => prev.map(c => 
-          c.id === `dm_${data.user_id}` ? { ...c, other_user: { ...c.other_user, last_seen_at: data.status === 'online' ? new Date().toISOString() : null } } : c
-        ));
+    socket.on('message_reacted', (data) => {
+      if (activeChat && data.chat_id === activeChat.id) {
+        setMessages(prev => prev.map(m => m.id === data.message_id ? { ...m, reactions: data.reactions } : m));
       }
+    });
+
+    socket.on('user_presence', (data) => {
+      const isOnline = data.status === 'online';
+      
+      // Update conversations list
+      setConversations(prev => prev.map(c => 
+        c.id === `dm_${data.user_id}` 
+          ? { ...c, other_user: { ...c.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : c.other_user.last_seen_at } } 
+          : c
+      ));
+
+      // Update active chat if it matches this user
+      setActiveChat((prev: any) => {
+        if (prev && prev.type === 'direct' && prev.other_user.id === data.user_id) {
+          return { ...prev, other_user: { ...prev.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : prev.other_user.last_seen_at } };
+        }
+        return prev;
+      });
     });
 
     return () => {
       socket.off('new_message');
       socket.off('typing_status');
       socket.off('messages_read');
+      socket.off('message_reacted');
       socket.off('user_presence');
     };
   }, [socket, activeChat]);
@@ -127,7 +177,7 @@ export default function MessagingPage() {
 
   const fetchConversations = async () => {
     try {
-      const resp = await axios.get('http://localhost:5000/api/messages/conversations', {
+      const resp = await axios.get('/api/messages/conversations', {
         headers: { 'X-User-ID': user.id }
       });
       setConversations(resp.data);
@@ -137,7 +187,7 @@ export default function MessagingPage() {
 
   const fetchHistory = async (convId: string) => {
     try {
-      const resp = await axios.get(`http://localhost:5000/api/messages/history/${convId}`, {
+      const resp = await axios.get(`/api/messages/history/${convId}`, {
         headers: { 'X-User-ID': user.id }
       });
       setMessages(resp.data.messages);
@@ -148,7 +198,7 @@ export default function MessagingPage() {
   const fetchAvailableUsers = async () => {
     setLoadingUsers(true);
     try {
-      const resp = await axios.get('http://localhost:5000/api/messages/search-users', {
+      const resp = await axios.get('/api/messages/search-users', {
         headers: { 'X-User-ID': user.id }
       });
       setAvailableUsers(resp.data);
@@ -160,9 +210,20 @@ export default function MessagingPage() {
 
   const openNewChat = () => {
     setIsNewChatOpen(true);
+    setIsCreatingGroup(false);
+    setGroupName('');
+    setSelectedMembers([]);
     fetchAvailableUsers();
   };
 
+  const openNewGroup = () => {
+    setIsNewChatOpen(true);
+    setIsCreatingGroup(true);
+    setGroupName('');
+    setSelectedMembers([]);
+    fetchAvailableUsers();
+  };
+   
   const handleSearch = async (val: string) => {
     setSearchQuery(val);
     if (val.length < 2) {
@@ -170,7 +231,7 @@ export default function MessagingPage() {
       return;
     }
     try {
-      const resp = await axios.get(`http://localhost:5000/api/messages/search-users?q=${val}`, {
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`, {
         headers: { 'X-User-ID': user.id }
       });
       setSearchResults(resp.data);
@@ -194,6 +255,43 @@ export default function MessagingPage() {
     setSearchResults([]);
   };
 
+  const createGroup = async () => {
+    if (!groupName.trim() || selectedMembers.length === 0) {
+      toast.error("Please provide a name and select at least one member");
+      return;
+    }
+
+    try {
+      const resp = await axios.post('/api/messages/groups', {
+        name: groupName,
+        members: selectedMembers
+      }, {
+        headers: { 'X-User-ID': user.id }
+      });
+      
+      const newGroupConv = {
+        id: `group_${resp.data.id}`,
+        type: 'group',
+        group: resp.data,
+        last_message: null,
+        unread_count: 0
+      };
+      
+      setConversations(prev => [newGroupConv, ...prev]);
+      setActiveChat(newGroupConv);
+      setIsNewChatOpen(false);
+      toast.success(`Group "${groupName}" created!`);
+    } catch (err) {
+      toast.error("Failed to create group");
+    }
+  };
+
+  const toggleMemberSelection = (uid: number) => {
+    setSelectedMembers(prev => 
+      prev.includes(uid) ? prev.filter(id => id !== uid) : [...prev, uid]
+    );
+  };
+
   const sendMessage = () => {
     if (!newMessage.trim() || !activeChat) return;
     
@@ -201,10 +299,12 @@ export default function MessagingPage() {
       sender_id: user.id,
       chat_id: activeChat.id,
       content: newMessage,
-      message_type: 'text'
+      message_type: 'text',
+      parent_message_id: replyingTo?.id
     });
     
     setNewMessage('');
+    setReplyingTo(null);
     handleTyping(false);
   };
 
@@ -219,6 +319,32 @@ export default function MessagingPage() {
     }
   };
 
+  const reactToMessage = (msgId: number, emoji: string) => {
+    socket?.emit('react_message', {
+      message_id: msgId,
+      emoji: emoji,
+      user_id: user.id,
+      chat_id: activeChat?.id
+    });
+    setReactionMenu(null);
+    setActiveActionsId(null);
+  };
+
+  const startLongPress = (e: React.PointerEvent, msgId: number) => {
+      const x = e.clientX;
+      const y = e.clientY;
+      longPressTimer.current = setTimeout(() => {
+          setReactionMenu({ msgId, x, y });
+      }, 500);
+  };
+
+  const stopLongPress = () => {
+      if (longPressTimer.current) {
+          clearTimeout(longPressTimer.current);
+          longPressTimer.current = null;
+      }
+  };
+
   const addEmoji = (emoji: string) => {
     setNewMessage(prev => prev + emoji);
     setShowEmojiPicker(false);
@@ -229,7 +355,7 @@ export default function MessagingPage() {
     setIsDeleting(true);
 
     try {
-      await axios.delete(`http://localhost:5000/api/messages/conversations/${activeChat.id}`, {
+      await axios.delete(`/api/messages/conversations/${activeChat.id}`, {
         headers: { 'X-User-ID': user.id }
       });
       setActiveChat(null);
@@ -257,8 +383,13 @@ export default function MessagingPage() {
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Messages</h2>
-            <Button size="icon" variant="ghost" className="h-8 w-8 rounded-full hover:bg-primary/10 text-primary" onClick={openNewChat}>
-              <Plus className="h-4 w-4" />
+            <Button 
+                size="sm" 
+                variant="default" 
+                className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
+                onClick={openNewGroup}
+            >
+              <Plus className="h-4 w-4" /> New Group
             </Button>
           </div>
           <div className="relative">
@@ -318,7 +449,7 @@ export default function MessagingPage() {
                     {conv.type === 'direct' && (
                       <div className={cn(
                         "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
-                        conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 60000) ? "bg-green-500" : "bg-zinc-400"
+                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
                       )} />
                     )}
                   </div>
@@ -340,7 +471,26 @@ export default function MessagingPage() {
                       "text-xs truncate",
                       activeChat?.id === conv.id ? "text-primary-foreground/80" : "text-muted-foreground"
                     )}>
-                      {conv.last_message?.content || 'No messages yet'}
+                      {conv.last_message ? (
+                        <span className="flex items-center gap-1 min-w-0">
+                          {conv.last_message.sender_id === user.id ? (
+                            <span className={cn(
+                              "font-black shrink-0",
+                              activeChat?.id === conv.id ? "text-primary-foreground" : "text-primary/70"
+                            )}>You:</span>
+                          ) : (
+                            conv.type === 'group' && (
+                              <span className={cn(
+                                "font-black shrink-0",
+                                activeChat?.id === conv.id ? "text-primary-foreground" : "text-primary/70"
+                              )}>
+                                {conv.last_message.sender_name?.split(' ')[0]}:
+                              </span>
+                            )
+                          )}
+                          <span className="truncate flex-1 min-w-0">{conv.last_message.content}</span>
+                        </span>
+                      ) : 'No messages yet'}
                     </div>
                   </div>
                   {conv.unread_count > 0 && (
@@ -383,7 +533,8 @@ export default function MessagingPage() {
                 </Avatar>
                 <div>
                   <div className="font-bold text-sm">
-                    {activeChat.type === 'direct' ? `${activeChat.other_user.first_name} ${activeChat.other_user.last_name}` : activeChat.group.name}
+                    <span className="md:hidden">{activeChat.type === 'direct' ? activeChat.other_user.first_name : activeChat.group.name.split(' ')[0]}</span>
+                    <span className="hidden md:inline">{activeChat.type === 'direct' ? `${activeChat.other_user.first_name} ${activeChat.other_user.last_name}` : activeChat.group.name}</span>
                   </div>
                   <div className="text-[10px] text-muted-foreground font-medium flex items-center gap-1.5">
                     {partnerTyping ? (
@@ -393,9 +544,9 @@ export default function MessagingPage() {
                         <>
                           <div className={cn(
                             "w-1.5 h-1.5 rounded-full",
-                            activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 60000) ? "bg-green-500" : "bg-zinc-400"
+                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
                           )} />
-                          {activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 60000) ? "Active now" : "Offline"}
+                          {activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "Active now" : "Offline"}
                         </>
                       )
                     )}
@@ -410,7 +561,7 @@ export default function MessagingPage() {
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><MoreVertical className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem>View Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile</DropdownMenuItem>
                     <DropdownMenuItem>Search Chat</DropdownMenuItem>
                     <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
                     <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
@@ -424,12 +575,15 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6">
+            <ScrollArea className="flex-1 p-6" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
               <div className="space-y-6">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
                    const prevMsg = idx > 0 ? messages[idx-1] : null;
                    const showDate = !prevMsg || format(new Date(msg.created_at), 'yyyy-MM-dd') !== format(new Date(prevMsg.created_at), 'yyyy-MM-dd');
+                   
+                   // Find parent message for replies
+                   const parentMsg = msg.parent_message_id ? messages.find(m => m.id === msg.parent_message_id) : null;
 
                    return (
                      <div key={msg.id || idx}>
@@ -440,60 +594,258 @@ export default function MessagingPage() {
                            </span>
                          </div>
                        )}
-                       <div className={cn(
-                         "flex group",
-                         isMe ? "justify-end" : "justify-start"
-                       )}>
-                          <div className={cn(
-                            "max-w-[85%] md:max-w-[450px] space-y-1",
-                            isMe ? "items-end" : "items-start"
-                          )}>
-                             <div className={cn(
-                               "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words overflow-hidden",
-                               isMe 
-                                 ? "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20" 
-                                 : "bg-card border-2 rounded-tl-none hover:border-primary/20"
-                             )}>
-                              {msg.content}
-                              <div className={cn(
-                                "flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px]",
-                                isMe ? "text-primary-foreground" : "text-muted-foreground"
-                              )}>
-                                {format(new Date(msg.created_at), 'HH:mm')}
-                                {isMe && (
-                                  msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />
+                        <div className={cn(
+                          "flex group items-center gap-2 w-full",
+                          isMe ? "justify-end" : "justify-start"
+                        )}>
+                            {!isMe ? (
+                                <>
+                                    <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-start text-left">
+                                {parentMsg && (
+                                  <div className={cn(
+                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "border-muted-foreground/20 rounded-tl-none text-left"
+                                  )}>
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
+                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
+                                   </span>
+                                   {parentMsg.content}
+                                  </div>
                                 )}
-                              </div>
+  
+                                <div 
+                                  className={cn(
+                                    "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0",
+                                    "bg-card border-2 rounded-tl-none hover:border-primary/20"
+                                  )}
+                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerUp={stopLongPress}
+                                  onPointerLeave={stopLongPress}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
+                                    setReactionMenu(null);
+                                  }}
+                                >
+                                 {msg.content}
+                                 <div className={cn(
+                                   "flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px]",
+                                   "text-muted-foreground"
+                                 )}>
+                                   {format(new Date(msg.created_at), 'HH:mm')}
+                                 </div>
+                               </div>
+  
+                               {/* Reactions display */}
+                               {msg.reactions && msg.reactions.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mt-1 justify-start">
+                                       {/* Group reactions by emoji */}
+                                       {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
+                                           <div 
+                                               key={emoji} 
+                                               className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
+                                               onClick={() => reactToMessage(msg.id, emoji)}
+                                           >
+                                               {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
+                                           </div>
+                                       ))}
+                                   </div>
+                               )}
                             </div>
-                         </div>
-                       </div>
-                     </div>
+                            
+                            {/* Action buttons (Reply & React) */}
+                            <div className={cn(
+                              "transition-opacity flex flex-col gap-1 items-center",
+                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                            )}>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => { 
+                                       e.stopPropagation(); 
+                                       setReplyingTo(msg); 
+                                       messageInputRef.current?.focus();
+                                       setActiveActionsId(null);
+                                   }}
+                                   title="Reply"
+                               >
+                                   <Reply className="h-3.5 w-3.5" />
+                               </Button>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       setReactionMenu({ 
+                                           msgId: msg.id, 
+                                           x: e.clientX, 
+                                           y: e.clientY 
+                                       });
+                                   }}
+                                   title="React"
+                               >
+                                   <Smile className="h-3.5 w-3.5" />
+                               </Button>
+                            </div>
+                         </>
+                      ) : (
+                         <>
+                            {/* Action buttons (Reply & React) - Left of bubble for Sent */}
+                            <div className={cn(
+                              "transition-opacity flex flex-col gap-1 items-center",
+                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                            )}>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => { 
+                                       e.stopPropagation(); 
+                                       setReplyingTo(msg); 
+                                       messageInputRef.current?.focus();
+                                       setActiveActionsId(null);
+                                   }}
+                                   title="Reply"
+                               >
+                                   <Reply className="h-3.5 w-3.5" />
+                               </Button>
+                               <Button 
+                                   variant="ghost" 
+                                   size="icon" 
+                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                   onClick={(e) => {
+                                       e.stopPropagation();
+                                       setReactionMenu({ 
+                                           msgId: msg.id, 
+                                           x: e.clientX, 
+                                           y: e.clientY 
+                                       });
+                                   }}
+                                   title="React"
+                               >
+                                   <Smile className="h-3.5 w-3.5" />
+                               </Button>
+                            </div>
+
+                            <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-end text-right">
+                                {parentMsg && (
+                                  <div className={cn(
+                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "border-primary/20 rounded-tr-none text-right"
+                                  )}>
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">Your Message</span>
+                                   {parentMsg.content}
+                                  </div>
+                                )}
+  
+                                <div 
+                                  className={cn(
+                                    "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0 font-medium",
+                                    "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20"
+                                  )}
+                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerUp={stopLongPress}
+                                  onPointerLeave={stopLongPress}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
+                                    setReactionMenu(null);
+                                  }}
+                                >
+                                 {msg.content}
+                                 <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
+                                   {format(new Date(msg.created_at), 'HH:mm')}
+                                   {msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                 </div>
+                               </div>
+  
+                               {/* Reactions display */}
+                               {msg.reactions && msg.reactions.length > 0 && (
+                                   <div className="flex flex-wrap gap-1 mt-1 justify-end">
+                                       {/* Group reactions by emoji */}
+                                       {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
+                                           <div 
+                                               key={emoji} 
+                                               className="bg-card border shadow-sm rounded-full px-1.5 py-0.5 text-[10px] cursor-pointer hover:scale-110 mb-1 transition-transform animate-in zoom-in"
+                                               onClick={() => reactToMessage(msg.id, emoji)}
+                                           >
+                                               {emoji} <span className="font-bold text-muted-foreground ml-0.5">{msg.reactions.filter((r: any) => r.emoji === emoji).length}</span>
+                                           </div>
+                                       ))}
+                                   </div>
+                               )}
+                            </div>
+                         </>
+                       )}
+                        </div>
+                      </div>
                    );
                 })}
                 <div ref={scrollRef} />
               </div>
+
+              {/* Reaction Menu Portal-like component */}
+              {reactionMenu && (
+                  <div 
+                    className="fixed z-[1000] bg-card/95 backdrop-blur-md border-2 shadow-2xl rounded-2xl p-2.5 flex flex-wrap gap-2 animate-in zoom-in-50 slide-in-from-bottom-5 max-w-[280px] sm:max-w-none shadow-primary/10" 
+                    style={{ left: Math.min(reactionMenu.x, window.innerWidth - 300), top: reactionMenu.y - 70 }}
+                    onClick={(e) => e.stopPropagation()}
+                  >
+                      {commonEmojis.slice(0, 10).map(e => (
+                          <button 
+                            key={e} 
+                            className="text-2xl hover:scale-125 transition-transform p-1.5 rounded-xl hover:bg-primary/10" 
+                            onClick={() => reactToMessage(reactionMenu.msgId, e)}
+                          >
+                              {e}
+                          </button>
+                      ))}
+                  </div>
+              )}
             </ScrollArea>
 
             {/* Input Area */}
             <div className="p-4 bg-card/80 backdrop-blur-md border-t">
-              <div className="flex items-center gap-2 max-w-4xl mx-auto">
-                <div className="flex gap-1 relative">
+              <div className="max-w-4xl mx-auto space-y-2">
+                {/* Replying To Preview */}
+                {replyingTo && (
+                    <div className="flex items-center justify-between bg-muted/40 p-3 rounded-xl border-l-4 border-primary animate-in slide-in-from-bottom-2 duration-300">
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-black uppercase text-primary tracking-widest mb-0.5">Replying to {replyingTo.sender_id === user.id ? "Yourself" : replyingTo.sender_name}</p>
+                            <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
+                        </div>
+                        <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setReplyingTo(null)}>
+                            <X className="h-4 w-4" />
+                        </Button>
+                    </div>
+                )}
+
+                <div className="flex items-center gap-2">
+                  <div className="flex gap-1 relative">
                   <Button 
                     variant="ghost" 
                     size="icon" 
                     className={cn("h-9 w-9 transition-colors", showEmojiPicker ? "text-primary bg-primary/10" : "text-muted-foreground hover:text-primary")}
-                    onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setShowEmojiPicker(!showEmojiPicker);
+                    }}
                   >
                     <Smile className="h-5 w-5" />
                   </Button>
                   
                   {showEmojiPicker && (
-                    <div className="absolute bottom-full mb-2 left-0 p-2 bg-card border-2 rounded-xl shadow-xl flex gap-1 z-50 animate-in slide-in-from-bottom-2 duration-200">
+                    <div 
+                      className="absolute bottom-full mb-3 left-0 p-3 bg-card border-2 rounded-2xl shadow-2xl grid grid-cols-7 gap-1.5 z-50 animate-in slide-in-from-bottom-4 duration-300 w-[260px] shadow-primary/10"
+                      onClick={(e) => e.stopPropagation()}
+                    >
                       {commonEmojis.map(e => (
                         <button 
                           key={e} 
-                          onClick={() => addEmoji(e)}
-                          className="hover:scale-125 transition-transform p-1 text-lg"
+                          onClick={(ev) => { ev.stopPropagation(); addEmoji(e); }}
+                          className="h-8 w-8 flex items-center justify-center hover:scale-125 hover:bg-primary/10 rounded-lg transition-all text-xl"
                         >
                           {e}
                         </button>
@@ -501,10 +853,18 @@ export default function MessagingPage() {
                     </div>
                   )}
                   
-                  <Button variant="ghost" size="icon" className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"><Paperclip className="h-5 w-5" /></Button>
+                  <Button 
+                    variant="ghost" 
+                    size="icon" 
+                    className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
+                    onClick={() => toast('Attachment feature coming soon!', { icon: '📂' })}
+                  >
+                    <Paperclip className="h-5 w-5" />
+                  </Button>
                 </div>
                 <div className="flex-1 relative group">
                   <Input 
+                    ref={messageInputRef}
                     placeholder="Type a message..." 
                     className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 h-11 rounded-xl transition-all font-medium py-3"
                     value={newMessage}
@@ -519,7 +879,14 @@ export default function MessagingPage() {
                   />
                   <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
                     {newMessage.trim() === '' ? (
-                      <Button variant="ghost" size="icon" className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"><Mic className="h-5 w-5" /></Button>
+                      <Button 
+                        variant="ghost" 
+                        size="icon" 
+                        className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"
+                        onClick={() => toast('Voice notes coming soon!', { icon: '🎙️' })}
+                      >
+                        <Mic className="h-5 w-5" />
+                      </Button>
                     ) : (
                       <Button 
                         size="icon" 
@@ -533,6 +900,7 @@ export default function MessagingPage() {
                 </div>
               </div>
             </div>
+          </div>
           </>
         ) : (
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
@@ -562,9 +930,37 @@ export default function MessagingPage() {
       <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
         <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
           <DialogHeader className="p-6 bg-primary text-primary-foreground">
-            <DialogTitle className="text-2xl font-black">New Conversation</DialogTitle>
+            <div className="flex items-center justify-between">
+              <DialogTitle className="text-2xl font-black">{isCreatingGroup ? 'Create Group' : 'New Conversation'}</DialogTitle>
+              <Button 
+                size="sm" 
+                className={cn(
+                  "text-[10px] font-black uppercase tracking-widest rounded-full px-4 h-8 transition-all duration-300 shadow-lg",
+                  isCreatingGroup 
+                    ? "bg-rose-500 text-white hover:bg-rose-600 shadow-rose-500/20" 
+                    : "bg-white text-primary hover:bg-white/90 hover:scale-105 shadow-black/10"
+                )}
+                onClick={() => {
+                  setIsCreatingGroup(!isCreatingGroup);
+                  setSelectedMembers([]);
+                }}
+              >
+                {isCreatingGroup ? 'Cancel Group' : 'New Group Chat'}
+              </Button>
+            </div>
           </DialogHeader>
           <div className="p-4 space-y-4">
+            {isCreatingGroup && (
+              <div className="space-y-2 animate-in slide-in-from-top-2">
+                <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Group Name</p>
+                <Input 
+                  placeholder="Enter group name..." 
+                  className="h-11 font-bold"
+                  value={groupName}
+                  onChange={(e) => setGroupName(e.target.value)}
+                />
+              </div>
+            )}
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
@@ -573,40 +969,71 @@ export default function MessagingPage() {
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <ScrollArea className="h-[300px] pr-4">
-              {loadingUsers ? (
-                <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 text-primary animate-spin" />
-                </div>
-              ) : (
-                <div className="space-y-1">
-                  {(searchQuery.length >= 2 ? searchResults : availableUsers).map((u: any) => (
-                    <button
-                      key={u.id}
-                      className="w-full flex items-center gap-3 p-3 rounded-xl hover:bg-primary/5 transition-all text-left group"
-                      onClick={() => {
-                        startDirectChat(u);
-                        setIsNewChatOpen(false);
-                      }}
-                    >
-                      <Avatar className="h-10 w-10 border-2 border-background group-hover:border-primary/20">
-                        <AvatarFallback className="bg-primary/5 text-primary font-bold">
-                          {u.first_name?.[0]}{u.last_name?.[0]}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="flex-1">
-                        <div className="text-sm font-bold">{u.first_name} {u.last_name}</div>
-                        <div className="text-xs text-muted-foreground">@{u.username}</div>
-                      </div>
-                    </button>
-                  ))}
-                  {(searchQuery.length >= 2 ? searchResults : availableUsers).length === 0 && (
-                     <div className="text-center py-8 text-muted-foreground italic text-sm">No users found</div>
-                  )}
-                </div>
-              )}
-            </ScrollArea>
+            <div className="space-y-1">
+              <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-2">
+                {isCreatingGroup ? `Select Members (${selectedMembers.length} selected)` : 'Recent Contacts'}
+              </p>
+              <ScrollArea className="h-[250px] pr-4">
+                {loadingUsers ? (
+                  <div className="flex items-center justify-center h-full">
+                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                  </div>
+                ) : (
+                  <div className="space-y-1 pt-1">
+                    {(searchQuery.length >= 2 ? searchResults : availableUsers).map((u: any) => (
+                      <button
+                        key={u.id}
+                        className={cn(
+                          "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
+                          selectedMembers.includes(u.id) ? "bg-primary/10 ring-1 ring-primary/20" : "hover:bg-primary/5"
+                        )}
+                        onClick={() => {
+                          if (isCreatingGroup) {
+                            toggleMemberSelection(u.id);
+                          } else {
+                            startDirectChat(u);
+                            setIsNewChatOpen(false);
+                          }
+                        }}
+                      >
+                        <div className="relative">
+                          <Avatar className="h-10 w-10 border-2 border-background group-hover:border-primary/20">
+                            <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                              {u.first_name?.[0]}{u.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          {selectedMembers.includes(u.id) && (
+                            <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 animate-in zoom-in">
+                              <Check className="h-3 w-3" />
+                            </div>
+                          )}
+                        </div>
+                        <div className="flex-1">
+                          <div className="text-sm font-bold">{u.first_name} {u.last_name}</div>
+                          <div className="text-xs text-muted-foreground">@{u.username}</div>
+                        </div>
+                      </button>
+                    ))}
+                    {(searchQuery.length >= 2 ? searchResults : availableUsers).length === 0 && (
+                       <div className="text-center py-8 text-muted-foreground italic text-sm">No users found</div>
+                    )}
+                  </div>
+                )}
+              </ScrollArea>
+            </div>
           </div>
+          {isCreatingGroup && (
+            <div className="p-4 bg-muted/30 border-t flex gap-2">
+               <Button variant="ghost" className="flex-1 font-bold h-11" onClick={() => setIsCreatingGroup(false)}>Back</Button>
+               <Button 
+                className="flex-[2] font-black h-11 shadow-lg shadow-primary/20" 
+                disabled={!groupName.trim() || selectedMembers.length === 0}
+                onClick={createGroup}
+              >
+                Create Group Chat
+              </Button>
+            </div>
+          )}
         </DialogContent>
       </Dialog>
 
@@ -621,7 +1048,80 @@ export default function MessagingPage() {
         loading={isDeleting}
       />
 
+      {/* User Profile Dialog */}
+      <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
+        <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          {activeChat?.type === 'direct' && (
+            <div className="flex flex-col">
+              {/* Profile Background & Avatar Header */}
+              <div className="h-32 bg-gradient-to-br from-primary via-primary/80 to-primary/40 relative">
+                <div className="absolute -bottom-12 left-1/2 -translate-x-1/2">
+                  <Avatar className="h-24 w-24 border-4 border-background shadow-xl">
+                    <AvatarFallback className="bg-muted text-primary text-2xl font-black">
+                      {activeChat.other_user.first_name[0]}{activeChat.other_user.last_name[0]}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className={cn(
+                    "absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-background",
+                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                  )} />
+                </div>
+              </div>
+
+              {/* Profile Content */}
+              <div className="pt-14 pb-8 px-6 text-center space-y-6">
+                <div className="space-y-1">
+                  <h3 className="text-2xl font-black tracking-tight">
+                    {activeChat.other_user.first_name} {activeChat.other_user.last_name}
+                  </h3>
+                  <div className="flex items-center justify-center gap-2">
+                    <Badge variant="secondary" className="bg-primary/5 text-primary border-none font-bold">
+                       @{activeChat.other_user.username}
+                    </Badge>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-4 text-left">
+                  <ProfileInfoItem label="Email Address" value={activeChat.other_user.email} icon={Mail} isLink />
+                  <ProfileInfoItem label="Phone Number" value={activeChat.other_user.phone} icon={Phone} isLink />
+                  
+                  <div className="space-y-2 mt-2 pt-4 border-t">
+                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
+                       <ShieldCheck className="h-3 w-3" /> System Roles
+                    </p>
+                    <div className="flex flex-wrap gap-1.5 pt-1">
+                      {activeChat.other_user.roles?.map((role: string) => (
+                        <Badge key={role} className="rounded-lg bg-indigo-500/10 text-indigo-600 border-none hover:bg-indigo-500/20 px-2 py-0.5 text-[10px] font-bold">
+                          {role}
+                        </Badge>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <Button 
+                    className="w-full h-11 rounded-xl font-bold gap-2 shadow-lg shadow-primary/20"
+                    onClick={() => setIsProfileOpen(false)}
+                  >
+                    Close Profile
+                  </Button>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
+
       </div>
+      {/* User Profile Dialog */}
+      <UserProfileDialog 
+        userProfile={selectedUserProfile}
+        isOpen={isUserProfileOpen}
+        onOpenChange={setIsUserProfileOpen}
+      />
     </MainLayout>
   );
 }
+
+// Add viewProfile helper (should be inside MessagingPage)

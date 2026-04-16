@@ -31,10 +31,10 @@ const RolePermissionPage: React.FC = () => {
     setLoading(true);
     try {
       const [rolesResp, permsResp] = await Promise.all([
-        axios.get('http://localhost:5000/api/admin/roles', {
+        axios.get('/api/admin/roles', {
           headers: { 'X-User-ID': user?.id?.toString() }
         }),
-        axios.get('http://localhost:5000/api/admin/permissions', {
+        axios.get('/api/admin/permissions', {
           headers: { 'X-User-ID': user?.id?.toString() }
         })
       ]);
@@ -67,7 +67,7 @@ const RolePermissionPage: React.FC = () => {
   const saveRolePermissions = async (role: any) => {
     setSaving(role.name);
     try {
-      await axios.post(`http://localhost:5000/api/admin/roles/${role.id}/permissions`, {
+      await axios.post(`/api/admin/roles/${role.id}/permissions`, {
         permissions: role.permissions
       }, {
         headers: { 'X-User-ID': user?.id?.toString() }
@@ -85,7 +85,7 @@ const RolePermissionPage: React.FC = () => {
     e.preventDefault();
     setCreatingRole(true);
     try {
-      await axios.post('http://localhost:5000/api/admin/roles', {
+      await axios.post('/api/admin/roles', {
         name: newRoleName,
         description: newRoleDesc
       }, {
@@ -109,7 +109,7 @@ const RolePermissionPage: React.FC = () => {
     setDeleting(true);
     try {
       const headers = { 'X-User-ID': user?.id?.toString() };
-      await axios.delete(`http://localhost:5000/api/admin/roles/${roleId}`, { headers });
+      await axios.delete(`/api/admin/roles/${roleId}`, { headers });
       toast.success(`Role '${roleName}' deleted successfully.`);
       setDeleteModal({ open: false, id: 0, name: '' });
       fetchData(); // Refresh list
@@ -134,14 +134,21 @@ const RolePermissionPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex justify-between items-end">
-          <div>
-            <h1 className="text-3xl font-black tracking-tight">System Access Control</h1>
-            <p className="text-muted-foreground font-medium italic mt-1">Manage roles, granular permissions, and security entrance keys.</p>
+        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
+          <div className="flex flex-col gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                <ShieldCheck className="h-6 w-6 sm:h-8 sm:w-8" />
+              </div>
+              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">System Access Control</h1>
+            </div>
+            <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+              Manage roles, granular permissions, and security entrance keys.
+            </p>
           </div>
-          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-2">
+          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-3 w-fit shrink-0 shadow-sm">
             <ShieldCheck className="w-4 h-4 text-primary" />
-            <span className="text-[10px] font-black uppercase text-primary tracking-widest">Security Override Enabled</span>
+            <span className="text-[9px] sm:text-[11px] font-black uppercase text-primary tracking-[0.15em] leading-none">Security Override Enabled</span>
           </div>
         </div>
 
@@ -178,30 +185,22 @@ const RolePermissionPage: React.FC = () => {
                           >
                             <ShieldAlert className="h-4 w-4" />
                           </Button> */}
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          onClick={() => {
-                            if (role.name.toLowerCase() === 'admin') {
-                              toast.error("The core Admin role cannot be deleted.");
-                              return;
-                            }
-                            setDeleteModal({ open: true, id: role.id, name: role.name });
-                          }}
-                          disabled={role.name.toLowerCase() === 'admin'}
-                          className="h-8 w-8 p-0 rounded-lg text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
                       </div>
                     </div>
                     <Button
-                      onClick={() => saveRolePermissions(role)}
-                      disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
-                      className="rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        if (role.name.toLowerCase() === 'admin') {
+                          toast.error("The core Admin role cannot be deleted.");
+                          return;
+                        }
+                        setDeleteModal({ open: true, id: role.id, name: role.name });
+                      }}
+                      disabled={role.name.toLowerCase() === 'admin'}
+                      className="h-9 w-9 p-0 rounded-xl text-rose-500 hover:text-rose-600 hover:bg-rose-50 disabled:opacity-30 transition-all"
                     >
-                      {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                      {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}
+                      <Trash2 className="h-5 w-5" />
                     </Button>
                   </CardHeader>
                   <CardContent className="p-6">
@@ -240,6 +239,17 @@ const RolePermissionPage: React.FC = () => {
                           </div>
                         );
                       })}
+                    </div>
+
+                    <div className="mt-8 pt-6 border-t flex justify-end">
+                      <Button
+                        onClick={() => saveRolePermissions(role)}
+                        disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
+                        className="h-12 px-8 rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                      >
+                        {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+                        {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}
+                      </Button>
                     </div>
                   </CardContent>
                 </Card>
