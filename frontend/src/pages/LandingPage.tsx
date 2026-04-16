@@ -172,7 +172,7 @@ const LandingPage = () => {
                 </span>
               </h1>
               <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl lg:mx-0">
-                The official healthcare management portal for DCP & DCT staff. Securely manage screenings, communicate with your clinical team, and track your wellness journey.
+                The official healthcare management portal for managing staff medical screenings. Securely communicate with your clinical team and track your wellness journey.
               </p>
               <div className="flex flex-row items-center space-x-3 sm:space-x-4 justify-start pt-4">
                 <Link to="/signup">
@@ -243,21 +243,6 @@ const LandingPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
-              icon={<MessageSquare className="w-6 h-6" />} 
-              title="Messaging" 
-              description="Directly connect with clinic admins and medical staff for secure, real-time health updates." 
-            />
-            <FeatureCard 
-              icon={<Shield className="w-6 h-6" />} 
-              title="Encrypted" 
-              description="Your data is private. Access yearly screening results with industry-standard encryption." 
-            />
-            <FeatureCard 
-              icon={<Bell className="w-6 h-6" />} 
-              title="Alerts" 
-              description="Never miss an appointment. Automated reminders for screenings and medical follow-ups." 
-            />
-            <FeatureCard 
               icon={<FileText className="w-6 h-6" />} 
               title="Digital Health Records" 
               description="Access all your screening history and medical records in one centralized, secure digital vault." 
@@ -271,6 +256,21 @@ const LandingPage = () => {
               icon={<Calendar className="w-6 h-6" />} 
               title="Appointment Scheduler" 
               description="Seamlessly book and manage your yearly medical screenings and follow-up consultations." 
+            />
+            <FeatureCard 
+              icon={<CheckCircle2 className="w-6 h-6" />} 
+              title="Verified Reports" 
+              description="Access and download your official signed medical reports in PDF format with digital authenticity." 
+            />
+            <FeatureCard 
+              icon={<Shield className="w-6 h-6" />} 
+              title="Encrypted" 
+              description="Your data is private. Access yearly screening results with industry-standard encryption." 
+            />
+            <FeatureCard 
+              icon={<Bell className="w-6 h-6" />} 
+              title="Alerts" 
+              description="Never miss an appointment. Automated reminders for screenings and medical follow-ups." 
             />
           </div>
         </div>
@@ -305,18 +305,18 @@ const LandingPage = () => {
                         </div>
                         <div className="space-y-3">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">2</div>
-                           <h4 className="text-xl font-bold">Access Records</h4>
-                           <p className="text-muted-foreground text-sm leading-relaxed">View all your historical screening findngs, download PDF reports, and verify their authenticity.</p>
+                           <h4 className="text-xl font-bold">Secure 2FA</h4>
+                           <p className="text-muted-foreground text-sm leading-relaxed">Your medical privacy is our priority. Every login session is protected by mandatory Two-Factor Authentication (2FA).</p>
                         </div>
                         <div className="space-y-3">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">3</div>
-                           <h4 className="text-xl font-bold">Digital Bookings</h4>
-                           <p className="text-muted-foreground text-sm leading-relaxed">Skip the queue by scheduling your screening sessions directly from your dashboard.</p>
+                           <h4 className="text-xl font-bold">Digital Reports</h4>
+                           <p className="text-muted-foreground text-sm leading-relaxed">Download and print your official medical screening reports directly from your secure dashboard.</p>
                         </div>
                         <div className="space-y-3">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">4</div>
-                           <h4 className="text-xl font-bold">Direct Messaging</h4>
-                           <p className="text-muted-foreground text-sm leading-relaxed">Communicate securely with the clinical team regarding any of your health test results.</p>
+                           <h4 className="text-xl font-bold">Digital Bookings</h4>
+                           <p className="text-muted-foreground text-sm leading-relaxed">Skip the queue by scheduling your screening sessions directly from your dashboard.</p>
                         </div>
                      </div>
 
