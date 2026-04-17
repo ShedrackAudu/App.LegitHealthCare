@@ -7,12 +7,29 @@ import { VitePWA } from 'vite-plugin-pwa'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
-    tailwindv4(), 
+    tailwindv4(),
     react(),
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      manifest: false, // We use a dynamic manifest from the backend for clinic branding
+      manifest: {
+        name: 'Legit HealthCare Management System',
+        short_name: 'Legit HealthCare',
+        description: 'Premium Healthcare Management System',
+        theme_color: '#0d9488',
+        background_color: '#ffffff',
+        display: 'standalone',
+        orientation: 'portrait',
+        icons: [
+          {
+            src: '/favicon.svg',
+            sizes: 'any',
+            type: 'image/svg+xml',
+            purpose: 'any'
+          }
+        ]
+      },
+      filename: 'manifest.json',
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [

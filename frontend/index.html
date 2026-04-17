@@ -10,7 +10,7 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="LegitHC" />
-    <link id="pwa-manifest" rel="manifest" href="/api/branding/manifest.json" />
+    <link rel="manifest" href="/api/branding/manifest.json" />
     <script>
       // Early manifest resolution to prevent PWA install button flickering on refresh
       (function() {
@@ -21,10 +21,10 @@
           ? apiBase + '/api/branding/manifest.json'
           : '/api/branding/manifest.json';
         
-        const link = document.getElementById('pwa-manifest');
+        const link = document.querySelector('link[rel="manifest"]');
         if (link && link.getAttribute('href') !== url) {
           link.href = url;
-          if (url.indexOf('http') === 0) link.crossOrigin = 'use-credentials';
+          if (url.indexOf('http') === 0) link.crossOrigin = 'anonymous';
         }
       })();
     </script>

@@ -125,7 +125,9 @@ def update_branding():
 @branding_bp.route('/uploads/<filename>')
 def uploaded_file(filename):
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-    return send_from_directory(upload_folder, filename)
+    response = send_from_directory(upload_folder, filename)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
 
 @branding_bp.route('/clear', methods=['POST'])
 @require_permission('manage_branding')
@@ -180,4 +182,6 @@ def get_pwa_manifest():
     import json
     
     manifest_data = json.dumps(manifest)
-    return Response(manifest_data, mimetype='application/manifest+json')
+    response = Response(manifest_data, mimetype='application/manifest+json')
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
