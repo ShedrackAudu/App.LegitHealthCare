@@ -10,7 +10,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="LegitHC" />
-    <link rel="manifest" href="/api/branding/manifest.json" />
+    <script>
+      (function() {
+        // Resolve Manifest URL early and statically to prevent 'Install' button flickering
+        // Vite replaces %VITE_API_URL% at build time
+        const viteApi = "%VITE_API_URL%";
+        const manifestUrl = (viteApi && !viteApi.startsWith('%')) ? viteApi + '/api/branding/manifest.json' : '/api/branding/manifest.json';
+        
+        const link = document.createElement('link');
+        link.rel = 'manifest';
+        link.id = 'pwa-manifest';
+        link.href = manifestUrl;
+        // Critical for cross-domain PWA installation
+        if (manifestUrl.startsWith('http')) link.setAttribute('crossorigin', 'use-credentials');
+        document.head.appendChild(link);
+      })();
+    </script>
   </head>
   <body>
     <div id="root"></div>

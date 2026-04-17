@@ -12,23 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      manifest: {
-        name: 'Legit HealthCare Management System',
-        short_name: 'LegitHC',
-        description: 'Premium Healthcare Management System',
-        theme_color: '#0d9488',
-        background_color: '#ffffff',
-        display: 'standalone',
-        orientation: 'portrait',
-        icons: [
-          {
-            src: '/favicon.svg',
-            sizes: 'any',
-            type: 'image/svg+xml',
-            purpose: 'any'
-          }
-        ]
-      },
+      manifest: false, // <== Use the dynamic manifest from the backend instead
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [
