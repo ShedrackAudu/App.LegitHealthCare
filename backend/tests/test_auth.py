@@ -1,5 +1,6 @@
 import json
-from auth_utils import is_password_strong
+import re
+from auth_utils import is_password_strong, generate_totp_secret
 
 def test_login_success(client, setup_user):
     response = client.post('/login', json={
@@ -30,3 +31,10 @@ def test_password_policy_enforcement():
     
     # Should pass matching policy
     assert is_password_strong("StrongPass1!")
+
+def test_generate_totp_secret():
+    secret = generate_totp_secret()
+    # verify length
+    assert len(secret) == 32
+    # verify it contains valid base32 characters (A-Z, 2-7)
+    assert re.match(r'^[A-Z2-7]+$', secret)
