@@ -61,7 +61,7 @@ else:
     }
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY') or os.urandom(24)
 
 # Email config (to be filled by user)
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
