@@ -186,10 +186,29 @@ def handle_patient(staff_id):
         patient.department = data.get('department', patient.department)
         
         # 1. Sync with ScreeningYearBioData in the current bind
-        ScreeningYearBioData.query.filter(func.lower(ScreeningYearBioData.staff_id) == func.lower(clean_staff_id)).update({
-            "first_name": first_name,
-            "last_name": last_name
-        }, synchronize_session=False)
+        new_p_id = data.get('patient_id')
+        current_year = data.get('screening_year', datetime.now().year)
+        
+        # Update yearly record fields (Names)
+        yearly_q = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == func.lower(clean_staff_id),
+            ScreeningYearBioData.screening_year == int(current_year)
+        )
+        
+        yearly_record = yearly_q.first()
+        if yearly_record:
+            # Check for Patient ID uniqueness if it's changing
+            if new_p_id and str(new_p_id) != str(yearly_record.patient_id):
+                conflict = ScreeningYearBioData.query.filter_by(
+                    screening_year=int(current_year),
+                    patient_id=new_p_id
+                ).first()
+                if conflict:
+                    return jsonify({"error": f"Patient ID {new_p_id} is already assigned to another patient for {current_year}"}), 400
+                yearly_record.patient_id = new_p_id
+            
+            yearly_record.first_name = first_name
+            yearly_record.last_name = last_name
         
         # 2. Sync with PatientPortalUser in the 'patients' bind (Aggressive Force)
         try:

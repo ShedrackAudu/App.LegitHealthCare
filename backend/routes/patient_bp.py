@@ -107,12 +107,17 @@ def claim_account():
     # Check if user already exists in ISOLATED database
     existing_user = PatientPortalUser.query.filter(
         (PatientPortalUser.username == staff_id) | 
-        (PatientPortalUser.email == email)
+        (PatientPortalUser.email == email) |
+        (PatientPortalUser.phone == phone)
     ).first()
     
     if existing_user:
         if existing_user.is_verified:
-            return jsonify({"error": "An account with this Staff ID or email already exists."}), 400
+            msg = "An account with this information already exists."
+            if existing_user.username == staff_id: msg = "This Staff ID is already registered."
+            elif existing_user.email == email: msg = "This email is already in use."
+            elif existing_user.phone == phone: msg = "This phone number is already in use."
+            return jsonify({"error": msg}), 400
         # If not verified, we can overwrite/reuse
         user = existing_user
     else:
@@ -124,20 +129,43 @@ def claim_account():
     user.otp_expiry = datetime.now() + timedelta(minutes=15)
     user.set_password(password)
     
+    # Update fields in case we're reusing an unverified user
+    user.phone = phone
+    user.email = email
+    
     if not existing_user:
         db.session.add(user)
     
     try:
+        db.session.flush() # Try flushing to catch constraints early
         db.session.commit()
+        
+        # Sync with Clinical BioData (dcp, dct binds)
+        contexts = ['dcp', 'dct']
+        for ctx in contexts:
+            try:
+                engine = db.engines.get(ctx)
+                if not engine: continue
+                with engine.connect() as conn:
+                    sync_query = text("""
+                        UPDATE bio_data 
+                        SET email = :e, phone = :p 
+                        WHERE LOWER(staff_id) = LOWER(:sid)
+                    """)
+                    conn.execute(sync_query, {"e": email, "p": phone, "sid": staff_id})
+                    conn.commit()
+            except Exception as e:
+                print(f"Claim Sync failed for {staff_id} in {ctx}: {str(e)}")
+
     except Exception as e:
         db.session.rollback()
         error_msg = str(e)
         if "UNIQUE constraint failed" in error_msg:
-            if "users.username" in error_msg or "patient_users.username" in error_msg:
+            if "patient_users.username" in error_msg:
                 return jsonify({"error": "This Staff ID is already registered."}), 400
-            if "users.email" in error_msg or "patient_users.email" in error_msg:
+            if "patient_users.email" in error_msg:
                 return jsonify({"error": "This email is already in use."}), 400
-            if "users.phone" in error_msg or "patient_users.phone" in error_msg:
+            if "patient_users.phone" in error_msg:
                 return jsonify({"error": "This phone number is already in use."}), 400
         return jsonify({"error": f"Database error: {error_msg}"}), 500
     
@@ -316,6 +344,62 @@ def get_patient_profile():
             continue
             
     return jsonify({"error": "Patient profile not found in any clinical section."}), 404
+    
+@patient_bp.route('/api/patient/profile', methods=['PUT'])
+def update_patient_profile():
+    staff_id = request.headers.get('X-Staff-ID')
+    if not staff_id:
+        return jsonify({"error": "X-Staff-ID header required"}), 400
+        
+    data = request.json
+    new_email = data.get('email')
+    new_phone = data.get('phone')
+    
+    clean_id = staff_id.strip()
+    
+    # 1. Update Portal User (patients bind)
+    portal_user = PatientPortalUser.query.filter_by(username=clean_id).first()
+    if not portal_user:
+        return jsonify({"error": "Portal account not found"}), 404
+        
+    try:
+        if new_email: portal_user.email = new_email
+        if new_phone: portal_user.phone = new_phone
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e).lower()
+        if "unique constraint" in error_msg or "already exists" in error_msg:
+             return jsonify({"error": "Email or phone number is already in use by another account."}), 400
+        return jsonify({"error": f"Failed to update portal account: {str(e)}"}), 500
+
+    # 2. Sync with Clinical BioData (dcp, dct binds)
+    contexts = ['dcp', 'dct']
+    sync_errors = []
+    
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine: continue
+            
+            with engine.connect() as conn:
+                # Update BioData
+                sync_query = text("""
+                    UPDATE bio_data 
+                    SET email = :e, phone = :p 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                conn.execute(sync_query, {"e": new_email, "p": new_phone, "sid": clean_id})
+                conn.commit()
+                print(f"Sync profile success for {clean_id} in {ctx}")
+        except Exception as e:
+            print(f"Sync profile failed for {clean_id} in {ctx}: {str(e)}")
+            sync_errors.append(ctx)
+            
+    return jsonify({
+        "message": "Profile updated successfully" + (f" (Sync issues in: {', '.join(sync_errors)})" if sync_errors else ""),
+        "user": portal_user.to_dict()
+    }), 200
 
 @patient_bp.route('/api/patient/reset-password/request', methods=['POST'])
 def reset_password_request():

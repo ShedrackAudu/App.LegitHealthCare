@@ -237,6 +237,7 @@ const SignupPage: React.FC = () => {
       await axios.post('/api/patient/claim', {
         staff_id: patientStaffId,
         email: claimData.email,
+        phone: claimData.phone,
         password: claimData.password,
         first_name: patientData.first_name
       });

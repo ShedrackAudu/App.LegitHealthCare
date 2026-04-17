@@ -87,11 +87,13 @@ const PatientManageAccountPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await axios.put('/api/account/profile', {
+      const response = await axios.put('/api/patient/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
         email: formData.email
+      }, {
+        headers: { 'X-Staff-ID': user.username }
       });
       const updatedUser = response.data.user;
       setUser(updatedUser);

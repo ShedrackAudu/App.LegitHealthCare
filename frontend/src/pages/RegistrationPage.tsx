@@ -259,7 +259,8 @@ const RegistrationPage: React.FC = () => {
       if (isEditMode) {
         await axios.put(`/api/patients/${editStaffId}`, {
           ...data,
-          dob: formattedDob
+          dob: formattedDob,
+          screening_year: activeYear
         }, {
           headers: { 'X-Company-Context': activeSection }
         });
