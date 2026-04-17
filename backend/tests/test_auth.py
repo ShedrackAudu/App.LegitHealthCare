@@ -1,5 +1,5 @@
 import json
-from auth_utils import is_password_strong
+from auth_utils import is_password_strong, get_totp_uri, generate_totp_secret
 
 def test_login_success(client, setup_user):
     response = client.post('/login', json={
@@ -30,3 +30,13 @@ def test_password_policy_enforcement():
     
     # Should pass matching policy
     assert is_password_strong("StrongPass1!")
+
+def test_get_totp_uri():
+    secret = generate_totp_secret()
+    username = "test_user"
+    uri = get_totp_uri(secret, username)
+
+    assert uri.startswith("otpauth://totp/")
+    assert "Legit%20HealthCare" in uri
+    assert username in uri
+    assert secret in uri
