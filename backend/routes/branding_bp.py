@@ -170,10 +170,14 @@ def get_pwa_manifest():
         "icons": [
             {
                 "src": logo_url,
-                "sizes": "192x192 512x512",
+                "sizes": "any" if logo_url.endswith('.svg') else "192x192 512x512",
                 "type": "image/png" if not logo_url.endswith('.svg') else "image/svg+xml",
                 "purpose": "any maskable"
             }
         ]
     }
-    return jsonify(manifest), 200
+    from flask import Response
+    import json
+    
+    manifest_data = json.dumps(manifest)
+    return Response(manifest_data, mimetype='application/manifest+json')

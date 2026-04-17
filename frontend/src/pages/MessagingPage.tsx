@@ -698,8 +698,8 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
-              <div className="space-y-6">
+            <ScrollArea className="flex-1 p-6 min-w-0 w-full overflow-hidden" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
+              <div className="space-y-6 overflow-x-hidden">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
                    const prevMsg = idx > 0 ? messages[idx-1] : null;
@@ -727,13 +727,15 @@ export default function MessagingPage() {
                                     <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-start text-left">
                                 {parentMsg && !msg.is_deleted && (
                                   <div className={cn(
-                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-70 bg-muted/60 border-x-2 border-t-2 w-full max-w-full overflow-hidden",
                                     "border-muted-foreground/20 rounded-tl-none text-left"
                                   )}>
-                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary/80">
                                      {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
                                    </span>
-                                   {parentMsg.content}
+                                   <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
+                                     {parentMsg.content}
+                                   </div>
                                   </div>
                                 )}
   
@@ -878,11 +880,13 @@ export default function MessagingPage() {
                             <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-end text-right">
                                 {parentMsg && !msg.is_deleted && (
                                   <div className={cn(
-                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-70 bg-muted/60 border-x-2 border-t-2 w-full max-w-full overflow-hidden",
                                     "border-primary/20 rounded-tr-none text-right"
                                   )}>
-                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">Your Message</span>
-                                   {parentMsg.content}
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary-foreground/80">Your Message</span>
+                                   <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
+                                     {parentMsg.content}
+                                   </div>
                                   </div>
                                 )}
   

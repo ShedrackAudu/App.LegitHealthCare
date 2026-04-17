@@ -15,7 +15,7 @@ createRoot(document.getElementById('root')!).render(
 // This ensures PWA works on Render regardless of domain setup
 const manifestLink = document.createElement('link');
 manifestLink.rel = 'manifest';
-manifestLink.href = `${API_BASE_URL}/api/branding/manifest.json`;
+manifestLink.href = `/api/branding/manifest.json`;
 document.head.appendChild(manifestLink);
 
 // Register Service Worker for PWA
