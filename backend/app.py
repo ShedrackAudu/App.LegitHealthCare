@@ -69,10 +69,16 @@ app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 
 db.init_app(app)
 bcrypt.init_app(app)
 mail.init_app(app)
+
+# Automated Schema Management
+from utils.migrations import ensure_schema
+with app.app_context():
+    ensure_schema(app)
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)

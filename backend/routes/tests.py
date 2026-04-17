@@ -100,6 +100,13 @@ def save_test_result(test_type):
 
     try:
         db.session.commit()
+        
+        # Trigger notification check
+        from utils.notification_logic import trigger_report_ready_notification
+        company_context = request.headers.get('X-Company-Context')
+        if company_context:
+            trigger_report_ready_notification(staff_id, screening_year, company_context)
+            
         return jsonify({"message": f"{test_type.upper()} results saved successfully"}), 200
     except Exception as e:
         db.session.rollback()
@@ -230,6 +237,7 @@ def bulk_upload(test_type):
 
         current_mapping = mappings.get(test_type, {})
 
+        processed_staff_ids = []
         for index, row in df.iterrows():
             pat_id = str(row.get('PATIENTID', '')).strip()
             # Handle float .0
@@ -275,9 +283,17 @@ def bulk_upload(test_type):
                     record.ldl = str(ldl)
             except: pass
 
+            processed_staff_ids.append(staff_id)
             success_count += 1
 
         db.session.commit()
+
+        # Trigger notification check for all processed patients
+        from utils.notification_logic import trigger_report_ready_notification
+        company_context = request.headers.get('X-Company-Context')
+        if company_context:
+            for s_id in list(set(processed_staff_ids)): # deduplicate
+                trigger_report_ready_notification(s_id, int(screening_year), company_context)
         return jsonify({
             "message": f"Bulk upload completed: {success_count} updated, {skip_count} skipped",
             "success_count": success_count,

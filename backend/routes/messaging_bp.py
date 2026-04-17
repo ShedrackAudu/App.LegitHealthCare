@@ -110,8 +110,8 @@ def search_users():
             )
         ).limit(20).all()
     else:
-        # Default: list first 20 other users
-        users = User.query.filter(User.id != user_id).limit(20).all()
+        # Default: list first 100 other users for easier picking
+        users = User.query.filter(User.id != user_id).limit(100).all()
     
     def user_with_status(u):
         d = u.to_dict()
@@ -170,18 +170,36 @@ def delete_conversation(conv_id):
             ((ChatMessage.sender_id == user_id) & (ChatMessage.receiver_id == other_id)) |
             ((ChatMessage.sender_id == other_id) & (ChatMessage.receiver_id == user_id))
         ).delete(synchronize_session=False)
-    else:
-        group_id = int(conv_id.split('_')[1])
-        # Check if user is Admin of the group
-        member = ChatGroupMember.query.filter_by(group_id=group_id, user_id=user_id).first()
-        if not member or member.role != 'Admin':
-            return jsonify({"error": "Only group admins can clear chat history"}), 403
-        
-        # Permanently delete all messages in the group
-        ChatMessage.query.filter_by(group_id=group_id).delete(synchronize_session=False)
-    
     db.session.commit()
-    return jsonify({"message": "Conversation history and session deleted successfully"})
+    return jsonify({"message": "Conversation history cleared successfully"})
+
+@messaging_bp.route('/groups/<int:group_id>', methods=['DELETE'])
+@require_permission('messaging')
+def delete_group(group_id):
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+    
+    user_id = int(user_id)
+    
+    # Check if user is Admin of the group
+    member = ChatGroupMember.query.filter_by(group_id=group_id, user_id=user_id).first()
+    if not member or member.role != 'Admin':
+        return jsonify({"error": "Only group admins can delete the entire group"}), 403
+    
+    # 1. Delete all messages
+    ChatMessage.query.filter_by(group_id=group_id).delete(synchronize_session=False)
+    
+    # 2. Delete all members
+    ChatGroupMember.query.filter_by(group_id=group_id).delete(synchronize_session=False)
+    
+    # 3. Delete the group itself
+    group = ChatGroup.query.get(group_id)
+    if group:
+        db.session.delete(group)
+        
+    db.session.commit()
+    return jsonify({"message": "Group chat permanently deleted"})
 
 @messaging_bp.route('/heartbeat', methods=['POST'])
 @require_permission('messaging')
@@ -193,3 +211,95 @@ def heartbeat():
             user.last_seen_at = datetime.now()
             db.session.commit()
     return jsonify({"status": "alive"}), 200
+
+# --- Group Management Features ---
+
+@messaging_bp.route('/groups/<int:group_id>/members', methods=['GET'])
+@require_permission('messaging')
+def get_group_members(group_id):
+    memberships = ChatGroupMember.query.filter_by(group_id=group_id).all()
+    members_list = []
+    for m in memberships:
+        user = User.query.get(m.user_id)
+        if user:
+            u_dict = user.to_dict()
+            u_dict['role'] = m.role
+            members_list.append(u_dict)
+    return jsonify(members_list), 200
+
+@messaging_bp.route('/groups/<int:group_id>/members', methods=['POST'])
+@require_permission('messaging')
+def add_group_members(group_id):
+    current_user_id = int(request.headers.get('X-User-ID'))
+    data = request.json
+    new_member_ids = data.get('members', [])
+    
+    # Check if current user is an admin of the group
+    admin_check = ChatGroupMember.query.filter_by(group_id=group_id, user_id=current_user_id, role='Admin').first()
+    if not admin_check:
+        return jsonify({"error": "Only group admins can add new members"}), 403
+        
+    added_count = 0
+    for mid in new_member_ids:
+        # Check if already a member
+        exists = ChatGroupMember.query.filter_by(group_id=group_id, user_id=mid).first()
+        if not exists:
+            new_member = ChatGroupMember(group_id=group_id, user_id=mid, role='Member')
+            db.session.add(new_member)
+            added_count += 1
+            
+    db.session.commit()
+    return jsonify({"message": f"Added {added_count} members to the group"}), 200
+
+@messaging_bp.route('/groups/<int:group_id>/members/<int:remove_user_id>', methods=['DELETE'])
+@require_permission('messaging')
+def remove_group_member(group_id, remove_user_id):
+    current_user_id = int(request.headers.get('X-User-ID'))
+    
+    # Check if current user is admin OR removing themselves
+    admin_check = ChatGroupMember.query.filter_by(group_id=group_id, user_id=current_user_id, role='Admin').first()
+    
+    if not admin_check and current_user_id != remove_user_id:
+        return jsonify({"error": "Unauthorized to remove this member"}), 403
+        
+    # Prevent removing the last admin
+    if admin_check and current_user_id == remove_user_id:
+        admin_count = ChatGroupMember.query.filter_by(group_id=group_id, role='Admin').count()
+        if admin_count <= 1:
+            return jsonify({"error": "Cannot leave group without assigning another Admin"}), 400
+            
+    membership = ChatGroupMember.query.filter_by(group_id=group_id, user_id=remove_user_id).first()
+    if membership:
+        db.session.delete(membership)
+        db.session.commit()
+        return jsonify({"message": "Member removed successfully"}), 200
+        
+    return jsonify({"error": "Member not found"}), 404
+
+# --- Message Management Features ---
+
+@messaging_bp.route('/messages/<int:message_id>', methods=['DELETE'])
+@require_permission('messaging')
+def delete_single_message(message_id):
+    current_user_id = int(request.headers.get('X-User-ID'))
+    message = ChatMessage.query.get(message_id)
+    
+    if not message:
+        return jsonify({"error": "Message not found"}), 404
+        
+    # Only the sender or a group admin (if group msg) can delete
+    is_sender = message.sender_id == current_user_id
+    is_group_admin = False
+    
+    if message.group_id:
+        admin_check = ChatGroupMember.query.filter_by(group_id=message.group_id, user_id=current_user_id, role='Admin').first()
+        is_group_admin = bool(admin_check)
+        
+    if not is_sender and not is_group_admin:
+        return jsonify({"error": "Unauthorized to delete this message"}), 403
+        
+    message.is_deleted = True
+    message.deleted_at = datetime.now()
+    db.session.commit()
+    
+    return jsonify({"message": "Message deleted successfully"}), 200

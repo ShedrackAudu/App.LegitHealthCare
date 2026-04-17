@@ -388,6 +388,7 @@ class ScreeningYearBioData(db.Model):
     department = db.Column(db.String(50))
     gender = db.Column(db.String(10))
     age = db.Column(db.Integer)
+    is_notified_ready = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     __table_args__ = (

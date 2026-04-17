@@ -133,4 +133,10 @@ def save_consultation():
     ).delete(synchronize_session=False)
 
     db.session.commit()
+    
+    # Trigger notification check
+    from utils.notification_logic import trigger_report_ready_notification
+    if bind:
+        trigger_report_ready_notification(staff_id, screening_year, bind)
+        
     return jsonify({"message": "Consultation data saved successfully"}), 200

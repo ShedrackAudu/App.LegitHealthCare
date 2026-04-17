@@ -405,4 +405,86 @@ class EmailService:
         </html>
         """
 
-
+    @staticmethod
+    def get_report_ready_template(first_name, screening_year, app_url, logo_url=None):
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
+        
+        # Ensure login URL is correct
+        login_url = f"{app_url.rstrip('/')}/login?portal=patient"
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
+                .cta-container {{ text-align: center; margin: 35px 0; }}
+                .cta-button {{ background-color: #0d9488; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; border-top: 1px solid #f1f5f9; padding-top: 20px; }}
+                .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: center; }}
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="logo-container">
+                        {logo_html}
+                    </div>
+                    
+                    <div class="header-bar">
+                        <h1>Medical Report Ready</h1>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">Dear {first_name},</div>
+                        
+                        <div class="body-text">
+                            We are pleased to inform you that your medical report for the <strong>{screening_year} Annual Medical Screening</strong> is now complete and ready for your review.
+                        </div>
+                        
+                        <div class="body-text">
+                            You can view your full clinical findings and medical advice by logging into your patient portal account using the button below.
+                        </div>
+                        
+                        <div class="cta-container">
+                            <a href="{login_url}" class="cta-button">View My Medical Report</a>
+                        </div>
+                        
+                        <div class="body-text" style="font-size: 14px; color: #64748b; text-align: center;">
+                            If the button doesn't work, copy and paste this link:<br>
+                            <a href="{login_url}" style="color: #0d9488;">{login_url}</a>
+                        </div>
+                        
+                        <div class="signature">
+                            Warm Regards,<br>
+                            The ICT Team,<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                        
+                        <div class="signed-section">
+                            <strong>SIGNED:</strong><br>
+                            Dr. Anyanwu Ugochukwu D. FMCPath<br>
+                            Consultant in Charge<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                    </div>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; {datetime.now().year} Legit HealthCare Services Ltd. All rights reserved.</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """

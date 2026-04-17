@@ -84,6 +84,16 @@ def save_director_review():
             
     try:
         db.session.commit()
+        
+        # Trigger notification check
+        from utils.notification_logic import trigger_report_ready_notification
+        bind = get_bind()
+        if bind:
+             # Run in background or just call it (since it's relatively fast)
+             # For now, we call it directly.
+             success, msg = trigger_report_ready_notification(staff_id, screening_year, bind)
+             print(f"Notification Check: {msg}")
+
         return jsonify({"message": "Director review saved successfully"}), 200
     except Exception as e:
         db.session.rollback()
