@@ -12,6 +12,10 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
+      // The static manifest acts as the primary/fallback PWA manifest.
+      // In production, index.html dynamically upgrades this to the backend
+      // manifest for clinic-specific branding.
+      includeAssets: ['favicon.svg', 'icons.svg'],
       manifest: {
         name: 'Legit HealthCare Management System',
         short_name: 'Legit HealthCare',
@@ -19,19 +23,30 @@ export default defineConfig({
         theme_color: '#0d9488',
         background_color: '#ffffff',
         display: 'standalone',
+        scope: '/',
+        start_url: '/',
         orientation: 'portrait',
         icons: [
           {
             src: '/favicon.svg',
             sizes: 'any',
             type: 'image/svg+xml',
-            purpose: 'any'
+            purpose: 'any maskable'
           }
         ]
       },
       filename: 'manifest.json',
+      devOptions: {
+        // Enable service worker in dev so PWA can be tested locally
+        enabled: false,
+        type: 'module',
+      },
       workbox: {
-        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        globPatterns: ['**/*.{js,css,html,ico,png,svg,woff2}'],
+        // Ignore backend manifest so the SW doesn't cache a stale clinic manifest
+        globIgnores: ['**/manifest.json'],
+        navigateFallback: 'index.html',
+        navigateFallbackDenylist: [/^\/api\//],
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
@@ -40,7 +55,37 @@ export default defineConfig({
               cacheName: 'google-fonts-cache',
               expiration: {
                 maxEntries: 10,
-                maxAgeSeconds: 60 * 60 * 24 * 365 // <== 365 days
+                maxAgeSeconds: 60 * 60 * 24 * 365 // 365 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Cache uploaded branding assets from the backend
+            urlPattern: /\/api\/branding\/uploads\/.*/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'branding-assets-cache',
+              expiration: {
+                maxEntries: 50,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 days
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            // Network-first for API calls so fresh data is always preferred
+            urlPattern: /\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 // 24 hours
               },
               cacheableResponse: {
                 statuses: [0, 200]

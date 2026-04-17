@@ -1,10 +1,18 @@
-from flask import Blueprint, request, jsonify, current_app, send_from_directory
+from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
 from models import db, AppBranding
 from werkzeug.utils import secure_filename
 from decorators import require_permission
 import os
+import json
 
 branding_bp = Blueprint('branding_bp', __name__)
+
+def _cors_headers(response):
+    """Add CORS headers required for cross-origin manifest and asset fetching."""
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Access-Control-Allow-Methods'] = 'GET, OPTIONS'
+    response.headers['Access-Control-Allow-Headers'] = 'Content-Type, Authorization, X-Company-Context'
+    return response
 
 ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'svg', 'ico'}
 
@@ -122,12 +130,14 @@ def update_branding():
     db.session.commit()
     return jsonify({"message": "Branding updated successfully"}), 200
 
-@branding_bp.route('/uploads/<filename>')
+@branding_bp.route('/uploads/<filename>', methods=['GET', 'OPTIONS'])
 def uploaded_file(filename):
+    if request.method == 'OPTIONS':
+        response = Response('', status=204)
+        return _cors_headers(response)
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
     response = send_from_directory(upload_folder, filename)
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
+    return _cors_headers(response)
 
 @branding_bp.route('/clear', methods=['POST'])
 @require_permission('manage_branding')
@@ -150,38 +160,76 @@ def clear_branding_asset():
     
     return jsonify({"message": f"Cleared {field}"}), 200
 
-@branding_bp.route('/manifest.json', methods=['GET'])
+@branding_bp.route('/manifest.json', methods=['GET', 'OPTIONS'])
 def get_pwa_manifest():
+    """Dynamic PWA manifest endpoint.
+    
+    Returns a clinic-branded Web App Manifest. Icon URLs are made absolute so they
+    resolve correctly when the manifest is fetched cross-origin in production
+    (e.g. frontend on Render static site, backend on Render web service).
+    
+    Required env vars for production:
+      - APP_URL: The backend's public URL (e.g. https://my-backend.onrender.com)
+      - FRONTEND_URL: The frontend's public URL (e.g. https://my-app.onrender.com)
+        Used as the start_url and scope so the PWA opens the frontend, not the backend.
+    """
+    if request.method == 'OPTIONS':
+        response = Response('', status=204)
+        return _cors_headers(response)
+
     branding = AppBranding.query.first()
     clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
-    # Use the primary logo for manifest icons
-    logo_url = branding.logo_light if branding and branding.logo_light else "/favicon.svg"
-    
-    # Ensure URL is absolute for manifest if it's a relative path starting with /api
-    # (Though browsers usually handle relative URLs in manifest, absolute can be safer)
-    
+
+    # Backend origin — used to make icon URLs absolute.
+    # Falls back to the request origin so relative paths always resolve.
+    backend_url = os.getenv('APP_URL', '').rstrip('/')
+    if not backend_url:
+        backend_url = request.url_root.rstrip('/')
+
+    # Frontend origin — used for start_url and scope so the installed PWA
+    # opens the React app, not the Flask backend.
+    frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
+    start_url = (frontend_url + '/') if frontend_url else '/'
+    scope = (frontend_url + '/') if frontend_url else '/'
+
+    # Resolve icon URL to an absolute URL
+    raw_logo = branding.logo_light if branding and branding.logo_light else None
+    if raw_logo:
+        if raw_logo.startswith('http'):
+            # Already absolute
+            icon_src = raw_logo
+        else:
+            # Relative path — make it absolute using backend URL
+            icon_src = backend_url + raw_logo
+        is_svg = raw_logo.lower().endswith('.svg')
+    else:
+        # Fallback: use the frontend's built-in favicon
+        icon_src = (frontend_url + '/favicon.svg') if frontend_url else '/favicon.svg'
+        is_svg = True
+
     manifest = {
         "name": clinic_name,
         "short_name": clinic_name[:12],
         "description": "Premium Healthcare Management System",
-        "start_url": "/",
+        "start_url": start_url,
+        "scope": scope,
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#0d9488",
         "orientation": "portrait",
         "icons": [
             {
-                "src": logo_url,
-                "sizes": "any" if logo_url.endswith('.svg') else "192x192 512x512",
-                "type": "image/png" if not logo_url.endswith('.svg') else "image/svg+xml",
+                "src": icon_src,
+                "sizes": "any" if is_svg else "512x512",
+                "type": "image/svg+xml" if is_svg else "image/png",
                 "purpose": "any maskable"
             }
         ]
     }
-    from flask import Response
-    import json
-    
+
     manifest_data = json.dumps(manifest)
     response = Response(manifest_data, mimetype='application/manifest+json')
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
+    # Instruct browser not to cache the manifest long-term so clinic
+    # name/logo changes propagate within minutes instead of days.
+    response.headers['Cache-Control'] = 'no-cache, max-age=300'
+    return _cors_headers(response)
