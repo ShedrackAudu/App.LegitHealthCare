@@ -67,25 +67,53 @@ export const Header: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
 
   useEffect(() => {
-      const handleBeforeInstallPrompt = (e: any) => {
-          e.preventDefault();
-          setDeferredPrompt(e);
-      };
+    // 1. Check if the event was already captured by index.html (global sync)
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
 
-      window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    // 2. Local listener for standard flow
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
 
-      return () => {
-          window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
-      };
+    // 3. Listener for the custom event dispatched from index.html if captured early
+    const handlePromptReady = () => {
+      if ((window as any).deferredPWAPrompt) {
+        setDeferredPrompt((window as any).deferredPWAPrompt);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+    };
   }, []);
 
   const handleInstallClick = async () => {
-      if (!deferredPrompt) return;
-      deferredPrompt.prompt();
+    if (!deferredPrompt) {
+      console.warn("PWA: No deferred prompt available");
+      return;
+    }
+    
+    try {
+      console.log("PWA: Triggering install prompt...");
+      await deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA: User choice result: ${outcome}`);
+      
       if (outcome === 'accepted') {
-          setDeferredPrompt(null);
+        setDeferredPrompt(null);
+        (window as any).deferredPWAPrompt = null;
       }
+    } catch (err) {
+      console.error("PWA: Call to prompt() failed:", err);
+      toast.error("Installation failed or was blocked by the browser.");
+    }
   };
 
   const [notifications, setNotifications] = useState<any[]>([]);
@@ -268,10 +296,11 @@ export const Header: React.FC = () => {
                 variant="outline"
                 size="sm"
                 onClick={handleInstallClick}
-                className="hidden md:flex h-9 rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95"
+                className="flex h-7 w-7 sm:h-9 sm:w-auto rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-0 sm:gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95 px-0 sm:px-3"
+                title="Install App"
               >
                 <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                Install App
+                <span className="hidden sm:inline">Install App</span>
               </Button>
             )}
             <Button

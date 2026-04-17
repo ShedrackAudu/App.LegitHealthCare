@@ -49,12 +49,19 @@
           }
         }
       })();
+
+      // Global capture for PWA install prompt to prevent missing the event before React mounts
+      window.deferredPWAPrompt = null;
+      window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window.deferredPWAPrompt = e;
+        // Dispatch custom event to notify React if it's already mounted
+        window.dispatchEvent(new CustomEvent('pwa-prompt-ready'));
+      });
+      window.addEventListener('appinstalled', () => {
+        window.deferredPWAPrompt = null;
+      });
     </script>
-    <!--
-      This hidden span carries the VITE_API_URL env var safely into the page.
-      Vite replaces %VITE_API_URL% in HTML attribute values at build time.
-      If the var is not set, the attribute will contain the literal string "%VITE_API_URL%".
-    -->
     <span id="__pwa_api_base__" data-api-base="%VITE_API_URL%" style="display:none" aria-hidden="true"></span>
   </head>
   <body>
