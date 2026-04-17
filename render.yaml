@@ -1,0 +1,95 @@
+# render.yaml — Render deployment configuration
+# Docs: https://render.com/docs/blueprint-spec
+#
+# This file configures both the frontend static site and backend web service
+# so Render knows how to build and deploy them correctly.
+#
+# HOW TO USE:
+# 1. Push this file to your repository root.
+# 2. In Render Dashboard → New → Blueprint → connect your repo.
+# 3. Render will auto-detect this file and create both services.
+# 4. After creation, go to each service's Environment tab and fill in
+#    the secret values marked with `generateValue: false` and no `value`.
+
+services:
+  # ─────────────────────────────────────────────
+  # FRONTEND — React/Vite Static Site
+  # ─────────────────────────────────────────────
+  - type: web
+    name: legit-healthcare-frontend
+    runtime: static
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/dist
+    # Pull request previews (optional)
+    pullRequestPreviewsEnabled: false
+    headers:
+      # Service worker MUST be served with these headers for PWA to work
+      - path: /sw.js
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /sw.js
+        name: Service-Worker-Allowed
+        value: /
+      - path: /workbox-*.js
+        name: Cache-Control
+        value: no-cache, no-store, must-revalidate
+      - path: /manifest.webmanifest
+        name: Cache-Control
+        value: no-cache, max-age=300
+      - path: /manifest.webmanifest
+        name: Content-Type
+        value: application/manifest+json
+    routes:
+      # SPA fallback — serve index.html for all non-file routes
+      # (Also handled by public/_redirects, this is a belt-and-suspenders approach)
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # REQUIRED: Set this to your backend web service URL (no trailing slash)
+      # Example: https://legit-healthcare-api.onrender.com
+      - key: VITE_API_URL
+        value: ""  # ← FILL THIS IN on Render dashboard or here
+
+  # ─────────────────────────────────────────────
+  # BACKEND — Flask/Python Web Service
+  # ─────────────────────────────────────────────
+  - type: web
+    name: legit-healthcare-api
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn --worker-class eventlet -w 1 app:app
+    rootDir: backend
+    plan: free
+    envVars:
+      # REQUIRED: Set to the backend's own public URL (no trailing slash)
+      # Example: https://legit-healthcare-api.onrender.com
+      - key: APP_URL
+        value: ""  # ← FILL THIS IN
+
+      # REQUIRED: Set to the frontend's public URL (no trailing slash)
+      # Example: https://legit-healthcare-frontend.onrender.com
+      - key: FRONTEND_URL
+        value: ""  # ← FILL THIS IN
+
+      # REQUIRED: Generate a strong random string (32+ characters)
+      - key: SECRET_KEY
+        generateValue: true
+
+      # REQUIRED: Your PostgreSQL database URL from Render
+      - key: DATABASE_URL
+        value: ""  # ← FILL THIS IN (from Render Postgres dashboard)
+
+      # Email (optional — needed for OTP/registration emails)
+      - key: MAIL_SERVER
+        value: smtp.gmail.com
+      - key: MAIL_PORT
+        value: "587"
+      - key: MAIL_USERNAME
+        value: ""  # ← your Gmail address
+      - key: MAIL_PASSWORD
+        value: ""  # ← Gmail App Password (not your account password)
+
+      # AI features (optional)
+      - key: OPENAI_API_KEY
+        value: ""  # ← your OpenAI key

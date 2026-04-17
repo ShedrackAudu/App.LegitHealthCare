@@ -35,9 +35,10 @@ export default defineConfig({
           }
         ]
       },
-      filename: 'manifest.json',
+      // manifestFilename controls the web app manifest file name in dist/
+      // Leave as default (manifest.webmanifest) — do NOT use 'filename' here.
+      // 'filename' would override the SERVICE WORKER filename, breaking SW registration.
       devOptions: {
-        // Enable service worker in dev so PWA can be tested locally
         enabled: false,
         type: 'module',
       },
