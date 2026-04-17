@@ -696,14 +696,14 @@ class Permission(db.Model):
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, nullable=True) # ID of Staff or Patient user
     action = db.Column(db.String(100), nullable=False)
     resource = db.Column(db.String(100))
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.now)
 
-    user = db.relationship('StaffUser', foreign_keys='AuditLog.user_id', backref=db.backref('audit_logs', lazy=True))
+    user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
     def to_dict(self):
         details_data = {}

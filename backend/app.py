@@ -269,20 +269,24 @@ def login():
         user.last_seen_at = datetime.now()
         
         # Log successful login (when 2FA is skipped)
-        login_log = AuditLog(
-            user_id=user.id,
-            action="LOGIN_SUCCESS",
-            resource=f"{portal.capitalize()} Portal",
-            details=json.dumps({
-                "method": "PASSWORD",
-                "identity": identifier,
-                "portal": portal,
-                "timestamp": datetime.now().isoformat()
-            }),
-            ip_address=get_client_ip()
-        )
-        db.session.add(login_log)
-        db.session.commit()
+        try:
+            login_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_SUCCESS",
+                resource=f"{portal.capitalize()} Portal",
+                details=json.dumps({
+                    "method": "PASSWORD",
+                    "identity": identifier,
+                    "portal": portal,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(login_log)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Login audit failed for {identifier}: {e}")
         
         return jsonify({
             "message": "Login successful",
@@ -411,19 +415,23 @@ def login_2fa():
         user.last_seen_at = datetime.now()
         
         # Log successful 2FA login
-        login_2fa_log = AuditLog(
-            user_id=user.id,
-            action="LOGIN_2FA_SUCCESS",
-            resource=f"{portal.capitalize()} Portal",
-            details=json.dumps({
-                "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
-                "portal": portal,
-                "timestamp": datetime.now().isoformat()
-            }),
-            ip_address=get_client_ip()
-        )
-        db.session.add(login_2fa_log)
-        db.session.commit()
+        try:
+            login_2fa_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_2FA_SUCCESS",
+                resource=f"{portal.capitalize()} Portal",
+                details=json.dumps({
+                    "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
+                    "portal": portal,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(login_2fa_log)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"2FA Login audit failed for user {user.id}: {e}")
         
         return jsonify({
             "message": "Login successful",
