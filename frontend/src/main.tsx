@@ -13,18 +13,18 @@ createRoot(document.getElementById('root')!).render(
 
 // Dynamically inject the PWA Manifest link using the correct API URL
 // This ensures PWA works on Render regardless of domain setup
+const existingManifest = document.querySelector('link[rel="manifest"]');
+if (existingManifest) existingManifest.remove();
+
 const manifestLink = document.createElement('link');
 manifestLink.rel = 'manifest';
-manifestLink.href = `/api/branding/manifest.json`;
+// Ensure the path is absolute using API_BASE_URL if it's available, 
+// otherwise fallback to relative for development proxies.
+const manifestUrl = API_BASE_URL && !API_BASE_URL.includes('localhost')
+    ? `${API_BASE_URL}/api/branding/manifest.json`
+    : `/api/branding/manifest.json`;
+
+manifestLink.href = manifestUrl;
 document.head.appendChild(manifestLink);
 
-// Register Service Worker for PWA
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then(registration => {
-      console.log('SW registered: ', registration);
-    }).catch(registrationError => {
-      console.log('SW registration failed: ', registrationError);
-    });
-  });
-}
+console.log(`PWA: Manifest linked to ${manifestUrl}`);

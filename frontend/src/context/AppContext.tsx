@@ -26,7 +26,9 @@ import { toast } from 'react-hot-toast';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeSection, setActiveSection] = useState<Section>(() => {
-    return (localStorage.getItem('activeSection') as Section) || 'DCP';
+    const section = (localStorage.getItem('activeSection') as Section) || 'DCP';
+    axios.defaults.headers.common['X-Company-Context'] = section;
+    return section;
   });
 
   const [activeYear, setActiveYear] = useState(() => {
@@ -35,7 +37,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const [user, setUser] = useState<any | null>(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    const u = saved ? JSON.parse(saved) : null;
+    if (u) axios.defaults.headers.common['X-User-ID'] = u.id;
+    return u;
   });
 
   const [socket, setSocket] = useState<Socket | null>(null);

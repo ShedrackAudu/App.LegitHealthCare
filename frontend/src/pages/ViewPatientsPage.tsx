@@ -57,7 +57,7 @@ const ViewPatientsPage: React.FC = () => {
 
     useEffect(() => {
         fetchPatients();
-    }, [activeSection, activeYear]);
+    }, [activeSection, activeYear, user]);
 
     const handlePatientClick = (patient: any) => {
         setSelectedPatient(patient);

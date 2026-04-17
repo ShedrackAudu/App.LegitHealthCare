@@ -442,8 +442,32 @@ def delete_screening_record(id):
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
 @view_data_bp.route('/patient-report/<staff_id>/<int:year>', methods=['GET'])
-@require_permission('view_records')
 def get_patient_report(staff_id, year):
+    # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
+    user_id = request.headers.get('X-User-ID')
+    if not user_id:
+        return jsonify({"error": "Authentication required"}), 401
+
+    from models import StaffUser, PatientPortalUser
+    
+    is_authorized = False
+    
+    # 1. Check if Staff with permission
+    requester_staff = StaffUser.query.get(user_id)
+    if requester_staff:
+        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+            is_authorized = True
+            
+    # 2. Check if Patient requesting self
+    if not is_authorized:
+        requester_patient = PatientPortalUser.query.get(user_id)
+        if requester_patient and requester_patient.is_verified:
+            if requester_patient.username.lower() == staff_id.lower():
+                is_authorized = True
+                
+    if not is_authorized:
+        return jsonify({"error": "Access denied. You do not have permission to view this clinical record."}), 403
+
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     

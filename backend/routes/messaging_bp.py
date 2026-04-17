@@ -170,6 +170,11 @@ def delete_conversation(conv_id):
             ((ChatMessage.sender_id == user_id) & (ChatMessage.receiver_id == other_id)) |
             ((ChatMessage.sender_id == other_id) & (ChatMessage.receiver_id == user_id))
         ).delete(synchronize_session=False)
+    elif conv_id.startswith('group_'):
+        group_id = int(conv_id.split('_')[1])
+        # Permanently delete all messages in this group
+        ChatMessage.query.filter_by(group_id=group_id).delete(synchronize_session=False)
+        
     db.session.commit()
     return jsonify({"message": "Conversation history cleared successfully"})
 

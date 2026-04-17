@@ -59,7 +59,7 @@ const ViewRecordsPage: React.FC = () => {
 
     useEffect(() => {
         fetchRecords(1, searchTerm);
-    }, [activeSection, activeYear]);
+    }, [activeSection, activeYear, user]);
 
     // REMOVED deprecated ad-hoc search logic
 

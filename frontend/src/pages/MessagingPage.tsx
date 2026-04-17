@@ -449,11 +449,10 @@ export default function MessagingPage() {
       await axios.delete(`/api/messages/conversations/${activeChat.id}`, {
         headers: { 'X-User-ID': user.id }
       });
-      setActiveChat(null);
       setMessages([]);
       fetchConversations();
       setIsDeleteModalOpen(false);
-      toast.success("Conversation deleted successfully");
+      toast.success(activeChat.type === 'group' ? "Group history cleared" : "Conversation history cleared");
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || "Failed to delete conversation";
       toast.error(errorMsg);
