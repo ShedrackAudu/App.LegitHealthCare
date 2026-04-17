@@ -245,7 +245,7 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
-  const viewProfile = async (uId: number) => {
+  const viewProfile = async (uId: number | string) => {
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
       const response = await axios.get(`/api/users/${uId}/profile`, { headers });
@@ -634,7 +634,7 @@ const UserManagementPage: React.FC = () => {
   );
 };
 
-const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (action: string, u: User) => void, onViewProfile: (id: number) => void }> = ({ users, loading, handleAction, onViewProfile }) => (
+const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (action: string, u: User) => void, onViewProfile: (id: number | string) => void }> = ({ users, loading, handleAction, onViewProfile }) => (
   <div className="overflow-x-auto">
     <Table>
       <TableHeader className="bg-muted/50">
@@ -726,12 +726,13 @@ const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (acti
                 </div>
               </TableCell>
               <TableCell className="text-right pr-6">
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="group-hover:bg-background">
-                      <MoreVertical className="h-4 w-4" />
-                    </Button>
-                  </DropdownMenuTrigger>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button variant="ghost" size="icon" className="group-hover:bg-background">
+                        <MoreVertical className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 border-2 shadow-2xl">
                     <DropdownMenuLabel>Actions for @{user.username}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
@@ -758,6 +759,7 @@ const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (acti
                     </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+                </div>
               </TableCell>
             </TableRow>
           ))

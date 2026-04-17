@@ -16,11 +16,21 @@ from utils.progress_utils import calculate_report_progress
 
 view_data_bp = Blueprint('view_data', __name__)
 
-@view_data_bp.route('/users/<int:user_id>/profile', methods=['GET'])
+@view_data_bp.route('/users/<string:user_id>/profile', methods=['GET'])
 @require_permission('view_users')
 def get_user_profile(user_id):
-    from models import User
-    user = User.query.get_or_404(user_id)
+    from models import StaffUser, PatientPortalUser
+    
+    if user_id.startswith('p'):
+        real_id = int(user_id[1:])
+        user = PatientPortalUser.query.get_or_404(real_id)
+    else:
+        try:
+            u_id = int(user_id)
+            user = StaffUser.query.get_or_404(u_id)
+        except ValueError:
+            return jsonify({"error": "Invalid user ID format"}), 400
+            
     return jsonify(user.to_dict()), 200
 @view_data_bp.route('/patients/search', methods=['GET'])
 @require_permission([
