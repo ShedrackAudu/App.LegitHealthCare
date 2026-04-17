@@ -152,19 +152,12 @@ def clear_branding_asset():
 def get_pwa_manifest():
     branding = AppBranding.query.first()
     clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
-    
     # Use the primary logo for manifest icons
     logo_url = branding.logo_light if branding and branding.logo_light else "/favicon.svg"
     
-    # Ensure icon URL is absolute so the browser can always find it for the install prompt
-    # especially if the manifest is served from a different domain than the icons.
-    if logo_url.startswith('/'):
-        base_url = request.url_root.rstrip('/')
-        # Force HTTPS for production environments like Render
-        if 'onrender.com' in base_url and base_url.startswith('http:'):
-            base_url = base_url.replace('http:', 'https:')
-        logo_url = f"{base_url}{logo_url}"
-        
+    # Ensure URL is absolute for manifest if it's a relative path starting with /api
+    # (Though browsers usually handle relative URLs in manifest, absolute can be safer)
+    
     manifest = {
         "name": clinic_name,
         "short_name": clinic_name[:12],
@@ -187,7 +180,4 @@ def get_pwa_manifest():
     import json
     
     manifest_data = json.dumps(manifest)
-    resp = Response(manifest_data, mimetype='application/manifest+json')
-    # Set Cache-Control to prevent frequent, disruptive re-fetches that reset install UI
-    resp.headers['Cache-Control'] = 'public, max-age=3600'
-    return resp
+    return Response(manifest_data, mimetype='application/manifest+json')

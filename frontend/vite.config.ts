@@ -12,7 +12,7 @@ export default defineConfig({
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
-      manifest: false, // <== Use the dynamic manifest from the backend instead
+      manifest: false, // We use a dynamic manifest from the backend for clinic branding
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
         runtimeCaching: [

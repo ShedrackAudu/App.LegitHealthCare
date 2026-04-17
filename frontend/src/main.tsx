@@ -10,3 +10,5 @@ createRoot(document.getElementById('root')!).render(
     <App />
   </StrictMode>,
 )
+
+// PWA Manifest and Service Worker registration are handled in index.html and vite-plugin-pwa

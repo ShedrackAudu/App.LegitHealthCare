@@ -10,20 +10,22 @@
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="LegitHC" />
+    <link id="pwa-manifest" rel="manifest" href="/api/branding/manifest.json" />
     <script>
+      // Early manifest resolution to prevent PWA install button flickering on refresh
       (function() {
-        // Resolve Manifest URL early and statically to prevent 'Install' button flickering
-        // Vite replaces %VITE_API_URL% at build time
-        const viteApi = "%VITE_API_URL%";
-        const manifestUrl = (viteApi && !viteApi.startsWith('%')) ? viteApi + '/api/branding/manifest.json' : '/api/branding/manifest.json';
+        const apiBase = "%VITE_API_URL%";
+        // Use local path if placeholder remains or if we are on localhost
+        const isPlaceHolder = apiBase === ("%" + "VITE_API_URL" + "%") || !apiBase;
+        const url = (!isPlaceHolder && apiBase.indexOf('localhost') === -1)
+          ? apiBase + '/api/branding/manifest.json'
+          : '/api/branding/manifest.json';
         
-        const link = document.createElement('link');
-        link.rel = 'manifest';
-        link.id = 'pwa-manifest';
-        link.href = manifestUrl;
-        // Critical for cross-domain PWA installation
-        if (manifestUrl.startsWith('http')) link.setAttribute('crossorigin', 'use-credentials');
-        document.head.appendChild(link);
+        const link = document.getElementById('pwa-manifest');
+        if (link && link.getAttribute('href') !== url) {
+          link.href = url;
+          if (url.indexOf('http') === 0) link.crossOrigin = 'use-credentials';
+        }
       })();
     </script>
   </head>
