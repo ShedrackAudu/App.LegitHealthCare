@@ -172,23 +172,45 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'X-Company-Context': activeSection }
       });
       setBranding(resp.data);
-      // Update document title and favicon
+
+      // Update document title
       if (resp.data.clinic_name) {
         document.title = resp.data.clinic_name;
       }
-      if (resp.data.favicon) {
+
+      // Update browser tab favicon (link[rel="icon"])
+      const faviconUrl = resp.data.favicon || resp.data.logo_light;
+      if (faviconUrl) {
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
         if (!link) {
           link = document.createElement('link');
           link.rel = 'icon';
           document.head.appendChild(link);
         }
-        link.href = `${API_BASE_URL}${resp.data.favicon}`;
+        const absoluteUrl = `${API_BASE_URL}${faviconUrl}`;
+        link.href = absoluteUrl;
+        // Set correct MIME type so the browser renders PNGs properly
+        link.type = faviconUrl.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+      }
+
+      // Update PWA manifest link to use the backend's dynamic manifest.
+      // The backend manifest now returns the clinic's uploaded favicon as the
+      // PWA icon (prioritizing branding.favicon, then logo_light).
+      // This makes the PWA install prompt show the clinic's custom logo
+      // instead of the static Vite fallback icon.
+      const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
+      if (manifestLink && (resp.data.favicon || resp.data.logo_light)) {
+        const dynamicManifest = `${API_BASE_URL}/api/branding/manifest.json`;
+        if (manifestLink.getAttribute('href') !== dynamicManifest) {
+          manifestLink.setAttribute('href', dynamicManifest);
+          manifestLink.setAttribute('crossorigin', 'anonymous');
+        }
       }
     } catch (err) {
       setBrandingError(true);
     }
   }, [activeSection]);
+
 
   useEffect(() => {
     axios.defaults.headers.common['X-Company-Context'] = activeSection;
