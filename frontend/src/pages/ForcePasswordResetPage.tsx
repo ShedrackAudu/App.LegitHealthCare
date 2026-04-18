@@ -98,7 +98,7 @@ const ForcePasswordResetPage: React.FC = () => {
                                     <div className="absolute right-3 top-3">
                                         {confirmPassword && (
                                             newPassword === confirmPassword ? 
-                                            <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in" /> : 
+                                            <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in" /> : 
                                             <X className="h-5 w-5 text-rose-500 animate-in zoom-in" />
                                         )}
                                     </div>

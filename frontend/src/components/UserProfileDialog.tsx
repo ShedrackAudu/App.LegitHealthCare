@@ -51,7 +51,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
                   {userProfile.first_name?.[0]}{userProfile.last_name?.[0]}
                 </AvatarFallback>
               </Avatar>
-              <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-green-500 border-4 border-background shadow-sm"></div>
+              <div className="absolute bottom-2 right-2 h-6 w-6 rounded-full bg-primary border-4 border-background shadow-sm"></div>
             </div>
             
             <div className="mt-4">

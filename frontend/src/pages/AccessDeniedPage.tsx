@@ -136,9 +136,9 @@ const AccessDeniedPage: React.FC = () => {
                                     <motion.div 
                                         initial={{ opacity: 0, y: 10 }}
                                         animate={{ opacity: 1, y: 0 }}
-                                        className="bg-emerald-500/10 border-2 border-emerald-500/20 rounded-2xl p-4 text-center ring-1 ring-emerald-500/20"
+                                        className="bg-primary/10 border-2 border-primary/20 rounded-2xl p-4 text-center ring-1 ring-primary/20"
                                     >
-                                        <p className="text-emerald-500 text-xs font-black flex items-center justify-center gap-2 uppercase tracking-widest">
+                                        <p className="text-primary text-xs font-black flex items-center justify-center gap-2 uppercase tracking-widest">
                                             <ShieldCheck className="w-4 h-4" /> Request Dispatched
                                         </p>
                                     </motion.div>

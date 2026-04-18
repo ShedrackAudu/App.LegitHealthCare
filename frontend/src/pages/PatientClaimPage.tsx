@@ -115,10 +115,10 @@ const PatientClaimPage = () => {
             {/* Main Form Fields */}
             <Card className="lg:col-span-2 border shadow-lg bg-card/50 backdrop-blur-xl overflow-hidden rounded-2xl">
               {/* Premium Patient Result Header */}
-              <div className="p-6 bg-emerald-500/5 border-b border-emerald-500/10 relative overflow-hidden">
+              <div className="p-6 bg-primary/5 border-b border-primary/10 relative overflow-hidden">
                 <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="flex items-center gap-3">
-                    <div className="w-14 h-14 rounded-xl bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20 text-emerald-600 font-bold text-xl">
+                    <div className="w-14 h-14 rounded-xl bg-primary/10 flex items-center justify-center border border-primary/20 text-primary font-bold text-xl">
                       {formData.first_name?.[0]}{formData.last_name?.[0]}
                     </div>
                     <div>
@@ -126,14 +126,14 @@ const PatientClaimPage = () => {
                         {formData.first_name} {formData.middle_name ? formData.middle_name + ' ' : ''}{formData.last_name}
                       </h2>
                       <div className="flex items-center gap-2 mt-2">
-                        <span className="text-[10px] font-bold text-emerald-600 uppercase tracking-widest">Verified Record</span>
+                        <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Verified Record</span>
                         <div className="w-1 h-1 rounded-full bg-muted-foreground/30" />
                         <span className="text-[10px] font-black text-muted-foreground tracking-[0.2em]">{formData.staff_id}</span>
                       </div>
                     </div>
                   </div>
                   
-                  <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-[0.2em] shadow-md shadow-primary/10 ${formData.section?.toUpperCase() === 'DCP' ? 'bg-emerald-500' : 'bg-blue-500'}`}>
+                  <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-[0.2em] shadow-md shadow-primary/10 ${formData.section?.toUpperCase() === 'DCP' ? 'bg-primary' : 'bg-blue-500'}`}>
                     {formData.section?.toUpperCase() || 'N/A'}
                   </div>
                 </div>

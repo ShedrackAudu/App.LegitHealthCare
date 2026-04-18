@@ -85,10 +85,10 @@ const ViewPatientsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-emerald-500/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-emerald-500/10 rounded-2xl">
-                            <Users className="text-emerald-600 h-8 w-8" />
+                        <div className="p-3 bg-primary/10 rounded-2xl">
+                            <Users className="text-primary h-8 w-8" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black tracking-tight">Patient Directory</h1>
@@ -187,7 +187,7 @@ const ViewPatientsPage: React.FC = () => {
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="sm" 
-                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                                className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/5"
                                                                 onClick={() => handlePatientClick(p)}
                                                             >
                                                                 <Eye className="h-4 w-4" />

@@ -116,23 +116,11 @@ def _trigger_report_ready_notification_sync(staff_id, screening_year, section):
 
 def trigger_registration_success_notification(patient_email, patient_first_name, screening_year):
     """
-    Spawns a background thread to send the registration success email.
-    Accepts patient data directly from the caller to avoid database routing
-    issues in background threads (no flask.request context available).
+    Sends the registration success email synchronously.
+    Accepts patient data directly from the caller.
     """
-    app = current_app._get_current_object()
-    thread = threading.Thread(
-        target=_registration_logic_async_wrapper, 
-        args=(app, patient_email, patient_first_name, screening_year)
-    )
-    thread.daemon = True
-    thread.start()
-    print(f"[REG-NOTIFICATION] Background thread started for {patient_email}")
-    return True
-
-def _registration_logic_async_wrapper(app, patient_email, patient_first_name, screening_year):
-    with app.app_context():
-        _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year)
+    print(f"[REG-NOTIFICATION] Starting synchronous delivery to {patient_email}")
+    return _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year)
 
 def _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year):
     """

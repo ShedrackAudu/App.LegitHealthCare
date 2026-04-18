@@ -496,7 +496,7 @@ const UserManagementPage: React.FC = () => {
                 <div className="absolute right-3 top-2.5">
                   {confirmPassword && (
                     newPassword === confirmPassword ?
-                      <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in duration-300" /> :
+                      <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in duration-300" /> :
                       <X className="h-5 w-5 text-rose-500 animate-in zoom-in duration-300" />
                   )}
                 </div>
@@ -713,7 +713,7 @@ const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (acti
               <TableCell>
                 <div className="flex items-center gap-2">
                   {user.is_verified ? (
-                    <Badge variant="outline" className="bg-emerald-500/10 text-emerald-600 border-emerald-200 gap-1 pr-2 py-0.5">
+                    <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 gap-1 pr-2 py-0.5">
                       <CheckCircle2 className="h-3 w-3" />
                       Verified
                     </Badge>

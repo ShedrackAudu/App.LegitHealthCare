@@ -245,7 +245,7 @@ const RolePermissionPage: React.FC = () => {
                       <Button
                         onClick={() => saveRolePermissions(role)}
                         disabled={saving === role.name || role.name.toLowerCase() === 'admin'}
-                        className="h-12 px-8 rounded-xl font-black text-xs gap-2 shadow-lg shadow-emerald-500/20 bg-emerald-500 hover:bg-emerald-600 transition-all border-none disabled:opacity-30 disabled:grayscale"
+                        className="h-12 px-8 rounded-xl font-black text-xs gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary transition-all border-none disabled:opacity-30 disabled:grayscale"
                       >
                         {saving === role.name ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                         {role.name.toLowerCase() === 'admin' ? "System Locked" : "Assign Roles"}

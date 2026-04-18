@@ -558,7 +558,7 @@ export default function MessagingPage() {
                     {conv.type === 'direct' && (
                       <div className={cn(
                         "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
-                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                       )} />
                     )}
                   </div>
@@ -653,7 +653,7 @@ export default function MessagingPage() {
                         <>
                           <div className={cn(
                             "w-1.5 h-1.5 rounded-full",
-                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                           )} />
                           {activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "Active now" : "Offline"}
                         </>
@@ -1392,7 +1392,7 @@ export default function MessagingPage() {
                   </Avatar>
                   <div className={cn(
                     "absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-background",
-                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                   )} />
                 </div>
               </div>

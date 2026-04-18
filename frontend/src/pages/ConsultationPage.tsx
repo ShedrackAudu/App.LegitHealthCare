@@ -125,7 +125,7 @@ const RadioField = ({ label, name, control }: any) => (
             className={`flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all ${fieldState.error ? 'border-red-500' : ''}`}
           >
             <div className="flex items-center space-x-2 py-1 sm:py-0">
-              <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-emerald-600 border-2" />
+              <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />
               <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer text-sm">Yes</Label>
             </div>
             <div className="flex items-center space-x-2 py-1 sm:py-0">
@@ -369,10 +369,10 @@ const ConsultationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500 mt-2 p-4">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-emerald-500/10">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10">
           <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-emerald-500/10 rounded-2xl">
-              <Stethoscope className="text-emerald-600 h-6 w-6 sm:h-8 sm:w-8" />
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+              <Stethoscope className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-lg sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
@@ -433,7 +433,7 @@ const ConsultationPage: React.FC = () => {
           </Card>
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 mt-8">
-            <Card className="border-2 border-emerald-500/20 shadow-lg bg-emerald-500/[0.02]">
+            <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02]">
               <CardContent className="p-4 md:p-6">
                 <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
@@ -443,7 +443,7 @@ const ConsultationPage: React.FC = () => {
                   <PatientInfo label="AGE" value={`${patient.age} Yrs`} />
                   <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <PatientInfo label="GENDER" value={patient.gender} />
-                  <div className="col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-emerald-500/10">
+                  <div className="col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
                     <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
                   </div>
                 </div>
@@ -457,14 +457,14 @@ const ConsultationPage: React.FC = () => {
                 </div>
                 <CardHeader className="border-b bg-muted/5 py-4">
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <ClipboardList className="h-6 w-6 text-emerald-600" />
+                    <ClipboardList className="h-6 w-6 text-primary" />
                     Clinical Findings & Assessments
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="p-8">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Medical History & Screening</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History & Screening</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
                         <RadioField name="luts" control={control} label="LUTS" />
                         <RadioField name="chronic_cough" control={control} label="Chronic Cough" />
@@ -482,10 +482,10 @@ const ConsultationPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Vital Signs & Core Metrics</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Vital Signs & Core Metrics</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-emerald-600" /> B.P <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P <span className="text-red-500">*</span></Label>
                             <Input {...register('bp')} className="h-12 text-lg font-bold" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
@@ -501,7 +501,7 @@ const ConsultationPage: React.FC = () => {
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-emerald-600 border-b pb-2">Systematic Findings & Lab Data</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Systematic Findings & Lab Data</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
@@ -520,18 +520,18 @@ const ConsultationPage: React.FC = () => {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
                         <Label className="font-bold">Other Assessments <span className="text-red-500">*</span></Label>
-                        <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
+                        <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-primary/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
                       </div>
                       <div className="space-y-2">
                         <Label className="font-bold">Other Remarks</Label>
-                        <textarea {...register('other_remarks')} className="w-full min-h-[100px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-2 ring-emerald-500/20 bg-muted/5 outline-none" placeholder="Any other clinical notes..." />
+                        <textarea {...register('other_remarks')} className="w-full min-h-[100px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-2 ring-primary/20 bg-muted/5 outline-none" placeholder="Any other clinical notes..." />
                       </div>
 
                     </div>
 
                     <div className="pt-6 border-t flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
                       <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto px-10 h-12 font-bold order-2 sm:order-1" onClick={() => setPatient(null)}>Discard</Button>
-                      <Button type="submit" size="lg" className="w-full sm:w-auto bg-emerald-600 hover:bg-emerald-700 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-emerald-500/20 order-1 sm:order-2" disabled={saving}>
+                      <Button type="submit" size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2" disabled={saving}>
                         {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
                           <div className="flex items-center justify-center whitespace-nowrap">
                              <Save className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
@@ -584,7 +584,7 @@ const ConsultationPage: React.FC = () => {
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-emerald-600 hover:text-white border border-emerald-600/20 rounded-lg group/btn"
+                          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white border border-emerald-600/20 rounded-lg group/btn"
                           onClick={() => {
                             handleSearch(entry.staff_id);
                             setIsQueueModalOpen(false);
@@ -597,7 +597,7 @@ const ConsultationPage: React.FC = () => {
                             <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
                               #{entry.queue_number || '--'}
                             </Badge>
-                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-600 border-emerald-600/20 h-auto">
+                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-emerald-600/20 h-auto">
                               WAITING
                             </Badge>
                           </div>

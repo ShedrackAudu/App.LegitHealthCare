@@ -407,8 +407,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
-                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
+                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
+                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
                              </div>
                         </div>
 
@@ -423,8 +423,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                     <Input {...register('other_remarks')} placeholder="Miscellaneous notes..." />
                                 </div>
                                 <div className="space-y-1 col-span-full">
-                                    <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Assessment(s)</Label>
-                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-emerald-500/20 rounded-xl p-4 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Assessment(s)</Label>
+                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-primary/20 rounded-xl p-4 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
                                 </div>
                             </div>
                             

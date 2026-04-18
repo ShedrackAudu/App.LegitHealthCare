@@ -191,6 +191,40 @@ const TestResultsPage: React.FC = () => {
         return () => clearInterval(interval);
     }, [activeYear, activeSection]);
 
+    const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+
+    useEffect(() => {
+        setActiveSearchIndex(-1);
+    }, [searchId, searchResults]);
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+        if (searchResults.length > 0) {
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setActiveSearchIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setActiveSearchIndex(prev => (prev > 0 ? prev - 1 : 0));
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+                        selectPatient(searchResults[activeSearchIndex]);
+                    } else {
+                        handleSearch();
+                    }
+                    break;
+                case 'Escape':
+                    setSearchResults([]);
+                    break;
+            }
+        } else if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
     const selectPatient = (p: any) => {
         setIsSelecting(true);
         setPatient(p);
@@ -228,7 +262,7 @@ const TestResultsPage: React.FC = () => {
                             { id: 'fbc', title: 'Full Blood Count', icon: FlaskConical, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
                             { id: 'kft', title: 'Kidney Function Test', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
                             { id: 'lipid', title: 'Lipid Profile', icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
-                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-emerald-500', bg: 'bg-emerald-500/10', permission: 'lab_lft' },
+                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
                             { id: 'ecg', title: 'ECG Analysis', icon: Heart, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
                             { id: 'spirometry', title: 'Spirometry', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
                             { id: 'audiometry', title: 'Audiometry', icon: Volume2, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
@@ -314,7 +348,7 @@ const TestResultsPage: React.FC = () => {
                                                 placeholder="Search Staff ID or Name..."
                                                 value={searchId}
                                                 onChange={(e) => setSearchId(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                                onKeyDown={handleSearchKeyDown}
                                                 className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
                                             />
                                         </div>
@@ -333,26 +367,27 @@ const TestResultsPage: React.FC = () => {
                                                     <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
                                                 </CardHeader>
                                                 <ul className="max-h-[300px] overflow-auto divide-y">
-                                                    {searchResults.map((p: any) => (
+                                                    {searchResults.map((p: any, index: number) => (
                                                         <li 
                                                             key={p.staff_id}
-                                                            className="p-4 hover:bg-primary/5 cursor-pointer transition-colors group"
+                                                            className={`p-4 cursor-pointer transition-colors group ${activeSearchIndex === index ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
                                                             onClick={() => selectPatient(p)}
+                                                            onMouseEnter={() => setActiveSearchIndex(index)}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black group-hover:scale-110 transition-transform">
+                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
                                                                         {p.first_name[0]}{p.last_name[0]}
                                                                     </div>
                                                                     <div>
-                                                                        <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
+                                                                        <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                                                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                                                                             <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
                                                                             • <span>{p.department}</span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
-                                                                <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
+                                                                <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
                                                                     Select <ChevronRight className="ml-1 h-3 w-3" />
                                                                 </Button>
                                                             </div>
@@ -644,12 +679,12 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             {uploadResult ? (
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                                            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                        <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+                                            <div className="flex items-center gap-2 text-primary mb-1">
                                                 <CheckCircle2 className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Success</span>
                                             </div>
-                                            <p className="text-2xl font-black text-emerald-700">{uploadResult.success_count}</p>
+                                            <p className="text-2xl font-black text-primary">{uploadResult.success_count}</p>
                                         </div>
                                         <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                                             <div className="flex items-center gap-2 text-rose-600 mb-1">

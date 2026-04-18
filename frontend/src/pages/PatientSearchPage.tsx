@@ -136,19 +136,19 @@ const PatientSearchPage = () => {
               transition={{ duration: 0.4, ease: "backOut" }}
               className="mt-8"
             >
-              <Card className="border-2 border-emerald-500/20 bg-emerald-500/5 backdrop-blur-xl overflow-hidden relative group">
+              <Card className="border-2 border-primary/20 bg-primary/5 backdrop-blur-xl overflow-hidden relative group">
                 <div className="absolute top-0 right-0 p-4">
-                    <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-widest shadow-lg ${patientData.section?.toUpperCase() === 'DCP' ? 'bg-emerald-500 shadow-emerald-500/10' : 'bg-blue-500 shadow-blue-500/10'}`}>
+                    <div className={`px-3 py-1 rounded-md text-white font-black text-[10px] tracking-widest shadow-lg ${patientData.section?.toUpperCase() === 'DCP' ? 'bg-primary shadow-primary/10' : 'bg-blue-500 shadow-blue-500/10'}`}>
                         {patientData.section?.toUpperCase() || 'N/A'}
                     </div>
                 </div>
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
-                    <div className="w-10 h-10 rounded-xl bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                         <User className="w-5 h-5" />
                     </div>
                     <div>
-                      <CardTitle className="text-emerald-600 dark:text-emerald-400 text-sm flex items-center gap-1.5 font-black uppercase tracking-wider">
+                      <CardTitle className="text-primary dark:text-primary text-sm flex items-center gap-1.5 font-black uppercase tracking-wider">
                         <CheckCircle2 className="w-4 h-4" /> Account Found
                       </CardTitle>
                       <CardDescription className="text-lg font-black text-foreground">
@@ -185,7 +185,7 @@ const PatientSearchPage = () => {
                 <CardFooter className="pt-2">
                   <Button 
                     onClick={handleProceed}
-                    className="w-full h-14 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-2xl shadow-xl shadow-emerald-500/20 transition-all hover:scale-[1.02]"
+                    className="w-full h-14 bg-primary hover:bg-primary0 text-white font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
                   >
                     Proceed with Registration <ArrowRight className="ml-2 w-5 h-5" />
                   </Button>

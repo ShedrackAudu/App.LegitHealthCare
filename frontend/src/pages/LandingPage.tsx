@@ -342,7 +342,7 @@ const LandingPage = () => {
                            <div className="flex gap-1.5">
                               <div className="w-3 h-3 rounded-full bg-red-500/50" />
                               <div className="w-3 h-3 rounded-full bg-amber-500/50" />
-                              <div className="w-3 h-3 rounded-full bg-emerald-500/50" />
+                              <div className="w-3 h-3 rounded-full bg-primary/50" />
                            </div>
                            <div className="mx-auto bg-background/50 h-5 w-48 rounded-md" />
                         </div>
@@ -351,7 +351,7 @@ const LandingPage = () => {
                            <div className="grid grid-cols-3 gap-4">
                               <div className="h-24 bg-blue-500/5 rounded-2xl border border-blue-500/10" />
                               <div className="h-24 bg-amber-500/5 rounded-2xl border border-amber-500/10" />
-                              <div className="h-24 bg-emerald-500/5 rounded-2xl border border-emerald-500/10" />
+                              <div className="h-24 bg-primary/5 rounded-2xl border border-primary/10" />
                            </div>
                            <div className="space-y-3">
                               <div className="h-12 bg-muted/50 rounded-xl w-3/4" />

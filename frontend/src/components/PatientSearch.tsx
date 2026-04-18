@@ -62,14 +62,14 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
 
   const colorClasses = {
     emerald: {
-      border: "focus-within:border-emerald-500/50",
-      button: "bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20",
-      dropdownBorder: "border-emerald-500/20",
-      dropdownHeader: "bg-emerald-500/5",
-      dropdownTitle: "text-emerald-600/70",
-      itemHover: "hover:bg-emerald-500/5",
-      avatarBg: "bg-emerald-500/10",
-      avatarText: "text-emerald-600"
+      border: "focus-within:border-primary/50",
+      button: "bg-primary hover:bg-primary0 shadow-primary/20",
+      dropdownBorder: "border-primary/20",
+      dropdownHeader: "bg-primary/5",
+      dropdownTitle: "text-primary/70",
+      itemHover: "hover:bg-primary/5",
+      avatarBg: "bg-primary/10",
+      avatarText: "text-primary"
     },
     primary: {
       border: "focus-within:border-primary/50",
@@ -92,6 +92,40 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     onSelect(p);
   };
 
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+
+  useEffect(() => {
+    setActiveSearchIndex(-1);
+  }, [searchId, searchResults]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (searchResults.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActiveSearchIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActiveSearchIndex(prev => (prev > 0 ? prev - 1 : 0));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+            handleItemSelect(searchResults[activeSearchIndex]);
+          } else {
+            onSearch(searchId);
+          }
+          break;
+        case 'Escape':
+          setSearchResults([]);
+          break;
+      }
+    } else if (e.key === 'Enter') {
+      onSearch(searchId);
+    }
+  };
+
   return (
     <div className={`w-full max-w-2xl relative ${className}`}>
       <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 transition-all relative ${currentTheme.border}`}>
@@ -101,7 +135,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
             placeholder={placeholder}
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
-            onKeyDown={(e) => e.key === 'Enter' && onSearch(searchId)}
+            onKeyDown={handleSearchKeyDown}
             className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
           />
         </div>
@@ -120,31 +154,39 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
               <CardTitle className={`text-xs uppercase tracking-widest ${currentTheme.dropdownTitle}`}>Matching Profiles</CardTitle>
             </CardHeader>
             <ul className="max-h-[300px] overflow-auto divide-y">
-              {searchResults.map((p: any) => (
-                <li 
-                  key={p.staff_id}
-                  className={`p-4 cursor-pointer transition-colors group ${currentTheme.itemHover}`}
-                  onClick={() => handleItemSelect(p)}
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${currentTheme.avatarBg} ${currentTheme.avatarText}`}>
-                        {p.first_name[0]}{p.last_name[0]}
+              {searchResults.map((p: any, index: number) => {
+                const isActive = activeSearchIndex === index;
+                const activeBg = themeColor === 'emerald' ? 'bg-primary/10' : 'bg-primary/10';
+                const activeText = themeColor === 'emerald' ? 'text-primary' : 'text-primary';
+                const activeAvatarBg = themeColor === 'emerald' ? 'bg-primary text-white' : 'bg-primary text-white';
+
+                return (
+                  <li 
+                    key={p.staff_id}
+                    className={`p-4 cursor-pointer transition-colors group ${isActive ? activeBg : currentTheme.itemHover}`}
+                    onClick={() => handleItemSelect(p)}
+                    onMouseEnter={() => setActiveSearchIndex(index)}
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${isActive ? activeAvatarBg : `${currentTheme.avatarBg} ${currentTheme.avatarText}`}`}>
+                          {p.first_name[0]}{p.last_name[0]}
+                        </div>
+                        <div className="text-left">
+                          <p className={`font-bold capitalize ${isActive ? activeText : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
+                          <p className="text-xs text-muted-foreground flex items-center gap-2">
+                            <span className="bg-muted px-1.5 py-0.5 rounded uppercase font-bold">{p.staff_id}</span>
+                            • <span className="font-medium">{p.department}</span>
+                          </p>
+                        </div>
                       </div>
-                      <div className="text-left">
-                        <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
-                        <p className="text-xs text-muted-foreground flex items-center gap-2">
-                          <span className="bg-muted px-1.5 py-0.5 rounded uppercase font-bold">{p.staff_id}</span>
-                          • <span className="font-medium">{p.department}</span>
-                        </p>
-                      </div>
+                      <Button size="sm" variant="ghost" className={`${isActive ? `opacity-100 ${activeBg} ${activeText}` : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
+                        Select <ChevronRight className="ml-1 h-3 w-3" />
+                      </Button>
                     </div>
-                    <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
-                      Select <ChevronRight className="ml-1 h-3 w-3" />
-                    </Button>
-                  </div>
-                </li>
-              ))}
+                  </li>
+                );
+              })}
             </ul>
           </Card>
         )}

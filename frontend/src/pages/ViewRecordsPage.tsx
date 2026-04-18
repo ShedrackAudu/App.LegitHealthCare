@@ -148,7 +148,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={18}>Hematology (FBC)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={9}>Kidney Function (KFT)</TableHead>
                                                     <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={6}>Lipid Profile</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-emerald-50 text-emerald-600 border-r text-center" colSpan={7}>Liver Function (LFT)</TableHead>
+                                                    <TableHead className="min-w-[800px] bg-primary/5 text-primary border-r text-center" colSpan={7}>Liver Function (LFT)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
                                                     <TableHead className="min-w-[600px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={4}>Director's Review</TableHead>
                                                     <TableHead className="min-w-[100px] text-right bg-muted/90">Actions</TableHead>
@@ -341,13 +341,13 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="border-r bg-amber-50/30 text-[11px] truncate max-w-[150px]" title={r.lipid?.other_remarks || ''}>{r.lipid?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* LFT */}
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.ast || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.alt || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.alp || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.tb || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.cb || '-'}</TableCell>
-                                                        <TableCell className="bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.other_remarks || ''}>{r.lft?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] text-center bg-primary/5/30">{r.lft?.ast || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] text-center bg-primary/5/30">{r.lft?.alt || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] text-center bg-primary/5/30">{r.lft?.alp || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] text-center bg-primary/5/30">{r.lft?.tb || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] text-center bg-primary/5/30">{r.lft?.cb || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5/30 text-[11px] truncate max-w-[150px]" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-primary/5/30 text-[11px] truncate max-w-[150px]" title={r.lft?.other_remarks || ''}>{r.lft?.other_remarks || '-'}</TableCell>
                                                         
                                                         {/* Special */}
                                                         <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.ecg || '-'}</TableCell>

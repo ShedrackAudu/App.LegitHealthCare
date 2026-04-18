@@ -206,7 +206,7 @@ const AccessKeysPage = () => {
                                         <SelectValue placeholder="Any Authorized User" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-2 shadow-2xl">
-                                        <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-emerald-600">Public (Any Unit)</SelectItem>
+                                        <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-primary">Public (Any Unit)</SelectItem>
                                         {users.map(u => (
                                             <SelectItem key={u.id} value={u.id.toString()} className="text-[10px] font-black uppercase tracking-widest py-3">
                                                 @{u.username} ({u.first_name} {u.last_name[0]}.)
@@ -297,7 +297,7 @@ const AccessKeysPage = () => {
                                                                 {code.target_user_name}
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="font-black text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 py-0.5">
+                                                            <Badge variant="outline" className="font-black text-[9px] bg-primary/10 text-primary border-primary/20 py-0.5">
                                                                 <ShieldCheck className="w-3 h-3 mr-1" />
                                                                 Universal
                                                             </Badge>
@@ -334,7 +334,7 @@ const AccessKeysPage = () => {
                                                             );
                                                         } else {
                                                             return (
-                                                                <Badge variant="outline" className="font-black text-[9px] px-3 py-1 rounded-full border shadow-sm bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                                                                <Badge variant="outline" className="font-black text-[9px] px-3 py-1 rounded-full border shadow-sm bg-primary/10 text-primary border-primary/20">
                                                                     ACTIVE
                                                                 </Badge>
                                                             );

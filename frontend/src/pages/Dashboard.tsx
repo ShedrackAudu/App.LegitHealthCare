@@ -51,7 +51,7 @@ const quickActions = [
     description: 'Enter clinical assessments and recommendations.',
     icon: Stethoscope, 
     path: '/consultation',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'consultation'
   },
   { 
@@ -158,7 +158,7 @@ const adminActions = [
     description: 'Configure AI agents and medical parameters.',
     icon: Activity, 
     path: '/ai-integration',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_ai'
   },
   { 
@@ -166,7 +166,7 @@ const adminActions = [
     description: 'Generate temporary security entrance codes.',
     icon: Key, 
     path: '/admin/access-keys',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_access_keys'
   },
 ];
@@ -273,7 +273,7 @@ const Dashboard: React.FC = () => {
              </div>
              <div className="text-left md:text-right min-w-0">
                 <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
-                <p className="text-xs md:text-sm font-bold text-emerald-500 truncate">Connected & Optimized</p>
+                <p className="text-xs md:text-sm font-bold text-primary truncate">Connected & Optimized</p>
              </div>
           </div>
         </div>
@@ -366,9 +366,9 @@ const Dashboard: React.FC = () => {
         {/* Queue Stats Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-tight text-emerald-500">Department Queues</h2>
-            <div className="h-px flex-1 bg-emerald-500/20" />
-            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-black uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10">
+            <h2 className="text-xl font-black tracking-tight text-primary">Department Queues</h2>
+            <div className="h-px flex-1 bg-primary/20" />
+            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10">
               Refresh
             </Button>
           </div>
@@ -376,13 +376,13 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: Stethoscope },
-              { id: 'audiometry', label: 'Audiometry', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: Activity },
+              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: Activity },
               { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: Activity },
               { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: Activity }
             ].map((dept) => (
               <Card 
                 key={dept.id} 
-                className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-emerald-500/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
+                className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
                 onClick={() => fetchQueueList(dept.label)}
               >
                 <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
@@ -400,7 +400,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">
                     {dept.label} Waiting
                   </p>
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                     View Patients <ChevronRight className="h-3 w-3" />
                   </div>
                 </CardContent>
@@ -423,7 +423,7 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {[
                             { label: 'Total Registered', count: stats?.registration_stats?.total_comprehensive, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                            { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                            { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
                             { label: 'Male Patients', count: stats?.registration_stats?.males, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
                             { label: 'Female Patients', count: stats?.registration_stats?.females, icon: User, color: 'text-rose-600', bg: 'bg-rose-500/10' },
                             { label: 'Age 40 & Above', count: stats?.registration_stats?.age_40_above, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-500/10' },
@@ -487,10 +487,10 @@ const Dashboard: React.FC = () => {
 
         {/* Queue List Modal */}
         <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-            <DialogContent className="max-w-2xl sm:max-w-[500px] border-emerald-500/20">
+            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                             <ClipboardList className="w-6 h-6" />
                         </div>
                         <div>
@@ -507,7 +507,7 @@ const Dashboard: React.FC = () => {
                                 {queueEntries.map((entry, idx) => (
                                     <div key={entry.staff_id} className="flex items-center justify-between p-4 rounded-xl border-2 bg-muted/5 hover:bg-muted/10 transition-colors group">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-black text-emerald-500 border border-emerald-500/20">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
                                                 {entry.first_name?.[0]}{entry.last_name?.[0]}
                                             </div>
                                             <div>
@@ -520,7 +520,7 @@ const Dashboard: React.FC = () => {
                                                <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
                                                     #{entry.queue_number || '--'}
                                                </Badge>
-                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-500 border-emerald-500/20 h-auto">
+                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20 h-auto">
                                                     WAITING
                                                </Badge>
                                             </div>

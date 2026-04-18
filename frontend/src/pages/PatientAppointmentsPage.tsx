@@ -176,7 +176,7 @@ const PatientAppointmentsPage = () => {
                                         <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black tracking-widest">
                                             {profile?.staff_id}
                                         </span>
-                                        <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase">
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase">
                                             <CheckCircle2 className="w-2.5 h-2.5" /> Active
                                         </div>
                                     </div>
@@ -317,13 +317,13 @@ const PatientAppointmentsPage = () => {
                                 )}
                             </Button>
 
-                            <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-dashed border-emerald-500/10 flex gap-3">
-                                <div className="p-1 bg-emerald-500/10 rounded-lg text-emerald-600 shrink-0 h-fit">
+                            <div className="p-3.5 rounded-xl bg-primary/5 border border-dashed border-primary/10 flex gap-3">
+                                <div className="p-1 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
                                      <Globe className="w-3 h-3" />
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[9px] font-black text-emerald-800 uppercase tracking-wider opacity-60">Next Steps</p>
-                                    <p className="text-[10px] font-semibold text-emerald-700/50 leading-tight">Admin will confirm within 24 hours.</p>
+                                    <p className="text-[10px] font-semibold text-primary/50 leading-tight">Admin will confirm within 24 hours.</p>
                                 </div>
                             </div>
                         </CardContent>

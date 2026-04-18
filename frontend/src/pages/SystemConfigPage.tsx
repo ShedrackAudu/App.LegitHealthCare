@@ -546,7 +546,7 @@ const SystemConfigPage: React.FC = () => {
                                                 <div className="space-y-2 relative">
                                                     <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center justify-between">
                                                         <span>Sender Password / App Password</span>
-                                                        {emailSettings.HAS_PASSWORD && <span className="text-[10px] text-emerald-500 font-black">● Currently Set</span>}
+                                                        {emailSettings.HAS_PASSWORD && <span className="text-[10px] text-primary font-black">● Currently Set</span>}
                                                     </Label>
                                                     <div className="relative">
                                                         <Input
@@ -605,9 +605,9 @@ const SystemConfigPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <Card className="border-2 shadow-lg h-fit border-emerald-500/10">
-                                        <CardHeader className="bg-emerald-500/5 border-b pb-4">
-                                            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-emerald-600">
+                                    <Card className="border-2 shadow-lg h-fit border-primary/10">
+                                        <CardHeader className="bg-primary/5 border-b pb-4">
+                                            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
                                                 <Mail className="h-4 w-4" />
                                                 Test Connection
                                             </CardTitle>
@@ -617,7 +617,7 @@ const SystemConfigPage: React.FC = () => {
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Recipient Email</Label>
                                                 <Input
-                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-emerald-500"
+                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-primary"
                                                     placeholder="test@example.com"
                                                     value={testEmail}
                                                     onChange={e => setTestEmail(e.target.value)}
@@ -625,7 +625,7 @@ const SystemConfigPage: React.FC = () => {
                                             </div>
                                             <Button
                                                 variant="secondary"
-                                                className="w-full font-bold h-10 border-2 hover:bg-emerald-500 hover:text-white transition-all"
+                                                className="w-full font-bold h-10 border-2 hover:bg-primary hover:text-white transition-all"
                                                 onClick={handleTestEmail}
                                                 disabled={testing}
                                             >
@@ -748,7 +748,7 @@ const SystemConfigPage: React.FC = () => {
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-destructive'}`} />
+                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
                                             <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
                                                 {staffSignupEnabled ? 'Enabled' : 'Disabled'}
                                             </span>

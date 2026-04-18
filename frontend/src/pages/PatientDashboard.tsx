@@ -143,7 +143,7 @@ const PatientDashboard = () => {
             </div>
           </div>
           <div className="flex gap-1.5">
-             <div className="px-2 py-1 bg-emerald-500/10 text-emerald-600 rounded-lg border border-emerald-500/10 flex items-center gap-1 text-[9px] font-black">
+             <div className="px-2 py-1 bg-primary/10 text-primary rounded-lg border border-primary/10 flex items-center gap-1 text-[9px] font-black">
                 <CheckCircle2 className="w-3 h-3" /> Verified
              </div>
           </div>
@@ -250,7 +250,7 @@ const PatientDashboard = () => {
                         </div>
                         
                         <div className="flex flex-wrap gap-1 md:gap-2">
-                            <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-emerald-500/10 rounded-md border border-emerald-500/20 text-[8px] md:text-[11px] font-black text-emerald-600 flex items-center gap-1">
+                            <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-primary/10 rounded-md border border-primary/20 text-[8px] md:text-[11px] font-black text-primary flex items-center gap-1">
                                 <CheckCircle2 className="h-2 w-2 md:h-3.5 md:w-3.5" />
                                 {reportProgress.points}/{reportProgress.total} Items
                             </div>
@@ -332,7 +332,7 @@ const PatientDashboard = () => {
             <Card className="border shadow-md rounded-lg overflow-hidden bg-card/40 backdrop-blur-sm">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1">
-                   <div className="p-1.5 bg-emerald-500/10 rounded-lg text-emerald-600">
+                   <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
                       <Calendar className="w-3.5 h-3.5" />
                    </div>
                    <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">Last Screening</span>

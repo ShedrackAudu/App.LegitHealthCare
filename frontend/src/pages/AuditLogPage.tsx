@@ -53,7 +53,7 @@ const AuditLogPage: React.FC = () => {
     
     // Administrative / Creation
     if (act.includes('CREATE') || act.includes('ADD') || act.includes('IMPORT') || act.includes('ASSIGN')) {
-      return 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20 antialiased shadow-sm ring-1 ring-emerald-500/10';
+      return 'bg-primary/10 text-primary border-primary/20 antialiased shadow-sm ring-1 ring-primary/10';
     }
     
     // Mutations / Changes
@@ -283,7 +283,7 @@ const AuditLogPage: React.FC = () => {
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                                             <Terminal className="w-3 h-3" /> Extended Metadata
                                         </p>
-                                        <Badge variant="outline" className="text-[8px] border-emerald-500/20 bg-emerald-500/5 text-emerald-600 font-black">
+                                        <Badge variant="outline" className="text-[8px] border-primary/20 bg-primary/5 text-primary font-black">
                                             ENCRYPTED PAYLOAD
                                         </Badge>
                                     </div>

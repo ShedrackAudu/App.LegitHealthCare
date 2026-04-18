@@ -38,7 +38,7 @@ const ReportVerificationPage: React.FC = () => {
             <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
                 <Card className="border-border shadow-2xl relative overflow-hidden">
                     {/* Header Strip */}
-                    <div className={`h-2 w-full ${status === 'success' ? 'bg-green-500' : status === 'failed' ? 'bg-destructive' : 'bg-primary'}`} />
+                    <div className={`h-2 w-full ${status === 'success' ? 'bg-primary' : status === 'failed' ? 'bg-destructive' : 'bg-primary'}`} />
                     
                     <CardHeader className="text-center pb-2">
                         <div className="mx-auto mb-4 mt-2">
@@ -47,8 +47,8 @@ const ReportVerificationPage: React.FC = () => {
                                     <Loader2 className="h-10 w-10 animate-spin text-primary" />
                                 </div>
                             ) : status === 'success' ? (
-                                <div className="h-20 w-20 rounded-full bg-green-500/10 flex items-center justify-center mx-auto ring-8 ring-green-500/20">
-                                    <CheckCircle2 className="h-12 w-12 text-green-500" />
+                                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto ring-8 ring-primary/20">
+                                    <CheckCircle2 className="h-12 w-12 text-primary" />
                                 </div>
                             ) : (
                                 <div className="h-20 w-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto ring-8 ring-destructive/20">

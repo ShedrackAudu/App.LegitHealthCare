@@ -530,8 +530,8 @@ const SignupPage: React.FC = () => {
                             <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
                           </div>
                           <div className="pl-4.5 flex items-center gap-1.5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                             <span className="text-xs font-black text-emerald-500 uppercase tracking-tight">Verified</span>
+                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                             <span className="text-xs font-black text-primary uppercase tracking-tight">Verified</span>
                           </div>
                       </div>
                     </div>
@@ -587,7 +587,7 @@ const SignupPage: React.FC = () => {
                           {(claimData.password || claimData.confirm_password) && (
                             <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
                               claimData.password === claimData.confirm_password && claimData.password.length > 0
-                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-xl shadow-emerald-500/10' 
+                                ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
                                 : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
                             }`}>
                               {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
@@ -679,12 +679,12 @@ const SignupPage: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex flex-col items-center py-10 space-y-6"
                       >
-                        <div className="w-24 h-24 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                        <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
                           <CheckCircle2 className="w-14 h-14" />
                         </div>
                         <div className="text-center space-y-2">
-                          <h3 className="text-2xl font-black text-emerald-600 tracking-tight">Identity Verified!</h3>
-                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-emerald-200">
+                          <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
+                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-primary/30">
                              Claim successful. Syncing your medical <br/> records to your personal dashboard...
                           </p>
                         </div>

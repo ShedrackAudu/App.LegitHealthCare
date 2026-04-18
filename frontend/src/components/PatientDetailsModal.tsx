@@ -117,7 +117,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                     </div>
                     {/* Active Status Dot */}
                     <div className="absolute bottom-1 right-1 sm:bottom-2 sm:right-2 w-5 h-5 sm:w-6 sm:h-6 bg-background rounded-full p-1 shadow-lg">
-                        <div className="w-full h-full bg-emerald-500 rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <div className="w-full h-full bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
                     </div>
                 </div>
               </div>
@@ -191,7 +191,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                     className="pt-4 sm:pt-6 flex flex-col sm:flex-row gap-3 sm:justify-between items-center border-t border-muted/50"
                   >
                       <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-muted/20 border border-transparent">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
                           <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">Verified Audit Session</p>
                       </div>
                       <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/30">
