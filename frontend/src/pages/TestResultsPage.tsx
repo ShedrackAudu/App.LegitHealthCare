@@ -1052,7 +1052,13 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
     });
 
     useEffect(() => {
-        if (initialData) reset(initialData);
+        if (initialData) {
+            const safeData: any = { ...initialData };
+            Object.keys(safeData).forEach(key => {
+                if (safeData[key] === null) safeData[key] = '';
+            });
+            reset(safeData);
+        }
     }, [initialData, reset]);
 
     const fbs = watch('fbs');

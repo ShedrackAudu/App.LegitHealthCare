@@ -161,13 +161,13 @@ const RadioField = ({ label, name, control, required = true }: any) => (
 const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, activeSection }: any) => {
     const { register, handleSubmit, setValue, watch, control, reset } = useForm({
         defaultValues: {
+            ...history?.review,
             ...history?.consultation,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
             ...history?.lipid,
-            ...history?.lft,
-            ...history?.review
+            ...history?.lft
         }
     });
 
@@ -175,13 +175,13 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
     useEffect(() => {
         reset({
+            ...history?.review,
             ...history?.consultation,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
             ...history?.lipid,
-            ...history?.lft,
-            ...history?.review
+            ...history?.lft
         });
     }, [history, reset]);
 

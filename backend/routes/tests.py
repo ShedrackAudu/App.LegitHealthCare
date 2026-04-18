@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, RoutineResult
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
@@ -46,7 +46,7 @@ def save_test_result(test_type):
         'lipid': LipidResult,
         'lft': LFTResult,
         'special': SpecialTestsResult,
-        'routine': RoutineResult
+        'routine': ConsultationData
     }
     
     model_class = model_map.get(test_type)
@@ -84,7 +84,6 @@ def save_test_result(test_type):
 
     if test_type == 'special':
         from models import QueueEntry
-        from sqlalchemy import func
         if ecg_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
@@ -142,7 +141,7 @@ def get_test_result(test_type, staff_id):
         'lipid': LipidResult,
         'lft': LFTResult,
         'special': SpecialTestsResult,
-        'routine': RoutineResult
+        'routine': ConsultationData
     }
     
     model_class = model_map.get(test_type)

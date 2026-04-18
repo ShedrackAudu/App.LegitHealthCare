@@ -1,7 +1,7 @@
 from flask import Blueprint, request, jsonify
 import os
 from models import (
-    db, BioData, ScreeningYearBioData, ConsultationData, 
+    db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
     SpecialTestsResult, DirectorReview, AuditLog, QueueEntry,
     ReportVerification, AppBranding
