@@ -221,6 +221,7 @@ const PatientDashboard = () => {
               animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
               exit={{ opacity: 0, height: 0, marginBottom: 0 }}
               transition={{ duration: 0.4, ease: 'easeOut' }}
+              className="block sm:hidden"
             >
               <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-lg shadow-primary/5">
                 {/* Dismiss button */}

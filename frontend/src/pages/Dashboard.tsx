@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   ChevronRight,
   Stethoscope,
@@ -18,7 +19,10 @@ import {
   ClipboardList,
   Settings2,
   Edit3,
-  Check
+  Check,
+  Download,
+  Smartphone,
+  X
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -181,6 +185,61 @@ const Dashboard: React.FC = () => {
   const [selectedDept, setSelectedDept] = React.useState<string | null>(null);
   const [isQueueModalOpen, setIsQueueModalOpen] = React.useState(false);
   const [loadingQueue, setLoadingQueue] = React.useState(false);
+
+  // PWA Install Prompt State (mobile dashboard banner)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [pwaDismissed, setPwaDismissed] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setPwaInstalled(true);
+      return;
+    }
+
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
+
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    const handlePromptReady = () => {
+      if ((window as any).deferredPWAPrompt) {
+        setDeferredPrompt((window as any).deferredPWAPrompt);
+      }
+    };
+    const handleAppInstalled = () => {
+      setPwaInstalled(true);
+      setDeferredPrompt(null);
+      (window as any).deferredPWAPrompt = null;
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handlePwaInstall = async () => {
+    if (!deferredPrompt) return;
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setPwaInstalled(true);
+        (window as any).deferredPWAPrompt = null;
+      }
+    } catch (err) {
+      console.error('PWA install failed:', err);
+    }
+  };
   
   const fetchDashboardStats = async () => {
     try {
@@ -277,6 +336,52 @@ const Dashboard: React.FC = () => {
              </div>
           </div>
         </div>
+
+        {/* PWA Install Banner — mobile only (header has the button on desktop) */}
+        <AnimatePresence>
+          {deferredPrompt && !pwaInstalled && !pwaDismissed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.35 }}
+              className="block sm:hidden"
+            >
+              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-lg shadow-primary/5">
+                <button
+                  onClick={() => setPwaDismissed(true)}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="absolute -right-6 -bottom-6 w-28 h-28 text-primary/[0.06] pointer-events-none">
+                  <Smartphone className="w-full h-full" />
+                </div>
+                <div className="relative z-10 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Download className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
+                      <p className="text-[11px] text-muted-foreground font-medium leading-snug">
+                        Add to your home screen for quick access.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handlePwaInstall}
+                    className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Install Now
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Quick Actions Grid */}
         <div className="space-y-4">
