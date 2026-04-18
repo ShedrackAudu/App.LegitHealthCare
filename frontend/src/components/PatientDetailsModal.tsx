@@ -15,7 +15,8 @@ import {
     X
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { motion, AnimatePresence, Variants } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import type { Variants } from "framer-motion";
 import { useAppContext } from '@/context/AppContext';
 
 interface PatientDetailsModalProps {
@@ -40,7 +41,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
       y: 0,
       transition: { 
         duration: 0.4, 
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.16, 1, 0.3, 1] as const,
         staggerChildren: 0.05
       }
     }
