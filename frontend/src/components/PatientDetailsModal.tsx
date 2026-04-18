@@ -15,8 +15,7 @@ import {
     X
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { motion, AnimatePresence } from "framer-motion";
-import type { Variants } from "framer-motion";
+import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useAppContext } from '@/context/AppContext';
 
 interface PatientDetailsModalProps {
