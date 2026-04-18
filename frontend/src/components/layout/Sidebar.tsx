@@ -30,13 +30,18 @@ interface SidebarItem {
   title: string;
   path: string;
   icon: React.ElementType;
-  permission?: string;
+  permission?: string | string[];
 }
 
 const medicalItems: SidebarItem[] = [
   { title: 'Registration', path: '/registration', icon: UserPlus, permission: 'registration' },
   { title: 'Consultation', path: '/consultation', icon: Stethoscope, permission: 'consultation' },
-  { title: 'Test Results', path: '/tests', icon: FlaskConical, permission: 'lab_tests' },
+  { 
+    title: 'Test Results', 
+    path: '/tests', 
+    icon: FlaskConical, 
+    permission: ['lab_tests', 'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 'lab_spirometry', 'lab_audiometry', 'lab_essential_diagnostics'] 
+  },
   { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
   { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
   { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
@@ -71,7 +76,7 @@ export const Sidebar: React.FC = () => {
     return false;
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
-  const { isAdmin, hasPermission } = usePermissions();
+  const { isAdmin, hasPermission, hasAnyPermission } = usePermissions();
   const location = useLocation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 

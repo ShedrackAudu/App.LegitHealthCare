@@ -529,6 +529,20 @@ class SpecialTestsResult(db.Model):
     audiometry_remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
+class RoutineResult(db.Model):
+    __tablename__ = 'routine_test_results'
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
+    screening_year = db.Column(db.Integer, nullable=False)
+    psa = db.Column(db.String(20))
+    psa_remark = db.Column(db.Text)
+    fbs = db.Column(db.String(20))
+    rbs = db.Column(db.String(20))
+    sugar_remark = db.Column(db.String(50))
+    ua_result = db.Column(db.String(50))
+    ua_remark = db.Column(db.String(50))
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
 class DirectorReview(db.Model):
     __tablename__ = 'director_reviews'
     id = db.Column(db.Integer, primary_key=True)

@@ -15,6 +15,7 @@ def init_rbac(app):
             ('lab_ecg', 'Access to ECG Diagnostic Recording'),
             ('lab_spirometry', 'Access to Spirometry Lung Function Test'),
             ('lab_audiometry', 'Access to Audiometry Hearing Test'),
+            ('lab_essential_diagnostics', 'Access to Essential Diagnostics (PSA, Sugar, Urine Analysis)'),
             ('director_review', 'Access to director level review'),
             ('patient_reports', 'Access to generating patient reports'),
             ('view_patients', 'Access to comprehensive patient directory'),

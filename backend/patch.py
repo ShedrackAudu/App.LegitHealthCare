@@ -1,4 +1,4 @@
-﻿import sys
+import sys
 
 with open(r'c:\Users\DELL\Documents\Legit HealthCare\Legit HealthCare WebApp\App.LegitHealthCare\backend\routes\admin_bp.py', 'r', encoding='utf-8') as f:
     lines = f.read()

@@ -95,7 +95,7 @@ const SelectField = ({ label, options, name, control }: any) => (
       render={({ field, fieldState }) => (
         <>
           <Select onValueChange={field.onChange} value={field.value}>
-            <SelectTrigger className={`h-11 rounded-xl border-2 font-semibold ${fieldState.error ? 'border-red-500' : ''}`}>
+            <SelectTrigger className={`h-11 rounded-xl border-2 ${fieldState.error ? 'border-red-500' : ''}`}>
               <SelectValue placeholder={`Select ${label}...`} />
             </SelectTrigger>
             <SelectContent className="z-[150]">
@@ -147,7 +147,7 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
       <Input
         ref={ref}
         {...props}
-        className={`h-11 rounded-xl border-2 font-black pr-10 text-lg ${props.className} ${props.error ? 'border-red-500' : ''}`}
+        className={`h-11 rounded-xl border-2 pr-10 ${props.className} ${props.error ? 'border-red-500' : ''}`}
       />
       <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 cursor-pointer">
         <DropdownMenu>
@@ -303,6 +303,21 @@ const ConsultationPage: React.FC = () => {
       setValue('fbs', 'Not Applicable');
     }
   }, [rbs, setValue]);
+
+  const psa = watch('psa');
+  const psa_remark = watch('psa_remark');
+  // Bidirectional auto-set to Not Applicable for PSA Result/Remark
+  useEffect(() => {
+    if (psa === 'Not Applicable' && psa_remark !== 'Not Applicable') {
+      setValue('psa_remark', 'Not Applicable');
+    }
+  }, [psa, setValue]);
+
+  useEffect(() => {
+    if (psa_remark === 'Not Applicable' && psa !== 'Not Applicable') {
+      setValue('psa', 'Not Applicable');
+    }
+  }, [psa_remark, setValue]);
 
 
   const handleSearch = async (staffIdToSearch?: string) => {
@@ -486,16 +501,16 @@ const ConsultationPage: React.FC = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
                           <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P <span className="text-red-500">*</span></Label>
-                            <Input {...register('bp')} className="h-12 text-lg font-bold" />
+                            <Input {...register('bp')} className="h-12" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
                         <div className="space-y-2">
                           <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Heart className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
-                          <Input {...register('pulse')} className="h-12 text-lg font-bold" />
+                          <Input {...register('pulse')} className="h-12" />
                         </div>
                         <div className="space-y-2">
                           <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 % <span className="text-red-500">*</span></Label>
-                          <Input {...register('spo2')} className="h-12 text-lg font-bold" />
+                          <Input {...register('spo2')} className="h-12" />
                         </div>
                       </div>
                     </div>

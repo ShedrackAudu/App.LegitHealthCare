@@ -27,8 +27,8 @@ const AccessDeniedPage: React.FC = () => {
     const navigate = useNavigate();
     
     // The path the user tried to access
-    const fromPath = location.state?.from?.pathname || '/dashboard';
-    const featureName = fromPath.split('/').pop()?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
+    const fromPath = location.state?.from?.pathname || location.pathname;
+    const featureName = fromPath.split('/').filter(Boolean).pop()?.replace(/-/g, ' ').replace(/\b\w/g, (c: string) => c.toUpperCase());
 
     const handleRequestAccess = async () => {
         setIsRequesting(true);

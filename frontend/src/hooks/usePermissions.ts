@@ -32,5 +32,10 @@ export const usePermissions = () => {
     return (user?.temp_access as any[] | undefined)?.some((t: any) => t.permission_name === 'admin_access') || false;
   };
 
-  return { hasPermission, isAdmin, user };
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (isAdmin()) return true;
+    return permissions.some(p => hasPermission(p));
+  };
+
+  return { hasPermission, hasAnyPermission, isAdmin, user };
 };

@@ -31,6 +31,13 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { toast } from 'react-hot-toast';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -42,6 +49,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { toast as hotToast } from 'react-hot-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const TempAccessCountdown = () => {
     const { user } = useAppContext();
@@ -87,23 +95,24 @@ const TempAccessCountdown = () => {
     );
 };
 
-type TestType = 'fbc' | 'kft' | 'lipid' | 'lft' | 'ecg' | 'spirometry' | 'audiometry' | null;
+type TestType = 'fbc' | 'kft' | 'lipid' | 'lft' | 'ecg' | 'spirometry' | 'audiometry' | 'routine' | null;
 
 const TestResultsPage: React.FC = () => {
     const { testType: paramTestType } = useParams<{ testType: string }>();
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const { activeSection, activeYear } = useAppContext();
+    const { hasPermission, isAdmin } = usePermissions();
     
     // Determine current test type from param or URL path fallback
     const currentType = (paramTestType || pathname.split('/').pop()) as TestType;
     const [selectedTest, setSelectedTest] = useState<TestType>(
-        ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry'].includes(currentType || '') ? currentType : null
+        ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry', 'routine'].includes(currentType || '') ? currentType : null
     );
     
     useEffect(() => {
         const urlType = (paramTestType || pathname.split('/').pop()) as TestType;
-        if (urlType && ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry'].includes(urlType)) {
+        if (urlType && ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry', 'routine'].includes(urlType)) {
             setSelectedTest(urlType);
         } else if (pathname === '/tests') {
             setSelectedTest(null);
@@ -259,6 +268,7 @@ const TestResultsPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
+                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
                             { id: 'fbc', title: 'Full Blood Count', icon: FlaskConical, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
                             { id: 'kft', title: 'Kidney Function Test', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
                             { id: 'lipid', title: 'Lipid Profile', icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
@@ -810,6 +820,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                     {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} />}
                     {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                     {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} />}
+                    {testType === 'routine' && <RoutineForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                 </CardContent>
             </Card>
         </div>
@@ -1021,6 +1032,163 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
                     {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                </Button>
+            </div>
+        </form>
+    );
+};
+
+const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, watch, setValue, reset } = useForm({
+        defaultValues: initialData || {
+            psa: '',
+            psa_remark: '',
+            fbs: '',
+            rbs: '',
+            sugar_remark: '',
+            ua_result: '',
+            ua_remark: ''
+        }
+    });
+
+    useEffect(() => {
+        if (initialData) reset(initialData);
+    }, [initialData, reset]);
+
+    const fbs = watch('fbs');
+    const rbs = watch('rbs');
+
+    // Mutual exclusivity logic for FBS and RBS
+    useEffect(() => {
+        if (fbs && !isNaN(parseFloat(fbs)) && fbs !== 'Not Applicable' && rbs !== 'Not Applicable') {
+            setValue('rbs', 'Not Applicable');
+        }
+    }, [fbs, setValue, rbs]);
+
+    useEffect(() => {
+        if (rbs && !isNaN(parseFloat(rbs)) && rbs !== 'Not Applicable' && fbs !== 'Not Applicable') {
+            setValue('fbs', 'Not Applicable');
+        }
+    }, [rbs, setValue, fbs]);
+
+    const psa = watch('psa');
+    const psa_remark = watch('psa_remark');
+    // Bidirectional auto-set to Not Applicable for PSA Result/Remark
+    useEffect(() => {
+        if (psa === 'Not Applicable' && psa_remark !== 'Not Applicable') {
+            setValue('psa_remark', 'Not Applicable');
+        }
+    }, [psa, setValue]);
+
+    useEffect(() => {
+        if (psa_remark === 'Not Applicable' && psa !== 'Not Applicable') {
+            setValue('psa', 'Not Applicable');
+        }
+    }, [psa_remark, setValue]);
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>PSA Result <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('psa', v)} value={watch('psa')} required>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select PSA result..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Negative', 'Not Applicable', 'Positive'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>PSA Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('psa_remark', v)} value={watch('psa_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select PSA remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Not Applicable'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Glucose (FBS/RBS)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label>FBS (mg/dL) <span className="text-rose-500">*</span></Label>
+                        <Input {...register('fbs', { required: true })} placeholder="Enter value..." className="h-12 border-2 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>RBS (mg/dL) <span className="text-rose-500">*</span></Label>
+                        <Input {...register('rbs', { required: true })} placeholder="Enter value..." className="h-12 border-2 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>FBS/RBS Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('sugar_remark', v)} value={watch('sugar_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Maybe Abnormal'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Urine Analysis (U/A)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>U/A Result <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('ua_result', v)} value={watch('ua_result')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select U/A result..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['No Abnormality', 'Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>U/A Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('ua_remark', v)} value={watch('ua_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select U/A remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Maybe Abnormal'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-center sm:justify-end pt-8">
+                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>

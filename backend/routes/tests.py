@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify, send_file
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, RoutineResult
 from datetime import datetime
 from decorators import require_permission
+from sqlalchemy import func
 import pandas as pd
 from io import BytesIO
 import json
@@ -13,7 +14,8 @@ PERM_MAP = {
     'kft': 'lab_kft',
     'lipid': 'lab_lipid',
     'lft': 'lab_lft',
-    'special': 'lab_tests' # General fallback for special tests or use lab_ecg/etc if needed
+    'special': 'lab_tests',
+    'routine': 'lab_essential_diagnostics'
 }
 
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
@@ -25,7 +27,7 @@ def save_test_result(test_type):
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-        
+    
     perm_name = PERM_MAP.get(test_type, 'lab_tests')
     if not user.has_permission(perm_name) and user.username != 'admin':
         return jsonify({"error": f"Permission '{perm_name}' required"}), 403
@@ -43,7 +45,8 @@ def save_test_result(test_type):
         'kft': KFTResult,
         'lipid': LipidResult,
         'lft': LFTResult,
-        'special': SpecialTestsResult
+        'special': SpecialTestsResult,
+        'routine': RoutineResult
     }
     
     model_class = model_map.get(test_type)
@@ -51,10 +54,13 @@ def save_test_result(test_type):
         return jsonify({"error": "Invalid test type"}), 400
         
     # Check if record already exists for this year, update if so
-    record = model_class.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    record = model_class.query.filter(
+        func.lower(func.trim(model_class.staff_id)) == func.lower(func.trim(staff_id)),
+        model_class.screening_year == int(screening_year)
+    ).first()
     
     if not record:
-        record = model_class(staff_id=staff_id, screening_year=screening_year)
+        record = model_class(staff_id=staff_id, screening_year=int(screening_year))
         db.session.add(record)
         
     # Update fields while checking for state transitions for queue tracking
@@ -135,14 +141,18 @@ def get_test_result(test_type, staff_id):
         'kft': KFTResult,
         'lipid': LipidResult,
         'lft': LFTResult,
-        'special': SpecialTestsResult
+        'special': SpecialTestsResult,
+        'routine': RoutineResult
     }
     
     model_class = model_map.get(test_type)
     if not model_class:
         return jsonify({"error": "Invalid test type"}), 400
         
-    record = model_class.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    record = model_class.query.filter(
+        func.lower(func.trim(model_class.staff_id)) == func.lower(func.trim(staff_id)),
+        model_class.screening_year == int(screening_year)
+    ).first()
     
     if not record:
         return jsonify({"message": "No records found"}), 404

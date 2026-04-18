@@ -76,11 +76,20 @@ def save_director_review():
         review.first_submitted_at = datetime.now()
         db.session.add(review)
         
+    # Map form field names that differ from DirectorReview column names
+    field_mappings = {
+        'sugar_remark': 'fbs_rbs_remark',
+    }
+    
+    # Fields that should never be overwritten by form data
+    protected_fields = {'id', 'staff_id', 'screening_year', 'created_at', 'first_submitted_at', 'updated_at', 'consulted_by_name'}
+    
     # Update all provided fields
-    # Fields can come from consultation, special tests, etc., but we'll map them to the DirectorReview model
     for key, value in data.items():
-        if hasattr(review, key) and key not in ['id', 'staff_id', 'screening_year', 'created_at', 'first_submitted_at']:
-            setattr(review, key, value)
+        # Apply field name mapping if one exists
+        mapped_key = field_mappings.get(key, key)
+        if hasattr(review, mapped_key) and mapped_key not in protected_fields:
+            setattr(review, mapped_key, value)
             
     try:
         db.session.commit()

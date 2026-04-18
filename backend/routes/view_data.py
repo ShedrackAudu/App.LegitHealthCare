@@ -398,7 +398,12 @@ def get_screening_records(year):
             "comment_one": dr.comment_one,
             "comment_two": dr.comment_two,
             "comment_three": dr.comment_three,
-            "comment_four": dr.comment_four
+            "comment_four": dr.comment_four,
+            "lab_remark": dr.overall_lab_remark,
+            "assessment": dr.overall_assessment,
+            "hx_pe": dr.assessment_hx_pe,
+            "other_assessments": dr.other_assessments,
+            "other_remarks": dr.other_remarks
         }
             
         results.append(record)

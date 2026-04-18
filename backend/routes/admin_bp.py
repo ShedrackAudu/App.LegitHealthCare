@@ -456,15 +456,16 @@ def export_screening_matrix():
                 "PCV": "", "WBC": "", "HGB": "", "PLT": "", "RBC": "", 
                 "LYMP PCT": "", "LYMP ABS": "", "GRA PCT": "", "GRA ABS": "", 
                 "MID PCT": "", "MID ABS": "", "MCV": "", "MCH": "", "MCHC": "", 
-                "RDW": "", "PDW": "", "FBC Remark": "", "FBC Others": "",
+                "RDW": "", "PDW": "", "FBC Remark": "",
                 "Potassium": "", "Sodium": "", "Chloride": "", "Urea": "", 
-                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "", "KFT Others": "",
-                "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "", "Lipid Others": "",
-                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "", "LFT Others": "",
+                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "",
+                "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "",
+                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "",
                 "ECG": "", "ECG Remark": "", "Spirometry": "", "Spirometry Remark": "", 
                 "Audiometry": "", "Audiometry Remark": "", "Weight": "", "Height": "",
                 "Director Comm1": "", "Director Comm2": "", "Director Comm3": "", "Director Comm4": "", 
-                "Final Assessment": "", "Director Review Date": ""
+                "Director Hx/PE": "", "Director Lab Remark": "", "Director Other Assessments": "", "Director Other Remarks": "",
+                "Overall Assessment": "", "Director Review Date": ""
             }
             
             bio = BioData.query.filter_by(staff_id=yp.staff_id).first()
@@ -477,19 +478,19 @@ def export_screening_matrix():
                 
             f = FBCResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if f:
-                row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark, "FBC Others": f.other_remarks })
+                row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark })
                 
             k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if k:
-                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark, "KFT Others": k.other_remarks })
+                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
             li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if li:
-                row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark, "Lipid Others": li.other_remarks })
+                row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark })
                 
             lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if lf:
-                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark, "LFT Others": lf.other_remarks })
+                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark })
                 
             s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if s:
@@ -497,6 +498,7 @@ def export_screening_matrix():
                 
             dr = DirectorReview.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if dr:
+                # Director overrides for vitals/assessments if populated
                 overrides = {
                     "DM Status": dr.dm_status, "HTN Status": dr.htn_status, "BP": dr.bp, "Pulse": dr.pulse, 
                     "SPO2": dr.spo2, "HS": dr.hs_status, "LUTS": dr.luts, "Chronic Cough": dr.chronic_cough, 
@@ -506,15 +508,18 @@ def export_screening_matrix():
                     "Breast Remark": dr.breast_remark, "Abdomen": dr.abdomen, "PSA": dr.psa, 
                     "PSA Remark": dr.psa_remark, "FBS": dr.fbs, "RBS": dr.rbs, 
                     "Sugar Remark": dr.fbs_rbs_remark, "UA Result": dr.ua_result, 
-                    "UA Remark": dr.ua_remark, "Assessment HX PE": dr.assessment_hx_pe, 
-                    "Overall Lab Remark": dr.overall_lab_remark, "Other Assessments": dr.other_assessments, 
-                    "Other Remarks": dr.other_remarks
+                    "UA Remark": dr.ua_remark
                 }
                 for k_key, v_val in overrides.items():
                     if v_val:
                         row[k_key] = v_val
                         
-                row.update({ "Director Comm1": dr.comment_one, "Director Comm2": dr.comment_two, "Director Comm3": dr.comment_three, "Director Comm4": dr.comment_four, "Final Assessment": dr.overall_assessment, "Director Review Date": dr.created_at.strftime('%Y-%m-%d %H:%M') if dr.created_at else '' })
+                row.update({ 
+                    "Director Comm1": dr.comment_one, "Director Comm2": dr.comment_two, "Director Comm3": dr.comment_three, "Director Comm4": dr.comment_four, 
+                    "Director Hx/PE": dr.assessment_hx_pe, "Director Lab Remark": dr.overall_lab_remark, 
+                    "Director Other Assessments": dr.other_assessments, "Director Other Remarks": dr.other_remarks,
+                    "Overall Assessment": dr.overall_assessment, "Director Review Date": dr.created_at.strftime('%Y-%m-%d %H:%M') if dr.created_at else '' 
+                })
             
             data.append(row)
             
