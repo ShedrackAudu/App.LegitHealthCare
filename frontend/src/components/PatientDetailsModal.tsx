@@ -15,7 +15,7 @@ import {
     X
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion, AnimatePresence, Variants } from "framer-motion";
 import { useAppContext } from '@/context/AppContext';
 
 interface PatientDetailsModalProps {
@@ -32,7 +32,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
   const { branding } = useAppContext();
   if (!patient) return null;
 
-  const containerVariants = {
+  const containerVariants: Variants = {
     hidden: { opacity: 0, scale: 0.95, y: 20 },
     visible: { 
       opacity: 1, 
