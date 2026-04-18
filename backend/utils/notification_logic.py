@@ -78,9 +78,11 @@ def _trigger_report_ready_notification_sync(staff_id, screening_year, section):
         branding = AppBranding.query.first()
         logo_url = branding.logo_light if branding and branding.logo_light else None
         
-        app_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+        app_url = current_app.config.get('FRONTEND_URL', current_app.config.get('APP_URL', 'http://localhost:5173'))
         if logo_url and logo_url.startswith('/'):
-            logo_url = f"{app_url.rstrip('/')}{logo_url}"
+            # Logo is served by the backend, so use APP_URL for static assets
+            backend_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+            logo_url = f"{backend_url.rstrip('/')}{logo_url}"
 
         subject = f"Your {screening_year} Medical Report is Ready - Legit HealthCare"
         html_content = EmailService.get_report_ready_template(
@@ -136,10 +138,12 @@ def _trigger_registration_success_notification_sync(patient_email, patient_first
         clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
         logo_url = branding.logo_light if branding and branding.logo_light else None
         
-        # 2. Resolve URLs
-        app_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+        # 2. Resolve URLs — use FRONTEND_URL so links point to the frontend, not the backend
+        app_url = current_app.config.get('FRONTEND_URL', current_app.config.get('APP_URL', 'http://localhost:5173'))
         if logo_url and logo_url.startswith('/'):
-            logo_url = f"{app_url.rstrip('/')}{logo_url}"
+            # Logo is served by the backend, so use APP_URL for static assets
+            backend_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+            logo_url = f"{backend_url.rstrip('/')}{logo_url}"
 
         # 3. Prepare Content
         subject = f"Registration Successful: {screening_year} Medical Screening Program"
