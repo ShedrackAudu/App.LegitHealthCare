@@ -4,6 +4,7 @@ from datetime import datetime
 from sqlalchemy import func
 from decorators import require_permission
 from utils.ip import get_client_ip
+from utils.notification_logic import trigger_registration_success_notification
 
 registration_bp = Blueprint('registration', __name__)
 
@@ -157,6 +158,10 @@ def register_patient():
         )
         db.session.add(audit)
         db.session.commit()
+        
+        # Trigger background email notification (Zero latency for the user)
+        if patient.email and "@" in patient.email:
+            trigger_registration_success_notification(patient.email, patient.first_name, screening_year)
         
         return jsonify({"message": "Registration successful", "staff_id": staff_id}), 201
     except Exception as e:
