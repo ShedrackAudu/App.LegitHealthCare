@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Activity, 
   FileText, 
@@ -11,7 +11,10 @@ import {
   CheckCircle2,
   AlertCircle,
   User,
-  Building2
+  Building2,
+  Download,
+  Smartphone,
+  X
 } from 'lucide-react';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -32,6 +35,67 @@ const PatientDashboard = () => {
 
   const [profile, setProfile] = useState<any>(null);
   const [reportProgress, setReportProgress] = useState<any>(null);
+
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [isInstalled, setIsInstalled] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+
+  useEffect(() => {
+    // Check if already running as installed PWA
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setIsInstalled(true);
+      return;
+    }
+
+    // Check if the event was already captured by index.html
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
+
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    const handlePromptReady = () => {
+      if ((window as any).deferredPWAPrompt) {
+        setDeferredPrompt((window as any).deferredPWAPrompt);
+      }
+    };
+
+    // When app is successfully installed
+    const handleAppInstalled = () => {
+      setIsInstalled(true);
+      setDeferredPrompt(null);
+      (window as any).deferredPWAPrompt = null;
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+    window.addEventListener('appinstalled', handleAppInstalled);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setIsInstalled(true);
+        (window as any).deferredPWAPrompt = null;
+      }
+    } catch (err) {
+      console.error('PWA install failed:', err);
+    }
+  };
 
   useEffect(() => {
     const timer = setInterval(() => setCurrentTime(new Date()), 1000);
@@ -148,6 +212,56 @@ const PatientDashboard = () => {
              </div>
           </div>
         </div>
+
+        {/* PWA Install Banner — prominent on mobile, auto-hides after install */}
+        <AnimatePresence>
+          {deferredPrompt && !isInstalled && !dismissed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0, marginBottom: 0 }}
+              animate={{ opacity: 1, height: 'auto', marginBottom: 20 }}
+              exit={{ opacity: 0, height: 0, marginBottom: 0 }}
+              transition={{ duration: 0.4, ease: 'easeOut' }}
+            >
+              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-lg shadow-primary/5">
+                {/* Dismiss button */}
+                <button
+                  onClick={() => setDismissed(true)}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+
+                {/* Background decoration */}
+                <div className="absolute -right-6 -bottom-6 w-32 h-32 text-primary/[0.06] pointer-events-none">
+                  <Smartphone className="w-full h-full" />
+                </div>
+
+                <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Download className="h-5 w-5 text-primary" />
+                    </div>
+                    <div className="min-w-0">
+                      <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
+                      <p className="text-[11px] text-muted-foreground font-medium leading-snug">
+                        Get quick access to your health records directly from your home screen.
+                      </p>
+                    </div>
+                  </div>
+
+                  <Button
+                    onClick={handleInstallClick}
+                    className="w-full sm:w-auto h-10 sm:h-9 rounded-lg font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all shrink-0 gap-2"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Install Now
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Welcome Hero - Compact & Integrated Icon */}
         <motion.div 
