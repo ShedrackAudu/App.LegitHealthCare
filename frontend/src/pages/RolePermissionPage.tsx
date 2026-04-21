@@ -31,12 +31,8 @@ const RolePermissionPage: React.FC = () => {
     setLoading(true);
     try {
       const [rolesResp, permsResp] = await Promise.all([
-        axios.get('/api/admin/roles', {
-          headers: { 'X-User-ID': user?.id?.toString() }
-        }),
-        axios.get('/api/admin/permissions', {
-          headers: { 'X-User-ID': user?.id?.toString() }
-        })
+        axios.get('/api/admin/roles'),
+        axios.get('/api/admin/permissions')
       ]);
       setRoles(rolesResp.data);
       setPermissions(permsResp.data);
@@ -69,8 +65,6 @@ const RolePermissionPage: React.FC = () => {
     try {
       await axios.post(`/api/admin/roles/${role.id}/permissions`, {
         permissions: role.permissions
-      }, {
-        headers: { 'X-User-ID': user?.id?.toString() }
       });
       toast.success(`Permissions for ${role.name} updated.`);
       fetchData(); // Refresh to sync
@@ -88,8 +82,6 @@ const RolePermissionPage: React.FC = () => {
       await axios.post('/api/admin/roles', {
         name: newRoleName,
         description: newRoleDesc
-      }, {
-        headers: { 'X-User-ID': user?.id?.toString() }
       });
       toast.success("Role created successfully.");
       setNewRoleName('');
@@ -108,8 +100,7 @@ const RolePermissionPage: React.FC = () => {
 
     setDeleting(true);
     try {
-      const headers = { 'X-User-ID': user?.id?.toString() };
-      await axios.delete(`/api/admin/roles/${roleId}`, { headers });
+      await axios.delete(`/api/admin/roles/${roleId}`);
       toast.success(`Role '${roleName}' deleted successfully.`);
       setDeleteModal({ open: false, id: 0, name: '' });
       fetchData(); // Refresh list

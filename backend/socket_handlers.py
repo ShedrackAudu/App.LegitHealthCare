@@ -1,5 +1,6 @@
-from flask import request
-from flask_socketio import emit, join_room, leave_room
+from flask import request, session
+from flask_socketio import emit, join_room, leave_room, disconnect
+from flask_jwt_extended import decode_token
 from models import db, User, ChatMessage, ChatGroupMember, ChatGroup
 from datetime import datetime
 import json
@@ -10,13 +11,24 @@ connected_users = {}
 def init_socket_handlers(socketio):
     
     @socketio.on('connect')
-    def handle_connect():
-        user_id = request.args.get('user_id')
-        if not user_id:
+    def handle_connect(auth):
+        token = auth.get('token') if auth else None
+        if not token:
+            print("Socket connection rejected: No token provided")
+            return False # Reject connection
+            
+        try:
+            # Decode and verify the JWT
+            decoded_token = decode_token(token)
+            user_id = int(decoded_token['sub'])
+        except Exception as e:
+            print(f"Socket connection rejected: Invalid token - {e}")
             return False
             
-        user_id = int(user_id)
         sid = request.sid
+        
+        # Secure identity assignment (Phase 6)
+        session['user_id'] = user_id
         
         if user_id not in connected_users:
             connected_users[user_id] = set()
@@ -34,7 +46,7 @@ def init_socket_handlers(socketio):
         
         # Broadcast presence change
         emit('user_presence', {'user_id': user_id, 'status': 'online'}, broadcast=True)
-        print(f"User {user_id} connected with SID {sid} and joined room user_{user_id}")
+        print(f"User {user_id} securely connected with SID {sid}")
 
     @socketio.on('disconnect')
     def handle_disconnect():
@@ -64,14 +76,18 @@ def init_socket_handlers(socketio):
 
     @socketio.on('typing')
     def on_typing(data):
+        user_id = session.get('user_id')
+        if not user_id: return
+        
         room = data.get('chat_id')
-        user_id = data.get('user_id')
         status = data.get('status') # 'start' or 'stop'
         emit('typing_status', {'chat_id': room, 'user_id': user_id, 'status': status}, to=room, include_self=False)
 
     @socketio.on('send_message')
     def on_send_message(data):
-        sender_id = int(data.get('sender_id'))
+        sender_id = session.get('user_id')
+        if not sender_id: return
+        
         chat_id = data.get('chat_id') # d_5 or group_1
         content = data.get('content')
         msg_type = data.get('message_type', 'text')
@@ -109,9 +125,11 @@ def init_socket_handlers(socketio):
 
     @socketio.on('react_message')
     def on_react(data):
+        user_id = session.get('user_id')
+        if not user_id: return
+        
         msg_id = data.get('message_id')
         emoji = data.get('emoji')
-        user_id = int(data.get('user_id'))
         chat_id = data.get('chat_id')
         
         msg = ChatMessage.query.get(msg_id)
@@ -139,7 +157,9 @@ def init_socket_handlers(socketio):
 
     @socketio.on('mark_read')
     def on_read(data):
-        user_id = int(data.get('user_id'))
+        user_id = session.get('user_id')
+        if not user_id: return
+        
         chat_id = data.get('chat_id')
         
         if chat_id.startswith('dm_'):

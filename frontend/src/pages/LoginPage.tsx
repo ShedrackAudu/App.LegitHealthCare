@@ -90,6 +90,10 @@ const LoginPage = () => {
       
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
+      if (response.data.token) {
+        localStorage.setItem('token', response.data.token);
+        axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
+      }
       
       if (response.data.user.must_reset_password) {
           navigate('/force-password-reset');
@@ -122,6 +126,10 @@ const LoginPage = () => {
         
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
+        if (resp.data.token) {
+          localStorage.setItem('token', resp.data.token);
+          axios.defaults.headers.common['Authorization'] = `Bearer ${resp.data.token}`;
+        }
         toast.success("Login successful!");
 
         if (resp.data.user.must_reset_password) {

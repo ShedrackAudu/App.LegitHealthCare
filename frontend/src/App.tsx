@@ -33,6 +33,8 @@ import PatientDashboard from './pages/PatientDashboard';
 import PatientMedicalReport from './pages/PatientMedicalReport';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import PatientManage2FAPage from './pages/PatientManage2FAPage';
+import SecurityDashboard from './pages/SecurityDashboard';
+import OfflinePage from './pages/OfflinePage';
 
 import { Toaster } from 'react-hot-toast';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -94,7 +96,9 @@ function RootApp() {
             <Route path="/audit-logs" element={<ProtectedRoute requiredPermission="view_audit_logs"><AuditLogPage /></ProtectedRoute>} />
             <Route path="/data-management" element={<ProtectedRoute requiredPermission="download_data"><DataManagementPage /></ProtectedRoute>} />
             <Route path="/admin/access-keys" element={<ProtectedRoute requiredPermission="manage_access_keys"><AccessKeysPage /></ProtectedRoute>} />
+            <Route path="/security-analytics" element={<ProtectedRoute requiredPermission="manage_roles"><SecurityDashboard /></ProtectedRoute>} />
             <Route path="/access-denied" element={<AccessDeniedPage />} />
+            <Route path="/offline" element={<OfflinePage />} />
             <Route path="/messages" element={<ProtectedRoute requiredPermission="messaging"><MessagingPage /></ProtectedRoute>} />
           </Routes>
         </Router>

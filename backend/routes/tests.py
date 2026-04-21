@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData
 from datetime import datetime
 from decorators import require_permission
@@ -19,8 +20,9 @@ PERM_MAP = {
 }
 
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
+@jwt_required()
 def save_test_result(test_type):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -118,8 +120,9 @@ def save_test_result(test_type):
         return jsonify({"error": str(e)}), 500
 
 @tests_bp.route('/get-test/<test_type>/<staff_id>', methods=['GET'])
+@jwt_required()
 def get_test_result(test_type, staff_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -186,8 +189,9 @@ def download_template(test_type):
     )
 
 @tests_bp.route('/bulk-upload/<test_type>', methods=['POST'])
+@jwt_required()
 def bulk_upload(test_type):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id: return jsonify({"error": "Unauthorized"}), 401
     user = User.query.get(user_id)
     

@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, g
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, AuditLog
 from datetime import datetime
 from sqlalchemy import func
@@ -150,7 +151,7 @@ def register_patient():
 
         # Create Audit Log
         audit = AuditLog(
-            user_id=request.headers.get('X-User-ID'),
+            user_id=get_jwt_identity(),
             action='Register Patient',
             resource=f"Patient:{staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} registered for year {screening_year}.",

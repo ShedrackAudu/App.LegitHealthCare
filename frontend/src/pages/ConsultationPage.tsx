@@ -365,8 +365,7 @@ const ConsultationPage: React.FC = () => {
         screening_year: activeYear
       }, {
         headers: {
-          'X-Company-Context': activeSection,
-          'X-User-ID': localStorage.getItem('user') ? JSON.parse(localStorage.getItem('user')!).id : undefined
+          'X-Company-Context': activeSection
         }
       });
       toast.success("Consultation records saved!");

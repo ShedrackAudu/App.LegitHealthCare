@@ -1,12 +1,14 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User
 from auth_utils import is_password_strong
 
 account_bp = Blueprint('account', __name__)
 
 @account_bp.route('/profile', methods=['PUT'])
+@jwt_required()
 def update_profile():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
@@ -24,8 +26,9 @@ def update_profile():
     return jsonify({"message": "Profile updated successfully", "user": user.to_dict()})
 
 @account_bp.route('/password', methods=['PUT'])
+@jwt_required()
 def update_password():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -49,8 +52,9 @@ def update_password():
     return jsonify({"message": "Password updated successfully"})
 
 @account_bp.route('/force-reset-password', methods=['POST'])
+@jwt_required()
 def force_reset_password():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     

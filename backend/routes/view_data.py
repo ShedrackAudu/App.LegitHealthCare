@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 from models import (
     db, BioData, ScreeningYearBioData, ConsultationData,
@@ -42,73 +43,60 @@ def get_user_profile(user_id):
 ])
 def search_patients():
     query = request.args.get('q', '')
-    print(f"DEBUG: Search query received: '{query}'")
-    if len(query) < 1: return jsonify([]), 200
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    year = request.args.get('year')
+    
+    if len(query) < 1: 
+        return jsonify({"results": [], "total": 0, "pages": 0}), 200
     
     search = f"%{query}%"
     
-    results_map = {} # Keyed by staff_id for merging
+    # 1. Base Query with Filtering
+    base_query = BioData.query.filter(
+        (BioData.staff_id.ilike(search)) |
+        (BioData.first_name.ilike(search)) |
+        (BioData.middle_name.ilike(search)) |
+        (BioData.last_name.ilike(search)) |
+        (BioData.department.ilike(search)) |
+        (BioData.phone.ilike(search)) |
+        (BioData.email.ilike(search))
+    ).order_by(BioData.created_at.desc())
+
+    # 2. Paginate
+    pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
     
-    def process_record(data):
-        s_id = data.get('staff_id')
-        if not s_id: return
-        
-        # Clean up data (especially dob)
-        if data.get('dob') and hasattr(data['dob'], 'isoformat'):
-            data['dob'] = data['dob'].isoformat()
-            
-        if s_id not in results_map:
-            results_map[s_id] = data
+    final_results = []
+    for p in pagination.items:
+        # Get yearly patient ID
+        if year:
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                staff_id=p.staff_id, 
+                screening_year=int(year)
+            ).first()
         else:
-            # Merge: fill in missing fields in existing with values from data
-            existing = results_map[s_id]
-            for k, v in data.items():
-                # If existing field is missing/empty and new field has value, fill it
-                if v and not existing.get(k):
-                    existing[k] = v
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                staff_id=p.staff_id
+            ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+            
+        p_id = yearly_record.patient_id if yearly_record else None
 
-    # 1. Start with global BioData search
-    try:
-        patients_global = BioData.query.filter(
-            (BioData.staff_id.ilike(search)) |
-            (BioData.first_name.ilike(search)) |
-            (BioData.last_name.ilike(search))
-        ).limit(20).all()
-        
-        for p in patients_global:
-            # NEW: Pull patient_id from the specific screening record if year is provided,
-            # otherwise fall back to most recent (for generic lookup/compatibility)
-            year = request.args.get('year')
-            if year:
-                yearly_record = ScreeningYearBioData.query.filter_by(
-                    staff_id=p.staff_id, 
-                    screening_year=int(year)
-                ).first()
-            else:
-                yearly_record = ScreeningYearBioData.query.filter_by(
-                    staff_id=p.staff_id
-                ).order_by(ScreeningYearBioData.screening_year.desc()).first()
-                
-            p_id = yearly_record.patient_id if yearly_record else None
+        final_results.append({
+            "staff_id": p.staff_id, "patient_id": p_id, "first_name": p.first_name, 
+            "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
+            "gender": p.gender, "dob": p.dob.isoformat() if p.dob else None, 
+            "age": p.age, "phone": p.phone, "email": p.email,
+            "race": p.race, "nationality": p.nationality
+        })
 
-            p_dict = {
-                "staff_id": p.staff_id, "patient_id": p_id, "first_name": p.first_name, 
-                "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
-                "gender": p.gender, "dob": p.dob, "age": p.age, "phone": p.phone, "email": p.email,
-                "race": p.race, "nationality": p.nationality
-            }
-            process_record(p_dict)
-    except Exception as e:
-        print(f"Global search error: {e}")
-
-    # REMOVED: Sectional search over ['dcp', 'dct'] to enforce isolation.
-    # The routed BioData.query above already searches the correct sectional database.
-
-    # Convert map back to list and limit to 10
-    final_results = list(results_map.values())[:10]
-    
-    # Final cleanup: calculate age if missing but dob exists (optional enhancement)
-    return jsonify(final_results), 200
+    return jsonify({
+        "results": final_results,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "has_next": pagination.has_next,
+        "has_prev": pagination.has_prev
+    }), 200
 
 def get_bind():
     context = request.headers.get('X-Company-Context', '').lower()
@@ -120,25 +108,38 @@ def get_all_patients():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
-    patients = BioData.query.order_by(BioData.created_at.desc()).all()
-    return jsonify([{
-        "staff_id": p.staff_id,
-        "first_name": p.first_name,
-        "middle_name": p.middle_name,
-        "last_name": p.last_name,
-        "department": p.department,
-        "gender": p.gender,
-        "dob": p.dob.isoformat() if p.dob else None,
-        "age": p.age,
-        "phone": p.phone,
-        "email": p.email,
-        "race": p.race,
-        "nationality": p.nationality
-    } for p in patients]), 200
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    pagination = BioData.query.order_by(BioData.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return jsonify({
+        "results": [{
+            "staff_id": p.staff_id,
+            "first_name": p.first_name,
+            "middle_name": p.middle_name,
+            "last_name": p.last_name,
+            "department": p.department,
+            "gender": p.gender,
+            "dob": p.dob.isoformat() if p.dob else None,
+            "age": p.age,
+            "phone": p.phone,
+            "email": p.email,
+            "race": p.race,
+            "nationality": p.nationality
+        } for p in pagination.items],
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "has_next": pagination.has_next,
+        "has_prev": pagination.has_prev
+    }), 200
 
-@view_data_bp.route('/patients/<staff_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
 def handle_patient(staff_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     from models import StaffUser
     user = StaffUser.query.get(user_id)
     if not user:
@@ -174,7 +175,7 @@ def handle_patient(staff_id):
 
         # Audit Log
         audit = AuditLog(
-            user_id=request.headers.get('X-User-ID'),
+            user_id=get_jwt_identity(),
             action='Delete Patient (Full)',
             resource=f"Patient:{clean_staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} and all data deleted.",
@@ -277,7 +278,7 @@ def handle_patient(staff_id):
         # Audit Log
         try:
             audit = AuditLog(
-                user_id=request.headers.get('X-User-ID'),
+                user_id=get_jwt_identity(),
                 action='Update Patient Profile',
                 resource=f"Patient:{patient.staff_id}",
                 details=f"Updated profile for {patient.first_name} {patient.last_name}.",
@@ -446,7 +447,7 @@ def delete_screening_record(id):
     
     # Audit Log for Deletion
     audit = AuditLog(
-        user_id=request.headers.get('X-User-ID'),
+        user_id=get_jwt_identity(),
         action='Delete Screening Record',
         resource=f"Patient:{staff_id}:Year:{year}",
         details=f"Screening record for year {year} and all associated diagnostics removed.",
@@ -456,10 +457,10 @@ def delete_screening_record(id):
     db.session.commit()
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
-@view_data_bp.route('/patient-report/<staff_id>/<int:year>', methods=['GET'])
+@jwt_required()
 def get_patient_report(staff_id, year):
     # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Authentication required"}), 401
 
@@ -690,10 +691,10 @@ def get_dashboard_stats():
         },
         "clinical_counts": clinical_counts
     }), 200
-@view_data_bp.route('/patient/report-progress', methods=['GET'])
+@jwt_required()
 def get_report_progress():
     try:
-        staff_id = request.headers.get('X-Staff-ID')
+        staff_id = get_jwt_identity()
         year_param = request.args.get('year')
         
         if not staff_id:

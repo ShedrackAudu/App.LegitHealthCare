@@ -60,10 +60,13 @@ def generate_totp_secret():
 def get_totp_uri(secret, username):
     return pyotp.totp.TOTP(secret).provisioning_uri(name=username, issuer_name="Legit HealthCare")
 
+from flask_jwt_extended import jwt_required, get_jwt_identity
+
 def login_required(f):
     @wraps(f)
+    @jwt_required()
     def decorated_function(*args, **kwargs):
-        user_id = request.headers.get('X-User-ID')
+        user_id = get_jwt_identity()
         if not user_id:
             return jsonify({"error": "Authentication required"}), 401
         
@@ -80,8 +83,9 @@ def login_required(f):
 def role_required(role_name):
     def decorator(f):
         @wraps(f)
+        @jwt_required()
         def decorated_function(*args, **kwargs):
-            user_id = request.headers.get('X-User-ID')
+            user_id = get_jwt_identity()
             if not user_id:
                 return jsonify({"error": "Authentication required"}), 401
             

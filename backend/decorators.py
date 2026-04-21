@@ -1,12 +1,14 @@
 from functools import wraps
 from flask import request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import User
 
 def require_permission(permission_name):
     def decorator(f):
         @wraps(f)
+        @jwt_required()
         def decorated_function(*args, **kwargs):
-            user_id = request.headers.get('X-User-ID')
+            user_id = get_jwt_identity()
             if not user_id:
                 return jsonify({"error": "Authentication required"}), 401
             

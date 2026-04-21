@@ -56,9 +56,7 @@ const ManageAccountPage = () => {
 
     const fetchContacts = async () => {
         try {
-            const resp = await axios.get('/api/account/contacts', {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.get('/api/account/contacts');
             setContacts(resp.data);
         } catch (err) {
             console.error("Failed to fetch contacts", err);
@@ -73,7 +71,7 @@ const ManageAccountPage = () => {
                 last_name: lastName,
                 phone,
                 email
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
             
             toast.success(resp.data.message || 'Profile updated successfully!');
             setUser({ ...user, first_name: firstName, last_name: lastName, phone, email });
@@ -107,7 +105,7 @@ const ManageAccountPage = () => {
             const resp = await axios.put(`/api/account/password`, {
                 current_password: currentPassword,
                 new_password: newPassword
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
 
             toast.success(resp.data.message || 'Password updated successfully!');
             setCurrentPassword('');
@@ -126,7 +124,7 @@ const ManageAccountPage = () => {
                 label: newLabel,
                 value: newValue,
                 contact_type: newValue.includes('http') ? 'link' : (newValue.includes('@') ? 'email' : 'phone')
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
             
             setContacts([...contacts, resp.data]);
             setNewLabel('');
@@ -139,9 +137,7 @@ const ManageAccountPage = () => {
 
     const handleDeleteContact = async (id: number) => {
         try {
-            await axios.delete(`/api/account/contacts/${id}`, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            await axios.delete(`/api/account/contacts/${id}`);
             setContacts(contacts.filter(c => c.id !== id));
             toast.success("Contact removed.");
         } catch (err) {

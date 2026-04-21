@@ -37,8 +37,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const [user, setUser] = useState<any | null>(() => {
     const saved = localStorage.getItem('user');
+    const token = localStorage.getItem('token');
     const u = saved ? JSON.parse(saved) : null;
-    if (u) axios.defaults.headers.common['X-User-ID'] = u.id;
+    if (u && token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
     return u;
   });
 
@@ -55,11 +58,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     if (user) {
+      const token = localStorage.getItem('token');
       localStorage.setItem('user', JSON.stringify(user));
       
       const newSocket = io(API_BASE_URL, {
+        auth: { token: token },
         query: { user_id: user.id }
       });
+      // ... rest of socket logic
       
       setSocket(newSocket);
       
@@ -92,16 +98,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       // Initial fetch for unread count
-      axios.get('/api/messages/conversations', {
-        headers: { 'X-User-ID': user.id }
-      }).then(resp => {
+      axios.get('/api/messages/conversations').then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
         setUnreadMessagesCount(total);
       }).catch(err => {});
 
       // Global Heartbeat to keep status 'Active now' in the DB while portal is open
       const hbInterval = setInterval(() => {
-          axios.post('/api/messages/heartbeat', {}, { headers: { 'X-User-ID': user.id } }).catch(() => {});
+          axios.post('/api/messages/heartbeat', {}).catch(() => {});
       }, 45000); // Every 45 seconds
 
       return () => {
@@ -214,12 +218,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   useEffect(() => {
     axios.defaults.headers.common['X-Company-Context'] = activeSection;
-    if (user) {
-      axios.defaults.headers.common['X-User-ID'] = user.id;
-    } else {
-      delete axios.defaults.headers.common['X-User-ID'];
-    }
-  }, [activeSection, user]);
+  }, [activeSection]);
 
   useEffect(() => {
     fetchBranding();

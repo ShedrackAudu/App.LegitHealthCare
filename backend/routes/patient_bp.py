@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, PatientPortalUser
 from auth_utils import generate_otp, is_password_strong
 import os
@@ -270,10 +271,11 @@ def verify_patient_otp():
     return jsonify({"error": "Invalid or expired OTP"}), 400
 
 @patient_bp.route('/api/patient/reports/years', methods=['GET'])
+@jwt_required()
 def get_report_years():
-    staff_id = request.headers.get('X-Staff-ID')
+    staff_id = get_jwt_identity()
     if not staff_id:
-        return jsonify({"error": "X-Staff-ID header required"}), 400
+        return jsonify({"error": "Unauthorized"}), 401
         
     clean_id = staff_id.strip()
     years_set = set()
@@ -301,10 +303,11 @@ def get_report_years():
     return jsonify(years), 200
 
 @patient_bp.route('/api/patient/profile', methods=['GET'])
+@jwt_required()
 def get_patient_profile():
-    staff_id = request.headers.get('X-Staff-ID')
+    staff_id = get_jwt_identity()
     if not staff_id:
-        return jsonify({"error": "X-Staff-ID header required"}), 400
+        return jsonify({"error": "Unauthorized"}), 401
         
     clean_id = staff_id.strip()
     contexts = ['dcp', 'dct']
@@ -346,10 +349,11 @@ def get_patient_profile():
     return jsonify({"error": "Patient profile not found in any clinical section."}), 404
     
 @patient_bp.route('/api/patient/profile', methods=['PUT'])
+@jwt_required()
 def update_patient_profile():
-    staff_id = request.headers.get('X-Staff-ID')
+    staff_id = get_jwt_identity()
     if not staff_id:
-        return jsonify({"error": "X-Staff-ID header required"}), 400
+        return jsonify({"error": "Unauthorized"}), 401
         
     data = request.json
     new_email = data.get('email')

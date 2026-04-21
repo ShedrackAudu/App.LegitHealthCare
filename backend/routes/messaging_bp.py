@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, User, ChatMessage, ChatGroup, ChatGroupMember
 from datetime import datetime, timedelta
 from decorators import require_permission
@@ -8,9 +9,9 @@ from socket_handlers import connected_users
 messaging_bp = Blueprint('messaging', __name__)
 
 @messaging_bp.route('/conversations', methods=['GET'])
-@require_permission('messaging')
+@jwt_required()
 def get_conversations():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -69,9 +70,9 @@ def get_conversations():
     return jsonify(conversations)
 
 @messaging_bp.route('/history/<conv_id>', methods=['GET'])
-@require_permission('messaging')
+@jwt_required()
 def get_history(conv_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
         
@@ -94,10 +95,10 @@ def get_history(conv_id):
     })
 
 @messaging_bp.route('/search-users', methods=['GET'])
-@require_permission('messaging')
+@jwt_required()
 def search_users():
     query = request.args.get('q', '')
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if user_id:
         user_id = int(user_id)
         
@@ -127,9 +128,9 @@ def search_users():
     return jsonify([user_with_status(u) for u in users])
 
 @messaging_bp.route('/groups', methods=['POST'])
-@require_permission('messaging')
+@jwt_required()
 def create_group():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     data = request.json
     name = data.get('name')
     member_ids = data.get('members', [])
@@ -155,9 +156,9 @@ def create_group():
     return jsonify(group.to_dict()), 201
 
 @messaging_bp.route('/conversations/<conv_id>', methods=['DELETE'])
-@require_permission('messaging')
+@jwt_required()
 def delete_conversation(conv_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -179,9 +180,9 @@ def delete_conversation(conv_id):
     return jsonify({"message": "Conversation history cleared successfully"})
 
 @messaging_bp.route('/groups/<int:group_id>', methods=['DELETE'])
-@require_permission('messaging')
+@jwt_required()
 def delete_group(group_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -207,9 +208,9 @@ def delete_group(group_id):
     return jsonify({"message": "Group chat permanently deleted"})
 
 @messaging_bp.route('/heartbeat', methods=['POST'])
-@require_permission('messaging')
+@jwt_required()
 def heartbeat():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if user_id:
         user = User.query.get(int(user_id))
         if user:
@@ -220,7 +221,7 @@ def heartbeat():
 # --- Group Management Features ---
 
 @messaging_bp.route('/groups/<int:group_id>/members', methods=['GET'])
-@require_permission('messaging')
+@jwt_required()
 def get_group_members(group_id):
     memberships = ChatGroupMember.query.filter_by(group_id=group_id).all()
     members_list = []
@@ -233,9 +234,9 @@ def get_group_members(group_id):
     return jsonify(members_list), 200
 
 @messaging_bp.route('/groups/<int:group_id>/members', methods=['POST'])
-@require_permission('messaging')
+@jwt_required()
 def add_group_members(group_id):
-    current_user_id = int(request.headers.get('X-User-ID'))
+    current_user_id = int(get_jwt_identity())
     data = request.json
     new_member_ids = data.get('members', [])
     
@@ -257,9 +258,9 @@ def add_group_members(group_id):
     return jsonify({"message": f"Added {added_count} members to the group"}), 200
 
 @messaging_bp.route('/groups/<int:group_id>/members/<int:remove_user_id>', methods=['DELETE'])
-@require_permission('messaging')
+@jwt_required()
 def remove_group_member(group_id, remove_user_id):
-    current_user_id = int(request.headers.get('X-User-ID'))
+    current_user_id = int(get_jwt_identity())
     
     # Check if current user is admin OR removing themselves
     admin_check = ChatGroupMember.query.filter_by(group_id=group_id, user_id=current_user_id, role='Admin').first()
@@ -284,9 +285,9 @@ def remove_group_member(group_id, remove_user_id):
 # --- Message Management Features ---
 
 @messaging_bp.route('/messages/<int:message_id>', methods=['DELETE'])
-@require_permission('messaging')
+@jwt_required()
 def delete_single_message(message_id):
-    current_user_id = int(request.headers.get('X-User-ID'))
+    current_user_id = int(get_jwt_identity())
     message = ChatMessage.query.get(message_id)
     
     if not message:

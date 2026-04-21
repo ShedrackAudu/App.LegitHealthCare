@@ -80,11 +80,10 @@ const AccessKeysPage = () => {
     const fetchData = async () => {
         setLoading(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
             const [usersRes, permsRes, codesRes] = await Promise.all([
-                axios.get('/api/admin/users', { headers }),
-                axios.get('/api/admin/permissions', { headers }),
-                axios.get('/api/admin/access-codes', { headers })
+                axios.get('/api/admin/users'),
+                axios.get('/api/admin/permissions'),
+                axios.get('/api/admin/access-codes')
             ]);
             setUsers(usersRes.data);
             setPermissions(permsRes.data);
@@ -109,13 +108,12 @@ const AccessKeysPage = () => {
 
         setGeneratingCode(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
             await axios.post('/api/admin/access-codes/generate', {
                 permission_name: targetPerm,
                 user_id: targetUser === 'all' ? null : targetUser,
                 duration_minutes: parseInt(targetDuration),
                 is_multi_use: isMultiUse
-            }, { headers });
+            });
 
             toast.success("Security Access Key generated successfully.");
             fetchData();
@@ -131,8 +129,7 @@ const AccessKeysPage = () => {
 
     const handleRevokeCode = async (id: number) => {
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.put(`/api/admin/access-codes/${id}/revoke`, {}, { headers });
+            await axios.put(`/api/admin/access-codes/${id}/revoke`, {});
             toast.success("Access Key successfully revoked.");
             fetchData();
         } catch (err: any) {
@@ -145,8 +142,7 @@ const AccessKeysPage = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.delete(`/api/admin/access-codes/${id}`, { headers });
+            await axios.delete(`/api/admin/access-codes/${id}`);
             toast.success("Access Key record deleted.");
             setDeleteModal({ open: false, id: 0 });
             fetchData();

@@ -1,11 +1,13 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, Notification
 
 notifications_bp = Blueprint('notifications', __name__)
 
 @notifications_bp.route('/', methods=['GET'])
+@jwt_required()
 def get_notifications():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
         
@@ -25,8 +27,9 @@ def get_notifications():
     })
 
 @notifications_bp.route('/<int:notif_id>/read', methods=['PUT'])
+@jwt_required()
 def mark_read(notif_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     notif = Notification.query.filter_by(id=notif_id, user_id=user_id).first()
     if not notif:
         return jsonify({"error": "Not found"}), 404
@@ -36,10 +39,22 @@ def mark_read(notif_id):
     return jsonify({"message": "Marked read", "notification": notif.to_dict()})
 
 @notifications_bp.route('/read-all', methods=['PUT'])
+@jwt_required()
 def mark_all_read():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id: return jsonify({"error": "Unauthorized"}), 401
     
     Notification.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
     db.session.commit()
     return jsonify({"message": "All marked read"})
+@notifications_bp.route('/delete-all', methods=['DELETE'])
+@jwt_required()
+def delete_all_notifications():
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"error": "Auth ID required"}), 401
+        
+    Notification.query.filter_by(user_id=user_id).delete()
+    db.session.commit()
+    
+    return jsonify({"message": "All notifications permanently deleted"})

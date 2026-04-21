@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import get_jwt_identity
 from models import (
     db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, 
     Notification, PatientPortalUser, BioData, ScreeningYearBioData, ConsultationData,
@@ -12,8 +13,60 @@ from datetime import datetime
 from utils.email_utils import EmailService
 from utils.ip import get_client_ip
 from auth_utils import is_password_strong
+from extensions import limiter
 
 admin_bp = Blueprint('admin_bp', __name__)
+
+@admin_bp.route('/api/admin/audit-analytics', methods=['GET'])
+@require_permission('manage_roles') # High-level admin permission
+def get_audit_analytics():
+    from sqlalchemy import func, desc
+    from datetime import datetime, timedelta
+
+    # 1. Timeline: Events per day for the last 30 days
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    timeline_query = db.session.query(
+        func.date(AuditLog.timestamp).label('date'),
+        func.count(AuditLog.id).label('count')
+    ).filter(AuditLog.timestamp >= thirty_days_ago)\
+     .group_by(func.date(AuditLog.timestamp))\
+     .order_by(func.date(AuditLog.timestamp)).all()
+
+    timeline = [{"date": str(row.date), "count": row.count} for row in timeline_query]
+
+    # 2. Action Breakdown: Top 10 actions
+    actions_query = db.session.query(
+        AuditLog.action,
+        func.count(AuditLog.id).label('count')
+    ).group_by(AuditLog.action)\
+     .order_by(desc('count')).limit(10).all()
+
+    action_breakdown = [{"action": row.action, "count": row.count} for row in actions_query]
+
+    # 3. Security Events: Focus on sensitive actions (Login, Delete, Permission Change, Failed Attempts)
+    critical_actions = ['LOGIN', 'SIGNUP_FAILED', '2FA_VERIFY_FAILED', 'DELETE_PATIENT', 'UPDATE_USER_ROLES']
+    security_query = db.session.query(
+        AuditLog.action,
+        func.count(AuditLog.id).label('count')
+    ).filter(AuditLog.action.in_(critical_actions))\
+     .group_by(AuditLog.action).all()
+    
+    security_stats = {row.action: row.count for row in security_query}
+
+    # 4. Failed Login Rate (Last 24h)
+    one_day_ago = datetime.now() - timedelta(hours=24)
+    failed_logins = AuditLog.query.filter(
+        AuditLog.timestamp >= one_day_ago,
+        AuditLog.action.ilike('%FAILED%')
+    ).count()
+
+    return jsonify({
+        "timeline": timeline,
+        "action_breakdown": action_breakdown,
+        "security_stats": security_stats,
+        "failed_logins_24h": failed_logins,
+        "total_logs": AuditLog.query.count()
+    })
 
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @require_permission(['view_users', 'manage_access_keys'])
@@ -72,7 +125,7 @@ def update_user_roles(user_id):
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="UPDATE_USER_ROLES",
@@ -85,7 +138,7 @@ def update_user_roles(user_id):
     
     # Real-time update: notify the specific user
     try:
-        from app import socketio
+        from extensions import socketio
         socketio.emit('user_update', user.to_dict(), room=f"user_{user.id}")
     except Exception as e:
         print(f"Socket emit for user role update failed: {e}")
@@ -114,7 +167,7 @@ def manage_roles():
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="CREATE_ROLE",
@@ -144,7 +197,7 @@ def delete_role(role_id):
     db.session.commit()
     
     # Log action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="DELETE_ROLE",
@@ -274,10 +327,11 @@ def request_access():
     return jsonify({"message": "Access request sent to hospital administration"}), 201
 
 @admin_bp.route('/api/admin/verify-access-code', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_access_code():
     data = request.json
     code_str = data.get('code')
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     
     code_obj = TempAccessCode.query.filter_by(code=code_str, is_revoked=False).first()
     
@@ -322,7 +376,7 @@ def verify_access_code():
     
     # Real-time notification to frontend
     try:
-        from app import socketio
+        from extensions import socketio
         socketio.emit('user_update', user.to_dict(), room=f"user_{user_id}")
     except Exception as e:
         print(f"Socket emit failed: {e}")
@@ -357,7 +411,7 @@ def update_role_permissions(role_id):
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="UPDATE_ROLE_PERMISSIONS",
@@ -370,7 +424,7 @@ def update_role_permissions(role_id):
     
     # Real-time update: notify all users with this role
     try:
-        from app import socketio
+        from extensions import socketio
         from models import User
         users = User.query.filter(User.roles.any(id=role.id)).all()
         for u in users:
@@ -596,7 +650,7 @@ def import_data():
         db.session.commit()
         
         # Log action
-        admin_id = request.headers.get('X-User-ID')
+        admin_id = get_jwt_identity()
         log = AuditLog(
             user_id=admin_id,
             action="IMPORT_BIO_DATA",
@@ -645,7 +699,7 @@ def generate_access_code():
     from datetime import timedelta
     expires = datetime.now() + timedelta(minutes=duration)
     
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     new_code = TempAccessCode(
         code=code_str,
@@ -685,7 +739,7 @@ def revoke_access_code(code_id):
     db.session.commit()
     
     # Log action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="REVOKE_ACCESS_CODE",
@@ -723,7 +777,7 @@ def delete_access_code(code_id):
 @admin_bp.route('/api/admin/users/<string:target_user_id>', methods=['DELETE'])
 @require_permission('manage_roles')
 def delete_user(target_user_id):
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     if target_user_id.startswith('p'):
         real_id = int(target_user_id[1:])
@@ -765,7 +819,7 @@ def delete_user(target_user_id):
 @admin_bp.route('/api/admin/users/<string:target_user_id>/reset-password', methods=['POST'])
 @require_permission('manage_roles')
 def admin_reset_password(target_user_id):
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     if target_user_id.startswith('p'):
         real_id = int(target_user_id[1:])
@@ -798,20 +852,10 @@ def admin_reset_password(target_user_id):
     
     return jsonify({"message": f"Password for user @{target_user.username} has been successfully reset."})
 
-@admin_bp.route('/api/notifications/delete-all', methods=['DELETE'])
-def delete_notifications():
-    user_id = request.headers.get('X-User-ID')
-    if not user_id:
-        return jsonify({"error": "Auth ID required"}), 401
-        
-    Notification.query.filter_by(user_id=user_id).delete()
-    db.session.commit()
-    
-    return jsonify({"message": "All notifications permanently deleted"})
 @admin_bp.route('/api/admin/audit-logs/clear', methods=['DELETE'])
 @require_permission('system_maintenance')
 def clear_audit_logs():
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     try:
         # Clear all existing logs
         AuditLog.query.delete()
@@ -840,7 +884,7 @@ def clear_audit_logs():
 @admin_bp.route('/api/admin/users', methods=['POST'])
 @require_permission('manage_roles')
 def create_user():
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     data = request.json
     
     first_name = data.get('first_name')

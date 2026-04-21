@@ -70,7 +70,6 @@ const DataManagementPage: React.FC = () => {
     try {
       const resp = await axios.post('/api/admin/import', formData, {
         headers: { 
-          'X-User-ID': user?.id?.toString(),
           'X-Company-Context': activeSection,
           'Content-Type': 'multipart/form-data'
         }

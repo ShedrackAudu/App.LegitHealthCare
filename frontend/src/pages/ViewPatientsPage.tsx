@@ -32,21 +32,40 @@ const ViewPatientsPage: React.FC = () => {
     const navigate = useNavigate();
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [perPage] = useState(10);
+    const [searchQuery, setSearchQuery] = useState('');
+    
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchPatients = async (query = '') => {
+    const fetchPatients = async (query = searchQuery, targetPage = page) => {
         setLoading(true);
         try {
             const url = query 
-                ? `/api/patients/all?q=${query}`
-                : '/api/patients/all';
+                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${perPage}`
+                : `/api/patients/all?page=${targetPage}&per_page=${perPage}`;
+            
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
             });
-            setPatients(response.data);
+
+            // Handle paginated response
+            if (response.data && response.data.results) {
+                setPatients(response.data.results);
+                setTotalPages(response.data.pages);
+                setTotalItems(response.data.total);
+                setPage(response.data.current_page);
+            } else {
+                // Fallback for old format
+                setPatients(Array.isArray(response.data) ? response.data : []);
+                setTotalPages(1);
+                setTotalItems(Array.isArray(response.data) ? response.data.length : 0);
+            }
         } catch (err) {
             console.error("Failed to fetch patients", err);
             toast.error("Failed to load directory");
@@ -56,7 +75,7 @@ const ViewPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchPatients();
+        fetchPatients(searchQuery, 1);
     }, [activeSection, activeYear, user]);
 
     const handlePatientClick = (patient: any) => {
@@ -98,20 +117,26 @@ const ViewPatientsPage: React.FC = () => {
                     
                     <PatientSearch
                         activeSection={activeSection}
-                        onSearch={fetchPatients}
-                        onSelect={(p) => fetchPatients(p.staff_id)}
+                        onSearch={(q) => {
+                            setSearchQuery(q);
+                            fetchPatients(q, 1);
+                        }}
+                        onSelect={(p) => {
+                            setSearchQuery(p.staff_id);
+                            fetchPatients(p.staff_id, 1);
+                        }}
                         searching={loading}
                         themeColor="emerald"
                         placeholder="Search Staff ID or Name..."
-                        initialValue=""
+                        initialValue={searchQuery}
                     />
                 </div>
 
                 <Card className="border-2 shadow-xl overflow-hidden bg-card">
                     <div className="bg-muted/30 border-b p-4 flex justify-between items-center">
                         <div className="flex gap-2">
-                            <Badge variant="outline" className="h-10 px-4 text-xs font-bold uppercase tracking-widest border-2">
-                                Total: {patients.length} Patients
+                             <Badge variant="outline" className="h-10 px-4 text-xs font-bold uppercase tracking-widest border-2">
+                                Total: {totalItems} Patients
                             </Badge>
                         </div>
                         <Button variant="outline" size="sm" className="font-bold gap-2" onClick={() => navigate('/registration')}>
@@ -222,6 +247,33 @@ const ViewPatientsPage: React.FC = () => {
                             </div>
                         )}
                     </CardContent>
+                    
+                    {/* Pagination Footer */}
+                    <div className="bg-muted/30 border-t p-4 flex items-center justify-between">
+                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            Page {page} of {totalPages}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={page <= 1 || loading}
+                                onClick={() => fetchPatients(searchQuery, page - 1)}
+                                className="font-bold border-2"
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={page >= totalPages || loading}
+                                onClick={() => fetchPatients(searchQuery, page + 1)}
+                                className="font-bold border-2"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </Card>
 
                 <ActionConfirmModal

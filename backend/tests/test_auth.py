@@ -9,7 +9,7 @@ def test_login_success(client, setup_user):
     data = json.loads(response.data)
     assert response.status_code == 200
     assert data['message'] == 'Login successful'
-    assert 'user' in data
+    assert 'token' in data
     assert data['user']['username'] == 'testuser'
 
 def test_login_failure(client, setup_user):

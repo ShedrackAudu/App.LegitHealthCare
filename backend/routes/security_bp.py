@@ -1,6 +1,8 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from models import db
 from auth_utils import generate_totp_secret, get_totp_uri
+from extensions import limiter
 import pyotp
 import json
 import random
@@ -9,9 +11,12 @@ import string
 security_bp = Blueprint('security', __name__)
 
 @security_bp.route('/generate', methods=['POST'])
+@jwt_required()
+@limiter.limit("5 per minute")
 def generate_2fa():
-    user_id = request.headers.get('X-User-ID')
-    portal = request.args.get('portal', 'staff') # Default to staff
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
     
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -33,11 +38,14 @@ def generate_2fa():
     return jsonify({"secret": secret, "uri": uri})
 
 @security_bp.route('/enable', methods=['POST'])
+@jwt_required()
+@limiter.limit("5 per minute")
 def enable_2fa():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
+    claims = get_jwt()
     data = request.json or {}
     code = data.get('code')
-    portal = data.get('portal', 'staff')
+    portal = claims.get('portal', 'staff')
     
     if not user_id or not code:
         return jsonify({"error": "Bad request"}), 400
@@ -61,11 +69,14 @@ def enable_2fa():
     return jsonify({"error": "Invalid code"}), 400
 
 @security_bp.route('/disable', methods=['POST'])
+@jwt_required()
+@limiter.limit("5 per minute")
 def disable_2fa():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
+    claims = get_jwt()
     data = request.json or {}
     code = data.get('code')
-    portal = data.get('portal', 'staff')
+    portal = claims.get('portal', 'staff')
     
     if not user_id or not code:
         return jsonify({"error": "Bad request"}), 400

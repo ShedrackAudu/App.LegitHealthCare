@@ -32,9 +32,7 @@ const Manage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`/api/2fa/generate`, {}, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/generate`, {});
             setQrUri(resp.data.uri);
             setSecret(resp.data.secret);
         } catch (err) {
@@ -50,9 +48,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/enable`, { code }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/enable`, { code });
             toast.success(resp.data.message || "2FA successfully enabled!");
             setBackupCodes(resp.data.backup_codes || []);
             setUser({ ...user, is_2fa_enabled: true });
@@ -68,9 +64,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode });
             toast.success(resp.data.message || "2FA has been disabled.");
             setUser({ ...user, is_2fa_enabled: false });
             localStorage.setItem('user', JSON.stringify({ ...user, is_2fa_enabled: false }));

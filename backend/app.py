@@ -1,41 +1,34 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
-import json
-from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
-from utils.ip import get_client_ip
-from routes.registration import registration_bp
-from routes.consultation import consultation_bp
-from routes.tests import tests_bp
-from routes.director import director_bp
-from routes.view_data import view_data_bp
-from routes.account_bp import account_bp
-from routes.security_bp import security_bp
-from routes.notifications_bp import notifications_bp
-from routes.branding_bp import branding_bp
-from routes.departments_bp import departments_bp
-from routes.queue_bp import queue_bp
-from routes.ai_bp import ai_bp
-from routes.messaging_bp import messaging_bp
-from routes.contacts_bp import contacts_bp
-from routes.admin_bp import admin_bp
-from routes.email_bp import email_bp
-from routes.config_bp import config_bp
-from routes.appointments import appointments_bp
-from routes.patient_bp import patient_bp
-from socket_handlers import init_socket_handlers
-from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 import os
+import json
 from dotenv import load_dotenv
+
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
+from extensions import mail, jwt, limiter, socketio
+from auth_utils import generate_otp, send_otp_email, is_password_strong
+from utils.ip import get_client_ip
 from setup_system import setup_system
+from socket_handlers import init_socket_handlers
 
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Extension Initialization
+limiter.init_app(app)
+
+# CORS Hardening (Phase 5)
+
+# CORS Hardening (Phase 5)
+frontend_url = os.getenv('FRONTEND_URL', '*')
+from flask_cors import CORS
+CORS(app, resources={r"/*": {"origins": frontend_url}})
+
+socketio.init_app(app, cors_allowed_origins=frontend_url)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -75,11 +68,61 @@ app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 db.init_app(app)
 bcrypt.init_app(app)
 mail.init_app(app)
+jwt.init_app(app)
+
+# JWT Error Handlers
+@jwt.unauthorized_loader
+def unauthorized_response(callback):
+    return jsonify({"error": "Unauthorized: Missing Authorization Header"}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_response(callback):
+    return jsonify({"error": "Security Alert: Invalid authentication token provided."}), 401
+
+@jwt.expired_token_loader
+def expired_token_response(jwt_header, jwt_payload):
+    return jsonify({"error": "Session Expired: Please log in again to continue."}), 401
+
+from flask_limiter import RateLimitExceeded
+@app.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    return jsonify({
+        "error": "Too many requests",
+        "message": "Security policy limit reached. Please wait a moment before trying again.",
+        "retry_after": e.description
+    }), 429
+def invalid_token_response(callback):
+    return jsonify({"error": "Invalid token"}), 401
+
+@jwt.expired_token_loader
+def expired_token_response(jwt_header, jwt_payload):
+    return jsonify({"error": "Token has expired"}), 401
 
 # Automated Schema Management
 from utils.migrations import ensure_schema
 with app.app_context():
     ensure_schema(app)
+
+# Import Blueprints (avoid circular imports by importing after extensions init)
+from routes.registration import registration_bp
+from routes.consultation import consultation_bp
+from routes.tests import tests_bp
+from routes.director import director_bp
+from routes.view_data import view_data_bp
+from routes.account_bp import account_bp
+from routes.security_bp import security_bp
+from routes.notifications_bp import notifications_bp
+from routes.branding_bp import branding_bp
+from routes.departments_bp import departments_bp
+from routes.queue_bp import queue_bp
+from routes.ai_bp import ai_bp
+from routes.messaging_bp import messaging_bp
+from routes.contacts_bp import contacts_bp
+from routes.admin_bp import admin_bp
+from routes.email_bp import email_bp
+from routes.config_bp import config_bp
+from routes.appointments import appointments_bp
+from routes.patient_bp import patient_bp
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)
@@ -144,6 +187,7 @@ def signup_status():
 
 @app.route('/signup', methods=['POST'])
 @cross_origin()
+@limiter.limit("3 per hour")
 def signup():
     data = request.json
     
@@ -210,6 +254,7 @@ def signup():
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
 @app.route('/verify-otp', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -232,6 +277,7 @@ def verify_otp():
     return jsonify({"error": "Invalid or expired OTP"}), 400
 
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     data = request.json
     identifier = (data.get('identity') or data.get('username') or '').strip()
@@ -289,15 +335,22 @@ def login():
             db.session.rollback()
             app.logger.error(f"Login audit failed for {identifier}: {e}")
         
+        # Generate Real JWT
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"portal": portal}
+        )
+        
         return jsonify({
             "message": "Login successful",
-            "token": "demo-token", 
+            "token": access_token, 
             "user": user.to_dict()
         }), 200
         
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
+@limiter.limit("3 per hour")
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
@@ -337,6 +390,7 @@ def forgot_password():
     }), 200
 
 @app.route('/forgot-password/verify', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_recovery_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -356,6 +410,7 @@ def verify_recovery_otp():
     return jsonify({"error": "Invalid or expired recovery code"}), 400
 
 @app.route('/forgot-password/reset', methods=['POST'])
+@limiter.limit("3 per hour")
 def reset_password():
     data = request.json
     user_id = data.get('user_id')
@@ -383,6 +438,7 @@ def reset_password():
     return jsonify({"error": "Auth session expired or invalid"}), 400
 
 @app.route('/login/2fa', methods=['POST'])
+@limiter.limit("5 per minute")
 def login_2fa():
     data = request.json
     user_id = data.get('user_id')
@@ -434,8 +490,15 @@ def login_2fa():
             db.session.rollback()
             app.logger.error(f"2FA Login audit failed for user {user.id}: {e}")
         
+        # Generate token
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"portal": portal}
+        )
+        
         return jsonify({
             "message": "Login successful",
+            "token": access_token,
             "user": user.to_dict()
         }), 200
         
@@ -476,4 +539,5 @@ with app.app_context():
         app.logger.error(f"Error initializing system: {e}")
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    socketio.run(app, debug=is_debug, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)

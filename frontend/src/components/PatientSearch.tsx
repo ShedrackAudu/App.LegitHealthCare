@@ -48,7 +48,9 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           const res = await axios.get(`/api/patients/search?q=${searchId}`, {
             headers: { 'X-Company-Context': activeSection }
           });
-          setSearchResults(res.data || []);
+          // Handle both old (list) and new (paginated) formats for safety
+          const results = res.data.results || (Array.isArray(res.data) ? res.data : []);
+          setSearchResults(results);
         } catch (err) {
           console.error("Patient search failed:", err);
         }

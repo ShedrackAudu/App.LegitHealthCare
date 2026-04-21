@@ -192,9 +192,7 @@ export default function MessagingPage() {
 
   const fetchConversations = async () => {
     try {
-      const resp = await axios.get('/api/messages/conversations', {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get('/api/messages/conversations');
       setConversations(resp.data);
     } catch (err) {
     }
@@ -202,9 +200,7 @@ export default function MessagingPage() {
 
   const fetchHistory = async (convId: string) => {
     try {
-      const resp = await axios.get(`/api/messages/history/${convId}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/history/${convId}`);
       setMessages(resp.data.messages);
     } catch (err) {
     }
@@ -213,9 +209,7 @@ export default function MessagingPage() {
   const fetchAvailableUsers = async () => {
     setLoadingUsers(true);
     try {
-      const resp = await axios.get('/api/messages/search-users', {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get('/api/messages/search-users');
       setAvailableUsers(resp.data);
     } catch (err) {
     } finally {
@@ -246,9 +240,7 @@ export default function MessagingPage() {
       return;
     }
     try {
-      const resp = await axios.get(`/api/messages/search-users?q=${val}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`);
       setSearchResults(resp.data);
     } catch (err) {
     }
@@ -261,9 +253,7 @@ export default function MessagingPage() {
       return;
     }
     try {
-      const resp = await axios.get(`/api/messages/search-users?q=${val}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`);
       setGroupSearchResults(resp.data);
     } catch (err) {
       setGroupSearchResults([]);
@@ -296,8 +286,6 @@ export default function MessagingPage() {
       const resp = await axios.post('/api/messages/groups', {
         name: groupName,
         members: selectedMembers
-      }, {
-        headers: { 'X-User-ID': user.id }
       });
       
       const newGroupConv = {
@@ -319,9 +307,7 @@ export default function MessagingPage() {
 
   const fetchGroupMembers = async (gid: string) => {
     try {
-      const resp = await axios.get(`/api/messages/groups/${gid}/members`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/groups/${gid}/members`);
       setGroupMembers(resp.data);
       const me = resp.data.find((m: any) => m.id === user.id);
       if (me) setGroupRole(me.role);
@@ -334,8 +320,6 @@ export default function MessagingPage() {
     try {
       await axios.post(`/api/messages/groups/${gid}/members`, {
         members: selectedMembers
-      }, {
-        headers: { 'X-User-ID': user.id }
       });
       toast.success("Members added to group");
       setIsAddingToGroup(false);
@@ -350,9 +334,7 @@ export default function MessagingPage() {
     if (!activeChat) return;
     const gid = activeChat.id.split('_')[1];
     try {
-      await axios.delete(`/api/messages/groups/${gid}/members/${targetUserId}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      await axios.delete(`/api/messages/groups/${gid}/members/${targetUserId}`);
       toast.success("Member removed");
       fetchGroupMembers(gid);
       if (targetUserId === user.id) {
@@ -366,9 +348,7 @@ export default function MessagingPage() {
 
   const deleteMessage = async (msgId: number) => {
     try {
-      await axios.delete(`/api/messages/messages/${msgId}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      await axios.delete(`/api/messages/messages/${msgId}`);
       setMessages(prev => prev.map(m => m.id === msgId ? { ...m, is_deleted: true, content: "This message was deleted" } : m));
       toast.success("Message deleted");
       setActiveActionsId(null);
@@ -446,9 +426,7 @@ export default function MessagingPage() {
     setIsDeleting(true);
 
     try {
-      await axios.delete(`/api/messages/conversations/${activeChat.id}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      await axios.delete(`/api/messages/conversations/${activeChat.id}`);
       setMessages([]);
       fetchConversations();
       setIsDeleteModalOpen(false);
@@ -466,9 +444,7 @@ export default function MessagingPage() {
     setIsDeleting(true);
     const gid = activeChat.id.split('_')[1];
     try {
-      await axios.delete(`/api/messages/groups/${gid}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      await axios.delete(`/api/messages/groups/${gid}`);
       toast.success("Group permanently deleted");
       setIsDeleteGroupModalOpen(false);
       setActiveChat(null);

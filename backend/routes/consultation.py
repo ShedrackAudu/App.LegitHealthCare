@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, ConsultationData, ScreeningYearBioData
 from sqlalchemy.orm import Session
 from decorators import require_permission
@@ -11,7 +12,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @consultation_bp.route('/screening/<int:year>/patient/<staff_id>', methods=['GET'])
-@require_permission('consultation')
+@jwt_required()
 def get_screening_patient(year, staff_id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid section context"}), 400
@@ -71,7 +72,7 @@ def get_screening_patient(year, staff_id):
     return jsonify(data), 200
 
 @consultation_bp.route('/consultation', methods=['POST'])
-@require_permission('consultation')
+@jwt_required()
 def save_consultation():
     data = request.json
     staff_id = data.get('staff_id')
@@ -103,8 +104,8 @@ def save_consultation():
         if field in data:
             setattr(consultation, field, data[field])
             
-    # Capture consulting doctor's name from headers
-    user_id = request.headers.get('X-User-ID')
+    # Capture consulting doctor's name from JWT identity
+    user_id = get_jwt_identity()
     
     if user_id and user_id != 'undefined' and user_id != 'null':
         try:
@@ -121,7 +122,7 @@ def save_consultation():
             import traceback
             traceback.print_exc(file=sys.stderr)
     else:
-        sys.stderr.write(f"[DEBUG] X-User-ID header is MISSING or INVALID\n")
+        sys.stderr.write(f"[DEBUG] JWT identity is MISSING or INVALID\n")
             
     # Remove from Consultation Queue
     from models import QueueEntry

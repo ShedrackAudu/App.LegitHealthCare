@@ -18,7 +18,8 @@ import {
   MessageSquare,
   Key,
   Settings2,
-  Calendar
+  Calendar,
+  Activity
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -52,6 +53,7 @@ const medicalItems: SidebarItem[] = [
 
 
 const adminItems: SidebarItem[] = [
+  { title: 'Security Center', path: '/security-analytics', icon: Activity, permission: 'manage_roles' },
   { title: 'User Management', path: '/user-management', icon: UserCog, permission: 'view_users' },
   { title: 'Role Configuration', path: '/roles-permissions', icon: ShieldCheck, permission: 'manage_roles' },
   { title: 'Audit Trails', path: '/audit-logs', icon: FileText, permission: 'view_audit_logs' },

@@ -33,9 +33,7 @@ const PatientManage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`/api/2fa/generate?portal=patient`, {}, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/generate?portal=patient`, {});
             setQrUri(resp.data.uri);
             setSecret(resp.data.secret);
         } catch (err) {
@@ -51,9 +49,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/enable`, { code, portal: 'patient' }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/enable`, { code, portal: 'patient' });
             toast.success(resp.data.message || "2FA successfully enabled!");
             setBackupCodes(resp.data.backup_codes || []);
             const updatedUser = { ...user, is_2fa_enabled: true };
@@ -70,9 +66,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' });
             toast.success(resp.data.message || "2FA has been disabled.");
             const updatedUser = { ...user, is_2fa_enabled: false };
             setUser(updatedUser);
