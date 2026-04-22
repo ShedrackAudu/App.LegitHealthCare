@@ -232,16 +232,16 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
       {/* Left Side: Branding & Visuals */}
-      <div className="hidden lg:flex relative overflow-hidden group">
+      <div className="hidden lg:flex relative overflow-hidden group h-full">
         {/* Background Image with Parallax-like effect */}
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
           style={{ 
             backgroundImage: branding?.auth_branding_image 
               ? `url(${(window as any).API_BASE_URL}${branding.auth_branding_image})` 
-              : `url('https://images.unsplash.com/photo-1576091160550-217359f4ecf8?q=80&w=2070&auto=format&fit=crop')` 
+              : `url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop')` 
           }}
         />
         
@@ -293,7 +293,7 @@ const LoginPage = () => {
       </div>
 
       {/* Right Side: Form */}
-      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative">
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative overflow-y-auto h-full scrollbar-hide">
         <div className="absolute top-8 right-8">
           <ModeToggle />
         </div>

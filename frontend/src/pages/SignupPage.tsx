@@ -253,9 +253,9 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
       {/* Left Side: Branding & Visuals (Consistent with Login) */}
-      <div className="hidden lg:flex relative overflow-hidden group">
+      <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
           style={{ 
@@ -309,7 +309,7 @@ const SignupPage: React.FC = () => {
       </div>
 
       {/* Right Side: Signup Form */}
-      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative overflow-y-auto">
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative overflow-y-auto h-full scrollbar-hide">
         <div className="absolute top-8 right-8">
           <ModeToggle />
         </div>
