@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion } from 'framer-motion';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 
@@ -68,7 +68,7 @@ const PatientClaimPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('/api/patient/claim', {
+      const resp = await api.post('/api/patient/claim', {
         ...formData
       });
       toast.success(resp.data.message);

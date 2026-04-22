@@ -4,7 +4,7 @@ import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
@@ -22,7 +22,7 @@ const PatientReportPage: React.FC = () => {
         if (!id) return;
         setSearching(true);
         try {
-            const pRes = await axios.get(`/api/patients/${id}`, {
+            const pRes = await api.get(`/api/patients/${id}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             if (pRes.data) handleSelectPatient(pRes.data);
@@ -37,7 +37,7 @@ const PatientReportPage: React.FC = () => {
         setLoading(true);
         setSelectedPatient(patient);
         try {
-            const res = await axios.get(`/api/patient-report/${patient.staff_id}/${activeYear}`, {
+            const res = await api.get(`/api/patient-report/${patient.staff_id}/${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setReportData(res.data);
@@ -168,7 +168,7 @@ const PatientReportPage: React.FC = () => {
                 attachment_filename: getDownloadFilename()
             };
 
-            const res = await axios.post('/api/email/report', payloadData);
+            const res = await api.post('/api/email/report', payloadData);
             toast.success(res.data.message || 'Email sent successfully!', { id: 'emailSend' });
         } catch (err: any) {
             console.error('Email error:', err);

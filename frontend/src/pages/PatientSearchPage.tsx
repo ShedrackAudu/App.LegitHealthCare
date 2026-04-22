@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 
@@ -31,7 +31,7 @@ const PatientSearchPage = () => {
     setPatientData(null);
 
     try {
-      const response = await axios.get(`/api/patient/search?staff_id=${staffId.trim()}`);
+      const response = await api.get(`/api/patient/search?staff_id=${staffId.trim()}`);
       setPatientData(response.data.data);
       toast.success('Record found successfully!');
     } catch (err: any) {

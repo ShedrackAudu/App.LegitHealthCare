@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 
@@ -48,7 +48,7 @@ const PatientOTPPage = () => {
     
     setResending(true);
     try {
-      await axios.post('/api/patient/resend-otp', {
+      await api.post('/api/patient/resend-otp', {
         email,
         first_name: firstName
       });
@@ -71,7 +71,7 @@ const PatientOTPPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('/api/patient/verify-otp', {
+      const resp = await api.post('/api/patient/verify-otp', {
         ...patientData,
         ...claimData,
         otp

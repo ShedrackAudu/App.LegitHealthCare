@@ -203,7 +203,14 @@ def signup():
     if not is_password_strong(data.get('password')):
         return jsonify({"error": "Password must be at least 8 chars long with 1 UC, 1 LC, 1 digit, and 1 special symbol."}), 400
         
-    if User.query.filter_by(username=data['username']).first():
+    username = data.get('username', '').strip().lower()
+    
+    # Reject special characters except underscore
+    import re
+    if not re.match(r'^[a-z0-9_]+$', username):
+        return jsonify({"error": "Username can only contain lowercase letters, numbers, and underscores."}), 400
+
+    if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
         
     if User.query.filter_by(email=data['email']).first():
@@ -220,7 +227,7 @@ def signup():
     new_user = User(
         first_name=data['first_name'],
         last_name=data['last_name'],
-        username=data['username'],
+        username=username,
         phone=data['phone'],
         email=data['email']
     )

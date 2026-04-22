@@ -8,7 +8,7 @@ import { ShieldCheck, ShieldAlert, Check, Info, ArrowLeft, CheckCircle2, Loader2
 import { QRCodeSVG } from 'qrcode.react';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
 const PatientManage2FAPage = () => {
@@ -33,7 +33,7 @@ const PatientManage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`/api/2fa/generate?portal=patient`, {});
+            const resp = await api.post(`/api/2fa/generate?portal=patient`, {});
             setQrUri(resp.data.uri);
             setSecret(resp.data.secret);
         } catch (err) {
@@ -49,7 +49,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/enable`, { code, portal: 'patient' });
+            const resp = await api.post(`/api/2fa/enable`, { code, portal: 'patient' });
             toast.success(resp.data.message || "2FA successfully enabled!");
             setBackupCodes(resp.data.backup_codes || []);
             const updatedUser = { ...user, is_2fa_enabled: true };
@@ -66,7 +66,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' });
+            const resp = await api.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' });
             toast.success(resp.data.message || "2FA has been disabled.");
             const updatedUser = { ...user, is_2fa_enabled: false };
             setUser(updatedUser);

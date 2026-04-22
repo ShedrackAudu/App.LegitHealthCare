@@ -22,7 +22,7 @@ import {
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { useAppContext } from '@/context/AppContext';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
@@ -40,7 +40,7 @@ const PatientMedicalReport: React.FC = () => {
     useEffect(() => {
         const fetchYears = async () => {
             try {
-                const res = await axios.get('/api/patient/reports/years', {
+                const res = await api.get('/api/patient/reports/years', {
                     headers: { 'X-Staff-ID': user?.username }
                 });
                 setAvailableYears(res.data);
@@ -66,7 +66,7 @@ const PatientMedicalReport: React.FC = () => {
         setLoading(true);
         try {
             // First verify 100% progress for the selected year
-            const progressRes = await axios.get(`/api/patient/report-progress?year=${selectedYear}`, {
+            const progressRes = await api.get(`/api/patient/report-progress?year=${selectedYear}`, {
                 headers: { 'X-Staff-ID': user?.username }
             });
             
@@ -77,13 +77,13 @@ const PatientMedicalReport: React.FC = () => {
             }
 
             // Fetch profile to get section
-            const profileRes = await axios.get('/api/patient/profile', {
+            const profileRes = await api.get('/api/patient/profile', {
                 headers: { 'X-Staff-ID': user?.username }
             });
 
             const section = profileRes.data.section || 'DCP';
 
-            const res = await axios.get(`/api/patient-report/${user?.username}/${selectedYear}`, {
+            const res = await api.get(`/api/patient-report/${user?.username}/${selectedYear}`, {
                 headers: { 'X-Company-Context': section }
             });
 
@@ -207,7 +207,7 @@ const PatientMedicalReport: React.FC = () => {
                 origin: 'frontend'
             };
 
-            await axios.post('/api/email/report', payloadData);
+            await api.post('/api/email/report', payloadData);
             toast.success('Report successfully emailed to your address!', { id: 'emailSend' });
         } catch (err: any) {
             console.error('Email error:', err);

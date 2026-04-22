@@ -273,10 +273,27 @@ def verify_patient_otp():
 @patient_bp.route('/api/patient/reports/years', methods=['GET'])
 @jwt_required()
 def get_report_years():
-    staff_id = get_jwt_identity()
-    if not staff_id:
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
         return jsonify({"error": "Unauthorized"}), 401
         
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
+
     clean_id = staff_id.strip()
     years_set = set()
     contexts = ['dcp', 'dct']
@@ -305,10 +322,27 @@ def get_report_years():
 @patient_bp.route('/api/patient/profile', methods=['GET'])
 @jwt_required()
 def get_patient_profile():
-    staff_id = get_jwt_identity()
-    if not staff_id:
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
         return jsonify({"error": "Unauthorized"}), 401
         
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
+
     clean_id = staff_id.strip()
     contexts = ['dcp', 'dct']
     
@@ -351,9 +385,26 @@ def get_patient_profile():
 @patient_bp.route('/api/patient/profile', methods=['PUT'])
 @jwt_required()
 def update_patient_profile():
-    staff_id = get_jwt_identity()
-    if not staff_id:
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
         return jsonify({"error": "Unauthorized"}), 401
+        
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
         
     data = request.json
     new_email = data.get('email')

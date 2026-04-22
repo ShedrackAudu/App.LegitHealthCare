@@ -21,7 +21,7 @@ import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
 const PatientDashboard = () => {
@@ -108,7 +108,7 @@ const PatientDashboard = () => {
 
       // 1. Profile Fetch (Critical)
       try {
-        const profileRes = await axios.get('/api/patient/profile', {
+        const profileRes = await api.get('/api/patient/profile', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setProfile(profileRes.data);
@@ -118,7 +118,7 @@ const PatientDashboard = () => {
 
       // 2. Core Stats (Years/Reports)
       try {
-        const yearsRes = await axios.get('/api/patient/reports/years', {
+        const yearsRes = await api.get('/api/patient/reports/years', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setStats(prev => ({
@@ -132,7 +132,7 @@ const PatientDashboard = () => {
 
       // 3. Progress Tracking (Non-blocking)
       try {
-        const progressRes = await axios.get('/api/patient/report-progress', {
+        const progressRes = await api.get('/api/patient/report-progress', {
           headers: { 'X-Staff-ID': user?.username }
         });
         setReportProgress(progressRes.data);

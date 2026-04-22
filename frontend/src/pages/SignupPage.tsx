@@ -25,7 +25,9 @@ import { PasswordStrength } from '@/components/ui/PasswordStrength';
 const signupSchema = z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores'),
   phone: z.string().min(10, 'Invalid phone number'),
   email: z.string().email('Invalid email address'),
   password: z.string()

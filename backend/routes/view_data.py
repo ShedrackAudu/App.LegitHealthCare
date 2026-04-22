@@ -457,17 +457,23 @@ def delete_screening_record(id):
     db.session.commit()
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
+@view_data_bp.route('/patient-report/<string:staff_id>/<int:year>', methods=['GET'])
 @jwt_required()
 def get_patient_report(staff_id, year):
     # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
-    user_id = get_jwt_identity()
-    if not user_id:
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
         return jsonify({"error": "Authentication required"}), 401
 
     from models import StaffUser, PatientPortalUser
     
     is_authorized = False
     
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        user_id = -1
+        
     # 1. Check if Staff with permission
     requester_staff = StaffUser.query.get(user_id)
     if requester_staff:
@@ -691,12 +697,32 @@ def get_dashboard_stats():
         },
         "clinical_counts": clinical_counts
     }), 200
+@view_data_bp.route('/patient/report-progress', methods=['GET'])
 @jwt_required()
 def get_report_progress():
     try:
-        staff_id = get_jwt_identity()
+        user_id_str = get_jwt_identity()
         year_param = request.args.get('year')
         
+        if not user_id_str:
+            return jsonify({"error": "Auth required"}), 400
+            
+        staff_id = None
+        # Try fetching portal user first (since it's a patient endpoint mostly)
+        from models import PatientPortalUser, StaffUser
+        try:
+            user_id = int(user_id_str)
+            p_user = PatientPortalUser.query.get(user_id)
+            if p_user:
+                staff_id = p_user.username
+            else:
+                s_user = StaffUser.query.get(user_id)
+                if s_user:
+                    # if a staff is calling it but staff checking their own progress
+                    staff_id = request.args.get('staff_id') or s_user.username
+        except ValueError:
+            staff_id = user_id_str
+
         if not staff_id:
             return jsonify({"error": "Staff ID required"}), 400
         

@@ -23,7 +23,7 @@ import {
   DialogTitle, 
   DialogFooter 
 } from "@/components/ui/dialog";
-import axios from 'axios';
+import api from '@/lib/api';
 
 const PatientManageAccountPage = () => {
   const { user, setUser } = useAppContext();
@@ -55,7 +55,7 @@ const PatientManageAccountPage = () => {
   const fetchProfile = useCallback(async () => {
     if (!user?.username) return;
     try {
-      const response = await axios.get('/api/patient/profile', {
+      const response = await api.get('/api/patient/profile', {
         headers: { 'X-Staff-ID': user.username }
       });
       const p = response.data;
@@ -87,7 +87,7 @@ const PatientManageAccountPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await axios.put('/api/patient/profile', {
+      const response = await api.put('/api/patient/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
@@ -396,7 +396,7 @@ const PatientManageAccountPage = () => {
                           onClick={async () => {
                             setResetLoading(true);
                             try {
-                              await axios.post('/api/patient/reset-password/request', { email: formData.email });
+                              await api.post('/api/patient/reset-password/request', { email: formData.email });
                               toast.success("Code sent to your email!");
                               setResetStep(2);
                             } catch (err: any) {
@@ -429,7 +429,7 @@ const PatientManageAccountPage = () => {
 
                             setResetLoading(true);
                             try {
-                              await axios.post('/api/patient/reset-password/verify', { 
+                              await api.post('/api/patient/reset-password/verify', { 
                                 email: formData.email,
                                 otp: resetOtp,
                                 new_password: newPassword
