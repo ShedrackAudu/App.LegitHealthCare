@@ -47,11 +47,16 @@ const getPageTitle = (pathname: string, branding: any, brandingError: boolean) =
   if (pathname.includes('/system-config')) return 'System Settings';
   if (pathname.includes('/departments')) return 'Clinic Departments';
   if (pathname.includes('/appointments')) return 'Appointment Scheduler';
+  if (pathname.includes('/security-analytics')) return 'Security Command Center';
   
   return (branding?.clinic_name && !brandingError) ? branding.clinic_name : 'Legit HealthCare';
 };
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  manualTitle?: string;
+}
+
+export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
   const { 
     activeSection, setActiveSection, 
     activeYear, setActiveYear,
@@ -61,7 +66,7 @@ export const Header: React.FC = () => {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const pageTitle = getPageTitle(location.pathname, branding, brandingError);
+  const pageTitle = manualTitle || getPageTitle(location.pathname, branding, brandingError);
   
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
