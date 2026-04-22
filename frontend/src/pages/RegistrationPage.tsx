@@ -196,7 +196,7 @@ const RegistrationPage: React.FC = () => {
           const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
-          setSearchResults(res.data);
+          setSearchResults(res.data.results || []);
         } catch (err) {
           console.error(err);
         }

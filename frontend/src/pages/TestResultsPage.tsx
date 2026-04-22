@@ -140,7 +140,7 @@ const TestResultsPage: React.FC = () => {
                     const res = await axios.get(`/api/patients/search?q=${searchId}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
-                    setSearchResults(res.data);
+                    setSearchResults(res.data.results || []);
                 } catch (err) {
                     console.error(err);
                 }

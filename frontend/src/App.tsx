@@ -36,7 +36,7 @@ import PatientManage2FAPage from './pages/PatientManage2FAPage';
 import SecurityDashboard from './pages/SecurityDashboard';
 import OfflinePage from './pages/OfflinePage';
 
-import { Toaster } from 'react-hot-toast';
+import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 
 function RootApp() {
@@ -45,7 +45,7 @@ function RootApp() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AppProvider>
         <Router>
-          <Toaster position="top-right" reverseOrder={false} />
+          <CustomToaster />
           <Routes>
             <Route path="/" element={<LandingPage />} />
             <Route path="/signup" element={<SignupPage />} />
