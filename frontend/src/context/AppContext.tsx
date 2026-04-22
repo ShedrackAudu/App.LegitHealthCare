@@ -57,6 +57,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [activeYear]);
 
   useEffect(() => {
+    // Response interceptor to handle 401s globally
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Only clear and redirect if we thought we were logged in
+          if (localStorage.getItem('token')) {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            // Remove the Authorization header
+            delete axios.defaults.headers.common['Authorization'];
+            // Redirect to login if not already there
+            if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login?reason=session_expired';
+            }
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
     if (user) {
       const token = localStorage.getItem('token');
       localStorage.setItem('user', JSON.stringify(user));
@@ -65,24 +87,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         auth: { token: token },
         query: { user_id: user.id }
       });
-      // ... rest of socket logic
+      // ... socket logic continues
       
       setSocket(newSocket);
       
       newSocket.on('message_notification', () => {
           setUnreadMessagesCount(prev => prev + 1);
-          // Optional: sound or browser notification
-      });
-
-      newSocket.on('new_message', () => {
-        // If the user is on the messaging page but not in the specific chat, 
-        // we might need to update the conversation list.
-        // This is mostly handled in MessagingPage.tsx, but having a global listener
-        // for "new message in some chat" is good for the badge.
-      });
-
-      newSocket.on('user_presence', () => {
-        // This could trigger a refresh of certain states if needed
       });
 
       newSocket.on('user_update', (updatedUser) => {
@@ -101,20 +111,28 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       axios.get('/api/messages/conversations').then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
         setUnreadMessagesCount(total);
-      }).catch(err => {});
+      }).catch(err => {
+        // Interceptor will handle 401
+      });
 
-      // Global Heartbeat to keep status 'Active now' in the DB while portal is open
+      // Global Heartbeat
       const hbInterval = setInterval(() => {
           axios.post('/api/messages/heartbeat', {}).catch(() => {});
-      }, 45000); // Every 45 seconds
+      }, 45000);
 
       return () => {
         newSocket.close();
         clearInterval(hbInterval);
+        axios.interceptors.response.eject(interceptor);
       };
     } else {
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
       setSocket(null);
+      return () => {
+        axios.interceptors.response.eject(interceptor);
+      };
     }
   }, [user]);
 

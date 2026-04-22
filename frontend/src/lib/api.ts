@@ -14,7 +14,21 @@ const api = axios.create({
   baseURL: API_BASE_URL,
 });
 
-// Optional: Add interceptors for tokens if needed later
+// Response interceptor for global error handling
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      if (!window.location.pathname.includes('/login')) {
+        window.location.href = '/login?reason=session_expired';
+      }
+    }
+    return Promise.reject(error);
+  }
+);
+
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('token');
   if (token) {
