@@ -20,7 +20,7 @@ import {
   Pie, 
   Cell
 } from 'recharts';
-import axios from 'axios';
+import api from '@/lib/api';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -39,7 +39,7 @@ export default function SecurityDashboard() {
 
   const fetchAnalytics = async () => {
     try {
-      const response = await axios.get('/api/admin/audit-analytics');
+      const response = await api.get('/api/admin/audit-analytics');
       setData(response.data);
     } catch (error) {
       console.error('Failed to fetch security analytics:', error);

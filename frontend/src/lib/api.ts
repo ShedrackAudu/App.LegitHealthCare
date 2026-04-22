@@ -10,6 +10,12 @@ export const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:50
 // Configure global axios defaults
 axios.defaults.baseURL = API_BASE_URL;
 
+// Re-initialize token on reload for components still using global axios
+const token = localStorage.getItem('token');
+if (token) {
+  axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+}
+
 const api = axios.create({
   baseURL: API_BASE_URL,
 });
