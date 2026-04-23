@@ -564,10 +564,22 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <div className="flex flex-col items-center justify-center h-[50vh] bg-muted/20 border-2 border-dashed rounded-3xl opacity-50">
-                        <Activity className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
-                        <p className="text-xl font-bold text-muted-foreground">Search for a patient to begin review</p>
-                    </div>
+                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6">
+                        <div className="text-center space-y-3">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
+                                <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                            </div>
+                            <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
+                                Search for a patient to begin clinical review.
+                            </p>
+                            <div className="flex flex-col items-center gap-1 sm:gap-2">
+                                <div className="h-px w-8 bg-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
+                                    Context: {activeSection} Clinic • {activeYear}
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
                 ) : (
                     <ReviewContent 
                         patient={patient} 

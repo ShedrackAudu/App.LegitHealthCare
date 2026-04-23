@@ -172,8 +172,24 @@ const ViewPatientsPage: React.FC = () => {
                                     <TableBody>
                                         {patients.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={13} className="h-32 text-center text-muted-foreground italic">
-                                                    No patients found matching your search.
+                                                <TableCell colSpan={13} className="h-[28rem] border-0">
+                                                    <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+                                                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                                            <Users className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <h3 className="text-xl font-black tracking-tight text-foreground/70">Directory Empty</h3>
+                                                            <p className="text-sm text-muted-foreground font-medium italic max-w-xs mx-auto">
+                                                                No patients found matching your search. Try adjusting the Staff ID or searching by name.
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-col items-center gap-2 pt-4">
+                                                            <div className="h-px w-12 bg-muted-foreground/20" />
+                                                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                                                Context: {activeSection} Clinic • {activeYear}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ) : (

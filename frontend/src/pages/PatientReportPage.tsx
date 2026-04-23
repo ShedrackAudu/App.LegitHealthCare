@@ -3,6 +3,7 @@ import { FileText, Download, Mail, Loader2, X, Printer } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
+import { Card } from '@/components/ui/card';
 import { useAppContext } from '@/context/AppContext';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -582,18 +583,47 @@ const PatientReportPage: React.FC = () => {
                             </div>
                         </div>
                     ) : (
-                        <div className="flex flex-col items-center justify-center py-20 bg-muted/10 rounded-3xl border-2 border-dashed">
-                            <FileText className="h-16 w-16 text-muted-foreground opacity-20 mb-4" />
-                            <p className="text-muted-foreground font-bold">No diagnostic data found for this patient in {activeYear}</p>
-                        </div>
+                        <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6 no-print">
+                            <div className="text-center space-y-3">
+                                <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
+                                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                                </div>
+                                <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
+                                    No diagnostic data found for this patient in {activeYear}.
+                                </p>
+                                <div className="flex flex-col items-center gap-1 sm:gap-2">
+                                    <div className="h-px w-8 bg-muted-foreground/20" />
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
+                                        Context: {activeSection} Clinic • {activeYear}
+                                    </p>
+                                </div>
+                            </div>
+                        </Card>
                     )}
                 </div>
             )}
 
             {!selectedPatient && (
-                <div className="flex flex-col items-center justify-center py-20 opacity-20 text-foreground no-print">
-                    <FileText className="h-32 w-32 mb-4" />
-                    <h2 className="text-2xl font-black">Search a patient to view report</h2>
+                <div className="p-4 sm:p-6 no-print">
+                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[24rem] bg-muted/5 mt-8 p-6">
+                        <div className="text-center space-y-3">
+                            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
+                                <FileText className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
+                            </div>
+                            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground/70">
+                                Search a patient to view report
+                            </h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
+                                Use the search bar above to retrieve clinical results
+                            </p>
+                            <div className="flex flex-col items-center gap-2 pt-4">
+                                <div className="h-px w-12 bg-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                    Secure Medical Records System
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
                 </div>
             )}
         </MainLayout>

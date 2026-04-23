@@ -658,12 +658,23 @@ const UserTable: React.FC<{ users: User[], loading: boolean, handleAction: (acti
           </TableRow>
         ) : users.length === 0 ? (
           <TableRow>
-            <TableCell colSpan={5} className="h-64 text-center">
-              <div className="flex flex-col items-center gap-2">
-                <div className="w-16 h-16 rounded-full bg-muted flex items-center justify-center">
-                  <Search className="h-8 w-8 text-muted-foreground/40" />
+            <TableCell colSpan={5} className="h-96 border-0">
+              <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                  <Search className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                 </div>
-                <p className="text-muted-foreground font-medium italic">No personnel found matching your criteria.</p>
+                <div className="space-y-2">
+                  <h3 className="text-xl font-black tracking-tight text-foreground/70">No Personnel Found</h3>
+                  <p className="text-sm text-muted-foreground font-medium italic max-w-xs mx-auto">
+                    No users matching your criteria were found in the directory. Try searching by username or email.
+                  </p>
+                </div>
+                <div className="flex flex-col items-center gap-2 pt-4">
+                  <div className="h-px w-12 bg-muted-foreground/20" />
+                  <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                    Secure Directory Services
+                  </p>
+                </div>
               </div>
             </TableCell>
           </TableRow>

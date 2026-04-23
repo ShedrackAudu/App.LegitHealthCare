@@ -320,22 +320,28 @@ const PatientMedicalReport: React.FC = () => {
                     )}
 
                     {!reportData && !loading && (
-                        <div className="flex flex-col items-center justify-center py-10 md:py-20 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6">
+                        <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
                             {fetchingYears ? (
-                                <Loader2 className="h-8 w-8 animate-spin text-primary/30 mb-4" />
+                                <Loader2 className="h-10 w-10 animate-spin text-primary/30 mb-2" />
                             ) : (
-                                <div className="w-14 h-14 rounded-2xl bg-muted-foreground/5 flex items-center justify-center mb-5">
-                                    <FileText className="h-7 w-7 text-muted-foreground/20" />
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                    <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                 </div>
                             )}
                             <div className="space-y-2">
-                                <h3 className="text-sm md:text-lg font-black text-muted-foreground/40 uppercase tracking-[0.2em]">
+                                <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
                                     {fetchingYears ? "Accessing Archives" : "No Report Selected"}
                                 </h3>
-                                <p className="text-[10px] md:text-xs text-muted-foreground font-medium max-w-[240px] md:max-w-none leading-relaxed">
+                                <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
                                     {availableYears.length > 0
-                                        ? "Please select a screening session from the menu above to view results."
-                                        : "No historical medical screenings found in our database."}
+                                        ? "Please select a screening session from the menu above to view your comprehensive results."
+                                        : "No historical medical screenings found in our database for your account."}
+                                </p>
+                            </div>
+                            <div className="flex flex-col items-center gap-2 pt-6">
+                                <div className="h-px w-10 bg-muted-foreground/20" />
+                                <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                    Official Medical Archives • {user?.username}
                                 </p>
                             </div>
                         </div>
