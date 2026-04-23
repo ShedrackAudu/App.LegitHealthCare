@@ -47,6 +47,13 @@ const LoginPage = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fpUserId, setFpUserId] = useState<string | null>(null);
 
+  // Force Reset State
+  const [isForceReset, setIsForceReset] = useState(false);
+  const [forceResetData, setForceResetData] = useState<{ newPassword: string; confirmPassword: string }>({
+    newPassword: '',
+    confirmPassword: ''
+  });
+
   useEffect(() => {
     const portal = searchParams.get('portal');
     if (portal === 'patient') {
@@ -61,7 +68,9 @@ const LoginPage = () => {
     }
 
     if (user) {
-      if (user.roles?.includes('Patient')) {
+      if (user.must_reset_password) {
+        setIsForceReset(true);
+      } else if (user.roles?.includes('Patient')) {
         navigate('/patient/dashboard');
       } else {
         navigate('/dashboard');
@@ -88,18 +97,20 @@ const LoginPage = () => {
           return;
       }
       
-      setUser(response.data.user);
-      localStorage.setItem('user', JSON.stringify(response.data.user));
       if (response.data.token) {
         localStorage.setItem('token', response.data.token);
         axios.defaults.headers.common['Authorization'] = `Bearer ${response.data.token}`;
       }
-      
+
       if (response.data.user.must_reset_password) {
-          navigate('/force-password-reset');
+          setUser(response.data.user);
+          localStorage.setItem('user', JSON.stringify(response.data.user));
+          setIsForceReset(true);
           return;
       }
 
+      setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
       const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
@@ -108,6 +119,32 @@ const LoginPage = () => {
         } else {
             setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
         }
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleForceReset = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (forceResetData.newPassword !== forceResetData.confirmPassword) {
+      toast.error("Passwords do not match");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const response = await axios.post('/api/account/force-reset-password', {
+        new_password: forceResetData.newPassword
+      });
+
+      toast.success("Security hardening complete! Welcome aboard.");
+      setUser(response.data.user);
+      localStorage.setItem('user', JSON.stringify(response.data.user));
+      
+      const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+      navigate(target);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update password");
     } finally {
       setLoading(false);
     }
@@ -133,7 +170,7 @@ const LoginPage = () => {
         toast.success("Login successful!");
 
         if (resp.data.user.must_reset_password) {
-            navigate('/force-password-reset');
+            setIsForceReset(true);
             return;
         }
 
@@ -308,20 +345,71 @@ const LoginPage = () => {
                  )}
              </Link>
              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-               {isForgotPassword ? (
+               {isForceReset ? 'Security Update' : 
+                isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Password Reset' : 
                   forgotPasswordStep === 'verify' ? 'Verify Identity' : 'New Password'
                ) : 'Login'}
              </h1>
              <p className="text-muted-foreground font-medium">
-               {isForgotPassword ? (
+               {isForceReset ? 'Protect your account with a new password.' :
+                isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Enter your details to begin.' : 
                   forgotPasswordStep === 'verify' ? 'Check your email for the code.' : 'Set your new secure password.'
                ) : 'Log in to your account.'}
              </p>
           </div>
 
-          {!isForgotPassword ? (
+          {isForceReset ? (
+            <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+               <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 flex gap-3">
+                  <Lock className="h-5 w-5 text-primary shrink-0 mt-1" />
+                  <p className="text-[10px] text-primary/80 leading-relaxed font-bold uppercase tracking-wider">
+                     Hello {user?.first_name}, for your security, please replace your temporary password with a permanent one.
+                  </p>
+               </div>
+
+               <form onSubmit={handleForceReset} className="space-y-5">
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Permanent Password</Label>
+                    <div className="relative group">
+                      <Input 
+                          type="password" 
+                          placeholder="••••••••"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          value={forceResetData.newPassword}
+                          onChange={(e) => setForceResetData({ ...forceResetData, newPassword: e.target.value })}
+                          disabled={loading} 
+                      />
+                      <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    </div>
+                    <PasswordStrength password={forceResetData.newPassword} />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm Permanent Password</Label>
+                    <div className="relative group">
+                      <Input 
+                          type="password" 
+                          placeholder="••••••••"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          value={forceResetData.confirmPassword}
+                          onChange={(e) => setForceResetData({ ...forceResetData, confirmPassword: e.target.value })}
+                          disabled={loading} 
+                      />
+                      <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    </div>
+                    {forceResetData.confirmPassword && forceResetData.newPassword !== forceResetData.confirmPassword && (
+                      <p className="text-[10px] text-destructive font-black ml-1 uppercase animate-in fade-in">Passwords do not match</p>
+                    )}
+                  </div>
+
+                  <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Harden Account'}
+                  </Button>
+               </form>
+            </div>
+          ) : !isForgotPassword ? (
             <Tabs 
               value={activePortal} 
               onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 

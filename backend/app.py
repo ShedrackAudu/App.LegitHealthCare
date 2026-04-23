@@ -64,6 +64,7 @@ app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
 
 db.init_app(app)
 bcrypt.init_app(app)

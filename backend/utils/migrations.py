@@ -48,5 +48,43 @@ def ensure_schema(app):
                                 # SQLite might use a different syntax or not support naming, but Render/Postgres will work here
                                 app.logger.debug(f"Could not drop constraint {con_name} (might be SQLite): {e}")
 
+                # 3. Add must_reset_password to users and patient_users
+                table_cols_to_check = {
+                    'users': 'must_reset_password',
+                    'patient_users': 'must_reset_password'
+                }
+                
+                for table, col in table_cols_to_check.items():
+                    if table in inspector.get_table_names():
+                        columns = [c['name'] for c in inspector.get_columns(table)]
+                        if col not in columns:
+                            app.logger.info(f"Adding '{col}' column to {table} table in {name} database...")
+                            try:
+                                with engine.connect() as conn:
+                                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} BOOLEAN DEFAULT FALSE"))
+                                    conn.commit()
+                                app.logger.info(f"Successfully added '{col}' to {table} in {name}.")
+                            except Exception as e:
+                                app.logger.error(f"Failed to add '{col}' to {table}: {e}")
+
+                # 4. Add contact fields to app_branding
+                if 'app_branding' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('app_branding')]
+                    branding_cols = {
+                        'whatsapp': 'VARCHAR(50)',
+                        'email': 'VARCHAR(120)',
+                        'phone': 'VARCHAR(50)'
+                    }
+                    for col_name, col_type in branding_cols.items():
+                        if col_name not in columns:
+                            app.logger.info(f"Adding '{col_name}' column to app_branding table in {name} database...")
+                            try:
+                                with engine.connect() as conn:
+                                    conn.execute(text(f"ALTER TABLE app_branding ADD COLUMN {col_name} {col_type}"))
+                                    conn.commit()
+                                app.logger.info(f"Successfully added '{col_name}' to app_branding in {name}.")
+                            except Exception as e:
+                                app.logger.error(f"Failed to add '{col_name}' to app_branding: {e}")
+
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

@@ -6,6 +6,7 @@ from models import (
     FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
 )
 from decorators import require_permission
+from sqlalchemy import func
 import json
 import random
 import string
@@ -77,11 +78,30 @@ def get_users():
     all_users = [u.to_dict() for u in staff]
     for p in patients:
         p_dict = p.to_dict()
-        # Fallback for phone if "N/A" or missing
-        if p_dict.get('phone') == 'N/A' or not p_dict.get('phone'):
-            bio = BioData.query.filter_by(staff_id=p.username).first()
-            if bio and bio.phone and bio.phone != 'N/A':
-                p_dict['phone'] = bio.phone
+        p_dict['section'] = None
+        p_dict['department'] = None
+        
+        # Explicitly check each clinical database using its engine
+        for bind_key in ['dcp', 'dct']:
+            try:
+                engine = db.engines.get(bind_key)
+                if not engine: continue
+                
+                from sqlalchemy import text
+                # Query the bio_data table directly to avoid RoutingSession conflicts
+                sql = text("SELECT department, phone FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                with engine.connect() as conn:
+                    result = conn.execute(sql, {"sid": p.username}).fetchone()
+                    if result:
+                        p_dict['section'] = bind_key.upper()
+                        # result is a Row object, access by index or name
+                        p_dict['department'] = result[0] 
+                        if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
+                            p_dict['phone'] = result[1]
+                        break
+            except Exception as e:
+                current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")
+                continue
                 
         p_dict['id'] = f"p{p.id}" 
         all_users.append(p_dict)
@@ -98,6 +118,61 @@ def get_user(user_id):
     
     user = User.query.get_or_404(int(user_id))
     return jsonify(user.to_dict())
+
+@admin_bp.route('/api/admin/users/<string:user_id>/timeline', methods=['GET'])
+@require_permission('view_users')
+def get_user_timeline(user_id):
+    is_patient = user_id.startswith('p')
+    real_id = int(user_id[1:]) if is_patient else int(user_id)
+    
+    # Get the username to search for actions ON this user
+    if is_patient:
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+        username = target_user.username
+    else:
+        target_user = User.query.get_or_404(real_id)
+        username = target_user.username
+
+    from sqlalchemy import or_
+    
+    # 1. Logs created BY the user
+    # 2. Logs where the user is the RESOURCE (Actions ON them)
+    # We check for resource starting with User: or Patient: followed by username
+    
+    resource_patterns = [
+        f"User:{username}", 
+        f"Patient:{username}",
+        f"User:{user_id}" # Fallback for some old logs
+    ]
+    
+    query = AuditLog.query.filter(
+        or_(
+            AuditLog.user_id == real_id,
+            AuditLog.resource.in_(resource_patterns)
+        )
+    ).order_by(AuditLog.timestamp.desc())
+
+    logs = query.limit(50).all()
+    
+    # Final filter: if action was BY the user, ensure portal context matches to avoid ID collisions
+    final_logs = []
+    for log in logs:
+        log_dict = log.to_dict()
+        
+        # If the log was BY someone with the same ID, check the portal
+        if log.user_id == real_id:
+            portal = log_dict.get('details', {}).get('portal', 'staff')
+            log_is_patient = portal == 'patient'
+            
+            # If IDs match but user types don't, this is a collision from another portal
+            if is_patient != log_is_patient:
+                # UNLESS it's an action ON them by someone else
+                if log.resource not in resource_patterns:
+                    continue
+        
+        final_logs.append(log_dict)
+            
+    return jsonify(final_logs)
 
 @admin_bp.route('/api/admin/users/<string:user_id>/roles', methods=['POST'])
 @require_permission('change_roles')
@@ -296,7 +371,7 @@ def request_access():
             type='alert',
             title='New Access Request',
             message=f"{user_name} is requesting access to {perm_name.replace('_', ' ').title()}.",
-            link='/admin/access-keys'
+            link=f'/admin/access-keys?user_id={user_id}&permission={perm_name}'
         )
         db.session.add(notif)
         
@@ -907,8 +982,16 @@ def create_user():
     if User.query.filter_by(phone=phone).first():
         return jsonify({"error": f"Phone number '{phone}' is already in use."}), 400
 
-    # Generate random temporary password
-    temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    # Generate strong temporary password
+    import secrets
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    while True:
+        temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        if (any(c.islower() for c in temp_password)
+                and any(c.isupper() for c in temp_password)
+                and any(c.isdigit() for c in temp_password)
+                and any(c in "!@#$%^&*" for c in temp_password)):
+            break
     
     # Create User
     new_user = User(
@@ -937,17 +1020,23 @@ def create_user():
         branding = AppBranding.query.first()
         logo_url = branding.logo_light if branding and branding.logo_light else None
         
-        # Ensure logo_url is absolute
+        backend_url = request.url_root.rstrip('/')
+        if 'onrender.com' in backend_url and backend_url.startswith('http:'):
+            backend_url = backend_url.replace('http:', 'https:')
+            
+        import os
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+        # Ensure logo_url is absolute (served from backend)
         if logo_url and logo_url.startswith('/'):
-            base_url = request.url_root.rstrip('/')
-            if 'onrender.com' in base_url and base_url.startswith('http:'):
-                base_url = base_url.replace('http:', 'https:')
-            logo_url = f"{base_url}{logo_url}"
+            logo_url = f"{backend_url}{logo_url}"
             
         html_content = EmailService.get_welcome_template(
             first_name=first_name,
             username=username,
             password=temp_password,
+            portal_type='staff',
+            app_url=frontend_url,
             logo_url=logo_url
         )
         
@@ -959,7 +1048,6 @@ def create_user():
         
         if not email_sent:
             current_app.logger.error(f"Failed to send welcome email to {email}")
-            # We don't fail the request because the user was created, but we should inform the admin
     except Exception as e:
         current_app.logger.error(f"Error sending welcome email: {e}")
 
@@ -976,5 +1064,146 @@ def create_user():
     
     return jsonify({
         "message": f"User @{username} created successfully. A welcome email has been sent to {email}.",
-        "user": new_user.to_dict()
+        "user": new_user.to_dict(),
+        "password": temp_password
+    }), 201
+
+@admin_bp.route('/api/admin/patients/onboard', methods=['POST'])
+@require_permission('manage_roles')
+def onboard_patient():
+    admin_id = get_jwt_identity()
+    data = request.json
+    
+    staff_id = data.get('staff_id', '').strip()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    
+    if not all([staff_id, first_name, last_name, email, phone]):
+        return jsonify({"error": "All fields (staff_id, first_name, last_name, email, phone) are required"}), 400
+        
+    # Check if patient already exists in portal (verified)
+    existing = PatientPortalUser.query.filter_by(username=staff_id).first()
+    if existing and existing.is_verified:
+        return jsonify({"error": f"A verified patient account for Staff ID '{staff_id}' already exists."}), 400
+        
+    # Check for email/phone conflicts with OTHER users
+    email_conflict = PatientPortalUser.query.filter(PatientPortalUser.email == email, PatientPortalUser.username != staff_id).first()
+    if email_conflict:
+        return jsonify({"error": f"The email '{email}' is already associated with another account (Staff ID: {email_conflict.username})."}), 409
+        
+    phone_conflict = PatientPortalUser.query.filter(PatientPortalUser.phone == phone, PatientPortalUser.username != staff_id).first()
+    if phone_conflict:
+        return jsonify({"error": f"The phone number '{phone}' is already associated with another account (Staff ID: {phone_conflict.username})."}), 409
+
+    # Generate strong temporary password
+    import secrets
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    while True:
+        temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        if (any(c.islower() for c in temp_password)
+                and any(c.isupper() for c in temp_password)
+                and any(c.isdigit() for c in temp_password)
+                and any(c in "!@#$%^&*" for c in temp_password)):
+            break
+    
+    try:
+        if existing:
+            user = existing
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.phone = phone
+            user.is_verified = True
+            user.must_reset_password = True
+        else:
+            user = PatientPortalUser(
+                username=staff_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                is_verified=True,
+                must_reset_password=True
+            )
+            db.session.add(user)
+            
+        user.set_password(temp_password)
+        db.session.commit()
+        current_app.logger.info(f"Successfully created/updated PatientPortalUser for {staff_id}")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to save patient user {staff_id}: {str(e)}")
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    
+    # Sync with Clinical BioData (dcp, dct binds)
+    from sqlalchemy import text
+    contexts = ['dcp', 'dct']
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine: continue
+            with engine.connect() as conn:
+                sync_query = text("""
+                    UPDATE bio_data 
+                    SET email = :e, phone = :p 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                conn.execute(sync_query, {"e": email, "p": phone, "sid": staff_id})
+                conn.commit()
+        except Exception as e:
+            current_app.logger.error(f"Onboard Sync failed for {staff_id} in {ctx}: {str(e)}")
+            
+    # Send Welcome Email
+    try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        backend_url = request.url_root.rstrip('/')
+        if 'onrender.com' in backend_url and backend_url.startswith('http:'):
+            backend_url = backend_url.replace('http:', 'https:')
+
+        import os
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+        if logo_url and logo_url.startswith('/'):
+            logo_url = f"{backend_url}{logo_url}"
+            
+        html_content = EmailService.get_welcome_template(
+            first_name=first_name,
+            username=staff_id,
+            password=temp_password,
+            portal_type='patient',
+            app_url=frontend_url,
+            logo_url=logo_url
+        )
+        
+        EmailService.send_email(
+            to_email=email,
+            subject="Welcome to Legit HealthCare Patient Portal",
+            html_content=html_content
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error sending patient welcome email: {e}")
+
+    # Audit Log
+    try:
+        log = AuditLog(
+            user_id=admin_id,
+            action="ONBOARD_PATIENT",
+            resource=f"Patient:{staff_id}",
+            details=json.dumps({"staff_id": staff_id, "email": email}),
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Audit Log failed for {staff_id}: {e}")
+        db.session.rollback() # Don't fail the whole request if audit fails
+    
+    return jsonify({
+        "message": f"Patient account for '{staff_id}' created successfully.",
+        "password": temp_password
     }), 201

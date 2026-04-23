@@ -20,19 +20,65 @@ view_data_bp = Blueprint('view_data', __name__)
 @view_data_bp.route('/users/<string:user_id>/profile', methods=['GET'])
 @require_permission('view_users')
 def get_user_profile(user_id):
-    from models import StaffUser, PatientPortalUser
+    from models import StaffUser, PatientPortalUser, BioData
     
     if user_id.startswith('p'):
         real_id = int(user_id[1:])
         user = PatientPortalUser.query.get_or_404(real_id)
+        u_dict = user.to_dict()
+        u_dict['section'] = None
+        u_dict['department'] = None
+        
+        # Explicitly check each clinical database using its engine
+        for bind_key in ['dcp', 'dct']:
+            try:
+                # Use current_app to safely get the engine
+                from flask import current_app
+                engine = db.get_engine(current_app, bind=bind_key)
+                
+                from sqlalchemy import text
+                # We need all bio metrics for the profile enrichment
+                sql = text("""
+                    SELECT department, middle_name, gender, age, nationality, race, dob, phone 
+                    FROM bio_data 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                with engine.connect() as conn:
+                    row = conn.execute(sql, {"sid": user.username}).fetchone()
+                    if row:
+                        # Safely handle DOB which might be string or date object
+                        dob_val = row[6]
+                        if dob_val and hasattr(dob_val, 'isoformat'):
+                            dob_val = dob_val.isoformat()
+                        elif dob_val:
+                            dob_val = str(dob_val)
+
+                        u_dict.update({
+                            'section': bind_key.upper(),
+                            'department': row[0],
+                            'middle_name': row[1],
+                            'gender': row[2],
+                            'age': row[3],
+                            'nationality': row[4],
+                            'race': row[5],
+                            'dob': dob_val,
+                        })
+                        # Fallback for phone
+                        if not u_dict.get('phone') or u_dict.get('phone') == 'N/A':
+                            u_dict['phone'] = row[7]
+                        break
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to fetch profile details from {bind_key}: {str(e)}")
+                continue
+        return jsonify(u_dict), 200
     else:
         try:
             u_id = int(user_id)
             user = StaffUser.query.get_or_404(u_id)
+            return jsonify(user.to_dict()), 200
         except ValueError:
             return jsonify({"error": "Invalid user ID format"}), 400
-            
-    return jsonify(user.to_dict()), 200
 @view_data_bp.route('/patients/search', methods=['GET'])
 @require_permission([
     'view_patients', 'registration', 'consultation', 'lab_tests', 
@@ -86,7 +132,8 @@ def search_patients():
             "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
             "gender": p.gender, "dob": p.dob.isoformat() if p.dob else None, 
             "age": p.age, "phone": p.phone, "email": p.email,
-            "race": p.race, "nationality": p.nationality
+            "race": p.race, "nationality": p.nationality,
+            "section": (request.headers.get('X-Company-Context') or 'DCP').upper()
         })
 
     return jsonify({
@@ -128,7 +175,8 @@ def get_all_patients():
             "phone": p.phone,
             "email": p.email,
             "race": p.race,
-            "nationality": p.nationality
+            "nationality": p.nationality,
+            "section": bind.upper()
         } for p in pagination.items],
         "total": pagination.total,
         "pages": pagination.pages,

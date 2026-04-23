@@ -3,7 +3,6 @@ import LandingPage from './pages/LandingPage';
 import SignupPage from './pages/SignupPage';
 import LoginPage from './pages/LoginPage';
 import OTPPage from './pages/OTPPage';
-import ForcePasswordResetPage from './pages/ForcePasswordResetPage';
 import Dashboard from './pages/Dashboard';
 import RegistrationPage from './pages/RegistrationPage';
 import ConsultationPage from './pages/ConsultationPage';
@@ -33,6 +32,7 @@ import PatientDashboard from './pages/PatientDashboard';
 import PatientMedicalReport from './pages/PatientMedicalReport';
 import PatientAppointmentsPage from './pages/PatientAppointmentsPage';
 import PatientManage2FAPage from './pages/PatientManage2FAPage';
+import PatientContactPage from './pages/PatientContactPage';
 import SecurityDashboard from './pages/SecurityDashboard';
 import OfflinePage from './pages/OfflinePage';
 
@@ -53,11 +53,6 @@ function RootApp() {
             <Route path="/verify-otp" element={<OTPPage />} />
             <Route path="/forgot-password" element={<Navigate to="/login?forgot=true" replace />} />
             <Route path="/verify/:token" element={<ReportVerificationPage />} />
-            <Route path="/force-password-reset" element={
-              <ProtectedRoute>
-                <ForcePasswordResetPage />
-              </ProtectedRoute>
-            } />
 
 
 
@@ -69,6 +64,7 @@ function RootApp() {
             <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={['Patient']}><PatientAppointmentsPage /></ProtectedRoute>} />
             <Route path="/patient/account" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManageAccountPage /></ProtectedRoute>} />
             <Route path="/patient/account/2fa" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManage2FAPage /></ProtectedRoute>} />
+            <Route path="/patient/contact" element={<ProtectedRoute allowedRoles={['Patient']}><PatientContactPage /></ProtectedRoute>} />
             <Route path="/registration" element={<ProtectedRoute requiredPermission="registration"><RegistrationPage /></ProtectedRoute>} />
             <Route path="/consultation" element={<ProtectedRoute requiredPermission="consultation"><ConsultationPage /></ProtectedRoute>} />
             <Route path="/appointments" element={<ProtectedRoute requiredPermission="view_appointments"><AppointmentsPage /></ProtectedRoute>} />

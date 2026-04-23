@@ -316,9 +316,12 @@ class EmailService:
         return EmailService.get_patient_verification_template(first_name, otp_code, logo_url)
 
     @staticmethod
-    def get_welcome_template(first_name, username, password, logo_url=None):
+    def get_welcome_template(first_name, username, password, portal_type='staff', app_url=None, logo_url=None):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
-        current_year = datetime.now().year
+        
+        # Determine Login URL
+        base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
+        login_url = f"{base_url}/login?portal={portal_type}"
         
         return f"""
         <!DOCTYPE html>
@@ -337,6 +340,8 @@ class EmailService:
                 .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
                 .details-box {{ background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #D2F1EE; margin-bottom: 25px; }}
                 .details-box p {{ margin: 10px 0; font-size: 16px; }}
+                .cta-container {{ text-align: center; margin: 35px 0; }}
+                .cta-button {{ background-color: #0d9488; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
                 .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
                 .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
                 .footer-bar p {{ margin: 2px 0; }}
@@ -367,7 +372,10 @@ class EmailService:
                         
                         <div class="body-text">
                             <p>For security reasons, you will be required to change your password upon your first login.</p>
-                            <p>To get started, simply log in using the credentials above and follow the prompt to set a new password.</p>
+                        </div>
+
+                        <div class="cta-container">
+                            <a href="{login_url}" class="cta-button">Login to My Portal</a>
                         </div>
                         
                         <div class="body-text">

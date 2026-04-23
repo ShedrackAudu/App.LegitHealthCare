@@ -7,7 +7,8 @@ import {
   ChevronLeft,
   ChevronRight,
   Building2,
-  Calendar
+  Calendar,
+  MessageSquare
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -23,6 +24,7 @@ const patientItems: SidebarItem[] = [
   { title: 'Dashboard', path: '/patient/dashboard', icon: LayoutDashboard },
   { title: 'Medical Report', path: '/patient/records', icon: FileText },
   { title: 'Appointments', path: '/patient/appointments', icon: Calendar },
+  { title: 'Contact Us', path: '/patient/contact', icon: MessageSquare },
   { title: 'Profile', path: '/patient/account', icon: User },
 ];
 

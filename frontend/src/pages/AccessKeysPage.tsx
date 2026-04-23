@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface User {
     username: string;
     first_name: string;
     last_name: string;
+    roles: string[];
 }
 
 interface Permission {
@@ -76,6 +78,14 @@ const AccessKeysPage = () => {
     const [targetDuration, setTargetDuration] = useState('60');
     const [isMultiUse, setIsMultiUse] = useState(false);
     const [generatingCode, setGeneratingCode] = useState(false);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const userId = searchParams.get('user_id');
+        const perm = searchParams.get('permission');
+        if (userId) setTargetUser(userId);
+        if (perm) setTargetPerm(perm);
+    }, [searchParams]);
 
     const fetchData = async () => {
         setLoading(true);
@@ -203,7 +213,7 @@ const AccessKeysPage = () => {
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-2 shadow-2xl">
                                         <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-primary">Public (Any Unit)</SelectItem>
-                                        {users.map(u => (
+                                        {users.filter(u => !u.roles.includes('Patient')).map(u => (
                                             <SelectItem key={u.id} value={u.id.toString()} className="text-[10px] font-black uppercase tracking-widest py-3">
                                                 @{u.username} ({u.first_name} {u.last_name[0]}.)
                                             </SelectItem>

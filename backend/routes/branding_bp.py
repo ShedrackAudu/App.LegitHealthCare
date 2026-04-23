@@ -42,24 +42,31 @@ def update_branding():
         branding = AppBranding()
         db.session.add(branding)
 
-    # Update text fields
-    if 'clinic_name' in request.form:
-        branding.clinic_name = request.form['clinic_name']
-    if 'clinic_slogan' in request.form:
-        branding.clinic_slogan = request.form['clinic_slogan']
-    if 'address' in request.form:
-        branding.address = request.form['address']
-    if 'email' in request.form:
-        branding.email = request.form['email']
-    if 'phone' in request.form:
-        branding.phone = request.form['phone']
-    if 'social_links' in request.form:
-        # Expecting JSON string from frontend
-        branding.social_links = request.form['social_links']
-    if 'doctor_name' in request.form:
-        branding.doctor_name = request.form['doctor_name']
-    if 'doctor_post' in request.form:
-        branding.doctor_post = request.form['doctor_post']
+    # Update text fields from either form or json data
+    data = request.form.to_dict() if request.form else {}
+    if request.is_json:
+        data.update(request.json)
+    
+    current_app.logger.info(f"Final data to update: {data}")
+
+    if 'clinic_name' in data:
+        branding.clinic_name = data['clinic_name']
+    if 'clinic_slogan' in data:
+        branding.clinic_slogan = data['clinic_slogan']
+    if 'address' in data:
+        branding.address = data['address']
+    if 'email' in data:
+        branding.email = data['email']
+    if 'phone' in data:
+        branding.phone = data['phone']
+    if 'whatsapp' in data:
+        branding.whatsapp = data['whatsapp']
+    if 'social_links' in data:
+        branding.social_links = data['social_links']
+    if 'doctor_name' in data:
+        branding.doctor_name = data['doctor_name']
+    if 'doctor_post' in data:
+        branding.doctor_post = data['doctor_post']
 
     # Identify upload folder
     # We will store uploads in backend/static/uploads

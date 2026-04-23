@@ -160,6 +160,7 @@ class PatientPortalUser(db.Model):
     otp_code = db.Column(db.String(6), nullable=True)
     otp_expiry = db.Column(db.DateTime, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
+    must_reset_password = db.Column(db.Boolean, default=False)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
@@ -180,6 +181,7 @@ class PatientPortalUser(db.Model):
             "phone": self.phone,
             "is_verified": self.is_verified,
             "is_2fa_enabled": self.is_2fa_enabled,
+            "must_reset_password": self.must_reset_password,
             "user_type": "patient",
             "roles": ["Patient"],
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
@@ -293,6 +295,7 @@ class AppBranding(db.Model):
     address = db.Column(db.Text, nullable=True)
     email = db.Column(db.String(120), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
+    whatsapp = db.Column(db.String(50), nullable=True)
     social_links = db.Column(db.Text, default='[]') # JSON string
     
     doctor_name = db.Column(db.String(100), default="Dr. Anyanwu Ugochukwu D. FMCPath")
@@ -324,6 +327,7 @@ class AppBranding(db.Model):
             "address": self.address,
             "email": self.email,
             "phone": self.phone,
+            "whatsapp": self.whatsapp,
             "social_links": social_links,
             "doctor_name": self.doctor_name,
             "doctor_post": self.doctor_post

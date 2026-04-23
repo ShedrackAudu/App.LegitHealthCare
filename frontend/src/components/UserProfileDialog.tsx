@@ -3,7 +3,7 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Mail, Phone, Bot, ShieldCheck, CheckCheck } from 'lucide-react';
+import { X, Mail, Phone, Bot, ShieldCheck, CheckCheck, Activity, Globe } from 'lucide-react';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
@@ -56,7 +56,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
             
             <div className="mt-4">
               <h2 className="text-2xl font-black text-foreground tracking-tight">
-                {userProfile.first_name} {userProfile.last_name}
+                {userProfile.first_name} {userProfile.middle_name ? `${userProfile.middle_name} ` : ''}{userProfile.last_name}
               </h2>
               <p className="text-primary font-bold text-sm tracking-wide uppercase">@{userProfile.username}</p>
             </div>
@@ -68,7 +68,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
                 </Badge>
               ))}
               <Badge variant="outline" className="font-bold px-3 py-1 border-primary/20">
-                {userProfile.section || 'All Sections'}
+                {userProfile.section ? `${userProfile.section} REGISTRY` : 'ALL REGISTRIES'}
               </Badge>
             </div>
           </div>
@@ -78,9 +78,26 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
                <ProfileInfoItem label="Email" value={userProfile.email} icon={Mail} isLink />
                <ProfileInfoItem label="Phone" value={userProfile.phone} icon={Phone} />
              </div>
-             <ProfileInfoItem label="Department" value={userProfile.department} icon={Bot} />
+             
+             {userProfile.user_type === 'patient' && (
+               <>
+                 <div className="grid grid-cols-2 gap-3">
+                   <ProfileInfoItem label="Gender" value={userProfile.gender} icon={Activity} />
+                   <ProfileInfoItem label="Age" value={userProfile.age ? `${userProfile.age} yrs` : null} icon={Activity} />
+                 </div>
+                 <div className="grid grid-cols-2 gap-3">
+                   <ProfileInfoItem label="Race" value={userProfile.race} icon={ShieldCheck} />
+                   <ProfileInfoItem label="Nationality" value={userProfile.nationality} icon={Globe} />
+                 </div>
+               </>
+             )}
+
              <div className="grid grid-cols-2 gap-3">
-               <ProfileInfoItem label="Joined" value={format(new Date(userProfile.created_at || new Date()), 'MMM yyyy')} icon={ShieldCheck} />
+                <ProfileInfoItem label="Department" value={userProfile.department} icon={Bot} />
+                <ProfileInfoItem label="Joined" value={format(new Date(userProfile.created_at || new Date()), 'MMM yyyy')} icon={ShieldCheck} />
+             </div>
+
+             <div className="grid grid-cols-2 gap-3">
                <ProfileInfoItem label="Status" value={userProfile.is_verified ? "Verified" : "Unverified"} icon={CheckCheck} />
              </div>
           </div>

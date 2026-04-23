@@ -54,7 +54,7 @@ def search_patient():
                 actual_cols = res_cols.keys()
                 
                 # Columns we want to select
-                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email']
+                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'nationality', 'race', 'age', 'phone', 'email']
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
                 select_clause = ", ".join(available_cols)
@@ -66,7 +66,26 @@ def search_patient():
                 
                 if result:
                     # Map result to dictionary using ._mapping for SQLAlchemy 1.4/2.0
-                    row_dict = dict(result._mapping)
+                    raw_dict = dict(result._mapping)
+                    # Case-insensitive wrapper for dictionary access
+                    row_dict = {k.lower(): v for k, v in raw_dict.items()}
+                    
+                    dob = row_dict.get('dob')
+                    age = row_dict.get('age')
+                    
+                    # Calculate age if missing but dob exists
+                    if dob and (not age or str(age).strip().lower() in ['n/a', '', 'none']):
+                        try:
+                            if isinstance(dob, str):
+                                dob_dt = datetime.strptime(dob, '%Y-%m-%d')
+                            else:
+                                dob_dt = dob
+                            today = datetime.now()
+                            age = today.year - dob_dt.year - ((today.month, today.day) < (dob_dt.month, dob_dt.day))
+                        except Exception as e:
+                            current_app.logger.error(f"Age calc error: {e}")
+                            age = 'N/A'
+
                     results.append({
                         "staff_id": str(row_dict.get('staff_id')),
                         "first_name": row_dict.get('first_name'),
@@ -74,7 +93,10 @@ def search_patient():
                         "last_name": row_dict.get('last_name'),
                         "department": row_dict.get('department'),
                         "gender": row_dict.get('gender'),
-                        "dob": str(row_dict.get('dob')) if row_dict.get('dob') else None,
+                        "dob": str(dob) if dob else None,
+                        "nationality": row_dict.get('nationality') if row_dict.get('nationality') else 'N/A',
+                        "race": row_dict.get('race') if row_dict.get('race') else 'N/A',
+                        "age": age if age else 'N/A',
                         "phone": row_dict.get('phone'),
                         "email": row_dict.get('email', ''),
                         "section": ctx.upper(),
