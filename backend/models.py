@@ -793,6 +793,7 @@ class Appointment(db.Model):
     appointment_date = db.Column(db.DateTime, nullable=False)
     time_slot = db.Column(db.String(50)) # e.g. 10:00 AM - 10:30 AM
     reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Pending') # Pending, Completed, Cancelled
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -810,6 +811,7 @@ class Appointment(db.Model):
             "appointment_date": self.appointment_date.isoformat(),
             "time_slot": self.time_slot,
             "reason": self.reason,
+            "status": self.status,
             "created_at": self.created_at.isoformat()
         }
 

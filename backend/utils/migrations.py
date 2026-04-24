@@ -85,6 +85,19 @@ def ensure_schema(app):
                                 app.logger.info(f"Successfully added '{col_name}' to app_branding in {name}.")
                             except Exception as e:
                                 app.logger.error(f"Failed to add '{col_name}' to app_branding: {e}")
+                
+                # 5. Add status to appointments
+                if 'appointments' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('appointments')]
+                    if 'status' not in columns:
+                        app.logger.info(f"Adding 'status' column to appointments table in {name} database...")
+                        try:
+                            with engine.connect() as conn:
+                                conn.execute(text("ALTER TABLE appointments ADD COLUMN status VARCHAR(20) DEFAULT 'Pending'"))
+                                conn.commit()
+                            app.logger.info(f"Successfully added 'status' to appointments in {name}.")
+                        except Exception as e:
+                            app.logger.error(f"Failed to add 'status' to appointments: {e}")
 
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

@@ -101,12 +101,12 @@ const DataManagementPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row bg-muted/50 p-1 sm:p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1 sm:gap-0">
+          <div className="flex bg-muted/50 p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1">
             <button
               onClick={() => setActiveTab('export')}
-              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
+              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'export' 
-                ? 'bg-primary shadow-md text-white sm:scale-105' 
+                ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -115,9 +115,9 @@ const DataManagementPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
+              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'import' 
-                ? 'bg-primary shadow-md text-white sm:scale-105' 
+                ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >

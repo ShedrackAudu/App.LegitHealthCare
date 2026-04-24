@@ -35,7 +35,7 @@ const RolePermissionPage: React.FC = () => {
         axios.get('/api/admin/permissions')
       ]);
       setRoles(rolesResp.data);
-      setPermissions(permsResp.data);
+      setPermissions(permsResp.data.sort((a: any, b: any) => a.name.localeCompare(b.name)));
     } catch (err) {
       toast.error("Failed to fetch administrative data.");
     } finally {

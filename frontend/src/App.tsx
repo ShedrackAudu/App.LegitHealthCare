@@ -67,7 +67,7 @@ function RootApp() {
             <Route path="/patient/contact" element={<ProtectedRoute allowedRoles={['Patient']}><PatientContactPage /></ProtectedRoute>} />
             <Route path="/registration" element={<ProtectedRoute requiredPermission="registration"><RegistrationPage /></ProtectedRoute>} />
             <Route path="/consultation" element={<ProtectedRoute requiredPermission="consultation"><ConsultationPage /></ProtectedRoute>} />
-            <Route path="/appointments" element={<ProtectedRoute requiredPermission="view_appointments"><AppointmentsPage /></ProtectedRoute>} />
+            <Route path="/appointments" element={<ProtectedRoute requiredPermission="manage_appointments"><AppointmentsPage /></ProtectedRoute>} />
 
             <Route path="/tests" element={<ProtectedRoute><TestResultsPage /></ProtectedRoute>} />
             <Route path="/tests/fbc" element={<ProtectedRoute requiredPermission="lab_fbc"><TestResultsPage /></ProtectedRoute>} />

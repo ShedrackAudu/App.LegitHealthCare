@@ -5,43 +5,44 @@ def init_rbac(app):
     with app.app_context():
         # 1. Define all permissions
         perms_metadata = [
-            ('registration', 'Access to patient registration'),
-            ('consultation', 'Access to clinical consultation'),
-            ('lab_tests', 'Access to lab test recording (Legacy - use specific)'),
-            ('lab_fbc', 'Access to FBC Test Results'),
-            ('lab_kft', 'Access to KFT Test Results'),
-            ('lab_lipid', 'Access to Lipid Profile Results'),
-            ('lab_lft', 'Access to LFT Test Results'),
-            ('lab_ecg', 'Access to ECG Diagnostic Recording'),
-            ('lab_spirometry', 'Access to Spirometry Lung Function Test'),
-            ('lab_audiometry', 'Access to Audiometry Hearing Test'),
-            ('lab_essential_diagnostics', 'Access to Essential Diagnostics (PSA, Sugar, Urine Analysis)'),
-            ('director_review', 'Access to director level review'),
-            ('patient_reports', 'Access to generating patient reports'),
-            ('view_patients', 'Access to comprehensive patient directory'),
-            ('view_records', 'Access to master screening matrix'),
-            ('view_users', 'View system user directory'),
-            ('view_dashboard', 'View main system stats dashboard'),
-            ('manage_roles', 'Manage system roles and permissions'),
-            ('view_audit_logs', 'View system activity logs'),
-            ('download_data', 'Export system data to Excel'),
-            ('manage_ai', 'Configure AI integration settings'),
-            ('manage_branding', 'Update system branding/logo'),
-            ('manage_departments', 'Manage clinic departments'),
-            ('messaging', 'Access to internal messaging system'),
-            ('manage_appointments', 'Manage clinic appointment schedules'),
-            ('view_appointments', 'View internal appointment directory'),
-            ('manage_queues', 'Manage patient departmental queues'),
             ('change_roles', 'Assign or revoke roles from users'),
-            ('system_maintenance', 'Access to core system settings'),
-            ('edit_patient', 'Permission to modify patient bio-data'),
+            ('consultation', 'Access to clinical consultation'),
             ('delete_patient', 'Permission to permanently remove a patient account'),
             ('delete_record', 'Permission to delete screening results from matrix'),
+            ('director_review', 'Access to director level review'),
+            ('download_data', 'Export system data to Excel'),
+            ('edit_patient', 'Permission to modify patient bio-data'),
+            ('lab_audiometry', 'Access to Audiometry Hearing Test'),
+            ('lab_ecg', 'Access to ECG Diagnostic Recording'),
+            ('lab_essential_diagnostics', 'Access to Essential Diagnostics (PSA, Sugar, Urine Analysis)'),
+            ('lab_fbc', 'Access to FBC Test Results'),
+            ('lab_kft', 'Access to KFT Test Results'),
+            ('lab_lft', 'Access to LFT Test Results'),
+            ('lab_lipid', 'Access to Lipid Profile Results'),
+            ('lab_spirometry', 'Access to Spirometry Lung Function Test'),
+            ('lab_tests', 'Access to lab test recording (Legacy - use specific)'),
             ('manage_access_keys', 'Generate and manage temporary access codes'),
+            ('manage_ai', 'Configure AI integration settings'),
+            ('manage_appointments', 'Full access to view and manage clinic appointment schedules'),
+            ('manage_branding', 'Update system branding/logo'),
+            ('manage_departments', 'Manage clinic departments'),
+            ('manage_patient_accounts', 'Create and onboard patient portal accounts'),
+            ('manage_queues', 'Manage patient departmental queues'),
+            ('manage_roles', 'Manage system roles and permissions'),
+            ('manage_staff_accounts', 'Create and manage clinical staff accounts'),
+            ('messaging', 'Access to internal messaging system'),
+            ('patient_reports', 'Access to generating patient reports'),
+            ('registration', 'Access to patient registration'),
+            ('system_maintenance', 'Access to core system settings'),
             ('upload_bulk_fbc', 'Bulk Upload FBC Results'),
             ('upload_bulk_kft', 'Bulk Upload KFT Results'),
             ('upload_bulk_lft', 'Bulk Upload LFT Results'),
-            ('upload_bulk_lipid', 'Bulk Upload Lipid Profile Results')
+            ('upload_bulk_lipid', 'Bulk Upload Lipid Profile Results'),
+            ('view_audit_logs', 'View system activity logs'),
+            ('view_dashboard', 'View main system stats dashboard'),
+            ('view_patients', 'Access to comprehensive patient directory'),
+            ('view_records', 'Access to master screening matrix'),
+            ('view_users', 'View system user directory'),
         ]
         
         perm_objs = {}
@@ -54,6 +55,16 @@ def init_rbac(app):
             perm_objs[name] = perm
         
         db.session.commit()
+        
+        # Cleanup: Remove deprecated permissions if they exist
+        deprecated_perms = ['manage_users', 'view_appointments']
+        for dp_name in deprecated_perms:
+            dp = Permission.query.filter_by(name=dp_name).first()
+            if dp:
+                print(f"Cleaning up deprecated permission: {dp_name}")
+                dp.roles = []
+                db.session.delete(dp)
+                db.session.commit()
 
         # 2. Define Roles
         perm_objs = {p.name: p for p in Permission.query.all()}

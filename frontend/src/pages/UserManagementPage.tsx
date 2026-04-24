@@ -58,6 +58,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 import { UserTimelineDialog } from '@/components/UserTimelineDialog';
@@ -96,6 +97,9 @@ const UserManagementPage: React.FC = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const { user } = useAppContext();
+  const { hasPermission } = usePermissions();
+  const canManageStaff = hasPermission('manage_staff_accounts');
+  const canManagePatients = hasPermission('manage_patient_accounts');
   const navigate = useNavigate();
   const [userRolesInput, setUserRolesInput] = useState<string[]>([]);
   const [saving, setSaving] = useState(false);
@@ -347,23 +351,25 @@ const UserManagementPage: React.FC = () => {
               <RefreshCw className={loading ? "h-4 w-4 animate-spin text-primary" : "h-4 w-4 text-primary"} />
               Reload
             </Button>
-            <Button 
-              size="sm" 
-              className="flex-1 lg:flex-none gap-2 h-10 rounded-xl font-black shadow-lg shadow-primary/20 px-6" 
-              onClick={() => activeTab === 'staff' ? setIsAddModalOpen(true) : setIsAddPatientModalOpen(true)}
-            >
-              {activeTab === 'staff' ? <UserCog className="h-4 w-4" /> : <Users className="h-4 w-4" />}
-              {activeTab === 'staff' ? 'Add User' : 'Add Patient'}
-            </Button>
+            {((activeTab === 'staff' && canManageStaff) || (activeTab === 'patient' && canManagePatients)) && (
+              <Button 
+                size="sm" 
+                className="flex-1 lg:flex-none gap-2 h-10 rounded-xl font-black shadow-lg shadow-primary/20 px-6" 
+                onClick={() => activeTab === 'staff' ? setIsAddModalOpen(true) : setIsAddPatientModalOpen(true)}
+              >
+                {activeTab === 'staff' ? <UserCog className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                {activeTab === 'staff' ? 'Add User' : 'Add Patient'}
+              </Button>
+            )}
           </div>
         </div>
 
         <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'staff' | 'patient')} className="w-full">
-          <TabsList className="flex flex-wrap bg-muted/50 p-1 mb-6 border-2 border-border/50 rounded-2xl h-auto min-h-[56px] w-fit mx-auto md:mx-0 overflow-hidden">
-            <TabsTrigger value="staff" className="flex-1 md:flex-none rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-bold transition-all whitespace-nowrap">
+          <TabsList className="flex bg-muted/50 p-1.5 mb-6 border-2 border-border/50 rounded-2xl h-14 w-full md:w-fit">
+            <TabsTrigger value="staff" className="flex-1 md:flex-none rounded-xl px-4 md:px-12 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-black transition-all whitespace-nowrap text-xs md:text-sm">
               Clinical Staff
             </TabsTrigger>
-            <TabsTrigger value="patient" className="flex-1 md:flex-none rounded-xl px-8 h-11 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-bold transition-all whitespace-nowrap">
+            <TabsTrigger value="patient" className="flex-1 md:flex-none rounded-xl px-4 md:px-12 h-full data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg font-black transition-all whitespace-nowrap text-xs md:text-sm">
               Patient Directory
             </TabsTrigger>
           </TabsList>
@@ -379,11 +385,11 @@ const UserManagementPage: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Filtering {filteredUsers.filter(u => !u.roles.includes('Patient')).length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
                   </div>
-                  <div className="flex w-full md:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+                  <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                    <Search className="ml-1 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search staff..."
-                      className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
+                      className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -414,11 +420,11 @@ const UserManagementPage: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Filtering {filteredUsers.filter(u => u.roles.includes('Patient')).length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
                   </div>
-                  <div className="flex w-full md:w-auto items-center gap-3 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <Search className="ml-2 h-5 w-5 text-muted-foreground" />
+                  <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                    <Search className="ml-1 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search patients..."
-                      className="border-0 bg-transparent focus-visible:ring-0 min-w-[300px] text-lg font-bold"
+                      className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
                       value={searchTerm}
                       onChange={(e) => setSearchTerm(e.target.value)}
                     />
@@ -480,24 +486,31 @@ const UserManagementPage: React.FC = () => {
                     {roles.map((role) => (
                       <div
                         key={role.id}
-                        onClick={() => handleToggleRole(role.name)}
-                        className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all cursor-pointer group ${userRolesInput.includes(role.name)
-                          ? "bg-primary/[0.03] border-primary/40 shadow-sm"
-                          : "hover:bg-muted/50 border-transparent bg-muted/20"
-                          }`}
+                        onClick={() => {
+                          if (role.name === 'Admin') return; // SYSTEM LOCKED - Admin role cannot be manually assigned
+                          handleToggleRole(role.name);
+                        }}
+                        className={`flex items-center justify-between p-4 rounded-xl border-2 transition-all group ${
+                          userRolesInput.includes(role.name)
+                            ? "bg-primary/[0.03] border-primary/40 shadow-sm"
+                            : "hover:bg-muted/50 border-transparent bg-muted/20"
+                          } ${role.name === 'Admin' ? "opacity-60 cursor-not-allowed grayscale" : "cursor-pointer"}`}
                       >
                         <div className="flex gap-3 items-center">
                           <Checkbox
                             checked={userRolesInput.includes(role.name)}
-                            onCheckedChange={() => handleToggleRole(role.name)}
-                            disabled={selectedUser?.username === 'admin' && role.name === 'Admin'}
+                            onCheckedChange={() => {
+                              if (role.name === 'Admin') return;
+                              handleToggleRole(role.name);
+                            }}
+                            disabled={role.name === 'Admin'}
                             className="h-5 w-5"
                           />
                           <div>
-                            <p className={`font-bold text-sm ${userRolesInput.includes(role.name) ? "text-primary" : ""} ${(selectedUser?.username === 'admin' && role.name === 'Admin') ? "opacity-50" : ""}`}>
+                            <p className={`font-bold text-sm ${userRolesInput.includes(role.name) ? "text-primary" : ""} ${role.name === 'Admin' ? "text-rose-600" : ""}`}>
                               {role.name}
-                              {selectedUser?.username === 'admin' && role.name === 'Admin' && (
-                                <span className="ml-2 text-[8px] bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded-full border border-rose-500/20">SYSTEM LOCKED</span>
+                              {role.name === 'Admin' && (
+                                <span className="ml-2 text-[8px] bg-rose-500/10 text-rose-500 px-1.5 py-0.5 rounded-full border border-rose-500/20 uppercase tracking-tighter">System Locked</span>
                               )}
                             </p>
                             <p className="text-[10px] text-muted-foreground font-medium mt-0.5 italic">{role.description}</p>
@@ -681,8 +694,14 @@ const UserManagementPage: React.FC = () => {
                   <Label>Assign Roles</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     {roles.map((role) => (
-                      <div key={role.id} className="flex items-center space-x-2 bg-muted/30 p-2 rounded-lg border hover:bg-muted/50 cursor-pointer"
+                      <div key={role.id} 
+                        className={`flex items-center space-x-2 bg-muted/30 p-2 rounded-lg border transition-all ${
+                          role.name === 'Admin' 
+                            ? "opacity-50 cursor-not-allowed grayscale bg-rose-500/5 border-rose-500/20" 
+                            : "hover:bg-muted/50 cursor-pointer"
+                        }`}
                         onClick={() => {
+                          if (role.name === 'Admin') return;
                           const currentRoles = newUser.roles;
                           if (currentRoles.includes(role.name)) {
                             setNewUser({ ...newUser, roles: currentRoles.filter(r => r !== role.name) });
@@ -690,8 +709,14 @@ const UserManagementPage: React.FC = () => {
                             setNewUser({ ...newUser, roles: [...currentRoles, role.name] });
                           }
                         }}>
-                        <Checkbox checked={newUser.roles.includes(role.name)} />
-                        <span className="text-sm font-medium">{role.name}</span>
+                        <Checkbox 
+                          checked={newUser.roles.includes(role.name)} 
+                          disabled={role.name === 'Admin'}
+                        />
+                        <span className={`text-sm font-medium ${role.name === 'Admin' ? "text-rose-600" : ""}`}>
+                          {role.name}
+                          {role.name === 'Admin' && <span className="ml-1 text-[8px] font-black uppercase">Locked</span>}
+                        </span>
                       </div>
                     ))}
                   </div>

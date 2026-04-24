@@ -84,7 +84,7 @@ def get_user_profile(user_id):
     'view_patients', 'registration', 'consultation', 'lab_tests', 
     'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 
     'lab_spirometry', 'lab_audiometry', 'director_review', 
-    'manage_appointments', 'view_appointments', 'edit_patient', 
+    'manage_appointments', 'edit_patient', 
     'delete_patient', 'manage_access_keys'
 ])
 def search_patients():

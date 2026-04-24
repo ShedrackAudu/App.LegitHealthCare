@@ -140,10 +140,32 @@ def create_appointment():
     return jsonify({"message": "Appointment booked successfully", "appointment": appointment.to_dict()}), 201
 
 @appointments_bp.route('/appointments', methods=['GET'])
-@require_permission('view_appointments')
+@require_permission('manage_appointments')
 def get_appointments():
     appointments = Appointment.query.order_by(Appointment.appointment_date.desc()).all()
     return jsonify([a.to_dict() for a in appointments]), 200
+
+@appointments_bp.route('/appointments/<int:appointment_id>/complete', methods=['PATCH'])
+@require_permission('manage_appointments')
+def complete_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+        
+    appointment.status = 'Completed'
+    db.session.commit()
+    return jsonify({"message": "Appointment marked as completed", "appointment": appointment.to_dict()}), 200
+
+@appointments_bp.route('/appointments/<int:appointment_id>', methods=['DELETE'])
+@require_permission('manage_appointments')
+def delete_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+        
+    db.session.delete(appointment)
+    db.session.commit()
+    return jsonify({"message": "Appointment deleted successfully"}), 200
 
 @appointments_bp.route('/appointments/booked', methods=['GET'])
 def get_booked_slots():

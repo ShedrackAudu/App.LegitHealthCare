@@ -35,20 +35,15 @@ interface SidebarItem {
 }
 
 const medicalItems: SidebarItem[] = [
-  { title: 'Registration', path: '/registration', icon: UserPlus, permission: 'registration' },
-  { title: 'Consultation', path: '/consultation', icon: Stethoscope, permission: 'consultation' },
-  { 
-    title: 'Test Results', 
-    path: '/tests', 
-    icon: FlaskConical, 
-    permission: ['lab_tests', 'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 'lab_spirometry', 'lab_audiometry', 'lab_essential_diagnostics'] 
-  },
-  { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
-  { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
-  { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
-  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
-  { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
-  { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'view_appointments' },
+  { title: 'Registration', path: '/registration', icon: UserPlus },
+  { title: 'Consultation', path: '/consultation', icon: Stethoscope },
+  { title: 'Test Results', path: '/tests', icon: FlaskConical },
+  { title: 'Director Review', path: '/director', icon: ShieldCheck },
+  { title: 'Patient Report', path: '/patient-report', icon: FileText },
+  { title: 'Screening Matrix', path: '/view-records', icon: Database },
+  { title: 'Patient Directory', path: '/view-patients', icon: Users },
+  { title: 'Messaging', path: '/messages', icon: MessageSquare },
+  { title: 'Appointments', path: '/appointments', icon: Calendar },
 ];
 
 
