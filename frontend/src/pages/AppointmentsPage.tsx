@@ -245,7 +245,7 @@ const AppointmentsPage = () => {
 
   return (
     <MainLayout>
-      <div className="max-w-6xl mx-auto space-y-8 pb-20 animate-in slide-in-from-bottom-4 duration-500 mt-2 p-4">
+      <div className="space-y-6">
         
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">

@@ -323,21 +323,27 @@ const RegistrationPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Top Header & Search */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-4 rounded-xl border-2 border-primary/10 shadow-sm">
-          <div className="flex items-center gap-4">
+        {/* Top Header & Search Area */}
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+          <div className="flex items-center gap-3">
             {isEditMode && (
-              <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="hover:bg-primary/10">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
                 <ArrowLeft className="h-5 w-5 text-primary" />
               </Button>
             )}
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+              {isEditMode ? (
+                <Users className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+              ) : (
+                <UserPlus className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+              )}
+            </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-                {isEditMode ? <Users className="text-primary h-5 w-5 sm:h-6 sm:w-6" /> : <UserPlus className="text-primary h-5 w-5 sm:h-6 sm:w-6" />}
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight">
                 {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
               </h1>
-              <p className="text-[10px] sm:text-sm text-muted-foreground">
-                {isEditMode ? `Updating ${editStaffId}` : `Manage patient Bio-Data for ${activeSection} - ${activeYear}`}
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">
+                {isEditMode ? `Updating ${editStaffId}` : `Session: ${activeYear} • ${activeSection}`}
               </p>
             </div>
           </div>
