@@ -319,6 +319,15 @@ const ConsultationPage: React.FC = () => {
     }
   }, [psa_remark, setValue]);
 
+  const breast_exam = watch('breast_exam');
+  const breast_remark = watch('breast_remark');
+  // Auto-set breast remark to Not Applicable
+  useEffect(() => {
+    if (breast_exam === 'Not Applicable' && breast_remark !== 'Not Applicable') {
+      setValue('breast_remark', 'Not Applicable');
+    }
+  }, [breast_exam, setValue]);
+
 
   const handleSearch = async (staffIdToSearch?: string) => {
     const idToSearch = staffIdToSearch || searchId;
@@ -331,21 +340,29 @@ const ConsultationPage: React.FC = () => {
       const fullData = response.data;
       setPatient(fullData);
 
+      const defaultValues = {
+        luts: 'No', chronic_cough: 'No', chronic_chest_pain: 'No', chest_infection: 'No',
+        heart_dx: 'No', palor: 'No', jaundice: 'No', murmur: 'No',
+        chest_status: '', psa: '', psa_remark: '',
+        fbs: '', rbs: '', sugar_remark: '',
+        ua_result: '', ua_remark: '', dm_status: '',
+        htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
+        breast_exam: '', breast_remark: '', abdomen: '',
+        assessment_hx_pe: '', other_assessments: '',
+        other_remarks: '', overall_assessment: ''
+      };
+
       if (fullData.consultation) {
-        reset(fullData.consultation);
+        const sanitized = { ...defaultValues };
+        for (const key in fullData.consultation) {
+          if (fullData.consultation[key] !== null && fullData.consultation[key] !== undefined) {
+            (sanitized as any)[key] = fullData.consultation[key];
+          }
+        }
+        reset(sanitized);
         toast.success(`Loaded existing consultation for ${fullData.first_name}`);
       } else {
-        reset({
-          luts: 'No', chronic_cough: 'No', chronic_chest_pain: 'No', chest_infection: 'No',
-          heart_dx: 'No', palor: 'No', jaundice: 'No', murmur: 'No',
-          chest_status: '', psa: '', psa_remark: '',
-          fbs: '', rbs: '', sugar_remark: '',
-          ua_result: '', ua_remark: '', dm_status: '',
-          htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
-          breast_exam: '', breast_remark: '', abdomen: '',
-          assessment_hx_pe: '', other_assessments: '',
-          other_remarks: '', overall_assessment: ''
-        } as any);
+        reset(defaultValues);
         toast.success(`New consultation for ${fullData.first_name}`);
       }
     } catch (err) {
