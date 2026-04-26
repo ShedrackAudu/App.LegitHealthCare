@@ -86,18 +86,31 @@ def ensure_schema(app):
                             except Exception as e:
                                 app.logger.error(f"Failed to add '{col_name}' to app_branding: {e}")
                 
-                # 5. Add status to appointments
+                # 5. Comprehensive Appointment Table Update
                 if 'appointments' in inspector.get_table_names():
                     columns = [c['name'] for c in inspector.get_columns('appointments')]
-                    if 'status' not in columns:
-                        app.logger.info(f"Adding 'status' column to appointments table in {name} database...")
-                        try:
-                            with engine.connect() as conn:
-                                conn.execute(text("ALTER TABLE appointments ADD COLUMN status VARCHAR(20) DEFAULT 'Pending'"))
-                                conn.commit()
-                            app.logger.info(f"Successfully added 'status' to appointments in {name}.")
-                        except Exception as e:
-                            app.logger.error(f"Failed to add 'status' to appointments: {e}")
+                    appointment_cols = {
+                        'status': "VARCHAR(20) DEFAULT 'Pending'",
+                        'booked_by_type': "VARCHAR(20)",
+                        'booked_by_username': "VARCHAR(50)",
+                        'phone': "VARCHAR(20)",
+                        'email': "VARCHAR(100)",
+                        'nationality': "VARCHAR(100)",
+                        'gender': "VARCHAR(20)",
+                        'dob': "VARCHAR(50)",
+                        'age': "INTEGER"
+                    }
+                    
+                    for col_name, col_type in appointment_cols.items():
+                        if col_name not in columns:
+                            app.logger.info(f"Adding '{col_name}' column to appointments table in {name} database...")
+                            try:
+                                with engine.connect() as conn:
+                                    conn.execute(text(f"ALTER TABLE appointments ADD COLUMN {col_name} {col_type}"))
+                                    conn.commit()
+                                app.logger.info(f"Successfully added '{col_name}' to appointments in {name}.")
+                            except Exception as e:
+                                app.logger.error(f"Failed to add '{col_name}' to appointments: {e}")
 
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")
