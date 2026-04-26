@@ -18,6 +18,9 @@ interface AppContextType {
   socket: Socket | null;
   unreadMessagesCount: number;
   setUnreadMessagesCount: (count: number) => void;
+  isMuted: boolean;
+  setIsMuted: (muted: boolean) => void;
+  playGlobalSound: (type?: 'message' | 'alert') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -47,6 +50,29 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('app_muted') === 'true');
+
+  const MESSAGE_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3';
+  const ALERT_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2353/2353-preview.mp3';
+  
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const playGlobalSound = useCallback((type: 'message' | 'alert' = 'message') => {
+    if (isMuted) return;
+    try {
+        const soundUrl = type === 'message' ? MESSAGE_SOUND : ALERT_SOUND;
+        const audio = new Audio(soundUrl);
+        audio.volume = 0.6;
+        audio.play().catch(e => console.warn("Auto-play blocked or audio failed:", e));
+    } catch (err) {
+        console.error("Global sound error:", err);
+    }
+  }, [isMuted]);
+
+  const handleSetIsMuted = (muted: boolean) => {
+    setIsMuted(muted);
+    localStorage.setItem('app_muted', String(muted));
+  };
 
   useEffect(() => {
     localStorage.setItem('activeSection', activeSection);
@@ -93,12 +119,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       newSocket.on('message_notification', () => {
           setUnreadMessagesCount(prev => prev + 1);
+          // Only play global sound if we're not on the messaging page 
+          // (Messaging page has its own logic for active chats)
+          if (!window.location.pathname.includes('/messaging')) {
+            playGlobalSound('message');
+          }
       });
 
       newSocket.on('user_update', (updatedUser) => {
         if (user && updatedUser.id === user.id) {
           const wasRevoked = (user.temp_access?.length || 0) > (updatedUser.temp_access?.length || 0);
           setUser(updatedUser);
+          playGlobalSound('alert');
           if (wasRevoked) {
             toast.error("Administrative Alert: An access privilege has been revoked.");
           } else {
@@ -255,7 +287,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeYear, setActiveYear, 
       user, setUser,
       branding, brandingError, fetchBranding,
-      socket, unreadMessagesCount, setUnreadMessagesCount
+      socket, unreadMessagesCount, setUnreadMessagesCount,
+      isMuted, setIsMuted: handleSetIsMuted, playGlobalSound
     }}>
       {children}
     </AppContext.Provider>

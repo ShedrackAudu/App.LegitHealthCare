@@ -358,7 +358,7 @@ const PatientDashboard = () => {
                     {/* Information Grid */}
                     <div className="flex-1 min-w-0 space-y-1.5 md:space-y-4">
                         <div className="space-y-0">
-                            <h2 className="text-[8px] md:text-[18px] font-black tracking-tighter text-muted-foreground uppercase">{reportProgress.year} Screening Report Progress Status</h2>
+                            <h2 className="text-[8px] md:text-[18px] font-black tracking-tighter text-muted-foreground uppercase">{reportProgress.year} SCREENING STATUS</h2>
                             <p className="text-xs md:text-2xl font-black text-foreground truncate">
                                 {reportProgress.status}
                             </p>

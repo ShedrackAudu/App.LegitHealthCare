@@ -22,7 +22,9 @@ import {
   ShieldCheck,
   Reply,
   X,
-  XCircle
+  XCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { 
   Dialog,
@@ -54,7 +56,7 @@ import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDial
 
 
 export default function MessagingPage() {
-  const { user, socket, setUnreadMessagesCount } = useAppContext();
+  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound } = useAppContext();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -134,6 +136,10 @@ export default function MessagingPage() {
       )) {
         setMessages(prev => [...prev, msg]);
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
+      }
+      
+      if (msg.sender_id !== user.id) {
+          playGlobalSound('message');
       }
       
       // Update sidebar regardless of whether it was the active chat
@@ -468,14 +474,28 @@ export default function MessagingPage() {
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Messages</h2>
-            <Button 
-                size="sm" 
-                variant="default" 
-                className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
-                onClick={openNewGroup}
-            >
-              <Plus className="h-4 w-4" /> New Group
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                      "h-9 w-9 p-0 rounded-xl",
+                      isMuted ? "text-rose-500" : "text-muted-foreground"
+                  )}
+                  onClick={() => setIsMuted(!isMuted)}
+                  title={isMuted ? "Unmute Notifications" : "Mute Notifications"}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
+                  onClick={openNewGroup}
+              >
+                <Plus className="h-4 w-4" /> New Group
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />

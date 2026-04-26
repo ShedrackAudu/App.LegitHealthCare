@@ -30,14 +30,31 @@ import {
   Sparkles,
   Stethoscope,
   Microscope,
-  Database
+  Database,
+  ArrowUp
 } from 'lucide-react';
 import axios from 'axios';
-import { motion, useScroll, useTransform } from 'framer-motion';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 const LandingPage = () => {
   const [branding, setBranding] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    return scrollY.on("change", (latest) => {
+      if (latest > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    });
+  }, [scrollY]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const fetchBranding = async () => {
@@ -71,7 +88,8 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <>
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-12 lg:px-20">
@@ -260,99 +278,76 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: "circOut", delay: 0.3 }}
-              className="lg:flex-1 relative w-full"
+              className="lg:flex-1 relative w-full mt-16 lg:mt-0"
             >
               <div className="relative mx-auto lg:ml-auto group max-w-2xl">
                 {/* Visual Depth Elements */}
                 <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
                 <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 rounded-full blur-3xl" />
                 
-                {/* Main Interface Box */}
-                <div className="relative bg-card/60 backdrop-blur-2xl rounded-2xl border border-white/20 shadow-[0_40px_100px_rgba(0,0,0,0.15)] overflow-hidden lg:rotate-2 group-hover:rotate-0 transition-transform duration-1000 p-8 sm:p-12">
-                   
-                   {/* Interface Header */}
-                   <div className="flex justify-between items-center mb-10 pb-6 border-b border-border/50">
-                      <div className="flex gap-2">
-                        <div className="w-3 h-3 rounded-full bg-red-400/30" />
-                        <div className="w-3 h-3 rounded-full bg-amber-400/30" />
-                        <div className="w-3 h-3 rounded-full bg-emerald-400/30" />
-                      </div>
-                      <div className="px-4 py-1 rounded-full bg-muted/50 border border-border/50 text-[9px] font-black tracking-widest uppercase opacity-60">
-                         Clinical Interface v2.0
-                      </div>
-                   </div>
+                {/* Grid of Clinical Mockups */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-10">
+                  {/* Sub-Card 1 */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
+                      alt="Medical Equipment"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
+                          <Microscope className="w-3 h-3" /> Diagnostics
+                       </div>
+                    </div>
+                  </motion.div>
 
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-10">
-                      {/* Sub-Card 1 */}
-                      <motion.div 
-                        whileHover={{ y: -5, scale: 1.02 }}
-                        className="h-44 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
-                      >
-                         <img 
-                          src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
-                          alt="Medical Equipment"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
-                        <div className="absolute bottom-4 left-4 right-4">
-                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
-                              <Microscope className="w-3 h-3" /> Diagnostics
-                           </div>
-                        </div>
-                      </motion.div>
+                  {/* Sub-Card 2 */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    transition={{ delay: 0.1 }}
+                    className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
+                      alt="Clinical Analytics"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
+                          <Database className="w-3 h-3" /> Bio-Analytics
+                       </div>
+                    </div>
+                  </motion.div>
 
-                      {/* Sub-Card 2 */}
-                      <motion.div 
-                        whileHover={{ y: -5, scale: 1.02 }}
-                        transition={{ delay: 0.1 }}
-                        className="h-44 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
-                      >
-                         <img 
-                          src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
-                          className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
-                          alt="Clinical Analytics"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
-                        <div className="absolute bottom-4 left-4 right-4">
-                           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
-                              <Database className="w-3 h-3" /> Bio-Analytics
-                           </div>
-                        </div>
-                      </motion.div>
-
-                      {/* Large Main Card */}
-                      <motion.div 
-                        whileHover={{ y: -5, scale: 1.01 }}
-                        transition={{ delay: 0.2 }}
-                        className="sm:col-span-2 h-64 rounded-xl overflow-hidden border border-white/20 shadow-2xl relative group/card cursor-pointer"
-                      >
-                         <img 
-                          src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
-                          className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-105" 
-                          alt="Medical Team"
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent opacity-40 transition-opacity group-hover/card:opacity-60" />
-                        <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
-                           <div className="space-y-1">
-                              <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">Expert Staff</p>
-                              <h4 className="text-xl font-black text-white">Clinical Intelligence Team</h4>
-                           </div>
-                           <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 text-white">
-                              <Stethoscope className="w-6 h-6" />
-                           </div>
-                        </div>
-                      </motion.div>
-                   </div>
-
-                   {/* Floating Heart Button */}
-                   <motion.div 
-                     animate={{ y: [0, -10, 0] }}
-                     transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                     className="absolute -bottom-5 -right-5 w-20 h-20 bg-background/50 backdrop-blur-3xl rounded-2xl border border-border shadow-2xl flex items-center justify-center z-20 hover:scale-110 transition-transform cursor-pointer group/heart"
-                   >
-                      <Heart className="w-8 h-8 text-rose-500 fill-rose-500/10 group-hover/heart:fill-rose-500 transition-all" />
-                   </motion.div>
+                  {/* Large Main Card */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.01 }}
+                    transition={{ delay: 0.2 }}
+                    className="sm:col-span-2 h-64 sm:h-80 rounded-xl overflow-hidden border border-white/20 shadow-2xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-105" 
+                      alt="Medical Team"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent opacity-40 transition-opacity group-hover/card:opacity-60" />
+                    <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">Expert Staff</p>
+                          <h4 className="text-xl font-black text-white">Clinical Intelligence Team</h4>
+                       </div>
+                       <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 text-white">
+                          <Stethoscope className="w-6 h-6" />
+                       </div>
+                    </div>
+                  </motion.div>
                 </div>
+
               </div>
             </motion.div>
           </div>
@@ -619,7 +614,23 @@ const LandingPage = () => {
         </div>
       </footer>
     </div>
-  );
+    
+    {/* Return to Top Button */}
+    <AnimatePresence>
+      {showScrollTop && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.5, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.5, y: 20 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 p-4 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30 hover:scale-110 active:scale-95 transition-transform"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  </>
+);
 };
 
 interface FeatureCardProps {
