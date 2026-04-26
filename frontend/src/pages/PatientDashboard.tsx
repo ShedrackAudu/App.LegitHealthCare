@@ -280,7 +280,7 @@ const PatientDashboard = () => {
           <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3.5 text-left flex-1">
                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
-                 <Shield className="w-2.5 h-2.5" /> HIPAA Secured
+                 <Shield className="w-2.5 h-2.5" /> NHA & NDPA Secured
                </div>
                <h1 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
                   Welcome back, <br />

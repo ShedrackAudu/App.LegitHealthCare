@@ -683,9 +683,25 @@ def verify_report(token):
     if not verification:
         return jsonify({"valid": False, "error": "Invalid or forged report signature."}), 404
         
+    # Fetch patient name from the correct section's BioData
+    patient_name = "N/A"
+    try:
+        from flask import current_app
+        engine = db.get_engine(current_app, bind=verification.section.lower())
+        from sqlalchemy import text
+        sql = text("SELECT first_name, middle_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+        with engine.connect() as conn:
+            row = conn.execute(sql, {"sid": verification.staff_id}).fetchone()
+            if row:
+                first, middle, last = row
+                patient_name = f"{first} {middle or ''} {last}".strip().replace('  ', ' ')
+    except Exception as e:
+        print(f"Error fetching name for verification: {str(e)}")
+
     return jsonify({
         "valid": True,
         "staff_id": verification.staff_id,
+        "patient_name": patient_name,
         "year": verification.screening_year,
         "section": verification.section.upper(),
         "generated_at": verification.generated_at.isoformat()

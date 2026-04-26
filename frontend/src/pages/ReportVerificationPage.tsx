@@ -1,12 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import { CheckCircle2, XCircle, Loader2, FileText, Calendar, Building2, User } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { 
+    CheckCircle2, 
+    XCircle, 
+    Loader2, 
+    FileText, 
+    Calendar, 
+    Building2, 
+    User, 
+    ShieldCheck, 
+    ExternalLink,
+    Clock
+} from 'lucide-react';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
+import { useAppContext } from '../context/AppContext';
+import { API_BASE_URL } from '../lib/api';
+import { motion, AnimatePresence } from 'framer-motion';
+import { ModeToggle } from '@/components/mode-toggle';
 
 const ReportVerificationPage: React.FC = () => {
     const { token } = useParams<{ token: string }>();
+    const { branding } = useAppContext();
     const [loading, setLoading] = useState(true);
     const [status, setStatus] = useState<'success' | 'failed' | null>(null);
     const [reportDetails, setReportDetails] = useState<any>(null);
@@ -34,95 +50,199 @@ const ReportVerificationPage: React.FC = () => {
     }, [token]);
 
     return (
-        <div className="min-h-screen bg-background text-foreground flex items-center justify-center p-4">
-            <div className="w-full max-w-md animate-in fade-in zoom-in-95 duration-500">
-                <Card className="border-border shadow-2xl relative overflow-hidden">
-                    {/* Header Strip */}
-                    <div className={`h-2 w-full ${status === 'success' ? 'bg-primary' : status === 'failed' ? 'bg-destructive' : 'bg-primary'}`} />
-                    
-                    <CardHeader className="text-center pb-2">
-                        <div className="mx-auto mb-4 mt-2">
-                            {loading ? (
-                                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto">
-                                    <Loader2 className="h-10 w-10 animate-spin text-primary" />
-                                </div>
-                            ) : status === 'success' ? (
-                                <div className="h-20 w-20 rounded-full bg-primary/10 flex items-center justify-center mx-auto ring-8 ring-primary/20">
-                                    <CheckCircle2 className="h-12 w-12 text-primary" />
-                                </div>
-                            ) : (
-                                <div className="h-20 w-20 rounded-full bg-destructive/10 flex items-center justify-center mx-auto ring-8 ring-destructive/20">
-                                    <XCircle className="h-12 w-12 text-destructive" />
-                                </div>
-                            )}
-                        </div>
-                        <CardTitle className="text-2xl font-black">
-                            {loading ? 'Verifying Report...' : status === 'success' ? 'Authentic Report' : 'Verification Failed'}
-                        </CardTitle>
-                        <CardDescription className="text-sm font-medium mt-1">
-                            {loading 
-                                ? 'Please wait while we validate the digital signature of this medical report.' 
-                                : status === 'success' 
-                                    ? 'This medical report has been cryptographically verified by Legit HealthCare systems.' 
-                                    : 'This report code is invalid, expired, or may be a forged document.'}
-                        </CardDescription>
-                    </CardHeader>
+        <div className="min-h-screen bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/5 via-background to-background text-foreground flex items-center justify-center p-4 relative">
+            {/* Theme Switcher */}
+            <div className="absolute top-6 right-6">
+                <ModeToggle />
+            </div>
 
-                    <CardContent className="pt-6">
-                        {status === 'success' && reportDetails && (
-                            <div className="bg-muted/30 rounded-2xl p-5 space-y-4 border border-border">
-                                <h3 className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-4 border-b pb-2">Verified Record Details</h3>
-                                
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-card rounded-lg border shadow-sm"><User className="h-4 w-4 text-primary" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Patient Reference (ID)</p>
-                                        <p className="font-bold text-sm">{reportDetails.staff_id}</p>
+            <div className="w-full max-w-lg">
+                <AnimatePresence mode="wait">
+                    {loading ? (
+                        <motion.div 
+                            key="loading"
+                            initial={{ opacity: 0, scale: 0.95 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.95 }}
+                            className="flex flex-col items-center justify-center py-12"
+                        >
+                            <div className="relative">
+                                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
+                            </div>
+                            <p className="mt-4 text-xs font-bold text-muted-foreground animate-pulse">
+                                Validating Digital Signature...
+                            </p>
+                        </motion.div>
+                    ) : (
+                        <motion.div
+                            key={status || 'empty'}
+                            initial={{ opacity: 0, y: 15 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        >
+                            <Card className="border-border/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden bg-card/50 backdrop-blur-xl">
+                                {/* Integrated Brand Header */}
+                                <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-border/10">
+                                    {branding?.logo_light ? (
+                                        <img 
+                                            src={`${API_BASE_URL}${branding.logo_light}`} 
+                                            alt="Clinic Logo" 
+                                            className="h-9 w-auto object-contain"
+                                        />
+                                    ) : (
+                                        <span className="font-black text-xs tracking-tighter">LEGIT HEALTHCARE</span>
+                                    )}
+                                    <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full">
+                                        <ShieldCheck className="h-2.5 w-2.5 text-primary" />
+                                        <span className="text-[8px] font-black uppercase tracking-widest text-primary">Secure Portal</span>
                                     </div>
                                 </div>
-                                
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-card rounded-lg border shadow-sm"><FileText className="h-4 w-4 text-primary" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Screening Period</p>
-                                        <p className="font-bold text-sm">{reportDetails.year} Annual Medical Screenings</p>
-                                    </div>
-                                </div>
-                                
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-card rounded-lg border shadow-sm"><Building2 className="h-4 w-4 text-primary" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Assigned Section</p>
-                                        <div className="mt-1">
-                                            <Badge variant="outline" className="font-bold bg-card">{reportDetails.section}</Badge>
+
+                                {/* Status Banner */}
+                                <div className={`py-3 px-5 flex items-center justify-between ${
+                                    status === 'success' ? 'bg-primary/5 border-b border-primary/10' : 'bg-destructive/5 border-b border-destructive/10'
+                                }`}>
+                                    <div className="flex items-center gap-2.5">
+                                        <div className={`p-1.5 rounded-lg ${status === 'success' ? 'bg-primary/20' : 'bg-destructive/20'}`}>
+                                            {status === 'success' ? (
+                                                <CheckCircle2 className={`h-4 w-4 ${status === 'success' ? 'text-primary' : 'text-destructive'}`} />
+                                            ) : (
+                                                <XCircle className="h-4 w-4 text-destructive" />
+                                            )}
+                                        </div>
+                                        <div>
+                                            <h2 className="text-[11px] font-black uppercase tracking-tight leading-none mb-0.5">
+                                                {status === 'success' ? 'Authenticity Verified' : 'Verification Failed'}
+                                            </h2>
+                                            <p className="text-[10px] font-medium text-muted-foreground leading-none">
+                                                {status === 'success' ? 'Document integrity confirmed' : 'Invalid or tampered record'}
+                                            </p>
                                         </div>
                                     </div>
+                                    {status === 'success' && (
+                                        <Badge variant="outline" className="bg-primary/10 text-primary border-primary/20 font-black text-[9px] px-1.5 py-0 uppercase">
+                                            Original
+                                        </Badge>
+                                    )}
                                 </div>
 
-                                <div className="flex items-start gap-3">
-                                    <div className="p-2 bg-card rounded-lg border shadow-sm"><Calendar className="h-4 w-4 text-primary" /></div>
-                                    <div>
-                                        <p className="text-[10px] font-bold text-muted-foreground uppercase">Mined Timestamp (UTC)</p>
-                                        <p className="font-bold text-sm">{new Date(reportDetails.generated_at).toLocaleString('en-GB')}</p>
+                                <CardContent className="p-4">
+                                    {status === 'success' && reportDetails ? (
+                                        <div className="space-y-4">
+                                            {/* Patient Info Header */}
+                                            <div className="flex items-center gap-4 pb-4 border-b border-dashed border-border/60">
+                                                <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
+                                                    <User className="h-6 w-6 text-primary" />
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <div className="flex items-center justify-between mb-1">
+                                                        <h3 className="text-xl font-black tracking-tight leading-none truncate pr-2">
+                                                            {reportDetails.patient_name}
+                                                        </h3>
+                                                        <Badge variant="outline" className="text-[7px] font-black uppercase tracking-widest border-primary/20 text-primary h-4 px-1 shrink-0">
+                                                            Patient
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex items-center gap-2.5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <span className="text-[8px] font-black uppercase text-muted-foreground tracking-tighter">Ref No.</span>
+                                                            <Badge variant="secondary" className="text-[9px] font-mono font-bold py-0 h-4 px-1.5 bg-muted/50">
+                                                                {reportDetails.staff_id}
+                                                            </Badge>
+                                                        </div>
+                                                        <div className="h-3 w-[1px] bg-border" />
+                                                        <div className="flex items-center gap-1 text-primary">
+                                                            <ShieldCheck className="h-3 w-3" />
+                                                            <span className="text-[9px] font-black uppercase tracking-wide">Identity Verified</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+
+                                            {/* Compact Details Grid */}
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <div className="p-2.5 rounded-xl bg-muted/30 border border-border/50 group hover:bg-muted/50 transition-colors">
+                                                    <div className="flex items-center gap-1.5 mb-1 text-primary">
+                                                        <Calendar className="h-3 w-3" />
+                                                        <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Period</span>
+                                                    </div>
+                                                    <p className="text-xs font-bold">{reportDetails.year} Screening</p>
+                                                </div>
+                                                <div className="p-2.5 rounded-xl bg-muted/30 border border-border/50 group hover:bg-muted/50 transition-colors">
+                                                    <div className="flex items-center gap-1.5 mb-1 text-primary">
+                                                        <Building2 className="h-3 w-3" />
+                                                        <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Section</span>
+                                                    </div>
+                                                    <p className="text-xs font-bold">{reportDetails.section}</p>
+                                                </div>
+                                            </div>
+
+                                            {/* Digital Fingerprint */}
+                                            <div className="p-3 rounded-xl bg-primary/[0.03] border border-primary/10">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <ShieldCheck className="h-3 w-3 text-primary" />
+                                                        <span className="text-[9px] font-black uppercase tracking-widest text-primary">Digital Signature</span>
+                                                    </div>
+                                                    <Badge variant="outline" className="text-[7px] font-mono border-primary/20 text-primary/70 h-3.5 px-1">AES-256</Badge>
+                                                </div>
+                                                <div className="grid grid-cols-1 gap-1">
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-bold text-muted-foreground">Generated On</span>
+                                                        <span className="text-[9px] font-bold">{new Date(reportDetails.generated_at).toLocaleString('en-GB')}</span>
+                                                    </div>
+                                                    <div className="flex items-center justify-between">
+                                                        <span className="text-[9px] font-bold text-muted-foreground">Hash Digest</span>
+                                                        <span className="text-[9px] font-mono text-muted-foreground truncate ml-4 max-w-[120px]">
+                                                            {token?.substring(0, 16)}...
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="py-6 text-center">
+                                            <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-3 ring-4 ring-destructive/5">
+                                                <XCircle className="h-6 w-6 text-destructive" />
+                                            </div>
+                                            <h3 className="text-base font-black tracking-tight mb-1">Invalid Verification Code</h3>
+                                            <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-tight font-medium">
+                                                Verification failed. Document may be altered or expired.
+                                            </p>
+                                            <div className="mt-6 pt-4 border-t border-dashed border-border/60">
+                                                <p className="text-[9px] font-black text-destructive uppercase tracking-widest mb-0.5">Security Warning</p>
+                                                <p className="text-[8px] font-medium text-muted-foreground italic leading-tight">
+                                                    Forged documents are a serious legal offense.
+                                                </p>
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    {/* Footer Branding */}
+                                    <div className="mt-6 pt-4 border-t border-border/40 flex items-center justify-between">
+                                        <div className="flex flex-col">
+                                            <span className="text-[7px] font-black uppercase text-muted-foreground tracking-widest">Authorized By</span>
+                                            <span className="text-[9px] font-black uppercase tracking-tighter text-foreground/80">
+                                                {branding?.clinic_name || 'Legit HealthCare Systems'}
+                                            </span>
+                                        </div>
+                                        <Link to="/" className="flex items-center gap-1 text-[9px] font-black text-primary hover:opacity-80 transition-opacity uppercase tracking-wider">
+                                            Main Portal
+                                            <ExternalLink className="h-2.5 w-2.5" />
+                                        </Link>
                                     </div>
-                                </div>
-                            </div>
-                        )}
+                                </CardContent>
+                            </Card>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
 
-                        {status === 'failed' && (
-                            <div className="bg-destructive/5 rounded-2xl p-5 border border-destructive/10 text-center">
-                                <p className="text-sm font-medium text-destructive mb-2">If you suspect this is a forged document, please contact the clinic administration immediately.</p>
-                            </div>
-                        )}
-
-                        <div className="mt-8 text-center border-t pt-6">
-                            <p className="text-[10px] font-black uppercase text-muted-foreground tracking-widest mb-3">Powered By</p>
-                            <Link to="/" className="text-sm font-black tracking-tighter hover:text-primary transition-colors inline-flex items-center gap-2">
-                                LEGIT HEALTHCARE SYSTEMS
-                            </Link>
-                        </div>
-                    </CardContent>
-                </Card>
+                <div className="mt-6 text-center">
+                    <p className="text-[8px] font-medium text-muted-foreground/60 uppercase tracking-[0.2em]">
+                        &copy; {new Date().getFullYear()} LEGIT HEALTHCARE SYSTEMS • All Rights Reserved
+                    </p>
+                </div>
             </div>
         </div>
     );

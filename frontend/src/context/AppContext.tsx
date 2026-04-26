@@ -135,6 +135,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
     }
   }, [user]);
+  
+  // Auto-set section from user profile if available (especially for patients)
+  useEffect(() => {
+    if (user && user.section && user.section !== activeSection) {
+      setActiveSection(user.section as Section);
+    }
+  }, [user?.section, activeSection]);
 
   useEffect(() => {
     if (!user?.temp_access || user.temp_access.length === 0) return;

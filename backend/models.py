@@ -172,6 +172,24 @@ class PatientPortalUser(db.Model):
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def to_dict(self):
+        # Dynamically find the section (DCP/DCT) by checking both clinical databases
+        section = None
+        from flask import current_app
+        from sqlalchemy import text
+        
+        for bind_key in ['dcp', 'dct']:
+            try:
+                engine = db.engines.get(bind_key)
+                if not engine: continue
+                sql = text("SELECT staff_id FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                with engine.connect() as conn:
+                    result = conn.execute(sql, {"sid": self.username}).fetchone()
+                    if result:
+                        section = bind_key.upper()
+                        break
+            except:
+                continue
+
         return {
             "id": self.id,
             "first_name": self.first_name,
@@ -183,6 +201,7 @@ class PatientPortalUser(db.Model):
             "is_2fa_enabled": self.is_2fa_enabled,
             "must_reset_password": self.must_reset_password,
             "user_type": "patient",
+            "section": section,
             "roles": ["Patient"],
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
         }
@@ -794,6 +813,8 @@ class Appointment(db.Model):
     time_slot = db.Column(db.String(50)) # e.g. 10:00 AM - 10:30 AM
     reason = db.Column(db.Text, nullable=False)
     status = db.Column(db.String(20), default='Pending') # Pending, Completed, Cancelled
+    booked_by_type = db.Column(db.String(20)) # staff, patient
+    booked_by_username = db.Column(db.String(50)) # username or staff_id
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -812,6 +833,8 @@ class Appointment(db.Model):
             "time_slot": self.time_slot,
             "reason": self.reason,
             "status": self.status,
+            "booked_by_type": self.booked_by_type,
+            "booked_by_username": self.booked_by_username,
             "created_at": self.created_at.isoformat()
         }
 

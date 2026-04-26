@@ -512,16 +512,16 @@ const LandingPage = () => {
                     <WorkflowStep number="03" title="Real-Time Access" text="Receive instant notifications and view your medical reports as soon as they are finalized." />
                  </div>
               </div>
-               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/hipaa ring-1 ring-white/10">
+               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/security ring-1 ring-white/10">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                  <Activity className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/hipaa:rotate-0" />
+                  <Activity className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/security:rotate-0" />
                   <div className="text-center relative z-10 space-y-6">
-                     <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center mx-auto text-white border border-white/20 shadow-2xl relative group-hover/hipaa:scale-110 transition-transform duration-500">
-                        <div className="absolute inset-0 bg-primary blur-2xl opacity-20 group-hover/hipaa:opacity-40 transition-opacity" />
+                     <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center mx-auto text-white border border-white/20 shadow-2xl relative group-hover/security:scale-110 transition-transform duration-500">
+                        <div className="absolute inset-0 bg-primary blur-2xl opacity-20 group-hover/security:opacity-40 transition-opacity" />
                         <Shield className="h-10 w-10 relative z-10" />
                      </div>
                      <div className="space-y-2">
-                        <h4 className="text-3xl font-black text-white tracking-tight">HIPAA Compliant</h4>
+                        <h4 className="text-3xl font-black text-white tracking-tight">NHA & NDPA Compliant</h4>
                         <div className="h-1 w-12 bg-white/20 mx-auto rounded-full" />
                      </div>
                      <p className="text-white/60 max-w-[280px] mx-auto text-sm leading-relaxed font-medium">

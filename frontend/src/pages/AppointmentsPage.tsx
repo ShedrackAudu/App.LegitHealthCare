@@ -78,6 +78,8 @@ interface Appointment {
     status: 'Pending' | 'Completed' | 'Cancelled';
     phone?: string;
     email?: string;
+    booked_by_type?: 'staff' | 'patient';
+    booked_by_username?: string;
 }
 
 const BioItem = ({ label, value, icon: Icon }: any) => (
@@ -439,14 +441,14 @@ const AppointmentsPage = () => {
             <div className="space-y-4 animate-in fade-in slide-in-from-top-4 duration-700">
                 <Tabs value={activeTab} onValueChange={(v: any) => setActiveTab(v)} className="w-full">
                     <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 mb-6">
-                        <TabsList className="bg-muted/50 p-1.5 border-2 border-border/50 rounded-2xl h-14 w-full lg:w-auto">
-                            <TabsTrigger value="pending" className="group flex-1 lg:flex-none rounded-xl px-4 sm:px-8 h-full font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all text-xs sm:text-sm">
+                        <TabsList className="flex bg-muted/50 p-1.5 mb-6 border-2 border-border/50 rounded-2xl h-14 w-full lg:w-fit">
+                            <TabsTrigger value="pending" className="group flex-1 lg:flex-none rounded-xl px-4 sm:px-12 h-full font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all text-xs sm:text-sm">
                                 Pending
                                 <Badge variant="secondary" className="ml-2 bg-primary/10 text-primary border-0 group-data-[state=active]:bg-white group-data-[state=active]:text-primary transition-colors text-[10px]">
                                     {appointments.filter(a => a.status === 'Pending').length}
                                 </Badge>
                             </TabsTrigger>
-                            <TabsTrigger value="completed" className="group flex-1 lg:flex-none rounded-xl px-4 sm:px-8 h-full font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg data-[state=active]:shadow-primary/30 transition-all text-xs sm:text-sm">
+                            <TabsTrigger value="completed" className="group flex-1 lg:flex-none rounded-xl px-4 sm:px-12 h-full font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all text-xs sm:text-sm">
                                 Completed
                                 <Badge variant="secondary" className="ml-2 bg-green-500/10 text-green-700 border-0 group-data-[state=active]:bg-white group-data-[state=active]:text-primary transition-colors text-[10px]">
                                     {appointments.filter(a => a.status === 'Completed').length}
@@ -514,7 +516,7 @@ const AppointmentsPage = () => {
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-3 gap-3">
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Schedule</p>
                                                 <p className="text-xs font-black flex items-center gap-1.5"><Calendar className="h-3 w-3 text-primary" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
@@ -523,6 +525,11 @@ const AppointmentsPage = () => {
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Status</p>
                                                 <Badge variant="outline" className="border-primary/20 text-primary bg-primary/5 font-black text-[9px] uppercase tracking-widest py-0 px-2 h-5">Pending</Badge>
+                                            </div>
+                                            <div className="p-3 bg-muted/30 rounded-xl space-y-1">
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Booked By</p>
+                                                <p className="text-[9px] font-black uppercase text-primary">{app.booked_by_type || 'staff'}</p>
+                                                <p className="text-[8px] font-bold text-muted-foreground truncate">{app.booked_by_username || 'SYSTEM'}</p>
                                             </div>
                                         </div>
                                         <div className="p-4 bg-primary/5 rounded-xl border border-primary/10">
@@ -538,9 +545,10 @@ const AppointmentsPage = () => {
                             <Table>
                                 <TableHeader className="bg-muted/30">
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-[300px] font-black text-[10px] uppercase tracking-widest py-4">Patient Info</TableHead>
+                                        <TableHead className="w-[280px] font-black text-[10px] uppercase tracking-widest py-4">Patient Info</TableHead>
                                         <TableHead className="w-[180px] font-black text-[10px] uppercase tracking-widest py-4">Schedule</TableHead>
-                                        <TableHead className="w-[120px] font-black text-[10px] uppercase tracking-widest py-4">Status</TableHead>
+                                        <TableHead className="w-[110px] font-black text-[10px] uppercase tracking-widest py-4">Status</TableHead>
+                                        <TableHead className="w-[150px] font-black text-[10px] uppercase tracking-widest py-4">Booked By</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Reason</TableHead>
                                         <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-widest py-4 text-right">Actions</TableHead>
                                     </TableRow>
@@ -549,7 +557,7 @@ const AppointmentsPage = () => {
                                     <AnimatePresence mode="popLayout">
                                         {filteredAppointments.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={5} className="h-32 text-center text-muted-foreground font-medium italic">
+                                                <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-medium italic">
                                                     {fetchingAppointments ? "Loading appointments..." : "No pending appointments found."}
                                                 </TableCell>
                                             </TableRow>
@@ -585,7 +593,26 @@ const AppointmentsPage = () => {
                                                         </Badge>
                                                     </TableCell>
                                                     <TableCell className="py-4">
-                                                        <p className="text-xs font-medium line-clamp-2 max-w-[250px]">{app.reason}</p>
+                                                        <div className="space-y-0.5">
+                                                            <div className="flex items-center gap-1.5">
+                                                                <Badge 
+                                                                    variant="secondary" 
+                                                                    className={`text-[8px] font-black uppercase px-1.5 py-0 h-4 ${
+                                                                        app.booked_by_type === 'patient' 
+                                                                        ? 'bg-blue-100 text-blue-700 border-blue-200' 
+                                                                        : 'bg-orange-100 text-orange-700 border-orange-200'
+                                                                    }`}
+                                                                >
+                                                                    {app.booked_by_type || 'staff'}
+                                                                </Badge>
+                                                            </div>
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase pl-0.5">
+                                                                {app.booked_by_username || 'SYSTEM'}
+                                                            </p>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <p className="text-xs font-medium line-clamp-2 max-w-[200px]">{app.reason}</p>
                                                     </TableCell>
                                                     <TableCell className="py-4 text-right">
                                                         <DropdownMenu>
@@ -671,7 +698,7 @@ const AppointmentsPage = () => {
                                                 </DropdownMenuContent>
                                             </DropdownMenu>
                                         </div>
-                                        <div className="grid grid-cols-2 gap-3">
+                                        <div className="grid grid-cols-3 gap-3">
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Completed On</p>
                                                 <p className="text-xs font-black flex items-center gap-1.5 text-muted-foreground"><Calendar className="h-3 w-3" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
@@ -679,6 +706,11 @@ const AppointmentsPage = () => {
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Status</p>
                                                 <Badge className="bg-green-500 text-white border-0 font-black text-[9px] uppercase tracking-widest py-0 px-2 h-5">Completed</Badge>
+                                            </div>
+                                            <div className="p-3 bg-muted/30 rounded-xl space-y-1">
+                                                <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Booked By</p>
+                                                <p className="text-[9px] font-black uppercase text-primary/60">{app.booked_by_type || 'staff'}</p>
+                                                <p className="text-[8px] font-bold text-muted-foreground truncate">{app.booked_by_username || 'SYSTEM'}</p>
                                             </div>
                                         </div>
                                         <div className="p-4 bg-muted/20 rounded-xl border border-border/50">
@@ -694,9 +726,10 @@ const AppointmentsPage = () => {
                             <Table>
                                 <TableHeader className="bg-muted/30">
                                     <TableRow className="hover:bg-transparent">
-                                        <TableHead className="w-[300px] font-black text-[10px] uppercase tracking-widest py-4">Patient Info</TableHead>
+                                        <TableHead className="w-[280px] font-black text-[10px] uppercase tracking-widest py-4">Patient Info</TableHead>
                                         <TableHead className="w-[180px] font-black text-[10px] uppercase tracking-widest py-4">Schedule</TableHead>
-                                        <TableHead className="w-[120px] font-black text-[10px] uppercase tracking-widest py-4">Status</TableHead>
+                                        <TableHead className="w-[110px] font-black text-[10px] uppercase tracking-widest py-4">Status</TableHead>
+                                        <TableHead className="w-[150px] font-black text-[10px] uppercase tracking-widest py-4">Booked By</TableHead>
                                         <TableHead className="font-black text-[10px] uppercase tracking-widest py-4">Reason</TableHead>
                                         <TableHead className="w-[80px] font-black text-[10px] uppercase tracking-widest py-4 text-right">Actions</TableHead>
                                     </TableRow>
@@ -704,7 +737,7 @@ const AppointmentsPage = () => {
                                 <TableBody>
                                     {filteredAppointments.length === 0 ? (
                                         <TableRow>
-                                            <TableCell colSpan={5} className="h-32 text-center text-muted-foreground font-medium italic">
+                                            <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-medium italic">
                                                 No completed appointments found.
                                             </TableCell>
                                         </TableRow>
@@ -740,7 +773,26 @@ const AppointmentsPage = () => {
                                                     </Badge>
                                                 </TableCell>
                                                 <TableCell className="py-4">
-                                                     <p className="text-[10px] font-bold text-muted-foreground italic line-clamp-1 max-w-[200px]">
+                                                    <div className="space-y-0.5">
+                                                        <div className="flex items-center gap-1.5">
+                                                            <Badge 
+                                                                variant="secondary" 
+                                                                className={`text-[8px] font-black uppercase px-1.5 py-0 h-4 ${
+                                                                    app.booked_by_type === 'patient' 
+                                                                    ? 'bg-blue-100/50 text-blue-700/70 border-blue-200/50' 
+                                                                    : 'bg-orange-100/50 text-orange-700/70 border-orange-200/50'
+                                                                }`}
+                                                            >
+                                                                {app.booked_by_type || 'staff'}
+                                                            </Badge>
+                                                        </div>
+                                                        <p className="text-[10px] font-black text-muted-foreground/60 uppercase pl-0.5">
+                                                            {app.booked_by_username || 'SYSTEM'}
+                                                        </p>
+                                                    </div>
+                                                </TableCell>
+                                                <TableCell className="py-4">
+                                                     <p className="text-[10px] font-bold text-muted-foreground italic line-clamp-1 max-w-[150px]">
                                                         {app.reason}
                                                      </p>
                                                 </TableCell>

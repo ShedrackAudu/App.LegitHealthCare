@@ -1,6 +1,6 @@
 export const SECTIONS = [
-  { id: 'DCP', name: 'DCP Section' },
-  { id: 'DCT', name: 'DCT Section' },
+  { id: 'DCP', name: 'DCP' },
+  { id: 'DCT', name: 'DCT' },
 ] as const;
 
 export const YEARS = Array.from({ length: 11 }, (_, i) => (2025 + i).toString());

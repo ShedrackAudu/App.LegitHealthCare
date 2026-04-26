@@ -266,8 +266,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               value={activeSection} 
               onValueChange={(val) => setActiveSection(val as SectionID)}
             >
-              <SelectTrigger className="w-[72px] sm:w-[130px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
-                <SelectValue placeholder="Section" />
+              <SelectTrigger className="w-[64px] sm:w-[90px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
+                <SelectValue placeholder="Sec" />
               </SelectTrigger>
               <SelectContent>
                 {SECTIONS.map((s) => (
@@ -282,8 +282,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
-              <SelectTrigger className="w-[60px] sm:w-[110px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
-                <SelectValue placeholder="Year" />
+              <SelectTrigger className="w-[60px] sm:w-[85px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
+                <SelectValue placeholder="Yr" />
               </SelectTrigger>
               <SelectContent>
                 {YEARS.map((y) => (
