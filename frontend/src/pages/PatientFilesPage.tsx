@@ -92,7 +92,7 @@ const PatientFilesPage: React.FC = () => {
 
                 {/* Files Section */}
                 {!selectedYear && !fetchingYears ? (
-                    <div className="flex flex-col items-center justify-center py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                    <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-border/40 text-center px-6 py-12 space-y-4 shadow-inner">
                         <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2">
                             <FileText className="h-10 w-10 text-muted-foreground/30" />
                         </div>
@@ -104,9 +104,9 @@ const PatientFilesPage: React.FC = () => {
                         </div>
                     </div>
                 ) : fetchingYears ? (
-                    <div className="flex flex-col items-center justify-center py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
+                    <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20 p-8 shadow-inner">
                         <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                        <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse mt-6">Syncing Clinical Records...</p>
+                        <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse mt-6">Syncing Records...</p>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-6">

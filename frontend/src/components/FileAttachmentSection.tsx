@@ -26,6 +26,7 @@ interface FileAttachmentSectionProps {
   year: string;
   department?: string; // Optional: if missing, show all files
   allowUpload?: boolean;
+  allowDownload?: boolean;
   compact?: boolean;
 }
 
@@ -34,6 +35,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
   year, 
   department,
   allowUpload = true,
+  allowDownload = true,
   compact = false
 }) => {
   const [files, setFiles] = useState<any[]>([]);
@@ -257,17 +259,19 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                     </div>
                   </div>
                   <div className={cn("flex items-center gap-0.5 shrink-0 ml-2", !compact && "lg:opacity-0 lg:group-hover:opacity-100 transition-opacity")}>
-                    <a href={file.file_path} download={file.filename} onClick={(e) => e.stopPropagation()}>
-                      <Button 
-                        type="button"
-                        size="icon" 
-                        variant="ghost" 
-                        className={cn("text-indigo-500 hover:bg-indigo-500/10", compact ? "h-5 w-5" : "h-8 w-8")} 
-                        title="Download File"
-                      >
-                        <Download className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
-                      </Button>
-                    </a>
+                    {allowDownload && (
+                     <a href={file.file_path} download={file.filename} onClick={(e) => e.stopPropagation()}>
+                       <Button 
+                         type="button"
+                         size="icon" 
+                         variant="ghost" 
+                         className={cn("text-indigo-500 hover:bg-indigo-500/10", compact ? "h-5 w-5" : "h-8 w-8")} 
+                         title="Download File"
+                       >
+                         <Download className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
+                       </Button>
+                     </a>
+                    )}
                     <Button 
                       type="button"
                       size="icon" 
@@ -342,11 +346,13 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
               </div>
             </div>
             <div className="flex items-center gap-2">
-                <a href={selectedFile?.file_path} download={selectedFile?.filename} className="w-full sm:w-auto">
-                  <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 h-8 text-[9px] sm:text-[10px] font-black uppercase border-2 shadow-sm bg-background/50">
-                    <Download className="h-3 w-3 text-primary" /> Download Report
-                  </Button>
-                </a>
+            {allowDownload && (
+                 <a href={selectedFile?.file_path} download={selectedFile?.filename} className="w-full sm:w-auto">
+                   <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 h-8 text-[9px] sm:text-[10px] font-black uppercase border-2 shadow-sm bg-background/50">
+                     <Download className="h-3 w-3 text-primary" /> Download Report
+                   </Button>
+                 </a>
+            )}
             </div>
           </DialogHeader>
           <div className="flex-1 w-full bg-zinc-800 relative flex items-center justify-center overflow-auto">

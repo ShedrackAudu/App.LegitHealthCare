@@ -1007,7 +1007,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
                     <div className="w-full sm:w-[320px] shrink-0">
-                        <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} />
+                        <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
@@ -1039,7 +1039,7 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
                     <div className="w-full sm:w-[320px] shrink-0">
                         {(test === 'Spirometry' || test === 'Audiometry' || test === 'ECG') && (
-                            <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} />
+                            <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} allowDownload={false} />
                         )}
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
