@@ -30,7 +30,7 @@ class RoutingSession(Session):
                     'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
                     'temp_access_codes', 'access_requests', 'system_config', 
                     'appointments', 'report_verifications', 'chat_messages', 
-                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications'
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications', 'patient_files'
                 ]:
                     return _db.engine
                 
@@ -796,6 +796,33 @@ class SystemConfig(db.Model):
     value = db.Column(db.Text)
     description = db.Column(db.String(255))
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+class PatientFile(db.Model):
+    __tablename__ = 'patient_files'
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.String(50), nullable=False) # The patient's staff ID
+    screening_year = db.Column(db.Integer, nullable=False)
+    department = db.Column(db.String(50), nullable=False) # Spirometry, Audiometry
+    filename = db.Column(db.String(255), nullable=False) # Original filename
+    file_path = db.Column(db.String(512), nullable=False) # Path relative to uploads dir
+    file_size = db.Column(db.Integer) # In bytes
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id')) # Staff ID of the uploader
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    uploader = db.relationship('StaffUser', backref=db.backref('uploaded_files', lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "staff_id": self.staff_id,
+            "screening_year": self.screening_year,
+            "department": self.department,
+            "filename": self.filename,
+            "file_path": f"/api/files/view/{self.id}", # Proxy URL for viewing
+            "file_size": self.file_size,
+            "uploaded_by_name": f"{self.uploader.first_name} {self.uploader.last_name}" if self.uploader else "System",
+            "created_at": self.created_at.isoformat()
+        }
 
 class Appointment(db.Model):
     __tablename__ = 'appointments'

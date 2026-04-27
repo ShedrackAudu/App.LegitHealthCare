@@ -63,3 +63,4 @@ gunicorn
 sendgrid
 pandas
 openpyxl
+xlsxwriter

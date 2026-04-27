@@ -35,6 +35,7 @@ import PatientManage2FAPage from './pages/PatientManage2FAPage';
 import PatientContactPage from './pages/PatientContactPage';
 import SecurityDashboard from './pages/SecurityDashboard';
 import OfflinePage from './pages/OfflinePage';
+import PatientFilesPage from './pages/PatientFilesPage';
 
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -61,6 +62,7 @@ function RootApp() {
             <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/patient/dashboard" element={<ProtectedRoute allowedRoles={['Patient']}><PatientDashboard /></ProtectedRoute>} />
             <Route path="/patient/records" element={<ProtectedRoute allowedRoles={['Patient']}><PatientMedicalReport /></ProtectedRoute>} />
+            <Route path="/patient/files" element={<ProtectedRoute allowedRoles={['Patient']}><PatientFilesPage /></ProtectedRoute>} />
             <Route path="/patient/appointments" element={<ProtectedRoute allowedRoles={['Patient']}><PatientAppointmentsPage /></ProtectedRoute>} />
             <Route path="/patient/account" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManageAccountPage /></ProtectedRoute>} />
             <Route path="/patient/account/2fa" element={<ProtectedRoute allowedRoles={['Patient']}><PatientManage2FAPage /></ProtectedRoute>} />

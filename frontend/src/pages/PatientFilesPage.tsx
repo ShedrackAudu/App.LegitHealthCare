@@ -1,0 +1,147 @@
+import React, { useState, useEffect } from 'react';
+import { PatientLayout } from '@/components/layout/PatientLayout';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { FileText, Calendar, Filter, Search } from 'lucide-react';
+import { useAppContext } from '@/context/AppContext';
+import { FileAttachmentSection } from '@/components/FileAttachmentSection';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
+import { Badge } from '@/components/ui/badge';
+import api from '@/lib/api';
+import { 
+  Loader2, 
+  ChevronRight, 
+  ShieldCheck,
+  AlertCircle,
+  Download,
+  Activity
+} from 'lucide-react';
+import { toast } from 'react-hot-toast';
+
+const PatientFilesPage: React.FC = () => {
+    const { user } = useAppContext();
+    const [availableYears, setAvailableYears] = useState<string[]>([]);
+    const [selectedYear, setSelectedYear] = useState<string>('');
+    const [fetchingYears, setFetchingYears] = useState(true);
+
+    useEffect(() => {
+        const fetchYears = async () => {
+            try {
+                const res = await api.get('/api/patient/reports/years', {
+                    headers: { 'X-Staff-ID': user?.username }
+                });
+                setAvailableYears(res.data);
+                if (res.data.length > 0) {
+                    setSelectedYear(res.data[0]);
+                }
+            } catch (err) {
+                console.error("Error fetching years:", err);
+                toast.error("Failed to load screening history");
+            } finally {
+                setFetchingYears(false);
+            }
+        };
+        if (user?.username) fetchYears();
+    }, [user]);
+
+    return (
+        <PatientLayout>
+            <div className="space-y-8 animate-in fade-in duration-700">
+                {/* Header Selector Card (Matching Medical Reports Style) */}
+                <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md">
+                    <CardHeader className="p-6 md:p-8">
+                        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                            <div className="flex flex-col gap-3">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                                        <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+                                    </div>
+                                    <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Technical Reports</CardTitle>
+                                </div>
+                                <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
+                                    Access detailed machine-generated diagnostic attachments.
+                                </p>
+                            </div>
+
+                            <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                                <div className="w-full sm:w-44">
+                                    <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears}>
+                                        <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
+                                            <Calendar className="mr-2 h-3.5 w-3.5 text-primary" />
+                                            <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
+                                        </SelectTrigger>
+                                        <SelectContent className="rounded-xl font-bold">
+                                            {availableYears.map(year => (
+                                                <SelectItem key={year} value={year}>{year} Screening</SelectItem>
+                                            ))}
+                                            {availableYears.length === 0 && !fetchingYears && (
+                                                <SelectItem value="none" disabled>No records found</SelectItem>
+                                            )}
+                                        </SelectContent>
+                                    </Select>
+                                </div>
+                            </div>
+                        </div>
+                    </CardHeader>
+                </Card>
+
+                {/* Files Section */}
+                {!selectedYear && !fetchingYears ? (
+                    <div className="flex flex-col items-center justify-center py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                        <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2">
+                            <FileText className="h-10 w-10 text-muted-foreground/30" />
+                        </div>
+                        <div className="space-y-2">
+                            <h3 className="text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">No History Found</h3>
+                            <p className="text-xs text-muted-foreground font-medium italic max-w-xs mx-auto leading-relaxed">
+                                You do not have any screening records in our database. Once you complete a screening, your technical files will appear here.
+                            </p>
+                        </div>
+                    </div>
+                ) : fetchingYears ? (
+                    <div className="flex flex-col items-center justify-center py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
+                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse mt-6">Syncing Clinical Records...</p>
+                    </div>
+                ) : (
+                    <div className="grid grid-cols-1 gap-6">
+                        <Card className="border-2 shadow-lg rounded-2xl overflow-hidden transition-all hover:shadow-xl">
+                            <CardContent className="p-6">
+                                {user?.username && selectedYear && (
+                                    <FileAttachmentSection 
+                                        staffId={user.username} 
+                                        year={selectedYear} 
+                                        allowUpload={false} 
+                                    />
+                                )}
+                            </CardContent>
+                        </Card>
+
+                        {/* Information Alert */}
+                        <Card className="bg-primary/5 border-primary/10 border-2 rounded-2xl">
+                            <CardContent className="p-6 flex items-start gap-4">
+                                <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
+                                    <AlertCircle className="h-5 w-5 text-primary" />
+                                </div>
+                                <div className="space-y-1">
+                                    <p className="text-sm font-black text-primary uppercase tracking-tight">Understanding Technical Files</p>
+                                    <p className="text-xs text-muted-foreground leading-relaxed font-medium">
+                                        View raw diagnostic images and PDF reports from machine tests (ECG, Spirometry, Audiometry) that support your medical results. 
+                                        Missing files may still be pending upload by clinical staff.
+                                    </p>
+                                </div>
+                            </CardContent>
+                        </Card>
+                    </div>
+                )}
+            </div>
+        </PatientLayout>
+    );
+};
+
+export default PatientFilesPage;

@@ -65,6 +65,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 db.init_app(app)
 bcrypt.init_app(app)
@@ -124,6 +125,7 @@ from routes.email_bp import email_bp
 from routes.config_bp import config_bp
 from routes.appointments import appointments_bp
 from routes.patient_bp import patient_bp
+from routes.files_bp import files_bp
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)
@@ -144,6 +146,7 @@ app.register_blueprint(email_bp, url_prefix='/api/email')
 app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
+app.register_blueprint(files_bp, url_prefix='/api/files')
 
 
 

@@ -39,6 +39,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileAttachmentSection } from '@/components/FileAttachmentSection';
 import { toast } from 'react-hot-toast';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -817,9 +818,9 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                     {testType === 'kft' && <KFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                     {testType === 'lipid' && <LipidForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                     {testType === 'lft' && <LFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
-                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} />}
-                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
-                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} />}
+                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
+                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
+                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
                     {testType === 'routine' && <RoutineForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                 </CardContent>
             </Card>
@@ -987,7 +988,7 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     );
 };
 
-const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
+const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) => {
     const { register, handleSubmit, reset } = useForm({
         defaultValues: initialData
     });
@@ -996,23 +997,28 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
         if (initialData) reset(initialData);
     }, [initialData, reset]);
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-            </div>
-            <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
-                </Button>
-            </div>
-        </form>
+        <div className="space-y-12">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                    <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
+                    <div className="w-full sm:w-[320px] shrink-0">
+                        <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} />
+                    </div>
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 };
 
-const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
+const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }: any) => {
     const { register, handleSubmit, reset } = useForm({
         defaultValues: initialData
     });
@@ -1024,17 +1030,24 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     const resultKey = `${test.toLowerCase()}_result`;
     const remarkKey = `${test.toLowerCase()}_remark`;
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
-                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
-            </div>
-            <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
-                </Button>
-            </div>
-        </form>
+        <div className="space-y-12">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
+                    <div className="w-full sm:w-[320px] shrink-0">
+                        {(test === 'Spirometry' || test === 'Audiometry' || test === 'ECG') && (
+                            <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} />
+                        )}
+                    </div>
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 };
 

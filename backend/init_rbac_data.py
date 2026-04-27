@@ -57,7 +57,14 @@ def init_rbac(app):
         db.session.commit()
         
         # Cleanup: Remove deprecated permissions if they exist
-        deprecated_perms = ['manage_users', 'view_appointments']
+        deprecated_perms = [
+            'manage_users', 
+            'view_appointments',
+            'manage_spirometry',
+            'manage_audiometry',
+            'manage_ecg',
+            'manage_clinical_data'
+        ]
         for dp_name in deprecated_perms:
             dp = Permission.query.filter_by(name=dp_name).first()
             if dp:
