@@ -54,7 +54,7 @@ export default defineConfig({
         globIgnores: ['**/manifest.json'],
         navigateFallback: 'index.html',
         navigateFallbackDenylist: [/^\/api\//],
-        maximumFileSizeToCacheInBytes: 5242880, // 5MB
+        maximumFileSizeToCacheInBytes: 10485760, // 10MB
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
