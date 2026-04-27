@@ -333,7 +333,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                 <Activity className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0 text-left">
-                <DialogTitle className="text-[11px] sm:text-sm font-black uppercase tracking-tight text-foreground truncate block text-left" title={selectedFile?.filename}>
+                <DialogTitle className="text-[11px] sm:text-sm font-black uppercase tracking-tight text-foreground truncate block text-left">
                   {selectedFile?.filename}
                 </DialogTitle>
                 <p className="text-[9px] sm:text-[10px] text-muted-foreground font-bold truncate opacity-80 text-left">
