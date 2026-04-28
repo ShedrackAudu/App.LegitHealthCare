@@ -23,7 +23,8 @@ import {
   Download,
   Smartphone,
   X,
-  Package
+  Package,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -58,6 +59,14 @@ const quickActions = [
     path: '/consultation',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'consultation'
+  },
+  { 
+    title: 'Appointments', 
+    description: 'Manage clinic schedule and patient bookings.',
+    icon: Calendar, 
+    path: '/appointments',
+    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    permission: 'manage_appointments'
   },
   { 
     title: 'Lab Test Results', 

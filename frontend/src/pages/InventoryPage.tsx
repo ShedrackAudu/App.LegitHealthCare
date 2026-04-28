@@ -149,10 +149,10 @@ const InventoryPage: React.FC = () => {
           setScannerBuffer('');
           
           if (isAddItemOpen) {
-            setNewItem(prev => ({ ...prev, sku: scannedSku }));
+            setNewItem((prev: any) => ({ ...prev, sku: scannedSku }));
             toast.success(`Hardware Scan: ${scannedSku}`);
           } else if (isEditItemOpen) {
-            setEditingItem(prev => ({ ...prev, sku: scannedSku }));
+            setEditingItem((prev: any) => ({ ...prev, sku: scannedSku }));
             toast.success(`Hardware Scan: ${scannedSku}`);
           } else if (isFastAdjustOpen) {
             const match = items.find(i => i.sku && i.sku.toLowerCase() === scannedSku.toLowerCase());
