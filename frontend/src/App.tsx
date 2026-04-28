@@ -36,6 +36,7 @@ import PatientContactPage from './pages/PatientContactPage';
 import SecurityDashboard from './pages/SecurityDashboard';
 import OfflinePage from './pages/OfflinePage';
 import PatientFilesPage from './pages/PatientFilesPage';
+import InventoryPage from './pages/InventoryPage';
 
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -98,6 +99,7 @@ function RootApp() {
             <Route path="/access-denied" element={<AccessDeniedPage />} />
             <Route path="/offline" element={<OfflinePage />} />
             <Route path="/messages" element={<ProtectedRoute requiredPermission="messaging"><MessagingPage /></ProtectedRoute>} />
+            <Route path="/inventory" element={<ProtectedRoute requiredPermission="view_inventory"><InventoryPage /></ProtectedRoute>} />
           </Routes>
         </Router>
       </AppProvider>

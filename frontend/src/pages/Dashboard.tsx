@@ -22,7 +22,8 @@ import {
   Check,
   Download,
   Smartphone,
-  X
+  X,
+  Package
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -105,6 +106,14 @@ const quickActions = [
     path: '/messages',
     color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
     permission: 'messaging'
+  },
+  { 
+    title: 'Inventory', 
+    description: 'Track clinical supplies and stock levels.',
+    icon: Package, 
+    path: '/inventory',
+    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    permission: 'view_inventory'
   },
 ];
 

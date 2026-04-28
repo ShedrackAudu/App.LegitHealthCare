@@ -19,7 +19,8 @@ import {
   Key,
   Settings2,
   Calendar,
-  Activity
+  Activity,
+  Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -44,6 +45,7 @@ const medicalItems: SidebarItem[] = [
   { title: 'Patient Directory', path: '/view-patients', icon: Users },
   { title: 'Messaging', path: '/messages', icon: MessageSquare },
   { title: 'Appointments', path: '/appointments', icon: Calendar },
+  { title: 'Inventory', path: '/inventory', icon: Package, permission: 'view_inventory' },
 ];
 
 

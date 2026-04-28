@@ -30,7 +30,8 @@ class RoutingSession(Session):
                     'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
                     'temp_access_codes', 'access_requests', 'system_config', 
                     'appointments', 'report_verifications', 'chat_messages', 
-                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications', 'patient_files'
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications', 'patient_files',
+                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions'
                 ]:
                     return _db.engine
                 
@@ -881,6 +882,109 @@ class ReportVerification(db.Model):
             "section": self.section,
             "verification_code": self.verification_code,
             "generated_at": self.generated_at.isoformat()
+        }
+
+
+class InventoryCategory(db.Model):
+    __tablename__ = 'inventory_categories'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "created_at": self.created_at.isoformat()
+        }
+
+class InventorySupplier(db.Model):
+    __tablename__ = 'inventory_suppliers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    contact_person = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
+    address = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "contact_person": self.contact_person,
+            "email": self.email,
+            "phone": self.phone,
+            "address": self.address,
+            "created_at": self.created_at.isoformat()
+        }
+
+class InventoryItem(db.Model):
+    __tablename__ = 'inventory_items'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    sku = db.Column(db.String(50), unique=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('inventory_categories.id'))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('inventory_suppliers.id'))
+    description = db.Column(db.Text)
+    unit = db.Column(db.String(20)) # e.g., Tablets, Bottles, Pieces
+    stock_level = db.Column(db.Integer, default=0)
+    min_stock_level = db.Column(db.Integer, default=5)
+    unit_price = db.Column(db.Float, default=0.0)
+    expiry_date = db.Column(db.Date, nullable=True)
+    location = db.Column(db.String(100)) # e.g., Shelf A, Room 2
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    category = db.relationship('InventoryCategory', backref='items')
+    supplier = db.relationship('InventorySupplier', backref='items')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sku": self.sku,
+            "category_id": self.category_id,
+            "category_name": self.category.name if self.category else None,
+            "supplier_id": self.supplier_id,
+            "supplier_name": self.supplier.name if self.supplier else None,
+            "description": self.description,
+            "unit": self.unit,
+            "stock_level": self.stock_level,
+            "min_stock_level": self.min_stock_level,
+            "unit_price": self.unit_price,
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
+            "location": self.location,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
+        }
+
+class InventoryTransaction(db.Model):
+    __tablename__ = 'inventory_transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('inventory_items.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    transaction_type = db.Column(db.String(20), nullable=False) # 'Addition', 'Deduction', 'Adjustment'
+    quantity = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(255))
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+
+    item = db.relationship('InventoryItem', backref='transactions')
+    user = db.relationship('StaffUser', backref='inventory_transactions')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "item_id": self.item_id,
+            "item_name": self.item.name if self.item else "Deleted Item",
+            "user_id": self.user_id,
+            "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "reason": self.reason,
+            "timestamp": self.timestamp.isoformat()
         }
 
 from sqlalchemy import event

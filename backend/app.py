@@ -126,6 +126,7 @@ from routes.config_bp import config_bp
 from routes.appointments import appointments_bp
 from routes.patient_bp import patient_bp
 from routes.files_bp import files_bp
+from routes.inventory_bp import inventory_bp
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)
@@ -147,6 +148,7 @@ app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
 app.register_blueprint(files_bp, url_prefix='/api/files')
+app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
 
 
 

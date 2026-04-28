@@ -43,6 +43,9 @@ def init_rbac(app):
             ('view_patients', 'Access to comprehensive patient directory'),
             ('view_records', 'Access to master screening matrix'),
             ('view_users', 'View system user directory'),
+            ('view_inventory', 'View inventory items and stock levels'),
+            ('manage_inventory', 'Add, edit or delete inventory items, categories and suppliers'),
+            ('adjust_stock', 'Ability to manually adjust stock levels and view transaction logs'),
         ]
         
         perm_objs = {}
@@ -85,6 +88,22 @@ def init_rbac(app):
         
         admin_role.permissions = list(perm_objs.values())
         print("Synced all permissions to Admin")
+
+        # Inventory Manager role
+        inventory_manager_role = Role.query.filter_by(name='Inventory Manager').first()
+        if not inventory_manager_role:
+            inventory_manager_role = Role(name='Inventory Manager', description='Staff responsible for inventory and supplies.')
+            db.session.add(inventory_manager_role)
+            print("Created Role: Inventory Manager")
+        
+        inventory_manager_role.permissions = [
+            perm_objs['view_dashboard'],
+            perm_objs['view_inventory'],
+            perm_objs['manage_inventory'],
+            perm_objs['adjust_stock'],
+            perm_objs['messaging']
+        ]
+
         db.session.commit()
 
         # 3. Assign Admin role to 'admin' user
