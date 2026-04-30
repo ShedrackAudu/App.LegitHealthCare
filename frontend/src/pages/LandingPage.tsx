@@ -134,8 +134,8 @@ const LandingPage = () => {
                 <Link to="/login">
                   <Button variant="ghost" className="font-semibold px-4 rounded-xl">Sign In</Button>
                 </Link>
-                <Link to="/signup?portal=patient">
-                  <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Join Portal</Button>
+                <Link to="/signup?portal=staff">
+                  <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Get Started</Button>
                 </Link>
               </div>
             </div>
@@ -167,7 +167,7 @@ const LandingPage = () => {
               <Link to="/login" onClick={() => setMenuOpen(false)}>
                 <Button variant="outline" className="w-full text-lg h-12">Login</Button>
               </Link>
-              <Link to="/signup" onClick={() => setMenuOpen(false)}>
+              <Link to="/signup?portal=staff" onClick={() => setMenuOpen(false)}>
                 <Button className="w-full text-lg h-12 shadow-lg rounded-xl">Get Started</Button>
               </Link>
             </div>
@@ -233,11 +233,11 @@ const LandingPage = () => {
                 </p>
               </div>
 
-              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
-                <Link to="/signup?portal=patient">
+              <div className="flex flex-row items-center justify-start gap-3 sm:gap-5">
+                <Link to="/signup?portal=staff">
                   <Button size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-1 active:translate-y-0.5 transition-all bg-primary relative overflow-hidden group">
                     <span className="relative z-10 flex items-center">
-                      Join Portal <ArrowRight className="ml-3 h-5 w-5" />
+                      Get Started <ArrowRight className="ml-3 h-5 w-5" />
                     </span>
                     <motion.div 
                       className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"
@@ -246,7 +246,7 @@ const LandingPage = () => {
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-xl hover:bg-muted/50 hover:border-primary/50 transition-all">
-                    Sign In
+                    Login
                   </Button>
                 </Link>
               </div>
