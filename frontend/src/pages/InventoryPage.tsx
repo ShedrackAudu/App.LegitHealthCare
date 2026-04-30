@@ -748,24 +748,24 @@ const InventoryPage: React.FC = () => {
 
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
           <div className="flex justify-start">
-            <TabsList className="bg-slate-950/5 dark:bg-slate-900/40 p-1.5 grid grid-cols-2 sm:flex h-auto gap-1.5 rounded-2xl border border-border/50 backdrop-blur-sm w-full sm:w-auto">
+            <TabsList className="bg-muted/50 dark:bg-muted/20 p-1.5 grid grid-cols-2 sm:flex h-auto gap-1.5 rounded-2xl border border-border/50 backdrop-blur-sm w-full sm:w-auto">
               <TabsTrigger 
                 value="items" 
-                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
                 <Box className="h-4 w-4 shrink-0" />
                 <span>Stock Items</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="categories" 
-                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
                 <Layers className="h-4 w-4 shrink-0" />
                 <span>Categories</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="suppliers" 
-                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
                 <Truck className="h-4 w-4 shrink-0" />
                 <span>Suppliers</span>
