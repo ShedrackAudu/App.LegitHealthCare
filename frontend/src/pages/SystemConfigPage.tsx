@@ -147,6 +147,12 @@ const SystemConfigPage: React.FC = () => {
         HAS_PASSWORD: false
     });
 
+    const [contactSettings, setContactSettings] = useState({
+        email: '',
+        phone: '',
+        whatsapp: ''
+    });
+
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
     const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
@@ -202,6 +208,11 @@ const SystemConfigPage: React.FC = () => {
             setBrandingData({
                 doctor_name: response.data.doctor_name || '',
                 doctor_post: response.data.doctor_post || ''
+            });
+            setContactSettings({
+                email: response.data.email || '',
+                phone: response.data.phone || '',
+                whatsapp: response.data.whatsapp || ''
             });
         } catch (err) {
             toast.error("Failed to load clinical identity settings");
@@ -280,8 +291,21 @@ const SystemConfigPage: React.FC = () => {
         setEmailSaving(true);
         try {
             await axios.post('/api/email/settings', emailSettings);
-            toast.success("Email configuration saved successfully!");
+            
+            // Save contact branding as well (using JSON for text-only update)
+            await axios.post('/api/branding', {
+                email: contactSettings.email,
+                phone: contactSettings.phone,
+                whatsapp: contactSettings.whatsapp
+            }, {
+                headers: {
+                    'X-Company-Context': activeSection
+                }
+            });
+
+            toast.success("Configuration saved successfully!");
             fetchEmailSettings();
+            fetchBrandingSettings();
         } catch (err) {
             toast.error("Failed to save email settings");
         } finally {
@@ -318,8 +342,7 @@ const SystemConfigPage: React.FC = () => {
 
             await axios.post('/api/branding', formData, {
                 headers: {
-                    'X-Company-Context': activeSection,
-                    'Content-Type': 'multipart/form-data'
+                    'X-Company-Context': activeSection
                 }
             });
             toast.success("Clinical identity updated!");
@@ -420,9 +443,9 @@ const SystemConfigPage: React.FC = () => {
                             <Globe className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="email" className="flex-1 min-w-[150px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Mail className="h-4 w-4" />
-                            Email
+                            Email & Contacts
                         </TabsTrigger>
                         <TabsTrigger value="doctor" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Stethoscope className="h-4 w-4" />
@@ -546,7 +569,7 @@ const SystemConfigPage: React.FC = () => {
                                                 <div className="space-y-2 relative">
                                                     <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest flex items-center justify-between">
                                                         <span>Sender Password / App Password</span>
-                                                        {emailSettings.HAS_PASSWORD && <span className="text-[10px] text-emerald-500 font-black">● Currently Set</span>}
+                                                        {emailSettings.HAS_PASSWORD && <span className="text-[10px] text-primary font-black">● Currently Set</span>}
                                                     </Label>
                                                     <div className="relative">
                                                         <Input
@@ -564,6 +587,48 @@ const SystemConfigPage: React.FC = () => {
                                                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                                                         </button>
                                                     </div>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
+                                            <CardHeader className="bg-primary/5 border-b pb-4">
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <Mail className="h-5 w-5 text-primary" />
+                                                    Patient Portal Contacts
+                                                </CardTitle>
+                                                <CardDescription>Configure contact details displayed on the Patient Portal 'Contact Us' page.</CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="pt-6 space-y-4">
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Public Contact Email</Label>
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                            value={contactSettings.email}
+                                                            onChange={e => setContactSettings({ ...contactSettings, email: e.target.value })}
+                                                            placeholder="e.g. contact@clinic.com"
+                                                        />
+                                                    </div>
+                                                    <div className="space-y-2">
+                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Public Call Phone Number</Label>
+                                                        <Input
+                                                            className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                            value={contactSettings.phone}
+                                                            onChange={e => setContactSettings({ ...contactSettings, phone: e.target.value })}
+                                                            placeholder="e.g. +234 800 000 0000"
+                                                        />
+                                                    </div>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">WhatsApp Number (For Direct Messaging)</Label>
+                                                    <Input
+                                                        className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                        value={contactSettings.whatsapp}
+                                                        onChange={e => setContactSettings({ ...contactSettings, whatsapp: e.target.value })}
+                                                        placeholder="e.g. +234 800 000 0000"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Enter the number in international format without spaces or symbols for best compatibility.</p>
                                                 </div>
                                             </CardContent>
                                         </Card>
@@ -605,9 +670,9 @@ const SystemConfigPage: React.FC = () => {
                                 </div>
 
                                 <div className="space-y-6">
-                                    <Card className="border-2 shadow-lg h-fit border-emerald-500/10">
-                                        <CardHeader className="bg-emerald-500/5 border-b pb-4">
-                                            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-emerald-600">
+                                    <Card className="border-2 shadow-lg h-fit border-primary/10">
+                                        <CardHeader className="bg-primary/5 border-b pb-4">
+                                            <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
                                                 <Mail className="h-4 w-4" />
                                                 Test Connection
                                             </CardTitle>
@@ -617,7 +682,7 @@ const SystemConfigPage: React.FC = () => {
                                             <div className="space-y-2">
                                                 <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Recipient Email</Label>
                                                 <Input
-                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-emerald-500"
+                                                    className="h-10 text-sm font-bold border-2 focus-visible:ring-primary"
                                                     placeholder="test@example.com"
                                                     value={testEmail}
                                                     onChange={e => setTestEmail(e.target.value)}
@@ -625,7 +690,7 @@ const SystemConfigPage: React.FC = () => {
                                             </div>
                                             <Button
                                                 variant="secondary"
-                                                className="w-full font-bold h-10 border-2 hover:bg-emerald-500 hover:text-white transition-all"
+                                                className="w-full font-bold h-10 border-2 hover:bg-primary hover:text-white transition-all"
                                                 onClick={handleTestEmail}
                                                 disabled={testing}
                                             >
@@ -748,7 +813,7 @@ const SystemConfigPage: React.FC = () => {
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-emerald-500 animate-pulse' : 'bg-destructive'}`} />
+                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
                                             <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
                                                 {staffSignupEnabled ? 'Enabled' : 'Disabled'}
                                             </span>

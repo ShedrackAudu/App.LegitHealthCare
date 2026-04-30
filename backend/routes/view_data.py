@@ -1,7 +1,8 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 from models import (
-    db, BioData, ScreeningYearBioData, ConsultationData, 
+    db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
     SpecialTestsResult, DirectorReview, AuditLog, QueueEntry,
     ReportVerification, AppBranding
@@ -12,92 +13,137 @@ from sqlalchemy import func
 from datetime import datetime
 from decorators import require_permission
 from utils.ip import get_client_ip
+from utils.progress_utils import calculate_report_progress
 
 view_data_bp = Blueprint('view_data', __name__)
 
-@view_data_bp.route('/users/<int:user_id>/profile', methods=['GET'])
+@view_data_bp.route('/users/<string:user_id>/profile', methods=['GET'])
 @require_permission('view_users')
 def get_user_profile(user_id):
-    from models import User
-    user = User.query.get_or_404(user_id)
-    return jsonify(user.to_dict()), 200
+    from models import StaffUser, PatientPortalUser, BioData
+    
+    if user_id.startswith('p'):
+        real_id = int(user_id[1:])
+        user = PatientPortalUser.query.get_or_404(real_id)
+        u_dict = user.to_dict()
+        u_dict['section'] = None
+        u_dict['department'] = None
+        
+        # Explicitly check each clinical database using its engine
+        for bind_key in ['dcp', 'dct']:
+            try:
+                # Use current_app to safely get the engine
+                from flask import current_app
+                engine = db.get_engine(current_app, bind=bind_key)
+                
+                from sqlalchemy import text
+                # We need all bio metrics for the profile enrichment
+                sql = text("""
+                    SELECT department, middle_name, gender, age, nationality, race, dob, phone 
+                    FROM bio_data 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                with engine.connect() as conn:
+                    row = conn.execute(sql, {"sid": user.username}).fetchone()
+                    if row:
+                        # Safely handle DOB which might be string or date object
+                        dob_val = row[6]
+                        if dob_val and hasattr(dob_val, 'isoformat'):
+                            dob_val = dob_val.isoformat()
+                        elif dob_val:
+                            dob_val = str(dob_val)
+
+                        u_dict.update({
+                            'section': bind_key.upper(),
+                            'department': row[0],
+                            'middle_name': row[1],
+                            'gender': row[2],
+                            'age': row[3],
+                            'nationality': row[4],
+                            'race': row[5],
+                            'dob': dob_val,
+                        })
+                        # Fallback for phone
+                        if not u_dict.get('phone') or u_dict.get('phone') == 'N/A':
+                            u_dict['phone'] = row[7]
+                        break
+            except Exception as e:
+                import logging
+                logging.error(f"Failed to fetch profile details from {bind_key}: {str(e)}")
+                continue
+        return jsonify(u_dict), 200
+    else:
+        try:
+            u_id = int(user_id)
+            user = StaffUser.query.get_or_404(u_id)
+            return jsonify(user.to_dict()), 200
+        except ValueError:
+            return jsonify({"error": "Invalid user ID format"}), 400
 @view_data_bp.route('/patients/search', methods=['GET'])
 @require_permission([
     'view_patients', 'registration', 'consultation', 'lab_tests', 
     'lab_fbc', 'lab_kft', 'lab_lipid', 'lab_lft', 'lab_ecg', 
     'lab_spirometry', 'lab_audiometry', 'director_review', 
-    'manage_appointments', 'view_appointments', 'edit_patient', 
+    'manage_appointments', 'edit_patient', 
     'delete_patient', 'manage_access_keys'
 ])
 def search_patients():
     query = request.args.get('q', '')
-    print(f"DEBUG: Search query received: '{query}'")
-    if len(query) < 1: return jsonify([]), 200
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 10, type=int)
+    year = request.args.get('year')
+    
+    if len(query) < 1: 
+        return jsonify({"results": [], "total": 0, "pages": 0}), 200
     
     search = f"%{query}%"
     
-    results_map = {} # Keyed by staff_id for merging
+    # 1. Base Query with Filtering
+    base_query = BioData.query.filter(
+        (BioData.staff_id.ilike(search)) |
+        (BioData.first_name.ilike(search)) |
+        (BioData.middle_name.ilike(search)) |
+        (BioData.last_name.ilike(search)) |
+        (BioData.department.ilike(search)) |
+        (BioData.phone.ilike(search)) |
+        (BioData.email.ilike(search))
+    ).order_by(BioData.created_at.desc())
+
+    # 2. Paginate
+    pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
     
-    def process_record(data):
-        s_id = data.get('staff_id')
-        if not s_id: return
-        
-        # Clean up data (especially dob)
-        if data.get('dob') and hasattr(data['dob'], 'isoformat'):
-            data['dob'] = data['dob'].isoformat()
-            
-        if s_id not in results_map:
-            results_map[s_id] = data
+    final_results = []
+    for p in pagination.items:
+        # Get yearly patient ID
+        if year:
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                staff_id=p.staff_id, 
+                screening_year=int(year)
+            ).first()
         else:
-            # Merge: fill in missing fields in existing with values from data
-            existing = results_map[s_id]
-            for k, v in data.items():
-                # If existing field is missing/empty and new field has value, fill it
-                if v and not existing.get(k):
-                    existing[k] = v
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                staff_id=p.staff_id
+            ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+            
+        p_id = yearly_record.patient_id if yearly_record else None
 
-    # 1. Start with global BioData search
-    try:
-        patients_global = BioData.query.filter(
-            (BioData.staff_id.ilike(search)) |
-            (BioData.first_name.ilike(search)) |
-            (BioData.last_name.ilike(search))
-        ).limit(20).all()
-        
-        for p in patients_global:
-            # NEW: Pull patient_id from the specific screening record if year is provided,
-            # otherwise fall back to most recent (for generic lookup/compatibility)
-            year = request.args.get('year')
-            if year:
-                yearly_record = ScreeningYearBioData.query.filter_by(
-                    staff_id=p.staff_id, 
-                    screening_year=int(year)
-                ).first()
-            else:
-                yearly_record = ScreeningYearBioData.query.filter_by(
-                    staff_id=p.staff_id
-                ).order_by(ScreeningYearBioData.screening_year.desc()).first()
-                
-            p_id = yearly_record.patient_id if yearly_record else None
+        final_results.append({
+            "staff_id": p.staff_id, "patient_id": p_id, "first_name": p.first_name, 
+            "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
+            "gender": p.gender, "dob": p.dob.isoformat() if p.dob else None, 
+            "age": p.age, "phone": p.phone, "email": p.email,
+            "race": p.race, "nationality": p.nationality,
+            "section": (request.headers.get('X-Company-Context') or 'DCP').upper()
+        })
 
-            p_dict = {
-                "staff_id": p.staff_id, "patient_id": p_id, "first_name": p.first_name, 
-                "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
-                "gender": p.gender, "dob": p.dob, "age": p.age, "phone": p.phone, "email": p.email,
-                "race": p.race, "nationality": p.nationality
-            }
-            process_record(p_dict)
-    except Exception as e:
-        print(f"Global search error: {e}")
-
-    # REMOVED: Sectional search over ['dcp', 'dct'] to enforce isolation.
-    # The routed BioData.query above already searches the correct sectional database.
-
-    # Convert map back to list and limit to 10
-    final_results = list(results_map.values())[:10]
-    
-    # Final cleanup: calculate age if missing but dob exists (optional enhancement)
-    return jsonify(final_results), 200
+    return jsonify({
+        "results": final_results,
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "has_next": pagination.has_next,
+        "has_prev": pagination.has_prev
+    }), 200
 
 def get_bind():
     context = request.headers.get('X-Company-Context', '').lower()
@@ -109,25 +155,39 @@ def get_all_patients():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
-    patients = BioData.query.order_by(BioData.created_at.desc()).all()
-    return jsonify([{
-        "staff_id": p.staff_id,
-        "first_name": p.first_name,
-        "middle_name": p.middle_name,
-        "last_name": p.last_name,
-        "department": p.department,
-        "gender": p.gender,
-        "dob": p.dob.isoformat() if p.dob else None,
-        "age": p.age,
-        "phone": p.phone,
-        "email": p.email,
-        "race": p.race,
-        "nationality": p.nationality
-    } for p in patients]), 200
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 20, type=int)
+    
+    pagination = BioData.query.order_by(BioData.created_at.desc()).paginate(
+        page=page, per_page=per_page, error_out=False
+    )
+    
+    return jsonify({
+        "results": [{
+            "staff_id": p.staff_id,
+            "first_name": p.first_name,
+            "middle_name": p.middle_name,
+            "last_name": p.last_name,
+            "department": p.department,
+            "gender": p.gender,
+            "dob": p.dob.isoformat() if p.dob else None,
+            "age": p.age,
+            "phone": p.phone,
+            "email": p.email,
+            "race": p.race,
+            "nationality": p.nationality,
+            "section": bind.upper()
+        } for p in pagination.items],
+        "total": pagination.total,
+        "pages": pagination.pages,
+        "current_page": pagination.page,
+        "has_next": pagination.has_next,
+        "has_prev": pagination.has_prev
+    }), 200
 
-@view_data_bp.route('/patients/<staff_id>', methods=['PUT', 'DELETE'])
+@jwt_required()
 def handle_patient(staff_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     from models import StaffUser
     user = StaffUser.query.get(user_id)
     if not user:
@@ -163,7 +223,7 @@ def handle_patient(staff_id):
 
         # Audit Log
         audit = AuditLog(
-            user_id=request.headers.get('X-User-ID'),
+            user_id=get_jwt_identity(),
             action='Delete Patient (Full)',
             resource=f"Patient:{clean_staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} and all data deleted.",
@@ -185,10 +245,29 @@ def handle_patient(staff_id):
         patient.department = data.get('department', patient.department)
         
         # 1. Sync with ScreeningYearBioData in the current bind
-        ScreeningYearBioData.query.filter(func.lower(ScreeningYearBioData.staff_id) == func.lower(clean_staff_id)).update({
-            "first_name": first_name,
-            "last_name": last_name
-        }, synchronize_session=False)
+        new_p_id = data.get('patient_id')
+        current_year = data.get('screening_year', datetime.now().year)
+        
+        # Update yearly record fields (Names)
+        yearly_q = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == func.lower(clean_staff_id),
+            ScreeningYearBioData.screening_year == int(current_year)
+        )
+        
+        yearly_record = yearly_q.first()
+        if yearly_record:
+            # Check for Patient ID uniqueness if it's changing
+            if new_p_id and str(new_p_id) != str(yearly_record.patient_id):
+                conflict = ScreeningYearBioData.query.filter_by(
+                    screening_year=int(current_year),
+                    patient_id=new_p_id
+                ).first()
+                if conflict:
+                    return jsonify({"error": f"Patient ID {new_p_id} is already assigned to another patient for {current_year}"}), 400
+                yearly_record.patient_id = new_p_id
+            
+            yearly_record.first_name = first_name
+            yearly_record.last_name = last_name
         
         # 2. Sync with PatientPortalUser in the 'patients' bind (Aggressive Force)
         try:
@@ -247,7 +326,7 @@ def handle_patient(staff_id):
         # Audit Log
         try:
             audit = AuditLog(
-                user_id=request.headers.get('X-User-ID'),
+                user_id=get_jwt_identity(),
                 action='Update Patient Profile',
                 resource=f"Patient:{patient.staff_id}",
                 details=f"Updated profile for {patient.first_name} {patient.last_name}.",
@@ -368,7 +447,12 @@ def get_screening_records(year):
             "comment_one": dr.comment_one,
             "comment_two": dr.comment_two,
             "comment_three": dr.comment_three,
-            "comment_four": dr.comment_four
+            "comment_four": dr.comment_four,
+            "lab_remark": dr.overall_lab_remark,
+            "assessment": dr.overall_assessment,
+            "hx_pe": dr.assessment_hx_pe,
+            "other_assessments": dr.other_assessments,
+            "other_remarks": dr.other_remarks
         }
             
         results.append(record)
@@ -411,7 +495,7 @@ def delete_screening_record(id):
     
     # Audit Log for Deletion
     audit = AuditLog(
-        user_id=request.headers.get('X-User-ID'),
+        user_id=get_jwt_identity(),
         action='Delete Screening Record',
         resource=f"Patient:{staff_id}:Year:{year}",
         details=f"Screening record for year {year} and all associated diagnostics removed.",
@@ -421,9 +505,39 @@ def delete_screening_record(id):
     db.session.commit()
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
-@view_data_bp.route('/patient-report/<staff_id>/<int:year>', methods=['GET'])
-@require_permission('view_records')
+@view_data_bp.route('/patient-report/<string:staff_id>/<int:year>', methods=['GET'])
+@jwt_required()
 def get_patient_report(staff_id, year):
+    # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Authentication required"}), 401
+
+    from models import StaffUser, PatientPortalUser
+    
+    is_authorized = False
+    
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        user_id = -1
+        
+    # 1. Check if Staff with permission
+    requester_staff = StaffUser.query.get(user_id)
+    if requester_staff:
+        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+            is_authorized = True
+            
+    # 2. Check if Patient requesting self
+    if not is_authorized:
+        requester_patient = PatientPortalUser.query.get(user_id)
+        if requester_patient and requester_patient.is_verified:
+            if requester_patient.username.lower() == staff_id.lower():
+                is_authorized = True
+                
+    if not is_authorized:
+        return jsonify({"error": "Access denied. You do not have permission to view this clinical record."}), 403
+
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
     
@@ -569,9 +683,25 @@ def verify_report(token):
     if not verification:
         return jsonify({"valid": False, "error": "Invalid or forged report signature."}), 404
         
+    # Fetch patient name from the correct section's BioData
+    patient_name = "N/A"
+    try:
+        from flask import current_app
+        engine = db.get_engine(current_app, bind=verification.section.lower())
+        from sqlalchemy import text
+        sql = text("SELECT first_name, middle_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+        with engine.connect() as conn:
+            row = conn.execute(sql, {"sid": verification.staff_id}).fetchone()
+            if row:
+                first, middle, last = row
+                patient_name = f"{first} {middle or ''} {last}".strip().replace('  ', ' ')
+    except Exception as e:
+        print(f"Error fetching name for verification: {str(e)}")
+
     return jsonify({
         "valid": True,
         "staff_id": verification.staff_id,
+        "patient_name": patient_name,
         "year": verification.screening_year,
         "section": verification.section.upper(),
         "generated_at": verification.generated_at.isoformat()
@@ -632,11 +762,31 @@ def get_dashboard_stats():
         "clinical_counts": clinical_counts
     }), 200
 @view_data_bp.route('/patient/report-progress', methods=['GET'])
+@jwt_required()
 def get_report_progress():
     try:
-        staff_id = request.headers.get('X-Staff-ID')
+        user_id_str = get_jwt_identity()
         year_param = request.args.get('year')
         
+        if not user_id_str:
+            return jsonify({"error": "Auth required"}), 400
+            
+        staff_id = None
+        # Try fetching portal user first (since it's a patient endpoint mostly)
+        from models import PatientPortalUser, StaffUser
+        try:
+            user_id = int(user_id_str)
+            p_user = PatientPortalUser.query.get(user_id)
+            if p_user:
+                staff_id = p_user.username
+            else:
+                s_user = StaffUser.query.get(user_id)
+                if s_user:
+                    # if a staff is calling it but staff checking their own progress
+                    staff_id = request.args.get('staff_id') or s_user.username
+        except ValueError:
+            staff_id = user_id_str
+
         if not staff_id:
             return jsonify({"error": "Staff ID required"}), 400
         
@@ -664,136 +814,17 @@ def get_report_progress():
 
         if found_bind:
             engine = db.engines[found_bind]
-            with engine.connect() as conn:
-                # Optimized single-pass query for all 42 points
-                query = db.text("""
-                    SELECT 
-                        COALESCE(d.fbs, c.fbs) as fbs, 
-                        COALESCE(d.rbs, c.rbs) as rbs, 
-                        COALESCE(d.fbs_rbs_remark, c.sugar_remark) as sugar_remark, 
-                        COALESCE(d.ua_result, c.ua_result) as ua_result, 
-                        COALESCE(d.ua_remark, c.ua_remark) as ua_remark, 
-                        COALESCE(d.psa, c.psa) as psa, 
-                        COALESCE(d.psa_remark, c.psa_remark) as psa_remark, 
-                        COALESCE(d.bp, c.bp) as bp, 
-                        COALESCE(d.pulse, c.pulse) as pulse, 
-                        COALESCE(d.spo2, c.spo2) as spo2, 
-                        COALESCE(d.assessment_hx_pe, c.assessment_hx_pe) as assessment_hx_pe, 
-                        COALESCE(d.overall_lab_remark, c.overall_lab_remark) as overall_lab_remark, 
-                        COALESCE(d.breast_exam, c.breast_exam) as breast_exam,
-                        f.pcv, f.wbc, f.lymp_percent, f.gra_percent, f.mid_percent, f.plt, f.fbc_remark,
-                        k.potassium, k.sodium, k.chloride, k.hco3, k.urea, k.creatinine, k.kft_remark,
-                        li.total_cholesterol, li.triglycerides, li.hdl, li.ldl, li.lp_remark,
-                        lf.ast, lf.alt, lf.alp, lf.tb, lf.cb, lf.lft_remark,
-                        s.ecg_result, s.spirometry_result, s.audiometry_result,
-                        d.comment_one, d.comment_two, d.comment_three, d.comment_four
-                    FROM screening_year_bio_data y
-                    LEFT JOIN consultation_data c ON y.staff_id = c.staff_id AND y.screening_year = c.screening_year
-                    LEFT JOIN fbc_results f ON y.staff_id = f.staff_id AND y.screening_year = f.screening_year
-                    LEFT JOIN kft_results k ON y.staff_id = k.staff_id AND y.screening_year = k.screening_year
-                    LEFT JOIN lipid_results li ON y.staff_id = li.staff_id AND y.screening_year = li.screening_year
-                    LEFT JOIN lft_results lf ON y.staff_id = lf.staff_id AND y.screening_year = lf.screening_year
-                    LEFT JOIN special_tests_results s ON y.staff_id = s.staff_id AND y.screening_year = s.screening_year
-                    LEFT JOIN director_reviews d ON y.staff_id = d.staff_id AND y.screening_year = d.screening_year
-                    WHERE y.staff_id = :s_id AND y.screening_year = :year
-                    LIMIT 1
-                """)
-                row = conn.execute(query, {"s_id": staff_id, "year": year}).fetchone()
-                
-                if row:
-                    # 42 Point Logic Check
-                    points = 0
-                    total_possible = 42
-                    missing_fields = []
-                    
-                    def check_val(val, label, cat):
-                        if val is not None and str(val).strip() != "" and str(val).strip().lower() != "n/a":
-                            return 1
-                        missing_fields.append({"label": label, "category": cat})
-                        return 0
-
-                    # Map row indices to point logic (matching the 42 point schema)
-                    # Consultation (0-12)
-                    points += check_val(row[0], "FBS", "Sugar")
-                    points += check_val(row[1], "RBS", "Sugar")
-                    points += check_val(row[2], "Sugar Remark", "Sugar")
-                    points += check_val(row[3], "Urine Result", "UA")
-                    points += check_val(row[4], "Urine Remark", "UA")
-                    points += check_val(row[5], "PSA", "PSA")
-                    points += check_val(row[6], "PSA Remark", "PSA")
-                    points += check_val(row[7], "Blood Pressure", "Vitals")
-                    points += check_val(row[8], "Pulse Rate", "Vitals")
-                    points += check_val(row[9], "SPO2", "Vitals")
-                    points += check_val(row[10], "Hx/PE", "Clinical")
-                    points += check_val(row[11], "Lab Remark", "Clinical")
-                    points += check_val(row[12], "Breast Exam", "Clinical")
-
-                    # FBC (13-19)
-                    points += check_val(row[13], "PCV", "FBC")
-                    points += check_val(row[14], "WBC", "FBC")
-                    points += check_val(row[15], "Lymphocytes", "FBC")
-                    points += check_val(row[16], "Neutrophils", "FBC")
-                    points += check_val(row[17], "Mixed Cells", "FBC")
-                    points += check_val(row[18], "Platelets", "FBC")
-                    points += check_val(row[19], "FBC Remark", "FBC")
-
-                    # KFT (20-26)
-                    points += check_val(row[20], "Potassium", "KFT")
-                    points += check_val(row[21], "Sodium", "KFT")
-                    points += check_val(row[22], "Chloride", "KFT")
-                    points += check_val(row[23], "Bicarbonate", "KFT")
-                    points += check_val(row[24], "Urea", "KFT")
-                    points += check_val(row[25], "Creatinine", "KFT")
-                    points += check_val(row[26], "KFT Remark", "KFT")
-
-                    # Lipid (27-31)
-                    points += check_val(row[27], "Total Chol.", "Lipid")
-                    points += check_val(row[28], "Triglycerides", "Lipid")
-                    points += check_val(row[29], "HDL-c", "Lipid")
-                    points += check_val(row[30], "LDL-c", "Lipid")
-                    points += check_val(row[31], "Lipid Remark", "Lipid")
-
-                    # LFT (32-37)
-                    points += check_val(row[32], "AST", "LFT")
-                    points += check_val(row[33], "ALT", "LFT")
-                    points += check_val(row[34], "ALP", "LFT")
-                    points += check_val(row[35], "TB", "LFT")
-                    points += check_val(row[36], "CB", "LFT")
-                    points += check_val(row[37], "LFT Remark", "LFT")
-
-                    # Special (38-40)
-                    points += check_val(row[38], "ECG", "Special")
-                    points += check_val(row[39], "Spirometry", "Special")
-                    points += check_val(row[40], "Audiometry", "Special")
-
-                    # Final Advice (41) - Check if ANY comment exists
-                    has_comment = 0
-                    if row[41] or row[42] or row[43] or row[44]:
-                        has_comment = 1
-                    
-                    points += has_comment
-                    if not has_comment:
-                        missing_fields.append({"label": "Medical Advice", "category": "Review"})
-
-                    percentage = round((points / total_possible) * 100)
-                    
-                    # Status logic
-                    status = "Registration Only"
-                    if points > 1: status = "Lab Testing Stage"
-                    if points > 15: status = "Diagnostic Stage"
-                    if points > 31: status = "Medical Review Stage"
-                    if points >= 41 and not has_comment: status = "Awaiting Final Advice"
-                    if percentage == 100: status = "Report Ready"
-
-                    return jsonify({
-                        "percentage": percentage,
-                        "points": points,
-                        "total": total_possible,
-                        "status": status,
-                        "year": year,
-                        "missing_count": len(missing_fields),
-                        "missing_preview": missing_fields[:5]
-                    }), 200
+            percentage, points, status, missing_fields = calculate_report_progress(staff_id, year, engine)
+            
+            return jsonify({
+                "percentage": percentage,
+                "points": points,
+                "total": 42,
+                "status": status,
+                "year": year,
+                "missing_count": len(missing_fields),
+                "missing_preview": missing_fields[:5]
+            }), 200
 
         # Fallback if no record found (Registered but no clinical data started)
         return jsonify({

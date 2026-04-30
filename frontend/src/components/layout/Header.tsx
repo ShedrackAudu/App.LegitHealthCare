@@ -47,11 +47,16 @@ const getPageTitle = (pathname: string, branding: any, brandingError: boolean) =
   if (pathname.includes('/system-config')) return 'System Settings';
   if (pathname.includes('/departments')) return 'Clinic Departments';
   if (pathname.includes('/appointments')) return 'Appointment Scheduler';
+  if (pathname.includes('/security-analytics')) return 'Security Command Center';
   
   return (branding?.clinic_name && !brandingError) ? branding.clinic_name : 'Legit HealthCare';
 };
 
-export const Header: React.FC = () => {
+interface HeaderProps {
+  manualTitle?: string;
+}
+
+export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
   const { 
     activeSection, setActiveSection, 
     activeYear, setActiveYear,
@@ -61,7 +66,60 @@ export const Header: React.FC = () => {
   const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
   const location = useLocation();
-  const pageTitle = getPageTitle(location.pathname, branding, brandingError);
+  const pageTitle = manualTitle || getPageTitle(location.pathname, branding, brandingError);
+  
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    // 1. Check if the event was already captured by index.html (global sync)
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
+
+    // 2. Local listener for standard flow
+    const handleBeforeInstallPrompt = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+
+    // 3. Listener for the custom event dispatched from index.html if captured early
+    const handlePromptReady = () => {
+      if ((window as any).deferredPWAPrompt) {
+        setDeferredPrompt((window as any).deferredPWAPrompt);
+      }
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) {
+      console.warn("PWA: No deferred prompt available");
+      return;
+    }
+    
+    try {
+      console.log("PWA: Triggering install prompt...");
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`PWA: User choice result: ${outcome}`);
+      
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        (window as any).deferredPWAPrompt = null;
+      }
+    } catch (err) {
+      console.error("PWA: Call to prompt() failed:", err);
+      toast.error("Installation failed or was blocked by the browser.");
+    }
+  };
 
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
@@ -208,8 +266,8 @@ export const Header: React.FC = () => {
               value={activeSection} 
               onValueChange={(val) => setActiveSection(val as SectionID)}
             >
-              <SelectTrigger className="w-[72px] sm:w-[130px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
-                <SelectValue placeholder="Section" />
+              <SelectTrigger className="w-[64px] sm:w-[90px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
+                <SelectValue placeholder="Sec" />
               </SelectTrigger>
               <SelectContent>
                 {SECTIONS.map((s) => (
@@ -224,8 +282,8 @@ export const Header: React.FC = () => {
           <div className="flex items-center gap-1.5">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
-              <SelectTrigger className="w-[60px] sm:w-[110px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
-                <SelectValue placeholder="Year" />
+              <SelectTrigger className="w-[60px] sm:w-[85px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
+                <SelectValue placeholder="Yr" />
               </SelectTrigger>
               <SelectContent>
                 {YEARS.map((y) => (
@@ -238,6 +296,18 @@ export const Header: React.FC = () => {
           </div>
 
           <div className="flex items-center gap-2">
+            {deferredPrompt && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleInstallClick}
+                className="hidden sm:flex h-7 w-7 sm:h-9 sm:w-auto rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-0 sm:gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95 px-0 sm:px-3"
+                title="Install App"
+              >
+                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                <span className="hidden sm:inline">Install App</span>
+              </Button>
+            )}
             <Button
               variant="outline"
               size="icon"

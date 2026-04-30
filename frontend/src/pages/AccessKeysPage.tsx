@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface User {
     username: string;
     first_name: string;
     last_name: string;
+    roles: string[];
 }
 
 interface Permission {
@@ -76,15 +78,22 @@ const AccessKeysPage = () => {
     const [targetDuration, setTargetDuration] = useState('60');
     const [isMultiUse, setIsMultiUse] = useState(false);
     const [generatingCode, setGeneratingCode] = useState(false);
+    const [searchParams] = useSearchParams();
+
+    useEffect(() => {
+        const userId = searchParams.get('user_id');
+        const perm = searchParams.get('permission');
+        if (userId) setTargetUser(userId);
+        if (perm) setTargetPerm(perm);
+    }, [searchParams]);
 
     const fetchData = async () => {
         setLoading(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
             const [usersRes, permsRes, codesRes] = await Promise.all([
-                axios.get('/api/admin/users', { headers }),
-                axios.get('/api/admin/permissions', { headers }),
-                axios.get('/api/admin/access-codes', { headers })
+                axios.get('/api/admin/users'),
+                axios.get('/api/admin/permissions'),
+                axios.get('/api/admin/access-codes')
             ]);
             setUsers(usersRes.data);
             setPermissions(permsRes.data);
@@ -109,13 +118,12 @@ const AccessKeysPage = () => {
 
         setGeneratingCode(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
             await axios.post('/api/admin/access-codes/generate', {
                 permission_name: targetPerm,
                 user_id: targetUser === 'all' ? null : targetUser,
                 duration_minutes: parseInt(targetDuration),
                 is_multi_use: isMultiUse
-            }, { headers });
+            });
 
             toast.success("Security Access Key generated successfully.");
             fetchData();
@@ -131,8 +139,7 @@ const AccessKeysPage = () => {
 
     const handleRevokeCode = async (id: number) => {
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.put(`/api/admin/access-codes/${id}/revoke`, {}, { headers });
+            await axios.put(`/api/admin/access-codes/${id}/revoke`, {});
             toast.success("Access Key successfully revoked.");
             fetchData();
         } catch (err: any) {
@@ -145,8 +152,7 @@ const AccessKeysPage = () => {
         if (!id) return;
         setDeleting(true);
         try {
-            const headers = { 'X-User-ID': user?.id?.toString() || '' };
-            await axios.delete(`/api/admin/access-codes/${id}`, { headers });
+            await axios.delete(`/api/admin/access-codes/${id}`);
             toast.success("Access Key record deleted.");
             setDeleteModal({ open: false, id: 0 });
             fetchData();
@@ -206,8 +212,8 @@ const AccessKeysPage = () => {
                                         <SelectValue placeholder="Any Authorized User" />
                                     </SelectTrigger>
                                     <SelectContent className="rounded-xl border-2 shadow-2xl">
-                                        <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-emerald-600">Public (Any Unit)</SelectItem>
-                                        {users.map(u => (
+                                        <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-primary">Public (Any Unit)</SelectItem>
+                                        {users.filter(u => !u.roles.includes('Patient')).map(u => (
                                             <SelectItem key={u.id} value={u.id.toString()} className="text-[10px] font-black uppercase tracking-widest py-3">
                                                 @{u.username} ({u.first_name} {u.last_name[0]}.)
                                             </SelectItem>
@@ -297,7 +303,7 @@ const AccessKeysPage = () => {
                                                                 {code.target_user_name}
                                                             </Badge>
                                                         ) : (
-                                                            <Badge variant="outline" className="font-black text-[9px] bg-emerald-500/10 text-emerald-600 border-emerald-500/20 py-0.5">
+                                                            <Badge variant="outline" className="font-black text-[9px] bg-primary/10 text-primary border-primary/20 py-0.5">
                                                                 <ShieldCheck className="w-3 h-3 mr-1" />
                                                                 Universal
                                                             </Badge>
@@ -334,7 +340,7 @@ const AccessKeysPage = () => {
                                                             );
                                                         } else {
                                                             return (
-                                                                <Badge variant="outline" className="font-black text-[9px] px-3 py-1 rounded-full border shadow-sm bg-emerald-500/10 text-emerald-500 border-emerald-500/20">
+                                                                <Badge variant="outline" className="font-black text-[9px] px-3 py-1 rounded-full border shadow-sm bg-primary/10 text-primary border-primary/20">
                                                                     ACTIVE
                                                                 </Badge>
                                                             );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import AccessDeniedPage from '@/pages/AccessDeniedPage';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
@@ -31,21 +32,21 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // Handle Forced Password Reset
-  if (user.must_reset_password && location.pathname !== '/force-password-reset') {
-    return <Navigate to="/force-password-reset" replace />;
+  if (user.must_reset_password && location.pathname !== '/login') {
+    return <Navigate to="/login" replace />;
   }
 
   if (allowedRoles && !isAdmin()) {
     const hasRole = allowedRoles.some(role => userRoles.includes(role));
     if (!hasRole) {
-      return <Navigate to="/access-denied" state={{ from: location }} replace />;
+      return <AccessDeniedPage />;
     }
   }
 
   // Admin section: Only for admins
   if (adminOnly && !isAdmin()) {
-    // Redirect to access denied page
-    return <Navigate to="/access-denied" state={{ from: location }} replace />;
+    // Render access denied in place
+    return <AccessDeniedPage />;
   }
 
   // Medical/Other section: Check specific permission(s)
@@ -55,8 +56,8 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     const hasAny = permissions.some(p => hasPermission(p));
     
     if (!hasAny) {
-      // Redirect to access denied page with the first needed permission context
-      return <Navigate to="/access-denied" state={{ from: location, permission: permissions[0] }} replace />;
+      // Render access denied in place
+      return <AccessDeniedPage />;
     }
   }
 

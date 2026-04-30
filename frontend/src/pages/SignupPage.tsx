@@ -25,7 +25,9 @@ import { PasswordStrength } from '@/components/ui/PasswordStrength';
 const signupSchema = z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
   last_name: z.string().min(2, 'Last name must be at least 2 characters'),
-  username: z.string().min(3, 'Username must be at least 3 characters'),
+  username: z.string()
+    .min(3, 'Username must be at least 3 characters')
+    .regex(/^[a-z0-9_]+$/, 'Username can only contain lowercase letters, numbers, and underscores'),
   phone: z.string().min(10, 'Invalid phone number'),
   email: z.string().email('Invalid email address'),
   password: z.string()
@@ -237,6 +239,7 @@ const SignupPage: React.FC = () => {
       await axios.post('/api/patient/claim', {
         staff_id: patientStaffId,
         email: claimData.email,
+        phone: claimData.phone,
         password: claimData.password,
         first_name: patientData.first_name
       });
@@ -250,9 +253,9 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
       {/* Left Side: Branding & Visuals (Consistent with Login) */}
-      <div className="hidden lg:flex relative overflow-hidden group">
+      <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
           style={{ 
@@ -306,7 +309,7 @@ const SignupPage: React.FC = () => {
       </div>
 
       {/* Right Side: Signup Form */}
-      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative overflow-y-auto">
+      <div className="flex flex-col items-center justify-center p-8 sm:p-12 relative overflow-y-auto h-full scrollbar-hide">
         <div className="absolute top-8 right-8">
           <ModeToggle />
         </div>
@@ -529,8 +532,8 @@ const SignupPage: React.FC = () => {
                             <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
                           </div>
                           <div className="pl-4.5 flex items-center gap-1.5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                             <span className="text-xs font-black text-emerald-500 uppercase tracking-tight">Verified</span>
+                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                             <span className="text-xs font-black text-primary uppercase tracking-tight">Verified</span>
                           </div>
                       </div>
                     </div>
@@ -586,7 +589,7 @@ const SignupPage: React.FC = () => {
                           {(claimData.password || claimData.confirm_password) && (
                             <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
                               claimData.password === claimData.confirm_password && claimData.password.length > 0
-                                ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500 shadow-xl shadow-emerald-500/10' 
+                                ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
                                 : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
                             }`}>
                               {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
@@ -678,12 +681,12 @@ const SignupPage: React.FC = () => {
                         animate={{ opacity: 1, scale: 1 }}
                         className="flex flex-col items-center py-10 space-y-6"
                       >
-                        <div className="w-24 h-24 bg-emerald-500 rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-emerald-500/30">
+                        <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
                           <CheckCircle2 className="w-14 h-14" />
                         </div>
                         <div className="text-center space-y-2">
-                          <h3 className="text-2xl font-black text-emerald-600 tracking-tight">Identity Verified!</h3>
-                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-emerald-200">
+                          <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
+                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-primary/30">
                              Claim successful. Syncing your medical <br/> records to your personal dashboard...
                           </p>
                         </div>

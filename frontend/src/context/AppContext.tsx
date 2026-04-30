@@ -18,6 +18,9 @@ interface AppContextType {
   socket: Socket | null;
   unreadMessagesCount: number;
   setUnreadMessagesCount: (count: number) => void;
+  isMuted: boolean;
+  setIsMuted: (muted: boolean) => void;
+  playGlobalSound: (type?: 'message' | 'alert') => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -26,7 +29,9 @@ import { toast } from 'react-hot-toast';
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [activeSection, setActiveSection] = useState<Section>(() => {
-    return (localStorage.getItem('activeSection') as Section) || 'DCP';
+    const section = (localStorage.getItem('activeSection') as Section) || 'DCP';
+    axios.defaults.headers.common['X-Company-Context'] = section;
+    return section;
   });
 
   const [activeYear, setActiveYear] = useState(() => {
@@ -35,11 +40,39 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   
   const [user, setUser] = useState<any | null>(() => {
     const saved = localStorage.getItem('user');
-    return saved ? JSON.parse(saved) : null;
+    const token = localStorage.getItem('token');
+    const u = saved ? JSON.parse(saved) : null;
+    if (u && token) {
+      axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+    }
+    return u;
   });
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
+  const [isMuted, setIsMuted] = useState(() => localStorage.getItem('app_muted') === 'true');
+
+  const MESSAGE_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3';
+  const ALERT_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2353/2353-preview.mp3';
+  
+  const audioRef = React.useRef<HTMLAudioElement | null>(null);
+
+  const playGlobalSound = useCallback((type: 'message' | 'alert' = 'message') => {
+    if (isMuted) return;
+    try {
+        const soundUrl = type === 'message' ? MESSAGE_SOUND : ALERT_SOUND;
+        const audio = new Audio(soundUrl);
+        audio.volume = 0.6;
+        audio.play().catch(e => console.warn("Auto-play blocked or audio failed:", e));
+    } catch (err) {
+        console.error("Global sound error:", err);
+    }
+  }, [isMuted]);
+
+  const handleSetIsMuted = (muted: boolean) => {
+    setIsMuted(muted);
+    localStorage.setItem('app_muted', String(muted));
+  };
 
   useEffect(() => {
     localStorage.setItem('activeSection', activeSection);
@@ -50,35 +83,54 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [activeYear]);
 
   useEffect(() => {
+    // Response interceptor to handle 401s globally
+    const interceptor = axios.interceptors.response.use(
+      (response) => response,
+      (error) => {
+        if (error.response?.status === 401) {
+          // Only clear and redirect if we thought we were logged in
+          if (localStorage.getItem('token')) {
+            setUser(null);
+            localStorage.removeItem('user');
+            localStorage.removeItem('token');
+            // Remove the Authorization header
+            delete axios.defaults.headers.common['Authorization'];
+            // Redirect to login if not already there
+            if (!window.location.pathname.includes('/login')) {
+              window.location.href = '/login?reason=session_expired';
+            }
+          }
+        }
+        return Promise.reject(error);
+      }
+    );
+
     if (user) {
+      const token = localStorage.getItem('token');
       localStorage.setItem('user', JSON.stringify(user));
       
       const newSocket = io(API_BASE_URL, {
+        auth: { token: token },
         query: { user_id: user.id }
       });
+      // ... socket logic continues
       
       setSocket(newSocket);
       
       newSocket.on('message_notification', () => {
           setUnreadMessagesCount(prev => prev + 1);
-          // Optional: sound or browser notification
-      });
-
-      newSocket.on('new_message', () => {
-        // If the user is on the messaging page but not in the specific chat, 
-        // we might need to update the conversation list.
-        // This is mostly handled in MessagingPage.tsx, but having a global listener
-        // for "new message in some chat" is good for the badge.
-      });
-
-      newSocket.on('user_presence', () => {
-        // This could trigger a refresh of certain states if needed
+          // Only play global sound if we're not on the messaging page 
+          // (Messaging page has its own logic for active chats)
+          if (!window.location.pathname.includes('/messaging')) {
+            playGlobalSound('message');
+          }
       });
 
       newSocket.on('user_update', (updatedUser) => {
         if (user && updatedUser.id === user.id) {
           const wasRevoked = (user.temp_access?.length || 0) > (updatedUser.temp_access?.length || 0);
           setUser(updatedUser);
+          playGlobalSound('alert');
           if (wasRevoked) {
             toast.error("Administrative Alert: An access privilege has been revoked.");
           } else {
@@ -88,27 +140,40 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       });
 
       // Initial fetch for unread count
-      axios.get('/api/messages/conversations', {
-        headers: { 'X-User-ID': user.id }
-      }).then(resp => {
+      axios.get('/api/messages/conversations').then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
         setUnreadMessagesCount(total);
-      }).catch(err => {});
+      }).catch(err => {
+        // Interceptor will handle 401
+      });
 
-      // Global Heartbeat to keep status 'Active now' in the DB while portal is open
+      // Global Heartbeat
       const hbInterval = setInterval(() => {
-          axios.post('/api/messages/heartbeat', {}, { headers: { 'X-User-ID': user.id } }).catch(() => {});
-      }, 45000); // Every 45 seconds
+          axios.post('/api/messages/heartbeat', {}).catch(() => {});
+      }, 45000);
 
       return () => {
         newSocket.close();
         clearInterval(hbInterval);
+        axios.interceptors.response.eject(interceptor);
       };
     } else {
       localStorage.removeItem('user');
+      localStorage.removeItem('token');
+      delete axios.defaults.headers.common['Authorization'];
       setSocket(null);
+      return () => {
+        axios.interceptors.response.eject(interceptor);
+      };
     }
   }, [user]);
+  
+  // Auto-set section from user profile if available (especially for patients)
+  useEffect(() => {
+    if (user && user.section && user.section !== activeSection) {
+      setActiveSection(user.section as Section);
+    }
+  }, [user?.section, activeSection]);
 
   useEffect(() => {
     if (!user?.temp_access || user.temp_access.length === 0) return;
@@ -168,32 +233,49 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         headers: { 'X-Company-Context': activeSection }
       });
       setBranding(resp.data);
-      // Update document title and favicon
+
+      // Update document title
       if (resp.data.clinic_name) {
         document.title = resp.data.clinic_name;
       }
-      if (resp.data.favicon) {
+
+      // Update browser tab favicon (link[rel="icon"])
+      const faviconUrl = resp.data.favicon || resp.data.logo_light;
+      if (faviconUrl) {
         let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
         if (!link) {
           link = document.createElement('link');
           link.rel = 'icon';
           document.head.appendChild(link);
         }
-        link.href = `${API_BASE_URL}${resp.data.favicon}`;
+        const absoluteUrl = `${API_BASE_URL}${faviconUrl}`;
+        link.href = absoluteUrl;
+        // Set correct MIME type so the browser renders PNGs properly
+        link.type = faviconUrl.toLowerCase().endsWith('.svg') ? 'image/svg+xml' : 'image/png';
+      }
+
+      // Update PWA manifest link to use the backend's dynamic manifest.
+      // The backend manifest now returns the clinic's uploaded favicon as the
+      // PWA icon (prioritizing branding.favicon, then logo_light).
+      // This makes the PWA install prompt show the clinic's custom logo
+      // instead of the static Vite fallback icon.
+      const manifestLink = document.querySelector('link[rel="manifest"]') as HTMLLinkElement;
+      if (manifestLink && (resp.data.favicon || resp.data.logo_light)) {
+        const dynamicManifest = `${API_BASE_URL}/api/branding/manifest.json`;
+        if (manifestLink.getAttribute('href') !== dynamicManifest) {
+          manifestLink.setAttribute('href', dynamicManifest);
+          manifestLink.setAttribute('crossorigin', 'anonymous');
+        }
       }
     } catch (err) {
       setBrandingError(true);
     }
   }, [activeSection]);
 
+
   useEffect(() => {
     axios.defaults.headers.common['X-Company-Context'] = activeSection;
-    if (user) {
-      axios.defaults.headers.common['X-User-ID'] = user.id;
-    } else {
-      delete axios.defaults.headers.common['X-User-ID'];
-    }
-  }, [activeSection, user]);
+  }, [activeSection]);
 
   useEffect(() => {
     fetchBranding();
@@ -205,7 +287,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       activeYear, setActiveYear, 
       user, setUser,
       branding, brandingError, fetchBranding,
-      socket, unreadMessagesCount, setUnreadMessagesCount
+      socket, unreadMessagesCount, setUnreadMessagesCount,
+      isMuted, setIsMuted: handleSetIsMuted, playGlobalSound
     }}>
       {children}
     </AppContext.Provider>

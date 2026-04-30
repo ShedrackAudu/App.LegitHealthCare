@@ -31,7 +31,15 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
+import { 
+  Select, 
+  SelectContent, 
+  SelectItem, 
+  SelectTrigger, 
+  SelectValue 
+} from '@/components/ui/select';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { FileAttachmentSection } from '@/components/FileAttachmentSection';
 import { toast } from 'react-hot-toast';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -42,6 +50,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { toast as hotToast } from 'react-hot-toast';
+import { usePermissions } from '@/hooks/usePermissions';
 
 const TempAccessCountdown = () => {
     const { user } = useAppContext();
@@ -87,23 +96,24 @@ const TempAccessCountdown = () => {
     );
 };
 
-type TestType = 'fbc' | 'kft' | 'lipid' | 'lft' | 'ecg' | 'spirometry' | 'audiometry' | null;
+type TestType = 'fbc' | 'kft' | 'lipid' | 'lft' | 'ecg' | 'spirometry' | 'audiometry' | 'routine' | null;
 
 const TestResultsPage: React.FC = () => {
     const { testType: paramTestType } = useParams<{ testType: string }>();
     const { pathname } = useLocation();
     const navigate = useNavigate();
     const { activeSection, activeYear } = useAppContext();
+    const { hasPermission, isAdmin } = usePermissions();
     
     // Determine current test type from param or URL path fallback
     const currentType = (paramTestType || pathname.split('/').pop()) as TestType;
     const [selectedTest, setSelectedTest] = useState<TestType>(
-        ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry'].includes(currentType || '') ? currentType : null
+        ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry', 'routine'].includes(currentType || '') ? currentType : null
     );
     
     useEffect(() => {
         const urlType = (paramTestType || pathname.split('/').pop()) as TestType;
-        if (urlType && ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry'].includes(urlType)) {
+        if (urlType && ['fbc', 'kft', 'lipid', 'lft', 'ecg', 'spirometry', 'audiometry', 'routine'].includes(urlType)) {
             setSelectedTest(urlType);
         } else if (pathname === '/tests') {
             setSelectedTest(null);
@@ -131,7 +141,7 @@ const TestResultsPage: React.FC = () => {
                     const res = await axios.get(`/api/patients/search?q=${searchId}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
-                    setSearchResults(res.data);
+                    setSearchResults(res.data.results || []);
                 } catch (err) {
                     console.error(err);
                 }
@@ -191,6 +201,40 @@ const TestResultsPage: React.FC = () => {
         return () => clearInterval(interval);
     }, [activeYear, activeSection]);
 
+    const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+
+    useEffect(() => {
+        setActiveSearchIndex(-1);
+    }, [searchId, searchResults]);
+
+    const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+        if (searchResults.length > 0) {
+            switch (e.key) {
+                case 'ArrowDown':
+                    e.preventDefault();
+                    setActiveSearchIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
+                    break;
+                case 'ArrowUp':
+                    e.preventDefault();
+                    setActiveSearchIndex(prev => (prev > 0 ? prev - 1 : 0));
+                    break;
+                case 'Enter':
+                    e.preventDefault();
+                    if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+                        selectPatient(searchResults[activeSearchIndex]);
+                    } else {
+                        handleSearch();
+                    }
+                    break;
+                case 'Escape':
+                    setSearchResults([]);
+                    break;
+            }
+        } else if (e.key === 'Enter') {
+            handleSearch();
+        }
+    };
+
     const selectPatient = (p: any) => {
         setIsSelecting(true);
         setPatient(p);
@@ -225,10 +269,11 @@ const TestResultsPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
+                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
                             { id: 'fbc', title: 'Full Blood Count', icon: FlaskConical, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
                             { id: 'kft', title: 'Kidney Function Test', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
                             { id: 'lipid', title: 'Lipid Profile', icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
-                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-emerald-500', bg: 'bg-emerald-500/10', permission: 'lab_lft' },
+                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
                             { id: 'ecg', title: 'ECG Analysis', icon: Heart, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
                             { id: 'spirometry', title: 'Spirometry', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
                             { id: 'audiometry', title: 'Audiometry', icon: Volume2, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
@@ -314,7 +359,7 @@ const TestResultsPage: React.FC = () => {
                                                 placeholder="Search Staff ID or Name..."
                                                 value={searchId}
                                                 onChange={(e) => setSearchId(e.target.value)}
-                                                onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                                                onKeyDown={handleSearchKeyDown}
                                                 className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
                                             />
                                         </div>
@@ -333,26 +378,27 @@ const TestResultsPage: React.FC = () => {
                                                     <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
                                                 </CardHeader>
                                                 <ul className="max-h-[300px] overflow-auto divide-y">
-                                                    {searchResults.map((p: any) => (
+                                                    {searchResults.map((p: any, index: number) => (
                                                         <li 
                                                             key={p.staff_id}
-                                                            className="p-4 hover:bg-primary/5 cursor-pointer transition-colors group"
+                                                            className={`p-4 cursor-pointer transition-colors group ${activeSearchIndex === index ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
                                                             onClick={() => selectPatient(p)}
+                                                            onMouseEnter={() => setActiveSearchIndex(index)}
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black group-hover:scale-110 transition-transform">
+                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
                                                                         {p.first_name[0]}{p.last_name[0]}
                                                                     </div>
                                                                     <div>
-                                                                        <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
+                                                                        <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                                                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                                                                             <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
                                                                             • <span>{p.department}</span>
                                                                         </p>
                                                                     </div>
                                                                 </div>
-                                                                <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
+                                                                <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
                                                                     Select <ChevronRight className="ml-1 h-3 w-3" />
                                                                 </Button>
                                                             </div>
@@ -644,12 +690,12 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             {uploadResult ? (
                                 <div className="space-y-4">
                                     <div className="grid grid-cols-2 gap-3">
-                                        <div className="p-3 bg-emerald-500/10 rounded-xl border border-emerald-500/20">
-                                            <div className="flex items-center gap-2 text-emerald-600 mb-1">
+                                        <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
+                                            <div className="flex items-center gap-2 text-primary mb-1">
                                                 <CheckCircle2 className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Success</span>
                                             </div>
-                                            <p className="text-2xl font-black text-emerald-700">{uploadResult.success_count}</p>
+                                            <p className="text-2xl font-black text-primary">{uploadResult.success_count}</p>
                                         </div>
                                         <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                                             <div className="flex items-center gap-2 text-rose-600 mb-1">
@@ -772,9 +818,10 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                     {testType === 'kft' && <KFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                     {testType === 'lipid' && <LipidForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                     {testType === 'lft' && <LFTForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
-                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} />}
-                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
-                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} />}
+                    {testType === 'ecg' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="ECG" initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
+                    {testType === 'spirometry' && <SpirometryForm onSubmit={onSubmit} loading={loading} initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
+                    {testType === 'audiometry' && <SimpleTestForm onSubmit={onSubmit} loading={loading} test="Audiometry" initialData={initialData} staffId={patient?.staff_id} year={activeYear} />}
+                    {testType === 'routine' && <RoutineForm onSubmit={onSubmit} loading={loading} initialData={initialData} />}
                 </CardContent>
             </Card>
         </div>
@@ -941,7 +988,7 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     );
 };
 
-const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
+const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) => {
     const { register, handleSubmit, reset } = useForm({
         defaultValues: initialData
     });
@@ -950,23 +997,28 @@ const SpirometryForm = ({ onSubmit, loading, initialData }: any) => {
         if (initialData) reset(initialData);
     }, [initialData, reset]);
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
-                <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-            </div>
-            <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
-                </Button>
-            </div>
-        </form>
+        <div className="space-y-12">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register('spirometry_result', { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register('spirometry_remark', { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Weight (kg) <span className="text-rose-500">*</span></Label><Input {...register('weight', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                    <div className="space-y-2"><Label>Height (cm) <span className="text-rose-500">*</span></Label><Input {...register('height', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
+                    <div className="w-full sm:w-[320px] shrink-0">
+                        <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
+                    </div>
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                    </Button>
+                </div>
+            </form>
+        </div>
     );
 };
 
-const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
+const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }: any) => {
     const { register, handleSubmit, reset } = useForm({
         defaultValues: initialData
     });
@@ -978,14 +1030,184 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData }: any) => {
     const resultKey = `${test.toLowerCase()}_result`;
     const remarkKey = `${test.toLowerCase()}_remark`;
     return (
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
-                <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
+        <div className="space-y-12">
+            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+                <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
+                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
+                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
+                </div>
+                <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
+                    <div className="w-full sm:w-[320px] shrink-0">
+                        {(test === 'Spirometry' || test === 'Audiometry' || test === 'ECG') && (
+                            <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} allowDownload={false} />
+                        )}
+                    </div>
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
+                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                    </Button>
+                </div>
+            </form>
+        </div>
+    );
+};
+
+const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
+    const { register, handleSubmit, watch, setValue, reset } = useForm({
+        defaultValues: initialData || {
+            psa: '',
+            psa_remark: '',
+            fbs: '',
+            rbs: '',
+            sugar_remark: '',
+            ua_result: '',
+            ua_remark: ''
+        }
+    });
+
+    useEffect(() => {
+        if (initialData) {
+            const safeData: any = { ...initialData };
+            Object.keys(safeData).forEach(key => {
+                if (safeData[key] === null) safeData[key] = '';
+            });
+            reset(safeData);
+        }
+    }, [initialData, reset]);
+
+    const fbs = watch('fbs');
+    const rbs = watch('rbs');
+
+    // Mutual exclusivity logic for FBS and RBS
+    useEffect(() => {
+        if (fbs && !isNaN(parseFloat(fbs)) && fbs !== 'Not Applicable' && rbs !== 'Not Applicable') {
+            setValue('rbs', 'Not Applicable');
+        }
+    }, [fbs, setValue, rbs]);
+
+    useEffect(() => {
+        if (rbs && !isNaN(parseFloat(rbs)) && rbs !== 'Not Applicable' && fbs !== 'Not Applicable') {
+            setValue('fbs', 'Not Applicable');
+        }
+    }, [rbs, setValue, fbs]);
+
+    const psa = watch('psa');
+    const psa_remark = watch('psa_remark');
+    // Bidirectional auto-set to Not Applicable for PSA Result/Remark
+    useEffect(() => {
+        if (psa === 'Not Applicable' && psa_remark !== 'Not Applicable') {
+            setValue('psa_remark', 'Not Applicable');
+        }
+    }, [psa, setValue]);
+
+    useEffect(() => {
+        if (psa_remark === 'Not Applicable' && psa !== 'Not Applicable') {
+            setValue('psa', 'Not Applicable');
+        }
+    }, [psa_remark, setValue]);
+
+    return (
+        <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>PSA Result <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('psa', v)} value={watch('psa')} required>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select PSA result..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Negative', 'Not Applicable', 'Positive'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>PSA Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('psa_remark', v)} value={watch('psa_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select PSA remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Not Applicable'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
             </div>
-            <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Glucose (FBS/RBS)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div className="space-y-2">
+                        <Label>FBS (mg/dL) <span className="text-rose-500">*</span></Label>
+                        <Input {...register('fbs', { required: true })} placeholder="Enter value..." className="h-12 border-2 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>RBS (mg/dL) <span className="text-rose-500">*</span></Label>
+                        <Input {...register('rbs', { required: true })} placeholder="Enter value..." className="h-12 border-2 rounded-xl" />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>FBS/RBS Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('sugar_remark', v)} value={watch('sugar_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Maybe Abnormal'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+
+            </div>
+
+            <div className="space-y-4">
+                <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
+                    <Activity className="h-4 w-4" /> Urine Analysis (U/A)
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="space-y-2">
+                        <Label>U/A Result <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('ua_result', v)} value={watch('ua_result')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select U/A result..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['No Abnormality', 'Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>U/A Remark <span className="text-rose-500">*</span></Label>
+                        <Select onValueChange={(v) => setValue('ua_remark', v)} value={watch('ua_remark')}>
+                            <SelectTrigger className="h-12 border-2 rounded-xl">
+                                <SelectValue placeholder="Select U/A remark..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {['Normal', 'Abnormal', 'Maybe Abnormal'].map(opt => (
+                                    <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    </div>
+                </div>
+            </div>
+
+            <div className="flex justify-center sm:justify-end pt-8">
+                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
+                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>

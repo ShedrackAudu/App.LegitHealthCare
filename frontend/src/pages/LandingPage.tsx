@@ -26,13 +26,35 @@ import {
   MapPin,
   FileText,
   LineChart,
-  Calendar
+  Calendar,
+  Sparkles,
+  Stethoscope,
+  Microscope,
+  Database,
+  ArrowUp
 } from 'lucide-react';
 import axios from 'axios';
+import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 
 const LandingPage = () => {
   const [branding, setBranding] = useState<any>(null);
   const [menuOpen, setMenuOpen] = useState(false);
+  const [showScrollTop, setShowScrollTop] = useState(false);
+  const { scrollY } = useScroll();
+
+  useEffect(() => {
+    return scrollY.on("change", (latest) => {
+      if (latest > 400) {
+        setShowScrollTop(true);
+      } else {
+        setShowScrollTop(false);
+      }
+    });
+  }, [scrollY]);
+
+  const scrollToTop = () => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
 
   useEffect(() => {
     const fetchBranding = async () => {
@@ -66,15 +88,19 @@ const LandingPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+    <>
+      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-12 lg:px-20">
           <div className="flex justify-between items-center h-20">
             <div className="flex items-center">
               {/* Desktop Logo: Full Branding */}
-              <div className="hidden md:block">
-                {branding?.logo_dark ? (
+              {/* Desktop Logo: Brandmark Preferred */}
+              <div className="hidden md:flex items-center">
+                {branding?.logo_light ? (
+                  <img src={getImageUrl(branding.logo_light, '')} alt="Logo" className="h-10 transition-all" />
+                ) : branding?.logo_dark ? (
                   <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
                 ) : (
                   <div className="flex items-center">
@@ -98,7 +124,7 @@ const LandingPage = () => {
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
               <Link to="/login?portal=patient">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-4 rounded-full border-2 text-[10px] uppercase tracking-widest h-9">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-4 rounded-xl border-2 text-[10px] uppercase tracking-widest h-9">
                   Patient Portal
                 </Button>
               </Link>
@@ -106,10 +132,10 @@ const LandingPage = () => {
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
                 <Link to="/login">
-                  <Button variant="ghost" className="font-semibold px-4">Login</Button>
+                  <Button variant="ghost" className="font-semibold px-4 rounded-xl">Login</Button>
                 </Link>
                 <Link to="/signup">
-                  <Button className="font-bold px-6 shadow-lg shadow-primary/20">Get Started</Button>
+                  <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Get Started</Button>
                 </Link>
               </div>
             </div>
@@ -142,7 +168,7 @@ const LandingPage = () => {
                 <Button variant="outline" className="w-full text-lg h-12">Login</Button>
               </Link>
               <Link to="/signup" onClick={() => setMenuOpen(false)}>
-                <Button className="w-full text-lg h-12 shadow-lg">Get Started</Button>
+                <Button className="w-full text-lg h-12 shadow-lg rounded-xl">Get Started</Button>
               </Link>
             </div>
           </div>
@@ -150,86 +176,180 @@ const LandingPage = () => {
       </nav>
 
       {/* Hero Section */}
-      <section className="relative pt-32 pb-24 overflow-hidden">
-        {/* Background Decorations */}
-        <div className="absolute top-0 left-0 w-full h-full -z-10 bg-grid-white/[0.02] bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] from-primary/10 via-background to-background" />
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] bg-primary/5 rounded-full blur-[120px] -z-10 animate-pulse" />
+      <section className="relative pt-24 pb-16 lg:pt-24 lg:pb-28 overflow-hidden">
+        {/* Advanced Background System */}
+        <div className="absolute inset-0 -z-10 bg-background overflow-hidden">
+          <motion.div 
+            initial={{ scale: 1.1, opacity: 0 }}
+            animate={{ scale: 1, opacity: 0.07 }}
+            transition={{ duration: 1.5 }}
+            className="absolute inset-0 bg-cover bg-center"
+            style={{ backgroundImage: `url(${getImageUrl(branding?.auth_branding_image, "/images/medical_equipment_1.png")})` }}
+          />
+          <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
+          <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-primary/20 rounded-full blur-[160px] animate-pulse" />
+          <div className="absolute -bottom-1/4 -left-1/4 w-1/2 h-1/2 bg-blue-500/15 rounded-full blur-[160px]" />
+          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-[0.03]" />
+          <div className="absolute inset-0 bg-grid-white/[0.02]" />
+        </div>
         
-        <div className="container mx-auto px-4 md:px-12 lg:px-20">
+        <div className="container mx-auto px-6 md:px-12 lg:px-20 relative">
           <div className="flex flex-col lg:flex-row items-center gap-16">
-            <div className="flex-1 text-left space-y-8">
-              <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 text-primary text-xs font-bold uppercase tracking-wider animate-in fade-in slide-in-from-left-4 duration-500">
-                <span className="relative flex h-2 w-2">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-                  <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-                </span>
-                Now Live: Patient Portal
+            {/* Left Content Side */}
+            <motion.div 
+              initial={{ opacity: 0, x: -30 }}
+              animate={{ opacity: 1, x: 0 }}
+              transition={{ duration: 0.8, ease: "easeOut" }}
+              className="flex-1 text-left space-y-7"
+            >
+              <div className="space-y-5">
+                <motion.div 
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md"
+                >
+                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Now Live: Patient Portal</span>
+                </motion.div>
+                
+                <h1 className="text-5xl sm:text-7xl lg:text-[105px] font-black leading-[0.95] tracking-tight group">
+                  <span className="block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
+                    {branding?.clinic_name || "Legit HealthCare"}
+                  </span>
+                  <motion.span 
+                    initial={{ scaleX: 0 }}
+                    animate={{ scaleX: 1 }}
+                    transition={{ delay: 0.5, duration: 1 }}
+                    className="block h-2 bg-primary/40 w-1/4 mt-4 rounded-full origin-left group-hover:w-1/2 transition-all duration-700"
+                  />
+                  <span className="text-[19px] lg:text-[39px] text-primary font-black mt-6 block tracking-tight whitespace-nowrap">
+                    {branding?.clinic_slogan || "Excellence in Care."}
+                  </span>
+                </h1>
+                
+                <p className="text-[13px] sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl font-medium">
+                  The official healthcare management portal for managing staff annual medical screenings with an advanced self-service patient portal for tracking and managing health and personal data.
+                </p>
               </div>
-              <h1 className="text-[54px] sm:text-6xl lg:text-[100px] font-bold leading-[1.1] tracking-tight bg-clip-text text-transparent bg-gradient-to-br from-foreground via-foreground/90 to-primary/50">
-                {branding?.clinic_name}: <br />
-                <span className="text-xl lg:text-4xl text-primary font-black mt-2 block">
-                  {branding?.clinic_slogan}
-                </span>
-              </h1>
-              <p className="text-xl text-muted-foreground leading-relaxed max-w-2xl lg:mx-0">
-                The official healthcare management portal for managing staff medical screenings. Securely communicate with your clinical team and track your wellness journey.
-              </p>
-              <div className="flex flex-row items-center space-x-3 sm:space-x-4 justify-start pt-4">
+
+              <div className="flex flex-row items-center gap-3 sm:gap-5">
                 <Link to="/signup">
-                  <Button size="lg" className="w-auto h-16 px-8 sm:px-12 text-base sm:text-lg font-black shadow-[0_20px_50px_rgba(var(--primary),_0.3)] hover:scale-105 transition-transform bg-primary">
-                    Get Started <ArrowRight className="ml-2 h-5 w-5" />
+                  <Button size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-1 active:translate-y-0.5 transition-all bg-primary relative overflow-hidden group">
+                    <span className="relative z-10 flex items-center">
+                      Get Started <ArrowRight className="ml-3 h-5 w-5" />
+                    </span>
+                    <motion.div 
+                      className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"
+                    />
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="outline" size="lg" className="w-auto h-16 px-8 sm:px-12 text-base sm:text-lg font-bold border-2 hover:bg-muted/50 transition-colors">
+                  <Button variant="outline" size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-xl hover:bg-muted/50 hover:border-primary/50 transition-all">
                     Login
                   </Button>
                 </Link>
               </div>
-            </div>
-            <div className="w-full lg:flex-1 relative mt-16 lg:mt-0 flex justify-center lg:justify-end animate-in fade-in zoom-in-95 duration-1000">
-              <div className="relative group w-full sm:max-w-xl">
-                <div className="absolute -inset-1 bg-gradient-to-r from-primary to-blue-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                <div className="relative w-full h-auto lg:aspect-square bg-card/50 backdrop-blur-2xl rounded-3xl border-2 border-primary/20 shadow-2xl flex items-center justify-center p-4 sm:p-12 overflow-hidden">
-                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 w-full h-full relative z-10">
-                      <div className="h-48 sm:h-32 bg-primary/10 rounded-2xl overflow-hidden shadow-inner border border-primary/10 transition-transform group-hover:scale-[1.02] duration-500 relative group/item">
-                        <img 
-                          src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
-                          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
-                          alt="Medical Equipment"
-                        />
-                        <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-primary/80 backdrop-blur-md rounded-xl border border-white/20 shadow-xl translate-y-1 opacity-95 group-hover/item:translate-y-0 group-hover/item:opacity-100 transition-all duration-300">
-                           <p className="text-[9px] font-black uppercase tracking-widest text-white">Advanced Lab Gear</p>
-                        </div>
-                      </div>
-                      <div className="h-48 sm:h-32 bg-primary/5 rounded-2xl overflow-hidden shadow-inner border border-primary/10 transition-transform group-hover:scale-[1.02] duration-500 delay-75 relative group/item">
-                         <img 
-                          src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
-                          className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity" 
-                          alt="Medical Diagnostics"
-                        />
-                        <div className="absolute bottom-3 left-3 px-3 py-1.5 bg-primary/80 backdrop-blur-md rounded-xl border border-white/20 shadow-xl translate-y-1 opacity-95 group-hover/item:translate-y-0 group-hover/item:opacity-100 transition-all duration-300">
-                           <p className="text-[9px] font-black uppercase tracking-widest text-white">Clinical Diagnostics</p>
-                        </div>
-                      </div>
-                      <div className="h-64 sm:col-span-2 bg-primary/5 rounded-2xl overflow-hidden shadow-inner border border-primary/10 transition-transform group-hover:scale-[1.01] duration-500 delay-150 relative group/item">
-                        <img 
-                          src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
-                          className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" 
-                          alt="Our Medical Team"
-                        />
-                        <div className="absolute bottom-5 left-5 px-5 py-2.5 bg-primary/90 backdrop-blur-xl rounded-2xl border border-white/30 shadow-2xl translate-y-2 opacity-95 group-hover/item:translate-y-0 group-hover/item:opacity-100 transition-all duration-500">
-                           <p className="text-[11px] font-black uppercase tracking-[.25em] text-white">Our Expert Clinical Team</p>
-                        </div>
-                      </div>
+
+              {/* Trust Indicators */}
+              <div className="pt-5 sm:pt-7 flex flex-row items-center gap-4 sm:gap-8 border-t border-border/50">
+                <div className="flex -space-x-3">
+                  {[1,2,3,4].map(i => (
+                    <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold overflow-hidden">
+                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                    </div>
+                  ))}
+                  <div className="w-10 h-10 rounded-full border-2 border-background bg-primary text-white flex items-center justify-center text-[10px] font-black uppercase">
+                    +2k
+                  </div>
+                </div>
+                <div className="h-8 w-px bg-border/50 hidden sm:block" />
+                <div className="space-y-1">
+                   <div className="flex gap-1">
+                     {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
                    </div>
-                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
-                      <div className="w-40 h-40 bg-primary/20 rounded-full blur-3xl animate-pulse" />
-                   </div>
-                   <Heart className="absolute bottom-10 right-10 h-10 w-10 text-rose-500/40 animate-bounce transition-all group-hover:text-rose-500 group-hover:scale-125 z-20" />
+                   <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Certified Medical Services</p>
                 </div>
               </div>
-            </div>
+            </motion.div>
+
+            {/* Right Visual Side */}
+            <motion.div 
+              initial={{ opacity: 0, y: 40 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 1, ease: "circOut", delay: 0.3 }}
+              className="lg:flex-1 relative w-full mt-16 lg:mt-0"
+            >
+              <div className="relative mx-auto lg:ml-auto group max-w-2xl">
+                {/* Visual Depth Elements */}
+                <div className="absolute -top-10 -left-10 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl animate-pulse" />
+                <div className="absolute -bottom-10 -right-10 w-60 h-60 bg-primary/10 rounded-full blur-3xl" />
+                
+                {/* Grid of Clinical Mockups */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-5 relative z-10">
+                  {/* Sub-Card 1 */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
+                      alt="Medical Equipment"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
+                          <Microscope className="w-3 h-3" /> Diagnostics
+                       </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Sub-Card 2 */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.02 }}
+                    transition={{ delay: 0.1 }}
+                    className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
+                      className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
+                      alt="Clinical Analytics"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
+                    <div className="absolute bottom-4 left-4 right-4">
+                       <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
+                          <Database className="w-3 h-3" /> Bio-Analytics
+                       </div>
+                    </div>
+                  </motion.div>
+
+                  {/* Large Main Card */}
+                  <motion.div 
+                    whileHover={{ y: -5, scale: 1.01 }}
+                    transition={{ delay: 0.2 }}
+                    className="sm:col-span-2 h-64 sm:h-80 rounded-xl overflow-hidden border border-white/20 shadow-2xl relative group/card cursor-pointer"
+                  >
+                     <img 
+                      src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
+                      className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-105" 
+                      alt="Medical Team"
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/20 to-transparent opacity-40 transition-opacity group-hover/card:opacity-60" />
+                    <div className="absolute bottom-6 left-6 right-6 flex items-center justify-between">
+                       <div className="space-y-1">
+                          <p className="text-[10px] font-black uppercase tracking-[0.3em] text-white/70">Expert Staff</p>
+                          <h4 className="text-xl font-black text-white">Clinical Intelligence Team</h4>
+                       </div>
+                       <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 text-white">
+                          <Stethoscope className="w-6 h-6" />
+                       </div>
+                    </div>
+                  </motion.div>
+                </div>
+
+              </div>
+            </motion.div>
           </div>
         </div>
       </section>
@@ -322,12 +442,12 @@ const LandingPage = () => {
 
                      <div className="flex flex-col sm:flex-row gap-4 pt-4">
                         <Link to="/signup?portal=patient">
-                           <Button size="lg" className="h-16 px-10 text-lg font-black shadow-2xl shadow-primary/30 transition-transform active:scale-95 bg-primary">
+                           <Button size="lg" className="h-16 px-10 text-lg font-black shadow-2xl shadow-primary/30 transition-transform active:scale-95 bg-primary rounded-xl">
                               Claim My Account
                            </Button>
                         </Link>
                         <Link to="/login?portal=patient">
-                           <Button variant="outline" size="lg" className="h-16 px-10 text-lg font-black border-2 hover:bg-primary/5 shadow-xl transition-transform active:scale-95">
+                           <Button variant="outline" size="lg" className="h-16 px-10 text-lg font-black border-2 hover:bg-primary/5 shadow-xl transition-transform active:scale-95 rounded-xl">
                               Log in to Portal
                            </Button>
                         </Link>
@@ -342,7 +462,7 @@ const LandingPage = () => {
                            <div className="flex gap-1.5">
                               <div className="w-3 h-3 rounded-full bg-red-500/50" />
                               <div className="w-3 h-3 rounded-full bg-amber-500/50" />
-                              <div className="w-3 h-3 rounded-full bg-emerald-500/50" />
+                              <div className="w-3 h-3 rounded-full bg-primary/50" />
                            </div>
                            <div className="mx-auto bg-background/50 h-5 w-48 rounded-md" />
                         </div>
@@ -351,7 +471,7 @@ const LandingPage = () => {
                            <div className="grid grid-cols-3 gap-4">
                               <div className="h-24 bg-blue-500/5 rounded-2xl border border-blue-500/10" />
                               <div className="h-24 bg-amber-500/5 rounded-2xl border border-amber-500/10" />
-                              <div className="h-24 bg-emerald-500/5 rounded-2xl border border-emerald-500/10" />
+                              <div className="h-24 bg-primary/5 rounded-2xl border border-primary/10" />
                            </div>
                            <div className="space-y-3">
                               <div className="h-12 bg-muted/50 rounded-xl w-3/4" />
@@ -371,28 +491,39 @@ const LandingPage = () => {
       </section>
 
       {/* Workflow Section */}
-      <section className="py-32 bg-muted/50">
-        <div className="container mx-auto px-8 md:px-12 lg:px-20">
+      <section className="py-32 bg-primary relative overflow-hidden">
+        {/* Decorative elements for depth */}
+        <div className="absolute inset-0 bg-grid-white/[0.05] [mask-image:radial-gradient(ellipse_at_center,white,transparent)] -z-10" />
+        <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-tr from-primary via-primary/50 to-primary opacity-50 -z-10" />
+        
+        <div className="container mx-auto px-8 md:px-12 lg:px-20 relative z-10">
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
               <div className="space-y-6">
-                 <h2 className="text-4xl font-bold">The Modern Health Experience</h2>
-                 <p className="text-lg text-muted-foreground">We've revolutionized how medical screenings are handled at Legit HealthCare Services Ltd. No more paper trails—just pure digital efficiency.</p>
+                 <h2 className="text-4xl font-bold text-primary-foreground">The Modern Health Experience</h2>
+                 <p className="text-lg text-primary-foreground/70">We've revolutionized how medical screenings are handled at Legit HealthCare Services Ltd. No more paper trails—just pure digital efficiency.</p>
                  <div className="space-y-8 pt-4">
                     <WorkflowStep number="01" title="Secure Registration" text="Verify your patient profile identity via OTP and 2FA for maximum security." />
                     <WorkflowStep number="02" title="Professional Screening" text="Complete your yearly medical evaluation with our expert clinical team." />
                     <WorkflowStep number="03" title="Real-Time Access" text="Receive instant notifications and view your medical reports as soon as they are finalized." />
                  </div>
               </div>
-              <div className="relative rounded-3xl overflow-hidden border-2 shadow-2xl h-[400px] lg:h-full bg-card flex items-center justify-center p-12">
-                 <Activity className="h-32 w-32 text-primary opacity-10 absolute animate-pulse" />
-                 <div className="text-center space-y-4">
-                    <div className="w-20 h-20 bg-primary/10 rounded-full flex items-center justify-center mx-auto text-primary">
-                       <Shield className="h-10 w-10" />
-                    </div>
-                    <h4 className="text-2xl font-bold">HIPAA Compliant</h4>
-                    <p className="text-muted-foreground max-w-xs mx-auto text-sm">Every bit of your healthcare data is protected by industry-standard encryption protocols.</p>
-                 </div>
-              </div>
+               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/security ring-1 ring-white/10">
+                  <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
+                  <Activity className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/security:rotate-0" />
+                  <div className="text-center relative z-10 space-y-6">
+                     <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center mx-auto text-white border border-white/20 shadow-2xl relative group-hover/security:scale-110 transition-transform duration-500">
+                        <div className="absolute inset-0 bg-primary blur-2xl opacity-20 group-hover/security:opacity-40 transition-opacity" />
+                        <Shield className="h-10 w-10 relative z-10" />
+                     </div>
+                     <div className="space-y-2">
+                        <h4 className="text-3xl font-black text-white tracking-tight">NHA & NDPA Compliant</h4>
+                        <div className="h-1 w-12 bg-white/20 mx-auto rounded-full" />
+                     </div>
+                     <p className="text-white/60 max-w-[280px] mx-auto text-sm leading-relaxed font-medium">
+                        Every bit of your healthcare data is protected by industry-standard encryption protocols.
+                     </p>
+                  </div>
+               </div>
            </div>
         </div>
       </section>
@@ -483,7 +614,23 @@ const LandingPage = () => {
         </div>
       </footer>
     </div>
-  );
+    
+    {/* Return to Top Button */}
+    <AnimatePresence>
+      {showScrollTop && (
+        <motion.button
+          initial={{ opacity: 0, scale: 0.5, y: 20 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.5, y: 20 }}
+          onClick={scrollToTop}
+          className="fixed bottom-8 right-8 z-50 p-4 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30 hover:scale-110 active:scale-95 transition-transform"
+        >
+          <ArrowUp className="w-6 h-6" />
+        </motion.button>
+      )}
+    </AnimatePresence>
+  </>
+);
 };
 
 interface FeatureCardProps {
@@ -504,12 +651,12 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
 
 const WorkflowStep = ({ number, title, text }: { number: string; title: string; text: string }) => (
   <div className="flex gap-6 items-start group">
-    <div className="text-4xl font-black text-primary/10 group-hover:text-primary/100 transition-colors duration-500 tabular-nums">
+    <div className="text-4xl font-black text-primary-foreground/20 group-hover:text-primary-foreground/60 transition-colors duration-500 tabular-nums">
       {number}
     </div>
     <div className="space-y-1">
-      <h4 className="text-xl font-bold">{title}</h4>
-      <p className="text-muted-foreground leading-relaxed">{text}</p>
+      <h4 className="text-xl font-bold text-primary-foreground">{title}</h4>
+      <p className="text-primary-foreground/60 leading-relaxed text-sm">{text}</p>
     </div>
   </div>
 );

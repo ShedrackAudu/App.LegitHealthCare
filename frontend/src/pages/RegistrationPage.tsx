@@ -196,7 +196,7 @@ const RegistrationPage: React.FC = () => {
           const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
-          setSearchResults(res.data);
+          setSearchResults(res.data.results || []);
         } catch (err) {
           console.error(err);
         }
@@ -259,7 +259,8 @@ const RegistrationPage: React.FC = () => {
       if (isEditMode) {
         await axios.put(`/api/patients/${editStaffId}`, {
           ...data,
-          dob: formattedDob
+          dob: formattedDob,
+          screening_year: activeYear
         }, {
           headers: { 'X-Company-Context': activeSection }
         });
@@ -285,24 +286,64 @@ const RegistrationPage: React.FC = () => {
     }
   };
 
+  const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
+
+  useEffect(() => {
+    setActiveSearchIndex(-1);
+  }, [searchId, searchResults]);
+
+  const handleSearchKeyDown = (e: React.KeyboardEvent) => {
+    if (searchResults.length > 0) {
+      switch (e.key) {
+        case 'ArrowDown':
+          e.preventDefault();
+          setActiveSearchIndex(prev => (prev < searchResults.length - 1 ? prev + 1 : prev));
+          break;
+        case 'ArrowUp':
+          e.preventDefault();
+          setActiveSearchIndex(prev => (prev > 0 ? prev - 1 : 0));
+          break;
+        case 'Enter':
+          e.preventDefault();
+          if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
+            selectPatient(searchResults[activeSearchIndex]);
+          } else {
+            handleSearch();
+          }
+          break;
+        case 'Escape':
+          setSearchResults([]);
+          break;
+      }
+    } else if (e.key === 'Enter') {
+      handleSearch();
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6">
-        {/* Top Header & Search */}
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-4 rounded-xl border-2 border-primary/10 shadow-sm">
-          <div className="flex items-center gap-4">
+        {/* Top Header & Search Area */}
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+          <div className="flex items-center gap-3">
             {isEditMode && (
-              <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="hover:bg-primary/10">
+              <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
                 <ArrowLeft className="h-5 w-5 text-primary" />
               </Button>
             )}
+            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+              {isEditMode ? (
+                <Users className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+              ) : (
+                <UserPlus className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+              )}
+            </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-bold flex items-center gap-2">
-                {isEditMode ? <Users className="text-primary h-5 w-5 sm:h-6 sm:w-6" /> : <UserPlus className="text-primary h-5 w-5 sm:h-6 sm:w-6" />}
+              <h1 className="text-lg sm:text-2xl font-black tracking-tight">
                 {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
               </h1>
-              <p className="text-[10px] sm:text-sm text-muted-foreground">
-                {isEditMode ? `Updating ${editStaffId}` : `Manage patient Bio-Data for ${activeSection} - ${activeYear}`}
+              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">
+                {isEditMode ? `Updating ${editStaffId}` : `Session: ${activeYear} • ${activeSection}`}
               </p>
             </div>
           </div>
@@ -317,7 +358,7 @@ const RegistrationPage: React.FC = () => {
                     placeholder="Search Staff ID or Name..."
                     value={searchId}
                     onChange={(e) => setSearchId(e.target.value)}
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+                    onKeyDown={handleSearchKeyDown}
                   />
                 </div>
                 <Button 
@@ -335,26 +376,27 @@ const RegistrationPage: React.FC = () => {
                       <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
                     </CardHeader>
                     <ul className="max-h-[300px] overflow-auto divide-y">
-                      {searchResults.map((p: any) => (
+                      {searchResults.map((p: any, index: number) => (
                         <li 
                           key={p.staff_id}
-                          className="p-4 hover:bg-primary/5 cursor-pointer transition-colors group"
+                          className={`p-4 cursor-pointer transition-colors group ${activeSearchIndex === index ? 'bg-primary/10' : 'hover:bg-primary/5'}`}
                           onClick={() => selectPatient(p)}
+                          onMouseEnter={() => setActiveSearchIndex(index)}
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center text-primary font-black group-hover:scale-110 transition-transform">
+                              <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
                                 {p.first_name[0]}{p.last_name[0]}
                               </div>
                               <div>
-                                <p className="font-bold text-foreground capitalize">{p.first_name} {p.last_name}</p>
+                                <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                                   <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
                                   • <span>{p.department}</span>
                                 </p>
                               </div>
                             </div>
-                            <Button size="sm" variant="ghost" className="opacity-0 group-hover:opacity-100 h-8 px-2">
+                            <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
                               Select <ChevronRight className="ml-1 h-3 w-3" />
                             </Button>
                           </div>
@@ -382,7 +424,7 @@ const RegistrationPage: React.FC = () => {
             value={stats?.today?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
             icon={Activity}
-            color="text-emerald-600"
+            color="text-primary"
           />
           <StatCard
             title="Gender Mix"
@@ -444,10 +486,10 @@ const RegistrationPage: React.FC = () => {
                   {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-emerald-600 font-bold">Patient ID <span className="text-rose-500">*</span></Label>
+                  <Label className="text-primary font-bold">Patient ID <span className="text-rose-500">*</span></Label>
                   <Input 
                     {...register('patient_id', { required: true })} 
-                    className="h-11 border-emerald-500/30 font-bold text-lg uppercase tracking-wider" 
+                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
                     placeholder="e.g. 12345" 
                     inputMode="numeric"
                     required

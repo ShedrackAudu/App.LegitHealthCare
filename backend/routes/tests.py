@@ -1,7 +1,9 @@
 from flask import Blueprint, request, jsonify, send_file
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData
+from flask_jwt_extended import jwt_required, get_jwt_identity
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData
 from datetime import datetime
 from decorators import require_permission
+from sqlalchemy import func
 import pandas as pd
 from io import BytesIO
 import json
@@ -13,19 +15,21 @@ PERM_MAP = {
     'kft': 'lab_kft',
     'lipid': 'lab_lipid',
     'lft': 'lab_lft',
-    'special': 'lab_tests' # General fallback for special tests or use lab_ecg/etc if needed
+    'special': 'lab_tests',
+    'routine': 'lab_essential_diagnostics'
 }
 
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
+@jwt_required()
 def save_test_result(test_type):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
     user = User.query.get(user_id)
     if not user:
         return jsonify({"error": "User not found"}), 404
-        
+    
     perm_name = PERM_MAP.get(test_type, 'lab_tests')
     if not user.has_permission(perm_name) and user.username != 'admin':
         return jsonify({"error": f"Permission '{perm_name}' required"}), 403
@@ -43,7 +47,8 @@ def save_test_result(test_type):
         'kft': KFTResult,
         'lipid': LipidResult,
         'lft': LFTResult,
-        'special': SpecialTestsResult
+        'special': SpecialTestsResult,
+        'routine': ConsultationData
     }
     
     model_class = model_map.get(test_type)
@@ -51,10 +56,13 @@ def save_test_result(test_type):
         return jsonify({"error": "Invalid test type"}), 400
         
     # Check if record already exists for this year, update if so
-    record = model_class.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    record = model_class.query.filter(
+        func.lower(func.trim(model_class.staff_id)) == func.lower(func.trim(staff_id)),
+        model_class.screening_year == int(screening_year)
+    ).first()
     
     if not record:
-        record = model_class(staff_id=staff_id, screening_year=screening_year)
+        record = model_class(staff_id=staff_id, screening_year=int(screening_year))
         db.session.add(record)
         
     # Update fields while checking for state transitions for queue tracking
@@ -78,7 +86,6 @@ def save_test_result(test_type):
 
     if test_type == 'special':
         from models import QueueEntry
-        from sqlalchemy import func
         if ecg_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
@@ -100,14 +107,22 @@ def save_test_result(test_type):
 
     try:
         db.session.commit()
+        
+        # Trigger notification check
+        from utils.notification_logic import trigger_report_ready_notification
+        company_context = request.headers.get('X-Company-Context')
+        if company_context:
+            trigger_report_ready_notification(staff_id, screening_year, company_context)
+            
         return jsonify({"message": f"{test_type.upper()} results saved successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
 @tests_bp.route('/get-test/<test_type>/<staff_id>', methods=['GET'])
+@jwt_required()
 def get_test_result(test_type, staff_id):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -128,14 +143,18 @@ def get_test_result(test_type, staff_id):
         'kft': KFTResult,
         'lipid': LipidResult,
         'lft': LFTResult,
-        'special': SpecialTestsResult
+        'special': SpecialTestsResult,
+        'routine': ConsultationData
     }
     
     model_class = model_map.get(test_type)
     if not model_class:
         return jsonify({"error": "Invalid test type"}), 400
         
-    record = model_class.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    record = model_class.query.filter(
+        func.lower(func.trim(model_class.staff_id)) == func.lower(func.trim(staff_id)),
+        model_class.screening_year == int(screening_year)
+    ).first()
     
     if not record:
         return jsonify({"message": "No records found"}), 404
@@ -170,8 +189,9 @@ def download_template(test_type):
     )
 
 @tests_bp.route('/bulk-upload/<test_type>', methods=['POST'])
+@jwt_required()
 def bulk_upload(test_type):
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     if not user_id: return jsonify({"error": "Unauthorized"}), 401
     user = User.query.get(user_id)
     
@@ -230,6 +250,7 @@ def bulk_upload(test_type):
 
         current_mapping = mappings.get(test_type, {})
 
+        processed_staff_ids = []
         for index, row in df.iterrows():
             pat_id = str(row.get('PATIENTID', '')).strip()
             # Handle float .0
@@ -275,9 +296,17 @@ def bulk_upload(test_type):
                     record.ldl = str(ldl)
             except: pass
 
+            processed_staff_ids.append(staff_id)
             success_count += 1
 
         db.session.commit()
+
+        # Trigger notification check for all processed patients
+        from utils.notification_logic import trigger_report_ready_notification
+        company_context = request.headers.get('X-Company-Context')
+        if company_context:
+            for s_id in list(set(processed_staff_ids)): # deduplicate
+                trigger_report_ready_notification(s_id, int(screening_year), company_context)
         return jsonify({
             "message": f"Bulk upload completed: {success_count} updated, {skip_count} skipped",
             "success_count": success_count,

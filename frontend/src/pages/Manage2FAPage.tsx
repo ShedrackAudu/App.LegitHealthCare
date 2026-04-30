@@ -32,9 +32,7 @@ const Manage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`/api/2fa/generate`, {}, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/generate`, {});
             setQrUri(resp.data.uri);
             setSecret(resp.data.secret);
         } catch (err) {
@@ -50,9 +48,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/enable`, { code }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/enable`, { code });
             toast.success(resp.data.message || "2FA successfully enabled!");
             setBackupCodes(resp.data.backup_codes || []);
             setUser({ ...user, is_2fa_enabled: true });
@@ -68,9 +64,7 @@ const Manage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode });
             toast.success(resp.data.message || "2FA has been disabled.");
             setUser({ ...user, is_2fa_enabled: false });
             localStorage.setItem('user', JSON.stringify({ ...user, is_2fa_enabled: false }));
@@ -97,9 +91,9 @@ const Manage2FAPage = () => {
                 </div>
 
                 {user?.is_2fa_enabled ? (
-                    <Card className="border-2 border-emerald-500/30">
+                    <Card className="border-2 border-primary/30">
                         <CardHeader>
-                            <CardTitle className="text-emerald-600 flex items-center gap-2">
+                            <CardTitle className="text-primary flex items-center gap-2">
                                 <Check className="h-5 w-5" /> 2FA is Active
                             </CardTitle>
                             <CardDescription>Your account is guarded by secondary verification.</CardDescription>
@@ -192,17 +186,17 @@ const Manage2FAPage = () => {
                         )}
 
                         {backupCodes.length > 0 && (
-                            <Card className="border-2 border-emerald-500/50 bg-emerald-50 shadow-lg">
+                            <Card className="border-2 border-primary/50 bg-primary/5 shadow-lg">
                                 <CardHeader>
-                                    <CardTitle className="text-emerald-700 flex items-center gap-2">
+                                    <CardTitle className="text-primary flex items-center gap-2">
                                         <Check className="h-5 w-5" /> Setup Complete!
                                     </CardTitle>
-                                    <CardDescription className="text-emerald-700/80">
+                                    <CardDescription className="text-primary/80">
                                         Two-Factor Authentication is now enabled. Please save these backup recovery codes in a secure place. You will need them if you lose access to your device.
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent>
-                                    <div className="grid grid-cols-2 gap-4 p-4 bg-white/60 rounded-xl border border-emerald-200 font-mono text-center font-bold text-emerald-900 tracking-wider">
+                                    <div className="grid grid-cols-2 gap-4 p-4 bg-white/60 rounded-xl border border-primary/30 font-mono text-center font-bold text-emerald-900 tracking-wider">
                                         {backupCodes.map((c, i) => (
                                             <div key={i} className="py-2 bg-white rounded shadow-sm">{c}</div>
                                         ))}

@@ -30,7 +30,7 @@ export const PasswordStrength: React.FC<PasswordStrengthProps> = ({ password }) 
         if (s <= 2) return 'bg-rose-500';
         if (s === 3) return 'bg-amber-500';
         if (s === 4) return 'bg-blue-500';
-        return 'bg-emerald-500';
+        return 'bg-primary';
     };
 
     const label = getLabel(strength);
@@ -44,7 +44,7 @@ export const PasswordStrength: React.FC<PasswordStrengthProps> = ({ password }) 
                 <span className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
                     Security Level
                 </span>
-                <span className={`text-[10px] font-black uppercase tracking-widest ${label === 'Weak' ? 'text-rose-500' : label === 'Fair' ? 'text-amber-500' : label === 'Good' ? 'text-blue-500' : 'text-emerald-500'}`}>
+                <span className={`text-[10px] font-black uppercase tracking-widest ${label === 'Weak' ? 'text-rose-500' : label === 'Fair' ? 'text-amber-500' : label === 'Good' ? 'text-blue-500' : 'text-primary'}`}>
                     {label}
                 </span>
             </div>

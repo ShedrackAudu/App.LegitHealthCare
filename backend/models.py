@@ -30,7 +30,8 @@ class RoutingSession(Session):
                     'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
                     'temp_access_codes', 'access_requests', 'system_config', 
                     'appointments', 'report_verifications', 'chat_messages', 
-                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications'
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications', 'patient_files',
+                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions'
                 ]:
                     return _db.engine
                 
@@ -160,6 +161,7 @@ class PatientPortalUser(db.Model):
     otp_code = db.Column(db.String(6), nullable=True)
     otp_expiry = db.Column(db.DateTime, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
+    must_reset_password = db.Column(db.Boolean, default=False)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
@@ -171,6 +173,24 @@ class PatientPortalUser(db.Model):
         return bcrypt.check_password_hash(self.password_hash, password)
 
     def to_dict(self):
+        # Dynamically find the section (DCP/DCT) by checking both clinical databases
+        section = None
+        from flask import current_app
+        from sqlalchemy import text
+        
+        for bind_key in ['dcp', 'dct']:
+            try:
+                engine = db.engines.get(bind_key)
+                if not engine: continue
+                sql = text("SELECT staff_id FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                with engine.connect() as conn:
+                    result = conn.execute(sql, {"sid": self.username}).fetchone()
+                    if result:
+                        section = bind_key.upper()
+                        break
+            except:
+                continue
+
         return {
             "id": self.id,
             "first_name": self.first_name,
@@ -180,7 +200,9 @@ class PatientPortalUser(db.Model):
             "phone": self.phone,
             "is_verified": self.is_verified,
             "is_2fa_enabled": self.is_2fa_enabled,
+            "must_reset_password": self.must_reset_password,
             "user_type": "patient",
+            "section": section,
             "roles": ["Patient"],
             "last_seen_at": self.last_seen_at.isoformat() if self.last_seen_at else None
         }
@@ -293,6 +315,7 @@ class AppBranding(db.Model):
     address = db.Column(db.Text, nullable=True)
     email = db.Column(db.String(120), nullable=True)
     phone = db.Column(db.String(50), nullable=True)
+    whatsapp = db.Column(db.String(50), nullable=True)
     social_links = db.Column(db.Text, default='[]') # JSON string
     
     doctor_name = db.Column(db.String(100), default="Dr. Anyanwu Ugochukwu D. FMCPath")
@@ -324,6 +347,7 @@ class AppBranding(db.Model):
             "address": self.address,
             "email": self.email,
             "phone": self.phone,
+            "whatsapp": self.whatsapp,
             "social_links": social_links,
             "doctor_name": self.doctor_name,
             "doctor_post": self.doctor_post
@@ -388,6 +412,7 @@ class ScreeningYearBioData(db.Model):
     department = db.Column(db.String(50))
     gender = db.Column(db.String(10))
     age = db.Column(db.Integer)
+    is_notified_ready = db.Column(db.Boolean, default=False)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
     __table_args__ = (
@@ -527,6 +552,8 @@ class SpecialTestsResult(db.Model):
     audiometry_result = db.Column(db.String(50))
     audiometry_remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+
 
 class DirectorReview(db.Model):
     __tablename__ = 'director_reviews'
@@ -695,14 +722,14 @@ class Permission(db.Model):
 class AuditLog(db.Model):
     __tablename__ = 'audit_logs'
     id = db.Column(db.Integer, primary_key=True)
-    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=True)
+    user_id = db.Column(db.Integer, nullable=True) # ID of Staff or Patient user
     action = db.Column(db.String(100), nullable=False)
     resource = db.Column(db.String(100))
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.now)
 
-    user = db.relationship('StaffUser', foreign_keys='AuditLog.user_id', backref=db.backref('audit_logs', lazy=True))
+    user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
     def to_dict(self):
         details_data = {}
@@ -771,6 +798,33 @@ class SystemConfig(db.Model):
     description = db.Column(db.String(255))
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
+class PatientFile(db.Model):
+    __tablename__ = 'patient_files'
+    id = db.Column(db.Integer, primary_key=True)
+    staff_id = db.Column(db.String(50), nullable=False) # The patient's staff ID
+    screening_year = db.Column(db.Integer, nullable=False)
+    department = db.Column(db.String(50), nullable=False) # Spirometry, Audiometry
+    filename = db.Column(db.String(255), nullable=False) # Original filename
+    file_path = db.Column(db.String(512), nullable=False) # Path relative to uploads dir
+    file_size = db.Column(db.Integer) # In bytes
+    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id')) # Staff ID of the uploader
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    uploader = db.relationship('StaffUser', backref=db.backref('uploaded_files', lazy=True))
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "staff_id": self.staff_id,
+            "screening_year": self.screening_year,
+            "department": self.department,
+            "filename": self.filename,
+            "file_path": f"/api/files/view/{self.id}", # Proxy URL for viewing
+            "file_size": self.file_size,
+            "uploaded_by_name": f"{self.uploader.first_name} {self.uploader.last_name}" if self.uploader else "System",
+            "created_at": self.created_at.isoformat()
+        }
+
 class Appointment(db.Model):
     __tablename__ = 'appointments'
     id = db.Column(db.Integer, primary_key=True)
@@ -786,6 +840,9 @@ class Appointment(db.Model):
     appointment_date = db.Column(db.DateTime, nullable=False)
     time_slot = db.Column(db.String(50)) # e.g. 10:00 AM - 10:30 AM
     reason = db.Column(db.Text, nullable=False)
+    status = db.Column(db.String(20), default='Pending') # Pending, Completed, Cancelled
+    booked_by_type = db.Column(db.String(20)) # staff, patient
+    booked_by_username = db.Column(db.String(50)) # username or staff_id
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     def to_dict(self):
@@ -803,6 +860,9 @@ class Appointment(db.Model):
             "appointment_date": self.appointment_date.isoformat(),
             "time_slot": self.time_slot,
             "reason": self.reason,
+            "status": self.status,
+            "booked_by_type": self.booked_by_type,
+            "booked_by_username": self.booked_by_username,
             "created_at": self.created_at.isoformat()
         }
 
@@ -822,6 +882,109 @@ class ReportVerification(db.Model):
             "section": self.section,
             "verification_code": self.verification_code,
             "generated_at": self.generated_at.isoformat()
+        }
+
+
+class InventoryCategory(db.Model):
+    __tablename__ = 'inventory_categories'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), unique=True, nullable=False)
+    description = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "description": self.description,
+            "created_at": self.created_at.isoformat()
+        }
+
+class InventorySupplier(db.Model):
+    __tablename__ = 'inventory_suppliers'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    contact_person = db.Column(db.String(100))
+    email = db.Column(db.String(120))
+    phone = db.Column(db.String(50))
+    address = db.Column(db.Text)
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "contact_person": self.contact_person,
+            "email": self.email,
+            "phone": self.phone,
+            "address": self.address,
+            "created_at": self.created_at.isoformat()
+        }
+
+class InventoryItem(db.Model):
+    __tablename__ = 'inventory_items'
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(100), nullable=False)
+    sku = db.Column(db.String(50), unique=True)
+    category_id = db.Column(db.Integer, db.ForeignKey('inventory_categories.id'))
+    supplier_id = db.Column(db.Integer, db.ForeignKey('inventory_suppliers.id'))
+    description = db.Column(db.Text)
+    unit = db.Column(db.String(20)) # e.g., Tablets, Bottles, Pieces
+    stock_level = db.Column(db.Integer, default=0)
+    min_stock_level = db.Column(db.Integer, default=5)
+    unit_price = db.Column(db.Float, default=0.0)
+    expiry_date = db.Column(db.Date, nullable=True)
+    location = db.Column(db.String(100)) # e.g., Shelf A, Room 2
+    created_at = db.Column(db.DateTime, default=datetime.now)
+    updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
+
+    category = db.relationship('InventoryCategory', backref='items')
+    supplier = db.relationship('InventorySupplier', backref='items')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "name": self.name,
+            "sku": self.sku,
+            "category_id": self.category_id,
+            "category_name": self.category.name if self.category else None,
+            "supplier_id": self.supplier_id,
+            "supplier_name": self.supplier.name if self.supplier else None,
+            "description": self.description,
+            "unit": self.unit,
+            "stock_level": self.stock_level,
+            "min_stock_level": self.min_stock_level,
+            "unit_price": self.unit_price,
+            "expiry_date": self.expiry_date.isoformat() if self.expiry_date else None,
+            "location": self.location,
+            "created_at": self.created_at.isoformat(),
+            "updated_at": self.updated_at.isoformat()
+        }
+
+class InventoryTransaction(db.Model):
+    __tablename__ = 'inventory_transactions'
+    id = db.Column(db.Integer, primary_key=True)
+    item_id = db.Column(db.Integer, db.ForeignKey('inventory_items.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False)
+    transaction_type = db.Column(db.String(20), nullable=False) # 'Addition', 'Deduction', 'Adjustment'
+    quantity = db.Column(db.Integer, nullable=False)
+    reason = db.Column(db.String(255))
+    timestamp = db.Column(db.DateTime, default=datetime.now)
+
+    item = db.relationship('InventoryItem', backref='transactions')
+    user = db.relationship('StaffUser', backref='inventory_transactions')
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "item_id": self.item_id,
+            "item_name": self.item.name if self.item else "Deleted Item",
+            "user_id": self.user_id,
+            "user_name": f"{self.user.first_name} {self.user.last_name}" if self.user else "Unknown",
+            "transaction_type": self.transaction_type,
+            "quantity": self.quantity,
+            "reason": self.reason,
+            "timestamp": self.timestamp.isoformat()
         }
 
 from sqlalchemy import event

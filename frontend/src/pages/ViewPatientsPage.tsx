@@ -32,21 +32,40 @@ const ViewPatientsPage: React.FC = () => {
     const navigate = useNavigate();
     const [patients, setPatients] = useState<any[]>([]);
     const [loading, setLoading] = useState(true);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
+    const [totalItems, setTotalItems] = useState(0);
+    const [perPage] = useState(10);
+    const [searchQuery, setSearchQuery] = useState('');
+    
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchPatients = async (query = '') => {
+    const fetchPatients = async (query = searchQuery, targetPage = page) => {
         setLoading(true);
         try {
             const url = query 
-                ? `/api/patients/all?q=${query}`
-                : '/api/patients/all';
+                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${perPage}`
+                : `/api/patients/all?page=${targetPage}&per_page=${perPage}`;
+            
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
             });
-            setPatients(response.data);
+
+            // Handle paginated response
+            if (response.data && response.data.results) {
+                setPatients(response.data.results);
+                setTotalPages(response.data.pages);
+                setTotalItems(response.data.total);
+                setPage(response.data.current_page);
+            } else {
+                // Fallback for old format
+                setPatients(Array.isArray(response.data) ? response.data : []);
+                setTotalPages(1);
+                setTotalItems(Array.isArray(response.data) ? response.data.length : 0);
+            }
         } catch (err) {
             console.error("Failed to fetch patients", err);
             toast.error("Failed to load directory");
@@ -56,8 +75,8 @@ const ViewPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchPatients();
-    }, [activeSection, activeYear]);
+        fetchPatients(searchQuery, 1);
+    }, [activeSection, activeYear, user]);
 
     const handlePatientClick = (patient: any) => {
         setSelectedPatient(patient);
@@ -85,10 +104,10 @@ const ViewPatientsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-emerald-500/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-emerald-500/10 rounded-2xl">
-                            <Users className="text-emerald-600 h-8 w-8" />
+                        <div className="p-3 bg-primary/10 rounded-2xl">
+                            <Users className="text-primary h-8 w-8" />
                         </div>
                         <div>
                             <h1 className="text-2xl font-black tracking-tight">Patient Directory</h1>
@@ -98,20 +117,26 @@ const ViewPatientsPage: React.FC = () => {
                     
                     <PatientSearch
                         activeSection={activeSection}
-                        onSearch={fetchPatients}
-                        onSelect={(p) => fetchPatients(p.staff_id)}
+                        onSearch={(q) => {
+                            setSearchQuery(q);
+                            fetchPatients(q, 1);
+                        }}
+                        onSelect={(p) => {
+                            setSearchQuery(p.staff_id);
+                            fetchPatients(p.staff_id, 1);
+                        }}
                         searching={loading}
                         themeColor="emerald"
                         placeholder="Search Staff ID or Name..."
-                        initialValue=""
+                        initialValue={searchQuery}
                     />
                 </div>
 
                 <Card className="border-2 shadow-xl overflow-hidden bg-card">
                     <div className="bg-muted/30 border-b p-4 flex justify-between items-center">
                         <div className="flex gap-2">
-                            <Badge variant="outline" className="h-10 px-4 text-xs font-bold uppercase tracking-widest border-2">
-                                Total: {patients.length} Patients
+                             <Badge variant="outline" className="h-10 px-4 text-xs font-bold uppercase tracking-widest border-2">
+                                Total: {totalItems} Patients
                             </Badge>
                         </div>
                         <Button variant="outline" size="sm" className="font-bold gap-2" onClick={() => navigate('/registration')}>
@@ -147,8 +172,24 @@ const ViewPatientsPage: React.FC = () => {
                                     <TableBody>
                                         {patients.length === 0 ? (
                                             <TableRow>
-                                                <TableCell colSpan={13} className="h-32 text-center text-muted-foreground italic">
-                                                    No patients found matching your search.
+                                                <TableCell colSpan={13} className="h-[28rem] border-0">
+                                                    <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
+                                                        <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                                            <Users className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                                        </div>
+                                                        <div className="space-y-2">
+                                                            <h3 className="text-xl font-black tracking-tight text-foreground/70">Directory Empty</h3>
+                                                            <p className="text-sm text-muted-foreground font-medium italic max-w-xs mx-auto">
+                                                                No patients found matching your search. Try adjusting the Staff ID or searching by name.
+                                                            </p>
+                                                        </div>
+                                                        <div className="flex flex-col items-center gap-2 pt-4">
+                                                            <div className="h-px w-12 bg-muted-foreground/20" />
+                                                            <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                                                Context: {activeSection} Clinic • {activeYear}
+                                                            </p>
+                                                        </div>
+                                                    </div>
                                                 </TableCell>
                                             </TableRow>
                                         ) : (
@@ -187,7 +228,7 @@ const ViewPatientsPage: React.FC = () => {
                                                             <Button 
                                                                 variant="ghost" 
                                                                 size="sm" 
-                                                                className="h-8 w-8 p-0 text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+                                                                className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/5"
                                                                 onClick={() => handlePatientClick(p)}
                                                             >
                                                                 <Eye className="h-4 w-4" />
@@ -222,6 +263,33 @@ const ViewPatientsPage: React.FC = () => {
                             </div>
                         )}
                     </CardContent>
+                    
+                    {/* Pagination Footer */}
+                    <div className="bg-muted/30 border-t p-4 flex items-center justify-between">
+                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
+                            Page {page} of {totalPages}
+                        </div>
+                        <div className="flex gap-2">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={page <= 1 || loading}
+                                onClick={() => fetchPatients(searchQuery, page - 1)}
+                                className="font-bold border-2"
+                            >
+                                Previous
+                            </Button>
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                disabled={page >= totalPages || loading}
+                                onClick={() => fetchPatients(searchQuery, page + 1)}
+                                className="font-bold border-2"
+                            >
+                                Next
+                            </Button>
+                        </div>
+                    </div>
                 </Card>
 
                 <ActionConfirmModal

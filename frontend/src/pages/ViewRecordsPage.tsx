@@ -59,7 +59,7 @@ const ViewRecordsPage: React.FC = () => {
 
     useEffect(() => {
         fetchRecords(1, searchTerm);
-    }, [activeSection, activeYear]);
+    }, [activeSection, activeYear, user]);
 
     // REMOVED deprecated ad-hoc search logic
 
@@ -131,10 +131,22 @@ const ViewRecordsPage: React.FC = () => {
                                 <p className="font-bold text-muted-foreground animate-pulse">Gathering diagnostic data...</p>
                             </div>
                         ) : recordsData.records.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center p-20 text-center">
-                                <Search className="h-16 w-16 text-muted-foreground/20 mb-4" />
-                                <h3 className="text-xl font-bold">No screening records found</h3>
-                                <p className="text-muted-foreground">Try adjusting your search or switching the academic year.</p>
+                            <div className="flex flex-col items-center justify-center min-h-[24rem] p-8 text-center space-y-4">
+                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                    <Search className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                </div>
+                                <div className="space-y-2">
+                                    <h3 className="text-xl font-black tracking-tight text-foreground/70">No screening records found</h3>
+                                    <p className="text-sm text-muted-foreground font-medium italic max-w-xs mx-auto">
+                                        Try adjusting your search query or switching the academic session from the system settings.
+                                    </p>
+                                </div>
+                                <div className="flex flex-col items-center gap-2 pt-4">
+                                    <div className="h-px w-12 bg-muted-foreground/20" />
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                        Context: {activeSection} Clinic • {activeYear}
+                                    </p>
+                                </div>
                             </div>
                         ) : (
                             <div className="flex flex-col h-full">
@@ -143,14 +155,14 @@ const ViewRecordsPage: React.FC = () => {
                                         <Table>
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
-                                                    <TableHead className="min-w-[1400px] bg-muted/90 border-r" colSpan={14}>Patient Profile</TableHead>
-                                                    <TableHead className="min-w-[1500px] bg-primary/10 text-primary border-r text-center" colSpan={21}>Consultation & Vitals</TableHead>
-                                                    <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={18}>Hematology (FBC)</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={9}>Kidney Function (KFT)</TableHead>
-                                                    <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={6}>Lipid Profile</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-emerald-50 text-emerald-600 border-r text-center" colSpan={7}>Liver Function (LFT)</TableHead>
+                                                    <TableHead className="min-w-[1400px] bg-muted/90 border-r text-center" colSpan={14}>Patient Profile</TableHead>
+                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={30}>Consultation & Vitals</TableHead>
+                                                    <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
+                                                    <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
+                                                    <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
+                                                    <TableHead className="min-w-[800px] bg-primary/5 text-primary border-r text-center" colSpan={6}>Liver Function (LFT)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
-                                                    <TableHead className="min-w-[600px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={4}>Director's Review</TableHead>
+                                                    <TableHead className="min-w-[1200px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={9}>Director's Review</TableHead>
                                                     <TableHead className="min-w-[100px] text-right bg-muted/90">Actions</TableHead>
                                                 </TableRow>
                                                 <TableRow className="hover:bg-transparent border-b text-[11px] font-bold">
@@ -171,91 +183,101 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px] border-r">Reg. Date</TableHead>
                                                     
                                                     {/* Consultation */}
-                                                    <TableHead className="min-w-[100px] text-center">Blood Pressure</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">Pulse Rate</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">SPO2 Level</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">LUTS (Y/N)</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Chronic Cough</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Chest Pain</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Chest Infect.</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Heart Disease</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">Palor</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">Jaundice</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">Murmur</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">PSA Level</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center">PSA Remark</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Sugar Level</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center">Sugar Remark</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Urinalysis Res</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center">Urinalysis Rem</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Chest Status</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center font-black">Assessment</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center italic">Hist/Physical</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">General Comments</TableHead>
+                                                    <TableHead className="min-w-[100px]">Blood Pressure</TableHead>
+                                                    <TableHead className="min-w-[80px]">Pulse Rate</TableHead>
+                                                    <TableHead className="min-w-[80px]">SPO2 Level</TableHead>
+                                                    <TableHead className="min-w-[120px]">DM Status</TableHead>
+                                                    <TableHead className="min-w-[120px]">HTN Status</TableHead>
+                                                    <TableHead className="min-w-[100px]">LUTS (Y/N)</TableHead>
+                                                    <TableHead className="min-w-[100px]">Chronic Cough</TableHead>
+                                                    <TableHead className="min-w-[100px]">Chest Pain</TableHead>
+                                                    <TableHead className="min-w-[100px]">Chest Infect.</TableHead>
+                                                    <TableHead className="min-w-[100px]">Heart Disease</TableHead>
+                                                    <TableHead className="min-w-[80px]">Palor</TableHead>
+                                                    <TableHead className="min-w-[80px]">Jaundice</TableHead>
+                                                    <TableHead className="min-w-[80px]">Murmur</TableHead>
+                                                    <TableHead className="min-w-[100px]">HS Status</TableHead>
+                                                    <TableHead className="min-w-[120px]">Abdomen Status</TableHead>
+                                                    <TableHead className="min-w-[100px]">PSA Level</TableHead>
+                                                    <TableHead className="min-w-[120px]">PSA Remark</TableHead>
+                                                    <TableHead className="min-w-[100px]">FBS</TableHead>
+                                                    <TableHead className="min-w-[100px]">RBS</TableHead>
+                                                    <TableHead className="min-w-[120px]">Sugar Remark</TableHead>
+                                                    <TableHead className="min-w-[100px]">U/A Result</TableHead>
+                                                    <TableHead className="min-w-[120px]">U/A Remark</TableHead>
+                                                    <TableHead className="min-w-[120px]">Breast Exam</TableHead>
+                                                    <TableHead className="min-w-[120px]">Breast Remark</TableHead>
+                                                    <TableHead className="min-w-[100px]">Chest Status</TableHead>
+                                                    <TableHead className="min-w-[120px] font-black">Assessment</TableHead>
+                                                    <TableHead className="min-w-[150px] italic">Assess. Hx/PE</TableHead>
+                                                    <TableHead className="min-w-[150px]">Other Assess.</TableHead>
+                                                    <TableHead className="min-w-[150px]">Overall Lab Remark</TableHead>
+                                                    <TableHead className="min-w-[150px] border-r">General Remarks</TableHead>
                                                     
                                                     {/* FBC */}
-                                                    <TableHead className="min-w-[70px] text-center">PCV</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">HGB</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">WBC</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">RBC</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">PLT</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">LYMP%</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">LYMP#</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">GRA%</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">GRA#</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">MID%</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">MID#</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">MCV</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">MCH</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">MCHC</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">RDW</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">PDW</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">FBC Remark</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">Other Remarks</TableHead>
+                                                    <TableHead className="min-w-[70px]">PCV</TableHead>
+                                                    <TableHead className="min-w-[70px]">HGB</TableHead>
+                                                    <TableHead className="min-w-[70px]">WBC</TableHead>
+                                                    <TableHead className="min-w-[70px]">RBC</TableHead>
+                                                    <TableHead className="min-w-[70px]">PLT</TableHead>
+                                                    <TableHead className="min-w-[70px]">LYMP%</TableHead>
+                                                    <TableHead className="min-w-[70px]">LYMP#</TableHead>
+                                                    <TableHead className="min-w-[70px]">GRA%</TableHead>
+                                                    <TableHead className="min-w-[70px]">GRA#</TableHead>
+                                                    <TableHead className="min-w-[70px]">MID%</TableHead>
+                                                    <TableHead className="min-w-[70px]">MID#</TableHead>
+                                                    <TableHead className="min-w-[70px]">MCV</TableHead>
+                                                    <TableHead className="min-w-[70px]">MCH</TableHead>
+                                                    <TableHead className="min-w-[70px]">MCHC</TableHead>
+                                                    <TableHead className="min-w-[70px]">RDW</TableHead>
+                                                    <TableHead className="min-w-[70px]">PDW</TableHead>
+                                                    <TableHead className="min-w-[150px] border-r">FBC Remark</TableHead>
                                                     
                                                     {/* KFT */}
-                                                    <TableHead className="min-w-[70px] text-center">K+</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">Na+</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">Cl-</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Urea</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Creatinine</TableHead>
-                                                    <TableHead className="min-w-[70px] text-center">HCO3</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">Bicarbonate</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">KFT Remark</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">Other Remarks</TableHead>
+                                                    <TableHead className="min-w-[70px]">K+</TableHead>
+                                                    <TableHead className="min-w-[70px]">Na+</TableHead>
+                                                    <TableHead className="min-w-[70px]">Cl-</TableHead>
+                                                    <TableHead className="min-w-[100px]">Urea</TableHead>
+                                                    <TableHead className="min-w-[100px]">Creatinine</TableHead>
+                                                    <TableHead className="min-w-[70px]">HCO3</TableHead>
+                                                    <TableHead className="min-w-[100px]">Bicarbonate</TableHead>
+                                                    <TableHead className="min-w-[150px] border-r">KFT Remark</TableHead>
                                                     
                                                     {/* Lipid */}
-                                                    <TableHead className="min-w-[100px] text-center">Cholesterol</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">TG</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">HDL</TableHead>
-                                                    <TableHead className="min-w-[100px] text-center">LDL</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">Lipid Remark</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">Other Remarks</TableHead>
+                                                    <TableHead className="min-w-[100px]">Cholesterol</TableHead>
+                                                    <TableHead className="min-w-[100px]">TG</TableHead>
+                                                    <TableHead className="min-w-[100px]">HDL</TableHead>
+                                                    <TableHead className="min-w-[100px]">LDL</TableHead>
+                                                    <TableHead className="min-w-[150px] border-r">Lipid Remark</TableHead>
                                                     
                                                     {/* LFT */}
-                                                    <TableHead className="min-w-[80px] text-center">AST</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">ALT</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">ALP</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">T.BIL</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">C.BIL</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">LFT Remark</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">Other Remarks</TableHead>
+                                                    <TableHead className="min-w-[80px]">AST</TableHead>
+                                                    <TableHead className="min-w-[80px]">ALT</TableHead>
+                                                    <TableHead className="min-w-[80px]">ALP</TableHead>
+                                                    <TableHead className="min-w-[80px]">T.BIL</TableHead>
+                                                    <TableHead className="min-w-[80px]">C.BIL</TableHead>
+                                                    <TableHead className="min-w-[150px] border-r">LFT Remark</TableHead>
                                                     
                                                     {/* Special */}
-                                                    <TableHead className="min-w-[120px] text-center">ECG Result</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">ECG Remark</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center">Spirometry</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">Spiro Remark</TableHead>
-                                                    <TableHead className="min-w-[120px] text-center">Audiometry</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">Audio Remark</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center">Weight</TableHead>
-                                                    <TableHead className="min-w-[80px] text-center border-r">Height</TableHead>
+                                                    <TableHead className="min-w-[120px]">ECG Result</TableHead>
+                                                    <TableHead className="min-w-[150px]">ECG Remark</TableHead>
+                                                    <TableHead className="min-w-[120px]">Spirometry</TableHead>
+                                                    <TableHead className="min-w-[150px]">Spiro Remark</TableHead>
+                                                    <TableHead className="min-w-[120px]">Audiometry</TableHead>
+                                                    <TableHead className="min-w-[150px]">Audio Remark</TableHead>
+                                                    <TableHead className="min-w-[80px]">Weight</TableHead>
+                                                    <TableHead className="min-w-[80px] border-r">Height</TableHead>
                                                     
                                                     {/* Director Review */}
-                                                    <TableHead className="min-w-[150px] text-center">Comment 1</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">Comment 2</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center">Comment 3</TableHead>
-                                                    <TableHead className="min-w-[150px] text-center border-r">Comment 4</TableHead>
+                                                    <TableHead className="min-w-[150px]">Comment 1</TableHead>
+                                                    <TableHead className="min-w-[150px]">Comment 2</TableHead>
+                                                    <TableHead className="min-w-[150px]">Comment 3</TableHead>
+                                                    <TableHead className="min-w-[150px]">Comment 4</TableHead>
+                                                    <TableHead className="min-w-[150px] font-black italic">Director Hx/PE</TableHead>
+                                                    <TableHead className="min-w-[150px]">Director Lab Remark</TableHead>
+                                                    <TableHead className="min-w-[150px]">Other Assessments</TableHead>
+                                                    <TableHead className="min-w-[150px]">Other Remarks</TableHead>
+                                                    <TableHead className="min-w-[200px] border-r font-bold">Overall Assessment</TableHead>
                                                     
                                                     <TableHead className="text-right">Actions</TableHead>
                                                 </TableRow>
@@ -279,91 +301,101 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="border-r text-[11px] font-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</TableCell>
                                                         
                                                         {/* Consultation */}
-                                                        <TableCell className="text-center font-bold bg-primary/5 text-[11px]">{r.consultation?.bp || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.pulse || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.spo2 || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 font-black text-[11px]">{r.consultation?.luts || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.chronic_cough || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.chronic_chest_pain || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.chest_infection || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.heart_dx || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.palor || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.jaundice || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 text-[11px]">{r.consultation?.murmur || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.psa || '-'}</TableCell>
+                                                        <TableCell className="font-bold bg-primary/5 text-[11px]">{r.consultation?.bp || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.pulse || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.spo2 || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.dm || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.htn || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 font-black text-[11px]">{r.consultation?.luts || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chronic_cough || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chronic_chest_pain || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_infection || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.heart_dx || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.palor || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.jaundice || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.murmur || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.hs || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.abdomen || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.psa || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.psa_remark || ''}>{r.consultation?.psa_remark || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.fbs || r.consultation?.rbs || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.fbs || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.rbs || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.sugar_remark || ''}>{r.consultation?.sugar_remark || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-primary/5 font-bold text-[11px]">{r.consultation?.ua_result || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.ua_result || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.ua_remark || ''}>{r.consultation?.ua_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.breast || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.breast_remark || ''}>{r.consultation?.breast_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_status || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.assessment || '-'}</TableCell>
-                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[150px]" title={r.consultation?.hx_pe || ''}>{r.consultation?.hx_pe || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-primary/5 text-[11px] truncate max-w-[150px]" title={r.consultation?.remarks || ''}>{r.consultation?.remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 font-bold text-[11px]">{r.director_review?.assessment || r.consultation?.assessment || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.hx_pe || r.consultation?.hx_pe || ''}>{r.director_review?.hx_pe || r.consultation?.hx_pe || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] truncate max-w-[150px]" title={r.director_review?.other_assessments || r.consultation?.other_assessments || ''}>{r.director_review?.other_assessments || r.consultation?.other_assessments || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] truncate max-w-[150px]" title={r.director_review?.lab_remark || r.consultation?.lab_remark || ''}>{r.director_review?.lab_remark || r.consultation?.lab_remark || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-primary/5 text-[11px] truncate max-w-[150px]" title={r.director_review?.other_remarks || r.consultation?.remarks || ''}>{r.director_review?.other_remarks || r.consultation?.remarks || '-'}</TableCell>
                                                         
                                                         {/* FBC */}
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.pcv || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 font-bold text-[11px]">{r.fbc?.hgb || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.wbc || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.rbc || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.plt || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.lymp_percent || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.lymp_abs || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.gra_percent || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.gra_abs || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mid_percent || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mid_abs || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mcv || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mch || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.mchc || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.rdw || '-'}</TableCell>
-                                                        <TableCell className="text-center bg-rose-50/30 text-[11px]">{r.fbc?.pdw || '-'}</TableCell>
-                                                        <TableCell className="bg-rose-50/30 text-[11px] truncate max-w-[150px]" title={r.fbc?.remark || ''}>{r.fbc?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-rose-50/30 text-[11px] truncate max-w-[150px]" title={r.fbc?.other_remarks || ''}>{r.fbc?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.pcv || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 font-bold text-[11px]">{r.fbc?.hgb || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.wbc || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.rbc || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.plt || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.lymp_percent || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.lymp_abs || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.gra_percent || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.gra_abs || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.mid_percent || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.mid_abs || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.mcv || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.mch || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.mchc || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.rdw || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px]">{r.fbc?.pdw || '-'}</TableCell>
+                                                        <TableCell className="bg-rose-50/30 text-[11px] truncate max-w-[150px] border-r" title={r.fbc?.remark || ''}>{r.fbc?.remark || '-'}</TableCell>
                                                         
                                                         {/* KFT */}
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.potassium || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.sodium || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.chloride || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30 font-bold">{r.kft?.urea || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30 font-bold">{r.kft?.creatinine || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.hco3 || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-blue-50/30">{r.kft?.bicarbonate || '-'}</TableCell>
-                                                        <TableCell className="bg-blue-50/30 text-[11px] truncate max-w-[150px]" title={r.kft?.remark || ''}>{r.kft?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-blue-50/30 text-[11px] truncate max-w-[150px]" title={r.kft?.other_remarks || ''}>{r.kft?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.potassium || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.sodium || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.chloride || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.urea || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.creatinine || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.hco3 || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.bicarbonate || '-'}</TableCell>
+                                                        <TableCell className="bg-blue-50/30 text-[11px] truncate max-w-[150px] border-r" title={r.kft?.remark || ''}>{r.kft?.remark || '-'}</TableCell>
                                                         
                                                         {/* Lipid */}
-                                                        <TableCell className="text-[11px] text-center bg-amber-50/30 font-bold">{r.lipid?.tcho || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.tg || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.hdl || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-amber-50/30">{r.lipid?.ldl || '-'}</TableCell>
-                                                        <TableCell className="bg-amber-50/30 text-[11px] truncate max-w-[150px]" title={r.lipid?.remark || ''}>{r.lipid?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-amber-50/30 text-[11px] truncate max-w-[150px]" title={r.lipid?.other_remarks || ''}>{r.lipid?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-amber-50/30 font-bold">{r.lipid?.tcho || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-amber-50/30">{r.lipid?.tg || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-amber-50/30">{r.lipid?.hdl || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-amber-50/30">{r.lipid?.ldl || '-'}</TableCell>
+                                                        <TableCell className="bg-amber-50/30 text-[11px] truncate max-w-[150px] border-r" title={r.lipid?.remark || ''}>{r.lipid?.remark || '-'}</TableCell>
                                                         
                                                         {/* LFT */}
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.ast || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.alt || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.alp || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.tb || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-emerald-50/30">{r.lft?.cb || '-'}</TableCell>
-                                                        <TableCell className="bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-emerald-50/30 text-[11px] truncate max-w-[150px]" title={r.lft?.other_remarks || ''}>{r.lft?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.ast || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.alt || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.alp || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.tb || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.cb || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5/30 text-[11px] truncate max-w-[150px] border-r" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
                                                         
                                                         {/* Special */}
-                                                        <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.ecg || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-red-50/30 font-bold">{r.special?.ecg || '-'}</TableCell>
                                                         <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.ecg_remark || ''}>{r.special?.ecg_remark || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.spirometry || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-red-50/30 font-bold">{r.special?.spirometry || '-'}</TableCell>
                                                         <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.spirometry_remark || ''}>{r.special?.spirometry_remark || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-red-50/30 font-bold">{r.special?.audiometry || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-red-50/30 font-bold">{r.special?.audiometry || '-'}</TableCell>
                                                         <TableCell className="bg-red-50/30 text-[11px] truncate max-w-[150px]" title={r.special?.audiometry_remark || ''}>{r.special?.audiometry_remark || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] text-center bg-red-50/30">{r.special?.weight || '-'}</TableCell>
-                                                        <TableCell className="border-r text-[11px] text-center bg-red-50/30">{r.special?.height || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-red-50/30">{r.special?.weight || '-'}</TableCell>
+                                                        <TableCell className="border-r text-[11px] bg-red-50/30">{r.special?.height || '-'}</TableCell>
                                                         
                                                         {/* Director Review */}
                                                         <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_one || ''}>{r.director_review?.comment_one || '-'}</TableCell>
                                                         <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_two || ''}>{r.director_review?.comment_two || '-'}</TableCell>
                                                         <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_three || ''}>{r.director_review?.comment_three || '-'}</TableCell>
-                                                        <TableCell className="border-r bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_four || ''}>{r.director_review?.comment_four || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.comment_four || ''}>{r.director_review?.comment_four || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.hx_pe || ''}>{r.director_review?.hx_pe || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] truncate max-w-[150px]" title={r.director_review?.lab_remark || ''}>{r.director_review?.lab_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] truncate max-w-[150px]" title={r.director_review?.other_assessments || ''}>{r.director_review?.other_assessments || '-'}</TableCell>
+                                                        <TableCell className="bg-indigo-50/30 text-[11px] truncate max-w-[150px]" title={r.director_review?.other_remarks || ''}>{r.director_review?.other_remarks || '-'}</TableCell>
+                                                        <TableCell className="border-r bg-indigo-50/10 text-[11px] font-bold truncate max-w-[200px]" title={r.director_review?.assessment || ''}>{r.director_review?.assessment || '-'}</TableCell>
                                                         
                                                         <TableCell className="text-right">
                                                             <div className="flex justify-end gap-1 transition-opacity">

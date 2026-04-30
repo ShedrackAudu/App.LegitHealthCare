@@ -1,10 +1,12 @@
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import get_jwt_identity
 from models import (
     db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, 
     Notification, PatientPortalUser, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
 )
 from decorators import require_permission
+from sqlalchemy import func
 import json
 import random
 import string
@@ -12,8 +14,60 @@ from datetime import datetime
 from utils.email_utils import EmailService
 from utils.ip import get_client_ip
 from auth_utils import is_password_strong
+from extensions import limiter
 
 admin_bp = Blueprint('admin_bp', __name__)
+
+@admin_bp.route('/api/admin/audit-analytics', methods=['GET'])
+@require_permission('manage_roles') # High-level admin permission
+def get_audit_analytics():
+    from sqlalchemy import func, desc
+    from datetime import datetime, timedelta
+
+    # 1. Timeline: Events per day for the last 30 days
+    thirty_days_ago = datetime.now() - timedelta(days=30)
+    timeline_query = db.session.query(
+        func.date(AuditLog.timestamp).label('date'),
+        func.count(AuditLog.id).label('count')
+    ).filter(AuditLog.timestamp >= thirty_days_ago)\
+     .group_by(func.date(AuditLog.timestamp))\
+     .order_by(func.date(AuditLog.timestamp)).all()
+
+    timeline = [{"date": str(row.date), "count": row.count} for row in timeline_query]
+
+    # 2. Action Breakdown: Top 10 actions
+    actions_query = db.session.query(
+        AuditLog.action,
+        func.count(AuditLog.id).label('count')
+    ).group_by(AuditLog.action)\
+     .order_by(desc('count')).limit(10).all()
+
+    action_breakdown = [{"action": row.action, "count": row.count} for row in actions_query]
+
+    # 3. Security Events: Focus on sensitive actions (Login, Delete, Permission Change, Failed Attempts)
+    critical_actions = ['LOGIN', 'SIGNUP_FAILED', '2FA_VERIFY_FAILED', 'DELETE_PATIENT', 'UPDATE_USER_ROLES']
+    security_query = db.session.query(
+        AuditLog.action,
+        func.count(AuditLog.id).label('count')
+    ).filter(AuditLog.action.in_(critical_actions))\
+     .group_by(AuditLog.action).all()
+    
+    security_stats = {row.action: row.count for row in security_query}
+
+    # 4. Failed Login Rate (Last 24h)
+    one_day_ago = datetime.now() - timedelta(hours=24)
+    failed_logins = AuditLog.query.filter(
+        AuditLog.timestamp >= one_day_ago,
+        AuditLog.action.ilike('%FAILED%')
+    ).count()
+
+    return jsonify({
+        "timeline": timeline,
+        "action_breakdown": action_breakdown,
+        "security_stats": security_stats,
+        "failed_logins_24h": failed_logins,
+        "total_logs": AuditLog.query.count()
+    })
 
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @require_permission(['view_users', 'manage_access_keys'])
@@ -24,11 +78,30 @@ def get_users():
     all_users = [u.to_dict() for u in staff]
     for p in patients:
         p_dict = p.to_dict()
-        # Fallback for phone if "N/A" or missing
-        if p_dict.get('phone') == 'N/A' or not p_dict.get('phone'):
-            bio = BioData.query.filter_by(staff_id=p.username).first()
-            if bio and bio.phone and bio.phone != 'N/A':
-                p_dict['phone'] = bio.phone
+        p_dict['section'] = None
+        p_dict['department'] = None
+        
+        # Explicitly check each clinical database using its engine
+        for bind_key in ['dcp', 'dct']:
+            try:
+                engine = db.engines.get(bind_key)
+                if not engine: continue
+                
+                from sqlalchemy import text
+                # Query the bio_data table directly to avoid RoutingSession conflicts
+                sql = text("SELECT department, phone FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                with engine.connect() as conn:
+                    result = conn.execute(sql, {"sid": p.username}).fetchone()
+                    if result:
+                        p_dict['section'] = bind_key.upper()
+                        # result is a Row object, access by index or name
+                        p_dict['department'] = result[0] 
+                        if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
+                            p_dict['phone'] = result[1]
+                        break
+            except Exception as e:
+                current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")
+                continue
                 
         p_dict['id'] = f"p{p.id}" 
         all_users.append(p_dict)
@@ -45,6 +118,61 @@ def get_user(user_id):
     
     user = User.query.get_or_404(int(user_id))
     return jsonify(user.to_dict())
+
+@admin_bp.route('/api/admin/users/<string:user_id>/timeline', methods=['GET'])
+@require_permission('view_users')
+def get_user_timeline(user_id):
+    is_patient = user_id.startswith('p')
+    real_id = int(user_id[1:]) if is_patient else int(user_id)
+    
+    # Get the username to search for actions ON this user
+    if is_patient:
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+        username = target_user.username
+    else:
+        target_user = User.query.get_or_404(real_id)
+        username = target_user.username
+
+    from sqlalchemy import or_
+    
+    # 1. Logs created BY the user
+    # 2. Logs where the user is the RESOURCE (Actions ON them)
+    # We check for resource starting with User: or Patient: followed by username
+    
+    resource_patterns = [
+        f"User:{username}", 
+        f"Patient:{username}",
+        f"User:{user_id}" # Fallback for some old logs
+    ]
+    
+    query = AuditLog.query.filter(
+        or_(
+            AuditLog.user_id == real_id,
+            AuditLog.resource.in_(resource_patterns)
+        )
+    ).order_by(AuditLog.timestamp.desc())
+
+    logs = query.limit(50).all()
+    
+    # Final filter: if action was BY the user, ensure portal context matches to avoid ID collisions
+    final_logs = []
+    for log in logs:
+        log_dict = log.to_dict()
+        
+        # If the log was BY someone with the same ID, check the portal
+        if log.user_id == real_id:
+            portal = log_dict.get('details', {}).get('portal', 'staff')
+            log_is_patient = portal == 'patient'
+            
+            # If IDs match but user types don't, this is a collision from another portal
+            if is_patient != log_is_patient:
+                # UNLESS it's an action ON them by someone else
+                if log.resource not in resource_patterns:
+                    continue
+        
+        final_logs.append(log_dict)
+            
+    return jsonify(final_logs)
 
 @admin_bp.route('/api/admin/users/<string:user_id>/roles', methods=['POST'])
 @require_permission('change_roles')
@@ -72,7 +200,7 @@ def update_user_roles(user_id):
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="UPDATE_USER_ROLES",
@@ -85,7 +213,7 @@ def update_user_roles(user_id):
     
     # Real-time update: notify the specific user
     try:
-        from app import socketio
+        from extensions import socketio
         socketio.emit('user_update', user.to_dict(), room=f"user_{user.id}")
     except Exception as e:
         print(f"Socket emit for user role update failed: {e}")
@@ -114,7 +242,7 @@ def manage_roles():
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="CREATE_ROLE",
@@ -144,7 +272,7 @@ def delete_role(role_id):
     db.session.commit()
     
     # Log action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="DELETE_ROLE",
@@ -243,7 +371,7 @@ def request_access():
             type='alert',
             title='New Access Request',
             message=f"{user_name} is requesting access to {perm_name.replace('_', ' ').title()}.",
-            link='/admin/access-keys'
+            link=f'/admin/access-keys?user_id={user_id}&permission={perm_name}'
         )
         db.session.add(notif)
         
@@ -274,10 +402,11 @@ def request_access():
     return jsonify({"message": "Access request sent to hospital administration"}), 201
 
 @admin_bp.route('/api/admin/verify-access-code', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_access_code():
     data = request.json
     code_str = data.get('code')
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
     
     code_obj = TempAccessCode.query.filter_by(code=code_str, is_revoked=False).first()
     
@@ -322,7 +451,7 @@ def verify_access_code():
     
     # Real-time notification to frontend
     try:
-        from app import socketio
+        from extensions import socketio
         socketio.emit('user_update', user.to_dict(), room=f"user_{user_id}")
     except Exception as e:
         print(f"Socket emit failed: {e}")
@@ -357,7 +486,7 @@ def update_role_permissions(role_id):
     db.session.commit()
     
     # Log the action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="UPDATE_ROLE_PERMISSIONS",
@@ -370,7 +499,7 @@ def update_role_permissions(role_id):
     
     # Real-time update: notify all users with this role
     try:
-        from app import socketio
+        from extensions import socketio
         from models import User
         users = User.query.filter(User.roles.any(id=role.id)).all()
         for u in users:
@@ -456,15 +585,16 @@ def export_screening_matrix():
                 "PCV": "", "WBC": "", "HGB": "", "PLT": "", "RBC": "", 
                 "LYMP PCT": "", "LYMP ABS": "", "GRA PCT": "", "GRA ABS": "", 
                 "MID PCT": "", "MID ABS": "", "MCV": "", "MCH": "", "MCHC": "", 
-                "RDW": "", "PDW": "", "FBC Remark": "", "FBC Others": "",
+                "RDW": "", "PDW": "", "FBC Remark": "",
                 "Potassium": "", "Sodium": "", "Chloride": "", "Urea": "", 
-                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "", "KFT Others": "",
-                "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "", "Lipid Others": "",
-                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "", "LFT Others": "",
+                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "",
+                "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "",
+                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "",
                 "ECG": "", "ECG Remark": "", "Spirometry": "", "Spirometry Remark": "", 
                 "Audiometry": "", "Audiometry Remark": "", "Weight": "", "Height": "",
                 "Director Comm1": "", "Director Comm2": "", "Director Comm3": "", "Director Comm4": "", 
-                "Final Assessment": "", "Director Review Date": ""
+                "Director Hx/PE": "", "Director Lab Remark": "", "Director Other Assessments": "", "Director Other Remarks": "",
+                "Overall Assessment": "", "Director Review Date": ""
             }
             
             bio = BioData.query.filter_by(staff_id=yp.staff_id).first()
@@ -474,22 +604,24 @@ def export_screening_matrix():
             c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if c:
                 row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Abdomen": c.abdomen, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
+
+
                 
             f = FBCResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if f:
-                row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark, "FBC Others": f.other_remarks })
+                row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark })
                 
             k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if k:
-                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark, "KFT Others": k.other_remarks })
+                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
             li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if li:
-                row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark, "Lipid Others": li.other_remarks })
+                row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark })
                 
             lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if lf:
-                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark, "LFT Others": lf.other_remarks })
+                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark })
                 
             s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if s:
@@ -497,6 +629,7 @@ def export_screening_matrix():
                 
             dr = DirectorReview.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if dr:
+                # Director overrides for vitals/assessments if populated
                 overrides = {
                     "DM Status": dr.dm_status, "HTN Status": dr.htn_status, "BP": dr.bp, "Pulse": dr.pulse, 
                     "SPO2": dr.spo2, "HS": dr.hs_status, "LUTS": dr.luts, "Chronic Cough": dr.chronic_cough, 
@@ -506,15 +639,18 @@ def export_screening_matrix():
                     "Breast Remark": dr.breast_remark, "Abdomen": dr.abdomen, "PSA": dr.psa, 
                     "PSA Remark": dr.psa_remark, "FBS": dr.fbs, "RBS": dr.rbs, 
                     "Sugar Remark": dr.fbs_rbs_remark, "UA Result": dr.ua_result, 
-                    "UA Remark": dr.ua_remark, "Assessment HX PE": dr.assessment_hx_pe, 
-                    "Overall Lab Remark": dr.overall_lab_remark, "Other Assessments": dr.other_assessments, 
-                    "Other Remarks": dr.other_remarks
+                    "UA Remark": dr.ua_remark
                 }
                 for k_key, v_val in overrides.items():
                     if v_val:
                         row[k_key] = v_val
                         
-                row.update({ "Director Comm1": dr.comment_one, "Director Comm2": dr.comment_two, "Director Comm3": dr.comment_three, "Director Comm4": dr.comment_four, "Final Assessment": dr.overall_assessment, "Director Review Date": dr.created_at.strftime('%Y-%m-%d %H:%M') if dr.created_at else '' })
+                row.update({ 
+                    "Director Comm1": dr.comment_one, "Director Comm2": dr.comment_two, "Director Comm3": dr.comment_three, "Director Comm4": dr.comment_four, 
+                    "Director Hx/PE": dr.assessment_hx_pe, "Director Lab Remark": dr.overall_lab_remark, 
+                    "Director Other Assessments": dr.other_assessments, "Director Other Remarks": dr.other_remarks,
+                    "Overall Assessment": dr.overall_assessment, "Director Review Date": dr.created_at.strftime('%Y-%m-%d %H:%M') if dr.created_at else '' 
+                })
             
             data.append(row)
             
@@ -589,7 +725,7 @@ def import_data():
         db.session.commit()
         
         # Log action
-        admin_id = request.headers.get('X-User-ID')
+        admin_id = get_jwt_identity()
         log = AuditLog(
             user_id=admin_id,
             action="IMPORT_BIO_DATA",
@@ -638,7 +774,7 @@ def generate_access_code():
     from datetime import timedelta
     expires = datetime.now() + timedelta(minutes=duration)
     
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     new_code = TempAccessCode(
         code=code_str,
@@ -678,7 +814,7 @@ def revoke_access_code(code_id):
     db.session.commit()
     
     # Log action
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     log = AuditLog(
         user_id=admin_id,
         action="REVOKE_ACCESS_CODE",
@@ -716,7 +852,7 @@ def delete_access_code(code_id):
 @admin_bp.route('/api/admin/users/<string:target_user_id>', methods=['DELETE'])
 @require_permission('manage_roles')
 def delete_user(target_user_id):
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     if target_user_id.startswith('p'):
         real_id = int(target_user_id[1:])
@@ -758,7 +894,7 @@ def delete_user(target_user_id):
 @admin_bp.route('/api/admin/users/<string:target_user_id>/reset-password', methods=['POST'])
 @require_permission('manage_roles')
 def admin_reset_password(target_user_id):
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     
     if target_user_id.startswith('p'):
         real_id = int(target_user_id[1:])
@@ -791,20 +927,10 @@ def admin_reset_password(target_user_id):
     
     return jsonify({"message": f"Password for user @{target_user.username} has been successfully reset."})
 
-@admin_bp.route('/api/notifications/delete-all', methods=['DELETE'])
-def delete_notifications():
-    user_id = request.headers.get('X-User-ID')
-    if not user_id:
-        return jsonify({"error": "Auth ID required"}), 401
-        
-    Notification.query.filter_by(user_id=user_id).delete()
-    db.session.commit()
-    
-    return jsonify({"message": "All notifications permanently deleted"})
 @admin_bp.route('/api/admin/audit-logs/clear', methods=['DELETE'])
 @require_permission('system_maintenance')
 def clear_audit_logs():
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     try:
         # Clear all existing logs
         AuditLog.query.delete()
@@ -833,7 +959,7 @@ def clear_audit_logs():
 @admin_bp.route('/api/admin/users', methods=['POST'])
 @require_permission('manage_roles')
 def create_user():
-    admin_id = request.headers.get('X-User-ID')
+    admin_id = get_jwt_identity()
     data = request.json
     
     first_name = data.get('first_name')
@@ -856,8 +982,16 @@ def create_user():
     if User.query.filter_by(phone=phone).first():
         return jsonify({"error": f"Phone number '{phone}' is already in use."}), 400
 
-    # Generate random temporary password
-    temp_password = ''.join(random.choices(string.ascii_letters + string.digits, k=8))
+    # Generate strong temporary password
+    import secrets
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    while True:
+        temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        if (any(c.islower() for c in temp_password)
+                and any(c.isupper() for c in temp_password)
+                and any(c.isdigit() for c in temp_password)
+                and any(c in "!@#$%^&*" for c in temp_password)):
+            break
     
     # Create User
     new_user = User(
@@ -886,17 +1020,23 @@ def create_user():
         branding = AppBranding.query.first()
         logo_url = branding.logo_light if branding and branding.logo_light else None
         
-        # Ensure logo_url is absolute
+        backend_url = request.url_root.rstrip('/')
+        if 'onrender.com' in backend_url and backend_url.startswith('http:'):
+            backend_url = backend_url.replace('http:', 'https:')
+            
+        import os
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+        # Ensure logo_url is absolute (served from backend)
         if logo_url and logo_url.startswith('/'):
-            base_url = request.url_root.rstrip('/')
-            if 'onrender.com' in base_url and base_url.startswith('http:'):
-                base_url = base_url.replace('http:', 'https:')
-            logo_url = f"{base_url}{logo_url}"
+            logo_url = f"{backend_url}{logo_url}"
             
         html_content = EmailService.get_welcome_template(
             first_name=first_name,
             username=username,
             password=temp_password,
+            portal_type='staff',
+            app_url=frontend_url,
             logo_url=logo_url
         )
         
@@ -908,7 +1048,6 @@ def create_user():
         
         if not email_sent:
             current_app.logger.error(f"Failed to send welcome email to {email}")
-            # We don't fail the request because the user was created, but we should inform the admin
     except Exception as e:
         current_app.logger.error(f"Error sending welcome email: {e}")
 
@@ -925,5 +1064,146 @@ def create_user():
     
     return jsonify({
         "message": f"User @{username} created successfully. A welcome email has been sent to {email}.",
-        "user": new_user.to_dict()
+        "user": new_user.to_dict(),
+        "password": temp_password
+    }), 201
+
+@admin_bp.route('/api/admin/patients/onboard', methods=['POST'])
+@require_permission('manage_roles')
+def onboard_patient():
+    admin_id = get_jwt_identity()
+    data = request.json
+    
+    staff_id = data.get('staff_id', '').strip()
+    first_name = data.get('first_name', '').strip()
+    last_name = data.get('last_name', '').strip()
+    email = data.get('email', '').strip()
+    phone = data.get('phone', '').strip()
+    
+    if not all([staff_id, first_name, last_name, email, phone]):
+        return jsonify({"error": "All fields (staff_id, first_name, last_name, email, phone) are required"}), 400
+        
+    # Check if patient already exists in portal (verified)
+    existing = PatientPortalUser.query.filter_by(username=staff_id).first()
+    if existing and existing.is_verified:
+        return jsonify({"error": f"A verified patient account for Staff ID '{staff_id}' already exists."}), 400
+        
+    # Check for email/phone conflicts with OTHER users
+    email_conflict = PatientPortalUser.query.filter(PatientPortalUser.email == email, PatientPortalUser.username != staff_id).first()
+    if email_conflict:
+        return jsonify({"error": f"The email '{email}' is already associated with another account (Staff ID: {email_conflict.username})."}), 409
+        
+    phone_conflict = PatientPortalUser.query.filter(PatientPortalUser.phone == phone, PatientPortalUser.username != staff_id).first()
+    if phone_conflict:
+        return jsonify({"error": f"The phone number '{phone}' is already associated with another account (Staff ID: {phone_conflict.username})."}), 409
+
+    # Generate strong temporary password
+    import secrets
+    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    while True:
+        temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
+        if (any(c.islower() for c in temp_password)
+                and any(c.isupper() for c in temp_password)
+                and any(c.isdigit() for c in temp_password)
+                and any(c in "!@#$%^&*" for c in temp_password)):
+            break
+    
+    try:
+        if existing:
+            user = existing
+            user.first_name = first_name
+            user.last_name = last_name
+            user.email = email
+            user.phone = phone
+            user.is_verified = True
+            user.must_reset_password = True
+        else:
+            user = PatientPortalUser(
+                username=staff_id,
+                first_name=first_name,
+                last_name=last_name,
+                email=email,
+                phone=phone,
+                is_verified=True,
+                must_reset_password=True
+            )
+            db.session.add(user)
+            
+        user.set_password(temp_password)
+        db.session.commit()
+        current_app.logger.info(f"Successfully created/updated PatientPortalUser for {staff_id}")
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Failed to save patient user {staff_id}: {str(e)}")
+        return jsonify({"error": f"Database error: {str(e)}"}), 500
+    
+    # Sync with Clinical BioData (dcp, dct binds)
+    from sqlalchemy import text
+    contexts = ['dcp', 'dct']
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine: continue
+            with engine.connect() as conn:
+                sync_query = text("""
+                    UPDATE bio_data 
+                    SET email = :e, phone = :p 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                conn.execute(sync_query, {"e": email, "p": phone, "sid": staff_id})
+                conn.commit()
+        except Exception as e:
+            current_app.logger.error(f"Onboard Sync failed for {staff_id} in {ctx}: {str(e)}")
+            
+    # Send Welcome Email
+    try:
+        from models import AppBranding
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        backend_url = request.url_root.rstrip('/')
+        if 'onrender.com' in backend_url and backend_url.startswith('http:'):
+            backend_url = backend_url.replace('http:', 'https:')
+
+        import os
+        frontend_url = os.getenv('FRONTEND_URL', 'http://localhost:5173')
+
+        if logo_url and logo_url.startswith('/'):
+            logo_url = f"{backend_url}{logo_url}"
+            
+        html_content = EmailService.get_welcome_template(
+            first_name=first_name,
+            username=staff_id,
+            password=temp_password,
+            portal_type='patient',
+            app_url=frontend_url,
+            logo_url=logo_url
+        )
+        
+        EmailService.send_email(
+            to_email=email,
+            subject="Welcome to Legit HealthCare Patient Portal",
+            html_content=html_content
+        )
+    except Exception as e:
+        current_app.logger.error(f"Error sending patient welcome email: {e}")
+
+    # Audit Log
+    try:
+        log = AuditLog(
+            user_id=admin_id,
+            action="ONBOARD_PATIENT",
+            resource=f"Patient:{staff_id}",
+            details=json.dumps({"staff_id": staff_id, "email": email}),
+            ip_address=request.remote_addr
+        )
+        db.session.add(log)
+        db.session.commit()
+    except Exception as e:
+        current_app.logger.error(f"Audit Log failed for {staff_id}: {e}")
+        db.session.rollback() # Don't fail the whole request if audit fails
+    
+    return jsonify({
+        "message": f"Patient account for '{staff_id}' created successfully.",
+        "password": temp_password
     }), 201

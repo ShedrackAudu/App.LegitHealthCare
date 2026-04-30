@@ -56,9 +56,7 @@ const ManageAccountPage = () => {
 
     const fetchContacts = async () => {
         try {
-            const resp = await axios.get('/api/account/contacts', {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await axios.get('/api/account/contacts');
             setContacts(resp.data);
         } catch (err) {
             console.error("Failed to fetch contacts", err);
@@ -73,7 +71,7 @@ const ManageAccountPage = () => {
                 last_name: lastName,
                 phone,
                 email
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
             
             toast.success(resp.data.message || 'Profile updated successfully!');
             setUser({ ...user, first_name: firstName, last_name: lastName, phone, email });
@@ -107,7 +105,7 @@ const ManageAccountPage = () => {
             const resp = await axios.put(`/api/account/password`, {
                 current_password: currentPassword,
                 new_password: newPassword
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
 
             toast.success(resp.data.message || 'Password updated successfully!');
             setCurrentPassword('');
@@ -126,7 +124,7 @@ const ManageAccountPage = () => {
                 label: newLabel,
                 value: newValue,
                 contact_type: newValue.includes('http') ? 'link' : (newValue.includes('@') ? 'email' : 'phone')
-            }, { headers: { 'X-User-ID': user?.id } });
+            }, {});
             
             setContacts([...contacts, resp.data]);
             setNewLabel('');
@@ -139,9 +137,7 @@ const ManageAccountPage = () => {
 
     const handleDeleteContact = async (id: number) => {
         try {
-            await axios.delete(`/api/account/contacts/${id}`, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            await axios.delete(`/api/account/contacts/${id}`);
             setContacts(contacts.filter(c => c.id !== id));
             toast.success("Contact removed.");
         } catch (err) {
@@ -234,7 +230,7 @@ const ManageAccountPage = () => {
                                             <div className="absolute right-3 top-2.5">
                                                 {confirmPassword && (
                                                     newPassword === confirmPassword ? 
-                                                    <CheckCircle2 className="h-5 w-5 text-emerald-500 animate-in zoom-in duration-300" /> : 
+                                                    <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in duration-300" /> : 
                                                     <X className="h-5 w-5 text-rose-500 animate-in zoom-in duration-300" />
                                                 )}
                                             </div>
@@ -247,23 +243,23 @@ const ManageAccountPage = () => {
                             </form>
                         </Card>
 
-                        <Card className={`border-2 shadow-sm ${user?.is_2fa_enabled ? 'border-emerald-500/50 bg-emerald-500/5' : 'border-rose-500/50 bg-rose-500/5'}`}>
-                            <CardHeader className={`p-5 border-b ${user?.is_2fa_enabled ? 'bg-emerald-500/5' : 'bg-rose-500/5'}`}>
+                        <Card className={`border-2 shadow-sm ${user?.is_2fa_enabled ? 'border-primary/50 bg-primary/5' : 'border-rose-500/50 bg-rose-500/5'}`}>
+                            <CardHeader className={`p-5 border-b ${user?.is_2fa_enabled ? 'bg-primary/5' : 'bg-rose-500/5'}`}>
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
-                                        <div className={`p-2 rounded-xl ${user?.is_2fa_enabled ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                                        <div className={`p-2 rounded-xl ${user?.is_2fa_enabled ? 'bg-primary/10 text-primary' : 'bg-rose-500/10 text-rose-600'}`}>
                                             {user?.is_2fa_enabled ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
                                         </div>
                                         <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Two-Factor Auth</CardTitle>
                                     </div>
-                                    <CardDescription className={`text-xs font-medium pl-4 border-l-4 ml-1 py-1 ${user?.is_2fa_enabled ? 'border-emerald-500/20' : 'border-rose-500/20'}`}>
+                                    <CardDescription className={`text-xs font-medium pl-4 border-l-4 ml-1 py-1 ${user?.is_2fa_enabled ? 'border-primary/20' : 'border-rose-500/20'}`}>
                                         {user?.is_2fa_enabled ? "2FA is currently active for your account." : "Enhance security with second-step verification."}
                                     </CardDescription>
                                 </div>
                             </CardHeader>
                             <CardContent>
                                 <Button 
-                                    className={`w-full font-bold ${user?.is_2fa_enabled ? 'bg-emerald-600 hover:bg-emerald-700' : ''}`}
+                                    className={`w-full font-bold ${user?.is_2fa_enabled ? 'bg-primary hover:bg-primary0' : ''}`}
                                     onClick={() => navigate('/account/2fa')}
                                 >
                                     {user?.is_2fa_enabled ? "Manage 2FA Settings" : "Set Up 2FA"}
