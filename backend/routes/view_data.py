@@ -185,6 +185,7 @@ def get_all_patients():
         "has_prev": pagination.has_prev
     }), 200
 
+@view_data_bp.route('/patients/<string:staff_id>', methods=['PUT', 'DELETE'])
 @jwt_required()
 def handle_patient(staff_id):
     user_id = get_jwt_identity()

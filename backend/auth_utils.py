@@ -1,4 +1,4 @@
-import random
+import secrets
 import string
 import re
 import pyotp
@@ -11,12 +11,23 @@ from models import db, StaffUser as User
 mail = Mail()
 
 def generate_otp(length=6):
-    return ''.join(random.choices(string.digits, k=length))
+    return ''.join(secrets.choice(string.digits) for _ in range(length))
 
-def verify_otp(otp_code):
-    # For now, we'll just accept any 6-digit code for testing
-    # In production, this should check against a stored value in Redis or DB
-    return len(otp_code) == 6
+def verify_otp(user, otp_code):
+    """
+    Cryptographically verify OTP code against stored value for a user.
+    """
+    if not user or not user.otp_code or not user.otp_expiry:
+        return False
+    
+    if user.otp_code != otp_code:
+        return False
+        
+    from datetime import datetime
+    if user.otp_expiry < datetime.now():
+        return False
+        
+    return True
 
 from utils.email_utils import EmailService
 

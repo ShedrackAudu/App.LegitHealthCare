@@ -5,7 +5,7 @@ from auth_utils import generate_totp_secret, get_totp_uri
 from extensions import limiter
 import pyotp
 import json
-import random
+import secrets
 import string
 
 security_bp = Blueprint('security', __name__)
@@ -60,8 +60,8 @@ def enable_2fa():
     totp = pyotp.totp.TOTP(user.totp_secret)
     if totp.verify(code) or (user.backup_codes and code in json.loads(user.backup_codes)):
         user.is_2fa_enabled = True
-        # Generate some simple backup codes for initial output
-        backup_codes = [''.join(random.choices(string.ascii_uppercase + string.digits, k=8)) for _ in range(6)]
+        # Generate cryptographically secure backup codes
+        backup_codes = [''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8)) for _ in range(6)]
         user.backup_codes = json.dumps(backup_codes)
         db.session.commit()
         return jsonify({"message": "2FA established", "backup_codes": backup_codes})

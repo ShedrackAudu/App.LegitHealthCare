@@ -5,7 +5,7 @@ import os
 import json
 from dotenv import load_dotenv
 
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies
 from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
 from extensions import mail, jwt, limiter, socketio
 from auth_utils import generate_otp, send_otp_email, is_password_strong
@@ -26,7 +26,7 @@ limiter.init_app(app)
 # CORS Hardening (Phase 5)
 frontend_url = os.getenv('FRONTEND_URL', '*')
 from flask_cors import CORS
-CORS(app, resources={r"/*": {"origins": frontend_url}})
+CORS(app, resources={r"/*": {"origins": frontend_url}}, supports_credentials=True)
 
 socketio.init_app(app, cors_allowed_origins=frontend_url)
 
@@ -54,7 +54,12 @@ else:
     }
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    if os.getenv('FLASK_ENV') == 'production':
+        raise RuntimeError("CRITICAL SECURITY ERROR: SECRET_KEY environment variable MUST be set in production.")
+    app.config['SECRET_KEY'] = 'dev-secret-key-insecure-only-for-local'
+    print("WARNING: Using insecure default SECRET_KEY. This is only acceptable for local development.")
 
 # Email config (to be filled by user)
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -65,6 +70,11 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+app.config['JWT_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False # Set to True later for full CSRF protection
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
+app.config['JWT_COOKIE_SAMESITE'] = 'Lax' if os.getenv('FLASK_ENV') != 'production' else 'None'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 db.init_app(app)
@@ -362,12 +372,14 @@ def login():
             additional_claims={"portal": detected_portal}
         )
         
-        return jsonify({
+        response = jsonify({
             "message": "Login successful",
             "token": access_token, 
             "portal": detected_portal,
             "user": user.to_dict()
-        }), 200
+        })
+        set_access_cookies(response, access_token)
+        return response, 200
         
     return jsonify({"error": "Invalid credentials"}), 401
 
@@ -397,7 +409,13 @@ def forgot_password():
         ).first()
     
     if not user:
-        return jsonify({"error": "No account found with that identity."}), 404
+        # Standardize response to prevent user enumeration (SEC-007)
+        # We return a 200 OK even if the user isn't found to keep attackers guessing.
+        return jsonify({
+            "message": "If an account with that identity exists, a recovery code has been sent to the registered email.",
+            "user_id": None,
+            "portal": portal
+        }), 200
         
     otp = generate_otp()
     user.otp_code = otp
@@ -419,7 +437,7 @@ def forgot_password():
     detected_portal = 'staff' if isinstance(user, StaffUser) else 'patient'
 
     return jsonify({
-        "message": "Recovery code sent to your registered email.",
+        "message": "If an account with that identity exists, a recovery code has been sent to the registered email.",
         "user_id": user.id,
         "portal": detected_portal
     }), 200
@@ -544,40 +562,21 @@ def login_2fa():
             additional_claims={"portal": detected_portal}
         )
         
-        return jsonify({
+        response = jsonify({
             "message": "Login successful",
             "token": access_token,
             "portal": detected_portal,
             "user": user.to_dict()
-        }), 200
+        })
+        set_access_cookies(response, access_token)
+        return response, 200
         
     return jsonify({"error": "Invalid 2FA code"}), 401
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    data = request.json
-    user_id = data.get('user_id')
-    portal = data.get('portal', 'staff')
-    
-    if user_id:
-        try:
-            logout_log = AuditLog(
-                user_id=user_id,
-                action="LOGOUT",
-                resource=f"{portal.capitalize()} Portal",
-                details=json.dumps({
-                    "portal": portal,
-                    "timestamp": datetime.now().isoformat()
-                }),
-                ip_address=get_client_ip()
-            )
-            db.session.add(logout_log)
-            db.session.commit()
-            return jsonify({"message": "Logout recorded"}), 200
-        except Exception as e:
-            app.logger.error(f"Failed to log logout for user {user_id}: {e}")
-            return jsonify({"error": "Logout logging failed"}), 500
-            
-    return jsonify({"message": "Logout complete (client-only)"}), 200
+    response = jsonify({"message": "Logout complete"})
+    unset_jwt_cookies(response)
+    return response, 200
 
 # Initialize Database and System (Run on startup)
 with app.app_context():
