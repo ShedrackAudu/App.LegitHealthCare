@@ -118,6 +118,11 @@ export default function MessagingPage() {
       fetchHistory(activeChat.id);
       socket.emit('join_chat', { chat_id: activeChat.id });
       socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
+      
+      // Optimistic UI: Clear unread count for this chat immediately
+      setConversations(prev => prev.map(c => 
+        c.id === activeChat.id ? { ...c, unread_count: 0 } : c
+      ));
 
       // Fetch group details if group
       if (activeChat.type === 'group') {
@@ -612,7 +617,7 @@ export default function MessagingPage() {
                       ) : 'No messages yet'}
                     </div>
                   </div>
-                  {conv.unread_count > 0 && (
+                  {conv.unread_count > 0 && activeChat?.id !== conv.id && (
                     <Badge variant="destructive" className="h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px]">
                       {conv.unread_count}
                     </Badge>
