@@ -106,23 +106,7 @@ class EmailService:
         except Exception as e:
             print(f"SMTP Fallback Error: {e}")
             return False
-        except Exception as e:
-            # Check for common dev/test overrides
-            error_str = str(e).lower()
-            if "authentication failed" in error_str or "timeout" in error_str or "connection refused" in error_str:
-                # If we suspect it's a dev machine without internet or config, log it nicely
-                print(f"\n\n!!! EMAIL SERVICE NOTICE !!!")
-                print(f"Failed to send real email to: {to_email}")
-                print(f"Reason: {str(e)}")
-                print(f"!!! Proceeding without sending email (Fallback) !!!\n\n")
-                
-                # We return False here if we want the caller to handle the failure, 
-                # or True if we want to swallow it for development. 
-                # For production safety, we should let the caller (app.py) know it failed.
-                return False 
-            
-            print(f"Critical Email Error: {e}")
-            raise e
+
 
     @staticmethod
     def get_report_template(first_name, screening_year, section, logo_url=None):
@@ -147,7 +131,7 @@ class EmailService:
                 .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
                 .contact-section {{ margin-top: 30px; padding-top: 20px; font-size: 14px; color: #64748b; }}
                 .contact-link {{ color: #0d9488; text-decoration: none; font-weight: 600; }}
-                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
                 .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -219,12 +203,13 @@ class EmailService:
                 .content {{ padding: 20px; }}
                 .data-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
                 .appointment-box {{ background: #f0fdf4; border: 1px solid #bbf7d0; padding: 15px; border-radius: 8px; margin: 20px 0; }}
-                .footer {{ font-size: 12px; color: #666; padding: 20px; border-top: 1px solid #eee; text-align: center; }}
+                .footer {{ font-size: 12px; color: #666; padding: 20px; border-top: 1px solid #eee; text-align: left; }}
+                .footer p {{ margin: 2px 0; }}
             </style>
         </head>
         <body>
             <div class="container">
-                <div style="text-align: center;">
+                <div style="text-align: left;">
                     {logo_html}
                 </div>
                 <div class="header">
@@ -237,14 +222,15 @@ class EmailService:
                         <p><strong>Appointment Date:</strong> {appointment_date}</p>
                         <p><strong>Reason:</strong> {reason}</p>
                     </div>
-
+ 
                     <h3>Patient Bio-Data:</h3>
                     <table class="data-table">
                         {items_html}
                     </table>
                 </div>
                  <div class="footer">
-                    <p>&copy; {datetime.now().year} Legit HealthCare - System Generated Notification</p>
+                    <p>&copy; 2026 Legit HealthCare Services Ltd</p>
+                    <p>Leading Edge in Healthcare delivery.</p>
                 </div>
             </div>
         </body>
@@ -275,7 +261,7 @@ class EmailService:
                 .otp-display {{ font-size: 36px; font-weight: 800; color: #1e293b; margin: 25px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px; letter-spacing: -1px !important; word-spacing: 0 !important; line-height: 1; }}
                 .expiry-text {{ font-size: 15px; color: #64748b; margin-bottom: 30px; }}
                 .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
                 .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -330,9 +316,12 @@ class EmailService:
         return EmailService.get_patient_verification_template(first_name, otp_code, logo_url)
 
     @staticmethod
-    def get_welcome_template(first_name, username, password, logo_url=None):
+    def get_welcome_template(first_name, username, password, portal_type='staff', app_url=None, logo_url=None):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 24px; font-weight: 800; color: #0d9488; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
-        current_year = datetime.now().year
+        
+        # Determine Login URL
+        base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
+        login_url = f"{base_url}/login?portal={portal_type}"
         
         return f"""
         <!DOCTYPE html>
@@ -351,8 +340,10 @@ class EmailService:
                 .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
                 .details-box {{ background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #D2F1EE; margin-bottom: 25px; }}
                 .details-box p {{ margin: 10px 0; font-size: 16px; }}
+                .cta-container {{ text-align: center; margin: 35px 0; }}
+                .cta-button {{ background-color: #0d9488; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
                 .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
                 .footer-bar p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -381,7 +372,10 @@ class EmailService:
                         
                         <div class="body-text">
                             <p>For security reasons, you will be required to change your password upon your first login.</p>
-                            <p>To get started, simply log in using the credentials above and follow the prompt to set a new password.</p>
+                        </div>
+
+                        <div class="cta-container">
+                            <a href="{login_url}" class="cta-button">Login to My Portal</a>
                         </div>
                         
                         <div class="body-text">
@@ -396,7 +390,7 @@ class EmailService:
                     </div>
                     
                     <div class="footer-bar">
-                        <p>&copy; {current_year} Legit HealthCare Services Ltd</p>
+                        <p>&copy; 2026 Legit HealthCare Services Ltd</p>
                         <p>Leading Edge in Healthcare delivery.</p>
                     </div>
                 </div>
@@ -405,4 +399,181 @@ class EmailService:
         </html>
         """
 
-
+    @staticmethod
+    def get_report_ready_template(first_name, screening_year, app_url, logo_url=None):
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
+        
+        # Ensure login URL is correct
+        login_url = f"{app_url.rstrip('/')}/login?portal=patient"
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
+                .cta-container {{ text-align: center; margin: 35px 0; }}
+                .cta-button {{ background-color: #0d9488; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; border-top: 1px solid #f1f5f9; padding-top: 20px; }}
+                .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
+                .footer-bar p {{ margin: 2px 0; }}
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="logo-container">
+                        {logo_html}
+                    </div>
+                    
+                    <div class="header-bar">
+                        <h1>Medical Report Ready</h1>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">Dear {first_name},</div>
+                        
+                        <div class="body-text">
+                            We are pleased to inform you that your medical report for the <strong>{screening_year} Annual Medical Screening</strong> is now complete and ready for your review.
+                        </div>
+                        
+                        <div class="body-text">
+                            You can view your full clinical findings and medical advice by logging into your patient portal account using the button below.
+                        </div>
+                        
+                        <div class="cta-container">
+                            <a href="{login_url}" class="cta-button">View My Medical Report</a>
+                        </div>
+                        
+                        <div class="body-text" style="font-size: 14px; color: #64748b; text-align: center;">
+                            If the button doesn't work, copy and paste this link:<br>
+                            <a href="{login_url}" style="color: #0d9488;">{login_url}</a>
+                        </div>
+                        
+                        <div class="signature">
+                            Warm Regards,<br>
+                            The ICT Team,<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                        
+                        <div class="signed-section">
+                            <strong>SIGNED:</strong><br>
+                            Dr. Anyanwu Ugochukwu D. FMCPath<br>
+                            Consultant in Charge<br>
+                            Legit HealthCare Services Ltd.
+                        </div>
+                    </div>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; 2026 Legit HealthCare Services Ltd</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """
+    @staticmethod
+    def get_registration_success_template(first_name, year, clinic_name, app_url, logo_url=None):
+        logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
+        
+        # Signup URL for patients to claim account
+        signup_url = f"{app_url.rstrip('/')}/signup?portal=patient"
+        
+        return f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+            <meta charset="utf-8">
+            <style>
+                body {{ font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; line-height: 1.6; color: #334155; margin: 0; padding: 0; background-color: #ffffff; }}
+                .wrapper {{ padding: 20px; }}
+                .container {{ max-width: 600px; margin: 0 auto; }}
+                .logo-container {{ padding: 20px 0; }}
+                .header-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-bottom: 30px; border-radius: 4px; }}
+                .header-bar h1 {{ margin: 0; font-size: 24px; color: #1e293b; font-weight: 700; }}
+                .content {{ padding: 0 25px; }}
+                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
+                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
+                .cta-container {{ text-align: center; margin: 35px 0; }}
+                .cta-button {{ background-color: #0d9488; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
+                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; border-top: 1px solid #f1f5f9; padding-top: 20px; }}
+                .footer-bar {{ background-color: #D2F1EE; padding: 15px 25px; margin-top: 40px; border-radius: 4px; font-size: 13px; color: #475569; text-align: left; }}
+                .footer-bar p {{ margin: 2px 0; }}
+                .whatsapp-section {{ margin-top: 25px; padding: 15px; background-color: #f8fafc; border-radius: 8px; font-size: 14px; color: #64748b; }}
+                .whatsapp-link {{ color: #0d9488; text-decoration: none; font-weight: 600; }}
+            </style>
+        </head>
+        <body>
+            <div class="wrapper">
+                <div class="container">
+                    <div class="logo-container">
+                        {logo_html}
+                    </div>
+                    
+                    <div class="header-bar">
+                        <h1>Registration Successful</h1>
+                    </div>
+                    
+                    <div class="content">
+                        <div class="greeting">Dear {first_name},</div>
+                        
+                        <div class="body-text">
+                            We are pleased to inform you that you have been successfully registered for the <strong>{year} medical screening program</strong>.
+                        </div>
+                        
+                        <div class="body-text">
+                            Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.
+                        </div>
+                        
+                        <div class="body-text">
+                            In the meantime, kindly click the button below to create or claim your patient account. This will allow you to track your personal data and monitor the progress of your screening report:
+                        </div>
+                        
+                        <div class="cta-container">
+                            <a href="{signup_url}" class="cta-button">Create Patient Account</a>
+                        </div>
+                        
+                        <div class="body-text">
+                            You will receive a follow-up email once your report is ready.
+                        </div>
+                        
+                        <div class="body-text">
+                            If you have any questions or need to update your information, please do not hesitate to contact us.
+                        </div>
+                        
+                        <div class="body-text">
+                            Thank you for your cooperation and commitment to your health.
+                        </div>
+                        
+                        <div class="signature">
+                            Kind regards,<br>
+                            ICT Department<br>
+                            {clinic_name}
+                        </div>
+                        
+                        <div class="whatsapp-section">
+                            For further information or to lodge a complaint, you may contact the Consultant in charge via WhatsApp:<br>
+                            <a href="https://bit.ly/SUNU-Doctor" class="whatsapp-link">https://bit.ly/SUNU-Doctor</a>
+                        </div>
+                    </div>
+                    
+                    <div class="footer-bar">
+                        <p>&copy; 2026 Legit HealthCare Services Ltd</p>
+                        <p>Leading Edge in Healthcare delivery.</p>
+                    </div>
+                </div>
+            </div>
+        </body>
+        </html>
+        """

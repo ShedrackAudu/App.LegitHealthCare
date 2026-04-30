@@ -8,7 +8,7 @@ import { ShieldCheck, ShieldAlert, Check, Info, ArrowLeft, CheckCircle2, Loader2
 import { QRCodeSVG } from 'qrcode.react';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
 const PatientManage2FAPage = () => {
@@ -33,9 +33,7 @@ const PatientManage2FAPage = () => {
     const beginSetup = async () => {
         setIsGenerating(true);
         try {
-            const resp = await axios.post(`/api/2fa/generate?portal=patient`, {}, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await api.post(`/api/2fa/generate?portal=patient`, {});
             setQrUri(resp.data.uri);
             setSecret(resp.data.secret);
         } catch (err) {
@@ -51,9 +49,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/enable`, { code, portal: 'patient' }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await api.post(`/api/2fa/enable`, { code, portal: 'patient' });
             toast.success(resp.data.message || "2FA successfully enabled!");
             setBackupCodes(resp.data.backup_codes || []);
             const updatedUser = { ...user, is_2fa_enabled: true };
@@ -70,9 +66,7 @@ const PatientManage2FAPage = () => {
             return;
         }
         try {
-            const resp = await axios.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' }, {
-                headers: { 'X-User-ID': user?.id }
-            });
+            const resp = await api.post(`/api/2fa/disable`, { code: disableCode, portal: 'patient' });
             toast.success(resp.data.message || "2FA has been disabled.");
             const updatedUser = { ...user, is_2fa_enabled: false };
             setUser(updatedUser);
@@ -96,7 +90,7 @@ const PatientManage2FAPage = () => {
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-emerald-500/10 rounded-xl text-emerald-600">
+                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
                            <ShieldCheck className="h-5 w-5" />
                         </div>
                         <div>
@@ -105,21 +99,21 @@ const PatientManage2FAPage = () => {
                         </div>
                     </div>
                     {user?.is_2fa_enabled && (
-                        <div className="px-2.5 py-1.5 bg-emerald-500 text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
+                        <div className="px-2.5 py-1.5 bg-primary text-white rounded-lg text-[9px] font-black uppercase tracking-widest flex items-center gap-1.5 shadow-md">
                            <Check className="w-3 h-3" /> 2FA Active
                         </div>
                     )}
                 </div>
 
                 {user?.is_2fa_enabled ? (
-                    <Card className="border border-emerald-500/20 shadow-lg rounded-2xl overflow-hidden">
-                        <CardHeader className="bg-emerald-500/5 p-5 border-b">
-                            <CardTitle className="text-lg font-black text-emerald-700">Authentication is enabled</CardTitle>
+                    <Card className="border border-primary/20 shadow-lg rounded-2xl overflow-hidden">
+                        <CardHeader className="bg-primary/5 p-5 border-b">
+                            <CardTitle className="text-lg font-black text-primary">Authentication is enabled</CardTitle>
                             <CardDescription className="text-[10px] font-medium">Your account is currently protected.</CardDescription>
                         </CardHeader>
                         <CardContent className="p-5 space-y-5">
                             <div className="p-4 bg-muted/40 rounded-2xl text-[13px] border-2 border-dashed flex items-start gap-4">
-                                <Info className="h-5 w-5 text-emerald-600 shrink-0 mt-0.5" />
+                                <Info className="h-5 w-5 text-primary shrink-0 mt-0.5" />
                                 <div className="space-y-0.5">
                                     <p className="font-black text-sm text-foreground">Need to turn off 2FA?</p>
                                     <p className="text-muted-foreground leading-relaxed">Enter your 6-digit verification code to disable protection.</p>
@@ -230,8 +224,8 @@ const PatientManage2FAPage = () => {
                         )}
 
                         {backupCodes.length > 0 && (
-                            <Card className="border-4 border-emerald-500 rounded-2xl bg-emerald-50/50 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500">
-                                <CardHeader className="p-8 bg-emerald-500 text-white">
+                            <Card className="border-4 border-primary rounded-2xl bg-primary/5/50 shadow-xl overflow-hidden animate-in zoom-in-95 duration-500">
+                                <CardHeader className="p-8 bg-primary text-white">
                                     <CardTitle className="text-xl sm:text-2xl font-black flex items-center gap-3">
                                         <CheckCircle2 className="h-7 w-7" /> Activated!
                                     </CardTitle>
@@ -240,22 +234,22 @@ const PatientManage2FAPage = () => {
                                     </CardDescription>
                                 </CardHeader>
                                 <CardContent className="p-8 space-y-6">
-                                    <div className="p-6 bg-white/80 backdrop-blur-xl rounded-xl border border-emerald-200 shadow-md">
+                                    <div className="p-6 bg-white/80 backdrop-blur-xl rounded-xl border border-primary/30 shadow-md">
                                         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 font-mono text-center font-black text-lg text-emerald-900 tracking-wider">
                                             {backupCodes.map((c, i) => (
-                                                <div key={i} className="py-3 bg-emerald-50 rounded-lg border border-emerald-100 shadow-sm">{c}</div>
+                                                <div key={i} className="py-3 bg-primary/5 rounded-lg border border-emerald-100 shadow-sm">{c}</div>
                                             ))}
                                         </div>
                                     </div>
-                                    <div className="bg-emerald-500/10 p-5 rounded-xl border border-dashed border-emerald-500/30 flex items-start gap-4">
-                                        <Info className="w-5 h-5 text-emerald-600 shrink-0 mt-0.5" />
+                                    <div className="bg-primary/10 p-5 rounded-xl border border-dashed border-primary/30 flex items-start gap-4">
+                                        <Info className="w-5 h-5 text-primary shrink-0 mt-0.5" />
                                         <p className="text-xs font-bold text-emerald-800 leading-relaxed">
                                             Save these codes offline. Each code can only be used once. 
                                         </p>
                                     </div>
                                 </CardContent>
                                 <CardFooter className="p-8 pt-0">
-                                    <Button onClick={() => navigate('/patient/account')} variant="outline" className="w-full h-12 rounded-xl font-black text-sm border-emerald-200 text-emerald-700 bg-white hover:bg-emerald-50 transition-all">
+                                    <Button onClick={() => navigate('/patient/account')} variant="outline" className="w-full h-12 rounded-xl font-black text-sm border-primary/30 text-primary bg-white hover:bg-primary/5 transition-all">
                                         Saved Safely
                                     </Button>
                                 </CardFooter>

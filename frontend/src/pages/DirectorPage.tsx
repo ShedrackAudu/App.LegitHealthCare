@@ -161,13 +161,13 @@ const RadioField = ({ label, name, control, required = true }: any) => (
 const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, activeSection }: any) => {
     const { register, handleSubmit, setValue, watch, control, reset } = useForm({
         defaultValues: {
+            ...history?.review,
             ...history?.consultation,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
             ...history?.lipid,
-            ...history?.lft,
-            ...history?.review
+            ...history?.lft
         }
     });
 
@@ -175,13 +175,13 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
     useEffect(() => {
         reset({
+            ...history?.review,
             ...history?.consultation,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
             ...history?.lipid,
-            ...history?.lft,
-            ...history?.review
+            ...history?.lft
         });
     }, [history, reset]);
 
@@ -407,8 +407,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
-                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-emerald-500/10 rounded-xl p-3 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
+                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
+                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
                              </div>
                         </div>
 
@@ -423,8 +423,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                     <Input {...register('other_remarks')} placeholder="Miscellaneous notes..." />
                                 </div>
                                 <div className="space-y-1 col-span-full">
-                                    <Label className="text-xs font-bold uppercase tracking-tight text-emerald-600 ml-1">Overall Assessment(s)</Label>
-                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-emerald-500/20 rounded-xl p-4 text-sm focus:ring-4 ring-emerald-500/10 bg-emerald-500/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Assessment(s)</Label>
+                                    <textarea {...register('overall_assessment')} className="w-full min-h-[120px] border-2 border-primary/20 rounded-xl p-4 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.02] outline-none font-black" placeholder="Final clinical summary..." />
                                 </div>
                             </div>
                             
@@ -564,10 +564,22 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <div className="flex flex-col items-center justify-center h-[50vh] bg-muted/20 border-2 border-dashed rounded-3xl opacity-50">
-                        <Activity className="h-16 w-16 text-muted-foreground mb-4 opacity-20" />
-                        <p className="text-xl font-bold text-muted-foreground">Search for a patient to begin review</p>
-                    </div>
+                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6">
+                        <div className="text-center space-y-3">
+                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
+                                <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                            </div>
+                            <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
+                                Search for a patient to begin clinical review.
+                            </p>
+                            <div className="flex flex-col items-center gap-1 sm:gap-2">
+                                <div className="h-px w-8 bg-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
+                                    Context: {activeSection} Clinic • {activeYear}
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
                 ) : (
                     <ReviewContent 
                         patient={patient} 

@@ -21,7 +21,10 @@ import {
   Mail,
   ShieldCheck,
   Reply,
-  X
+  X,
+  XCircle,
+  Volume2,
+  VolumeX
 } from 'lucide-react';
 import { 
   Dialog,
@@ -53,7 +56,7 @@ import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDial
 
 
 export default function MessagingPage() {
-  const { user, socket, setUnreadMessagesCount } = useAppContext();
+  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound } = useAppContext();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -67,6 +70,7 @@ export default function MessagingPage() {
   const [availableUsers, setAvailableUsers] = useState<any[]>([]);
   const [loadingUsers, setLoadingUsers] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isDeleteGroupModalOpen, setIsDeleteGroupModalOpen] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCreatingGroup, setIsCreatingGroup] = useState(false);
@@ -80,6 +84,14 @@ export default function MessagingPage() {
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const messageInputRef = useRef<HTMLInputElement>(null);
+
+  // Group Management State
+  const [isManagingMembers, setIsManagingMembers] = useState(false);
+  const [groupMembers, setGroupMembers] = useState<any[]>([]);
+  const [groupRole, setGroupRole] = useState<'Admin' | 'Member'>('Member');
+  const [isAddingToGroup, setIsAddingToGroup] = useState(false);
+  const [groupSearchQuery, setGroupSearchQuery] = useState('');
+  const [groupSearchResults, setGroupSearchResults] = useState<any[]>([]);
   
   const commonEmojis = ['😊', '😂', '👍', '❤️', '🔥', '🙌', '😮', '😢', '💯', '✨', '🙏', '👏', '🎉', '💡', '🚀', '✅', '❌', '🤔', '👀', '💪'];
 
@@ -105,6 +117,11 @@ export default function MessagingPage() {
       fetchHistory(activeChat.id);
       socket?.emit('join_chat', { chat_id: activeChat.id });
       socket?.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
+
+      // Fetch group details if group
+      if (activeChat.type === 'group') {
+        fetchGroupMembers(activeChat.id.split('_')[1]);
+      }
     }
     setReplyingTo(null);
   }, [activeChat]);
@@ -119,6 +136,10 @@ export default function MessagingPage() {
       )) {
         setMessages(prev => [...prev, msg]);
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
+      }
+      
+      if (msg.sender_id !== user.id) {
+          playGlobalSound('message');
       }
       
       // Update sidebar regardless of whether it was the active chat
@@ -177,9 +198,7 @@ export default function MessagingPage() {
 
   const fetchConversations = async () => {
     try {
-      const resp = await axios.get('/api/messages/conversations', {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get('/api/messages/conversations');
       setConversations(resp.data);
     } catch (err) {
     }
@@ -187,9 +206,7 @@ export default function MessagingPage() {
 
   const fetchHistory = async (convId: string) => {
     try {
-      const resp = await axios.get(`/api/messages/history/${convId}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/history/${convId}`);
       setMessages(resp.data.messages);
     } catch (err) {
     }
@@ -198,9 +215,7 @@ export default function MessagingPage() {
   const fetchAvailableUsers = async () => {
     setLoadingUsers(true);
     try {
-      const resp = await axios.get('/api/messages/search-users', {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get('/api/messages/search-users');
       setAvailableUsers(resp.data);
     } catch (err) {
     } finally {
@@ -231,11 +246,23 @@ export default function MessagingPage() {
       return;
     }
     try {
-      const resp = await axios.get(`/api/messages/search-users?q=${val}`, {
-        headers: { 'X-User-ID': user.id }
-      });
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`);
       setSearchResults(resp.data);
     } catch (err) {
+    }
+  };
+
+  const handleGroupSearch = async (val: string) => {
+    setGroupSearchQuery(val);
+    if (val.length < 2) {
+      setGroupSearchResults([]);
+      return;
+    }
+    try {
+      const resp = await axios.get(`/api/messages/search-users?q=${val}`);
+      setGroupSearchResults(resp.data);
+    } catch (err) {
+      setGroupSearchResults([]);
     }
   };
 
@@ -265,8 +292,6 @@ export default function MessagingPage() {
       const resp = await axios.post('/api/messages/groups', {
         name: groupName,
         members: selectedMembers
-      }, {
-        headers: { 'X-User-ID': user.id }
       });
       
       const newGroupConv = {
@@ -283,6 +308,58 @@ export default function MessagingPage() {
       toast.success(`Group "${groupName}" created!`);
     } catch (err) {
       toast.error("Failed to create group");
+    }
+  };
+
+  const fetchGroupMembers = async (gid: string) => {
+    try {
+      const resp = await axios.get(`/api/messages/groups/${gid}/members`);
+      setGroupMembers(resp.data);
+      const me = resp.data.find((m: any) => m.id === user.id);
+      if (me) setGroupRole(me.role);
+    } catch (err) {}
+  };
+
+  const addMembersToGroup = async () => {
+    if (!activeChat || selectedMembers.length === 0) return;
+    const gid = activeChat.id.split('_')[1];
+    try {
+      await axios.post(`/api/messages/groups/${gid}/members`, {
+        members: selectedMembers
+      });
+      toast.success("Members added to group");
+      setIsAddingToGroup(false);
+      setSelectedMembers([]);
+      fetchGroupMembers(gid);
+    } catch (err) {
+      toast.error("Failed to add members");
+    }
+  };
+
+  const removeGroupMember = async (targetUserId: number) => {
+    if (!activeChat) return;
+    const gid = activeChat.id.split('_')[1];
+    try {
+      await axios.delete(`/api/messages/groups/${gid}/members/${targetUserId}`);
+      toast.success("Member removed");
+      fetchGroupMembers(gid);
+      if (targetUserId === user.id) {
+          setActiveChat(null);
+          fetchConversations();
+      }
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to remove member");
+    }
+  };
+
+  const deleteMessage = async (msgId: number) => {
+    try {
+      await axios.delete(`/api/messages/messages/${msgId}`);
+      setMessages(prev => prev.map(m => m.id === msgId ? { ...m, is_deleted: true, content: "This message was deleted" } : m));
+      toast.success("Message deleted");
+      setActiveActionsId(null);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete message");
     }
   };
 
@@ -355,17 +432,31 @@ export default function MessagingPage() {
     setIsDeleting(true);
 
     try {
-      await axios.delete(`/api/messages/conversations/${activeChat.id}`, {
-        headers: { 'X-User-ID': user.id }
-      });
-      setActiveChat(null);
+      await axios.delete(`/api/messages/conversations/${activeChat.id}`);
       setMessages([]);
       fetchConversations();
       setIsDeleteModalOpen(false);
-      toast.success("Conversation deleted successfully");
+      toast.success(activeChat.type === 'group' ? "Group history cleared" : "Conversation history cleared");
     } catch (err: any) {
       const errorMsg = err.response?.data?.error || "Failed to delete conversation";
       toast.error(errorMsg);
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const confirmDeleteGroup = async () => {
+    if (!activeChat || activeChat.type !== 'group') return;
+    setIsDeleting(true);
+    const gid = activeChat.id.split('_')[1];
+    try {
+      await axios.delete(`/api/messages/groups/${gid}`);
+      toast.success("Group permanently deleted");
+      setIsDeleteGroupModalOpen(false);
+      setActiveChat(null);
+      fetchConversations();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to delete group");
     } finally {
       setIsDeleting(false);
     }
@@ -383,14 +474,28 @@ export default function MessagingPage() {
         <div className="p-4 border-b space-y-4">
           <div className="flex items-center justify-between">
             <h2 className="text-xl font-bold tracking-tight">Messages</h2>
-            <Button 
-                size="sm" 
-                variant="default" 
-                className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
-                onClick={openNewGroup}
-            >
-              <Plus className="h-4 w-4" /> New Group
-            </Button>
+            <div className="flex gap-1">
+              <Button
+                  size="sm"
+                  variant="ghost"
+                  className={cn(
+                      "h-9 w-9 p-0 rounded-xl",
+                      isMuted ? "text-rose-500" : "text-muted-foreground"
+                  )}
+                  onClick={() => setIsMuted(!isMuted)}
+                  title={isMuted ? "Unmute Notifications" : "Mute Notifications"}
+              >
+                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+              </Button>
+              <Button 
+                  size="sm" 
+                  variant="default" 
+                  className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
+                  onClick={openNewGroup}
+              >
+                <Plus className="h-4 w-4" /> New Group
+              </Button>
+            </div>
           </div>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -449,7 +554,7 @@ export default function MessagingPage() {
                     {conv.type === 'direct' && (
                       <div className={cn(
                         "absolute bottom-0 right-0 w-3 h-3 rounded-full border-2 border-card",
-                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                        conv.other_user?.is_online || (conv.other_user?.last_seen_at && (new Date().getTime() - new Date(conv.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                       )} />
                     )}
                   </div>
@@ -544,7 +649,7 @@ export default function MessagingPage() {
                         <>
                           <div className={cn(
                             "w-1.5 h-1.5 rounded-full",
-                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                            activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                           )} />
                           {activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "Active now" : "Offline"}
                         </>
@@ -561,13 +666,26 @@ export default function MessagingPage() {
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><MoreVertical className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile/Settings</DropdownMenuItem>
+                    {activeChat.type === 'group' && (
+                      <DropdownMenuItem onClick={() => { setIsManagingMembers(true); setIsAddingToGroup(false); }}>
+                        Manage Group Members
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuItem>Search Chat</DropdownMenuItem>
                     <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
                     <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
                       <Trash2 className="h-4 w-4 mr-2" />
-                      Delete Chat
+                      {activeChat.type === 'group' ? 'Clear Group History' : 'Delete Conversation'}
                     </DropdownMenuItem>
+
+                    {activeChat.type === 'group' && groupRole === 'Admin' && (
+                      <DropdownMenuItem className="text-rose-600 font-black" onClick={() => setIsDeleteGroupModalOpen(true)}>
+                        <XCircle className="h-4 w-4 mr-2" />
+                        Delete Entire Group
+                      </DropdownMenuItem>
+                    )}
+                    
                     <DropdownMenuItem className="text-zinc-500 opacity-50">Block User</DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -575,8 +693,8 @@ export default function MessagingPage() {
             </div>
 
             {/* Messages Thread */}
-            <ScrollArea className="flex-1 p-6" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
-              <div className="space-y-6">
+            <ScrollArea className="flex-1 p-6 min-w-0 w-full overflow-hidden" onClick={() => { setReactionMenu(null); setActiveActionsId(null); }}>
+              <div className="space-y-6 overflow-x-hidden">
                 {messages.map((msg, idx) => {
                    const isMe = msg.sender_id === user.id;
                    const prevMsg = idx > 0 ? messages[idx-1] : null;
@@ -596,32 +714,37 @@ export default function MessagingPage() {
                        )}
                         <div className={cn(
                           "flex group items-center gap-2 w-full",
-                          isMe ? "justify-end" : "justify-start"
+                          isMe ? "justify-end" : "justify-start",
+                          msg.is_deleted && "opacity-50"
                         )}>
                             {!isMe ? (
                                 <>
                                     <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-start text-left">
-                                {parentMsg && (
+                                {parentMsg && !msg.is_deleted && (
                                   <div className={cn(
-                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-70 bg-muted/60 border-x-2 border-t-2 w-full max-w-full overflow-hidden",
                                     "border-muted-foreground/20 rounded-tl-none text-left"
                                   )}>
-                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary/80">
                                      {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
                                    </span>
-                                   {parentMsg.content}
+                                   <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
+                                     {parentMsg.content}
+                                   </div>
                                   </div>
                                 )}
   
                                 <div 
                                   className={cn(
                                     "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0",
-                                    "bg-card border-2 rounded-tl-none hover:border-primary/20"
+                                    "bg-card border-2 rounded-tl-none hover:border-primary/20",
+                                    msg.is_deleted && "italic text-muted-foreground bg-muted/20"
                                   )}
-                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerDown={(e) => !msg.is_deleted && startLongPress(e, msg.id)}
                                   onPointerUp={stopLongPress}
                                   onPointerLeave={stopLongPress}
                                   onClick={(e) => {
+                                    if (msg.is_deleted) return;
                                     e.stopPropagation();
                                     setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
                                     setReactionMenu(null);
@@ -636,10 +759,8 @@ export default function MessagingPage() {
                                  </div>
                                </div>
   
-                               {/* Reactions display */}
-                               {msg.reactions && msg.reactions.length > 0 && (
+                               {!msg.is_deleted && msg.reactions && msg.reactions.length > 0 && (
                                    <div className="flex flex-wrap gap-1 mt-1 justify-start">
-                                       {/* Group reactions by emoji */}
                                        {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
                                            <div 
                                                key={emoji} 
@@ -653,118 +774,144 @@ export default function MessagingPage() {
                                )}
                             </div>
                             
-                            {/* Action buttons (Reply & React) */}
-                            <div className={cn(
-                              "transition-opacity flex flex-col gap-1 items-center",
-                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
-                            )}>
-                               <Button 
-                                   variant="ghost" 
-                                   size="icon" 
-                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                   onClick={(e) => { 
-                                       e.stopPropagation(); 
-                                       setReplyingTo(msg); 
-                                       messageInputRef.current?.focus();
-                                       setActiveActionsId(null);
-                                   }}
-                                   title="Reply"
-                               >
-                                   <Reply className="h-3.5 w-3.5" />
-                               </Button>
-                               <Button 
-                                   variant="ghost" 
-                                   size="icon" 
-                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                   onClick={(e) => {
-                                       e.stopPropagation();
-                                       setReactionMenu({ 
-                                           msgId: msg.id, 
-                                           x: e.clientX, 
-                                           y: e.clientY 
-                                       });
-                                   }}
-                                   title="React"
-                               >
-                                   <Smile className="h-3.5 w-3.5" />
-                               </Button>
-                            </div>
+                            {!msg.is_deleted && (
+                              <div className={cn(
+                                "transition-opacity flex flex-col gap-1 items-center",
+                                activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                              )}>
+                                 <Button 
+                                     variant="ghost" 
+                                     size="icon" 
+                                     className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                     onClick={(e) => { 
+                                         e.stopPropagation(); 
+                                         setReplyingTo(msg); 
+                                         messageInputRef.current?.focus();
+                                         setActiveActionsId(null);
+                                     }}
+                                     title="Reply"
+                                 >
+                                     <Reply className="h-3.5 w-3.5" />
+                                 </Button>
+                                 <Button 
+                                     variant="ghost" 
+                                     size="icon" 
+                                     className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                     onClick={(e) => {
+                                         e.stopPropagation();
+                                         setReactionMenu({ 
+                                             msgId: msg.id, 
+                                             x: e.clientX, 
+                                             y: e.clientY 
+                                         });
+                                     }}
+                                     title="React"
+                                 >
+                                     <Smile className="h-3.5 w-3.5" />
+                                 </Button>
+                                 {groupRole === 'Admin' && (
+                                     <Button 
+                                         variant="ghost" 
+                                         size="icon" 
+                                         className="h-7 w-7 rounded-full bg-muted/50 hover:bg-rose-100 hover:text-rose-500 transition-all duration-200"
+                                         onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
+                                         title="Delete (Admin)"
+                                     >
+                                         <Trash2 className="h-3.5 w-3.5" />
+                                     </Button>
+                                 )}
+                              </div>
+                            )}
                          </>
                       ) : (
                          <>
-                            {/* Action buttons (Reply & React) - Left of bubble for Sent */}
-                            <div className={cn(
-                              "transition-opacity flex flex-col gap-1 items-center",
-                              activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
-                            )}>
-                               <Button 
-                                   variant="ghost" 
-                                   size="icon" 
-                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                   onClick={(e) => { 
-                                       e.stopPropagation(); 
-                                       setReplyingTo(msg); 
-                                       messageInputRef.current?.focus();
-                                       setActiveActionsId(null);
-                                   }}
-                                   title="Reply"
-                               >
-                                   <Reply className="h-3.5 w-3.5" />
-                               </Button>
-                               <Button 
-                                   variant="ghost" 
-                                   size="icon" 
-                                   className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
-                                   onClick={(e) => {
-                                       e.stopPropagation();
-                                       setReactionMenu({ 
-                                           msgId: msg.id, 
-                                           x: e.clientX, 
-                                           y: e.clientY 
-                                       });
-                                   }}
-                                   title="React"
-                               >
-                                   <Smile className="h-3.5 w-3.5" />
-                               </Button>
-                            </div>
+                            {!msg.is_deleted && (
+                              <div className={cn(
+                                "transition-opacity flex flex-col gap-1 items-center",
+                                activeActionsId === msg.id ? "opacity-100" : "opacity-0 md:group-hover:opacity-100"
+                              )}>
+                                 <Button 
+                                     variant="ghost" 
+                                     size="icon" 
+                                     className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                     onClick={(e) => { 
+                                         e.stopPropagation(); 
+                                         setReplyingTo(msg); 
+                                         messageInputRef.current?.focus();
+                                         setActiveActionsId(null);
+                                     }}
+                                     title="Reply"
+                                 >
+                                     <Reply className="h-3.5 w-3.5" />
+                                 </Button>
+                                 <Button 
+                                     variant="ghost" 
+                                     size="icon" 
+                                     className="h-7 w-7 rounded-full bg-muted/50 hover:bg-primary/10 hover:text-primary transition-all duration-200"
+                                     onClick={(e) => {
+                                         e.stopPropagation();
+                                         setReactionMenu({ 
+                                             msgId: msg.id, 
+                                             x: e.clientX, 
+                                             y: e.clientY 
+                                         });
+                                     }}
+                                     title="React"
+                                 >
+                                     <Smile className="h-3.5 w-3.5" />
+                                 </Button>
+                                 <Button 
+                                     variant="ghost" 
+                                     size="icon" 
+                                     className="h-7 w-7 rounded-full bg-muted/50 hover:bg-rose-100 hover:text-rose-500 transition-all duration-200"
+                                     onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
+                                     title="Delete"
+                                 >
+                                     <Trash2 className="h-3.5 w-3.5" />
+                                 </Button>
+                              </div>
+                            )}
 
                             <div className="max-w-[75%] space-y-1 relative min-w-0 flex flex-col items-end text-right">
-                                {parentMsg && (
+                                {parentMsg && !msg.is_deleted && (
                                   <div className={cn(
-                                    "text-[11px] px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-60 bg-muted/50 border-x-2 border-t-2 truncate w-full",
+                                    "px-3 py-2 rounded-xl mb-[-8px] pb-4 opacity-70 bg-muted/60 border-x-2 border-t-2 w-full max-w-full overflow-hidden",
                                     "border-primary/20 rounded-tr-none text-right"
                                   )}>
-                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-0.5">Your Message</span>
-                                   {parentMsg.content}
+                                   <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary-foreground/80">Your Message</span>
+                                   <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
+                                     {parentMsg.content}
+                                   </div>
                                   </div>
                                 )}
   
                                 <div 
                                   className={cn(
                                     "relative px-4 py-3 rounded-2xl text-sm shadow-sm transition-all duration-200 break-words whitespace-pre-wrap cursor-default min-w-0 font-medium",
-                                    "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20"
+                                    "bg-primary text-primary-foreground rounded-tr-none hover:shadow-primary/20",
+                                    msg.is_deleted && "italic bg-muted/20 text-muted-foreground border-2 border-dashed border-muted-foreground/30"
                                   )}
-                                  onPointerDown={(e) => startLongPress(e, msg.id)}
+                                  onPointerDown={(e) => !msg.is_deleted && startLongPress(e, msg.id)}
                                   onPointerUp={stopLongPress}
                                   onPointerLeave={stopLongPress}
                                   onClick={(e) => {
+                                    if (msg.is_deleted) return;
                                     e.stopPropagation();
                                     setActiveActionsId(activeActionsId === msg.id ? null : msg.id);
                                     setReactionMenu(null);
                                   }}
                                 >
                                  {msg.content}
-                                 <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
-                                   {format(new Date(msg.created_at), 'HH:mm')}
-                                   {msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
-                                 </div>
+                                 {!msg.is_deleted && (
+                                   <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
+                                     {format(new Date(msg.created_at), 'HH:mm')}
+                                     {msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                   </div>
+                                 )}
                                </div>
   
-                               {/* Reactions display */}
-                               {msg.reactions && msg.reactions.length > 0 && (
+                               {!msg.is_deleted && msg.reactions && msg.reactions.length > 0 && (
                                    <div className="flex flex-wrap gap-1 mt-1 justify-end">
-                                       {/* Group reactions by emoji */}
                                        {Array.from(new Set(msg.reactions.map((r: any) => r.emoji))).map((emoji: any) => (
                                            <div 
                                                key={emoji} 
@@ -926,6 +1073,7 @@ export default function MessagingPage() {
           </div>
         )}
       </div>
+    </div>
 
       <Dialog open={isNewChatOpen} onOpenChange={setIsNewChatOpen}>
         <DialogContent className="sm:max-w-[425px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
@@ -1048,6 +1196,183 @@ export default function MessagingPage() {
         loading={isDeleting}
       />
 
+      <ActionConfirmModal 
+        isOpen={isDeleteGroupModalOpen}
+        onClose={() => setIsDeleteGroupModalOpen(false)}
+        onConfirm={confirmDeleteGroup}
+        title="Delete Entire Group?"
+        description="This will permanently delete the group, remove all members, and erase all message history for everyone. This action cannot be undone."
+        confirmText="Yes, Permanently Delete Group"
+        variant="danger"
+        loading={isDeleting}
+      />
+
+      {/* Group Member Management Dialog */}
+      <Dialog open={isManagingMembers} onOpenChange={setIsManagingMembers}>
+        <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
+          <DialogHeader className="p-6 bg-zinc-900 text-white">
+            <div className="flex items-center justify-between">
+              <div>
+                <DialogTitle className="text-2xl font-black">Group Settings</DialogTitle>
+                <p className="text-zinc-400 text-[10px] font-black uppercase tracking-wider mt-1">{activeChat?.group?.name}</p>
+              </div>
+              {groupRole === 'Admin' && !isAddingToGroup && (
+                <Button 
+                    size="sm" 
+                    className="bg-primary hover:bg-primary/90 text-[10px] font-black uppercase tracking-widest rounded-full h-8 px-4"
+                    onClick={() => { 
+                        setIsAddingToGroup(true); 
+                        setGroupSearchQuery('');
+                        setGroupSearchResults([]);
+                        fetchAvailableUsers(); 
+                    }}
+                >
+                  <Plus className="h-3.5 w-3.5 mr-1" /> Add People
+                </Button>
+              )}
+            </div>
+          </DialogHeader>
+
+          <div className="p-6 space-y-6">
+            {!isAddingToGroup ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-[10px] font-black uppercase tracking-widest text-muted-foreground">
+                  <span>Participants ({groupMembers.length})</span>
+                  <span>Role</span>
+                </div>
+                <ScrollArea className="h-[300px] -mx-2 px-2">
+                  <div className="space-y-2">
+                    {groupMembers.map(m => (
+                      <div key={m.id} className="flex items-center justify-between group/member p-2 rounded-xl transition-colors hover:bg-muted/50">
+                        <div className="flex items-center gap-3">
+                          <Avatar className="h-10 w-10 border-2 border-background shadow-sm">
+                            <AvatarFallback className="bg-primary/5 text-primary font-bold">
+                              {m.first_name?.[0]}{m.last_name?.[0]}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div>
+                            <div className="text-sm font-bold flex items-center gap-2">
+                              {m.first_name} {m.last_name}
+                              {m.id === user.id && <Badge variant="secondary" className="text-[8px] h-4 px-1 bg-primary/10 text-primary uppercase font-black">You</Badge>}
+                            </div>
+                            <div className="text-[10px] text-muted-foreground">@{m.username}</div>
+                          </div>
+                        </div>
+                        <div className="flex items-center gap-3">
+                            <Badge variant="outline" className={cn(
+                                "text-[10px] uppercase font-black px-2",
+                                m.role === 'Admin' ? "border-amber-500/50 text-amber-600 bg-amber-500/5" : "border-muted-foreground/30 text-muted-foreground"
+                            )}>
+                                {m.role}
+                            </Badge>
+                            {groupRole === 'Admin' && m.id !== user.id && (
+                                <Button 
+                                    variant="ghost" 
+                                    size="icon" 
+                                    className="h-8 w-8 text-muted-foreground hover:text-rose-500 opacity-0 group-hover/member:opacity-100 transition-all rounded-full"
+                                    onClick={() => removeGroupMember(m.id)}
+                                >
+                                    <Trash2 className="h-4 w-4" />
+                                </Button>
+                            )}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+                <Button 
+                    variant="outline" 
+                    className="w-full h-11 border-2 font-bold text-rose-500 hover:bg-rose-50 rounded-xl"
+                    onClick={() => removeGroupMember(user.id)}
+                >
+                    Leave Group
+                </Button>
+              </div>
+            ) : (
+              <div className="space-y-4 animate-in slide-in-from-right-4">
+                <div className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input 
+                    placeholder="Search people to add..." 
+                    className="pl-9 h-11 font-bold"
+                    value={groupSearchQuery}
+                    onChange={(e) => handleGroupSearch(e.target.value)}
+                  />
+                </div>
+                <ScrollArea className="h-[250px] border-2 rounded-xl p-2 bg-muted/10">
+                  {loadingUsers ? (
+                    <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
+                      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                      <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading People...</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      {(groupSearchQuery.length > 0
+                        ? availableUsers.filter((u: any) => 
+                            u.first_name.toLowerCase().includes(groupSearchQuery.toLowerCase()) || 
+                            u.last_name.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
+                            u.username.toLowerCase().includes(groupSearchQuery.toLowerCase())
+                          )
+                        : availableUsers)
+                        .filter(u => !groupMembers.find(m => m.id === u.id))
+                        .map((u: any) => (
+                        <button
+                          key={u.id}
+                          className={cn(
+                            "w-full flex items-center gap-3 p-3 rounded-xl transition-all text-left group",
+                            selectedMembers.includes(u.id) ? "bg-primary text-white shadow-lg shadow-primary/20" : "hover:bg-primary/5"
+                          )}
+                          onClick={() => toggleMemberSelection(u.id)}
+                        >
+                          <Avatar className={cn(
+                              "h-9 w-9 border-2",
+                              selectedMembers.includes(u.id) ? "border-white/50" : "border-background"
+                          )}>
+                             <AvatarFallback className={cn(
+                                 "font-bold",
+                                 selectedMembers.includes(u.id) ? "bg-white/20 text-white" : "bg-primary/10 text-primary"
+                             )}>
+                               {u.first_name[0]}{u.last_name[0]}
+                             </AvatarFallback>
+                          </Avatar>
+                          <div className="flex-1 min-w-0">
+                            <div className={cn("text-sm font-bold truncate", selectedMembers.includes(u.id) ? "text-white" : "text-foreground group-hover:text-primary transition-colors")}>
+                              {u.first_name} {u.last_name}
+                            </div>
+                            <div className={cn("text-[10px]", selectedMembers.includes(u.id) ? "text-white/70" : "text-muted-foreground")}>@{u.username}</div>
+                          </div>
+                          {selectedMembers.includes(u.id) ? <Check className="h-4 w-4 text-white" /> : <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />}
+                        </button>
+                      ))}
+                      {(groupSearchQuery.length > 0 && availableUsers.filter((u: any) => 
+                          u.first_name.toLowerCase().includes(groupSearchQuery.toLowerCase()) || 
+                          u.last_name.toLowerCase().includes(groupSearchQuery.toLowerCase()) ||
+                          u.username.toLowerCase().includes(groupSearchQuery.toLowerCase())
+                        ).length === 0) && (
+                        <div className="text-center py-8 text-muted-foreground italic text-sm">No members matching your search</div>
+                      )}
+                      {availableUsers.length === 0 && !loadingUsers && (
+                        <div className="text-center py-8 text-muted-foreground italic text-sm">All staff are already in this group</div>
+                      )}
+                    </div>
+                  )}
+                </ScrollArea>
+                <div className="flex gap-2">
+                    <Button variant="ghost" className="flex-1 font-bold h-11" onClick={() => setIsAddingToGroup(false)}>Back</Button>
+                    <Button 
+                        className="flex-[2] font-black h-11 shadow-lg shadow-primary/20" 
+                        disabled={selectedMembers.length === 0}
+                        onClick={addMembersToGroup}
+                    >
+                        Add Selected ({selectedMembers.length})
+                    </Button>
+                </div>
+              </div>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
       {/* User Profile Dialog */}
       <Dialog open={isProfileOpen} onOpenChange={setIsProfileOpen}>
         <DialogContent className="sm:max-w-[440px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
@@ -1063,7 +1388,7 @@ export default function MessagingPage() {
                   </Avatar>
                   <div className={cn(
                     "absolute bottom-1 right-1 w-5 h-5 rounded-full border-4 border-background",
-                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-green-500" : "bg-zinc-400"
+                    activeChat.other_user?.is_online || (activeChat.other_user?.last_seen_at && (new Date().getTime() - new Date(activeChat.other_user.last_seen_at).getTime() < 30000)) ? "bg-primary" : "bg-zinc-400"
                   )} />
                 </div>
               </div>
@@ -1113,7 +1438,6 @@ export default function MessagingPage() {
         </DialogContent>
       </Dialog>
 
-      </div>
       {/* User Profile Dialog */}
       <UserProfileDialog 
         userProfile={selectedUserProfile}

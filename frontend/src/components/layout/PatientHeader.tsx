@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sun, Moon, LogOut, User, Bell } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Bell, Download } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useTheme } from '@/components/theme-provider';
@@ -29,6 +29,39 @@ export const PatientHeader: React.FC = () => {
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
   const [profileName, setProfileName] = useState<string | null>(null);
+
+  // PWA Install Prompt State
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) return;
+
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
+
+    const handleBeforeInstall = (e: any) => { e.preventDefault(); setDeferredPrompt(e); };
+    const handlePromptReady = () => { if ((window as any).deferredPWAPrompt) setDeferredPrompt((window as any).deferredPWAPrompt); };
+    const handleInstalled = () => { setDeferredPrompt(null); (window as any).deferredPWAPrompt = null; };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+    window.addEventListener('appinstalled', handleInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+      window.removeEventListener('appinstalled', handleInstalled);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') { setDeferredPrompt(null); (window as any).deferredPWAPrompt = null; }
+    } catch (err) { console.error('PWA install failed:', err); }
+  };
 
   const fetchName = useCallback(async () => {
     if (!user?.username) return;
@@ -77,8 +110,20 @@ export const PatientHeader: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Theme Switcher, Notifications, Profile */}
+        {/* Right Side: Install, Theme, Notifications, Profile */}
         <div className="flex items-center gap-2 md:gap-4 shrink-0 px-4">
+          {deferredPrompt && (
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleInstallClick}
+              className="hidden sm:flex h-9 w-auto rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95 px-3"
+              title="Install App"
+            >
+              <Download className="h-3.5 w-3.5" />
+              Install App
+            </Button>
+          )}
           <Button
             variant="outline"
             size="icon"

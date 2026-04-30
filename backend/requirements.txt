@@ -16,6 +16,7 @@ Flask
 Flask-Bcrypt
 Flask-Cors
 Flask-JWT-Extended
+Flask-Limiter
 Flask-Login
 Flask-Mail
 Flask-Migrate
@@ -62,3 +63,4 @@ gunicorn
 sendgrid
 pandas
 openpyxl
+xlsxwriter

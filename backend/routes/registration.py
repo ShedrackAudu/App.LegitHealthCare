@@ -1,9 +1,11 @@
 from flask import Blueprint, request, jsonify, g
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, AuditLog
 from datetime import datetime
 from sqlalchemy import func
 from decorators import require_permission
 from utils.ip import get_client_ip
+from utils.notification_logic import trigger_registration_success_notification
 
 registration_bp = Blueprint('registration', __name__)
 
@@ -149,7 +151,7 @@ def register_patient():
 
         # Create Audit Log
         audit = AuditLog(
-            user_id=request.headers.get('X-User-ID'),
+            user_id=get_jwt_identity(),
             action='Register Patient',
             resource=f"Patient:{staff_id}",
             details=f"Patient {patient.first_name} {patient.last_name} registered for year {screening_year}.",
@@ -157,6 +159,10 @@ def register_patient():
         )
         db.session.add(audit)
         db.session.commit()
+        
+        # Trigger background email notification (Zero latency for the user)
+        if patient.email and "@" in patient.email:
+            trigger_registration_success_notification(patient.email, patient.first_name, screening_year)
         
         return jsonify({"message": "Registration successful", "staff_id": staff_id}), 201
     except Exception as e:

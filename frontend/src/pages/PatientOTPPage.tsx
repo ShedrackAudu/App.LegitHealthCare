@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { motion, AnimatePresence } from 'framer-motion';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 
@@ -48,7 +48,7 @@ const PatientOTPPage = () => {
     
     setResending(true);
     try {
-      await axios.post('/api/patient/resend-otp', {
+      await api.post('/api/patient/resend-otp', {
         email,
         first_name: firstName
       });
@@ -71,7 +71,7 @@ const PatientOTPPage = () => {
 
     setLoading(true);
     try {
-      const resp = await axios.post('/api/patient/verify-otp', {
+      const resp = await api.post('/api/patient/verify-otp', {
         ...patientData,
         ...claimData,
         otp
@@ -161,11 +161,11 @@ const PatientOTPPage = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   className="flex flex-col items-center py-6 space-y-4"
                 >
-                  <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-lg shadow-emerald-500/20">
+                  <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20">
                     <CheckCircle2 className="w-12 h-12" />
                   </div>
                   <div className="text-center">
-                    <h3 className="text-xl font-bold text-emerald-600">Verification Successful!</h3>
+                    <h3 className="text-xl font-bold text-primary">Verification Successful!</h3>
                     <p className="text-sm text-muted-foreground mt-1">Redirecting to your portal...</p>
                   </div>
                 </motion.div>

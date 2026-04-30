@@ -1,0 +1,11 @@
+# Render Static Site — SPA Routing Rules
+#
+# Without this file, Render returns 404 for any URL that is not
+# a physical file (e.g. /dashboard, /login, /patients/:id).
+# This catches all such routes and serves index.html so React Router
+# can handle them client-side.
+#
+# The service worker (sw.js / workbox-*.js) and manifest files are
+# physical files so they are served directly — this rule does not affect them.
+
+/*    /index.html    200

@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { AnimatePresence, motion } from 'framer-motion';
 import { 
   ChevronRight,
   Stethoscope,
@@ -18,7 +19,12 @@ import {
   ClipboardList,
   Settings2,
   Edit3,
-  Check
+  Check,
+  Download,
+  Smartphone,
+  X,
+  Package,
+  Calendar
 } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -51,8 +57,16 @@ const quickActions = [
     description: 'Enter clinical assessments and recommendations.',
     icon: Stethoscope, 
     path: '/consultation',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'consultation'
+  },
+  { 
+    title: 'Appointments', 
+    description: 'Manage clinic schedule and patient bookings.',
+    icon: Calendar, 
+    path: '/appointments',
+    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    permission: 'manage_appointments'
   },
   { 
     title: 'Lab Test Results', 
@@ -101,6 +115,14 @@ const quickActions = [
     path: '/messages',
     color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
     permission: 'messaging'
+  },
+  { 
+    title: 'Inventory', 
+    description: 'Track clinical supplies and stock levels.',
+    icon: Package, 
+    path: '/inventory',
+    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    permission: 'view_inventory'
   },
 ];
 
@@ -158,7 +180,7 @@ const adminActions = [
     description: 'Configure AI agents and medical parameters.',
     icon: Activity, 
     path: '/ai-integration',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_ai'
   },
   { 
@@ -166,7 +188,7 @@ const adminActions = [
     description: 'Generate temporary security entrance codes.',
     icon: Key, 
     path: '/admin/access-keys',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_access_keys'
   },
 ];
@@ -181,6 +203,61 @@ const Dashboard: React.FC = () => {
   const [selectedDept, setSelectedDept] = React.useState<string | null>(null);
   const [isQueueModalOpen, setIsQueueModalOpen] = React.useState(false);
   const [loadingQueue, setLoadingQueue] = React.useState(false);
+
+  // PWA Install Prompt State (mobile dashboard banner)
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [pwaInstalled, setPwaInstalled] = useState(false);
+  const [pwaDismissed, setPwaDismissed] = useState(false);
+
+  useEffect(() => {
+    if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
+      setPwaInstalled(true);
+      return;
+    }
+
+    if ((window as any).deferredPWAPrompt) {
+      setDeferredPrompt((window as any).deferredPWAPrompt);
+    }
+
+    const handleBeforeInstall = (e: any) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    const handlePromptReady = () => {
+      if ((window as any).deferredPWAPrompt) {
+        setDeferredPrompt((window as any).deferredPWAPrompt);
+      }
+    };
+    const handleAppInstalled = () => {
+      setPwaInstalled(true);
+      setDeferredPrompt(null);
+      (window as any).deferredPWAPrompt = null;
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstall);
+    window.addEventListener('pwa-prompt-ready', handlePromptReady);
+    window.addEventListener('appinstalled', handleAppInstalled);
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstall);
+      window.removeEventListener('pwa-prompt-ready', handlePromptReady);
+      window.removeEventListener('appinstalled', handleAppInstalled);
+    };
+  }, []);
+
+  const handlePwaInstall = async () => {
+    if (!deferredPrompt) return;
+    try {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === 'accepted') {
+        setDeferredPrompt(null);
+        setPwaInstalled(true);
+        (window as any).deferredPWAPrompt = null;
+      }
+    } catch (err) {
+      console.error('PWA install failed:', err);
+    }
+  };
   
   const fetchDashboardStats = async () => {
     try {
@@ -273,10 +350,56 @@ const Dashboard: React.FC = () => {
              </div>
              <div className="text-left md:text-right min-w-0">
                 <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
-                <p className="text-xs md:text-sm font-bold text-emerald-500 truncate">Connected & Optimized</p>
+                <p className="text-xs md:text-sm font-bold text-primary truncate">Connected & Optimized</p>
              </div>
           </div>
         </div>
+
+        {/* PWA Install Banner — mobile only (header has the button on desktop) */}
+        <AnimatePresence>
+          {deferredPrompt && !pwaInstalled && !pwaDismissed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.35 }}
+              className="block sm:hidden"
+            >
+              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-lg shadow-primary/5">
+                <button
+                  onClick={() => setPwaDismissed(true)}
+                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  aria-label="Dismiss"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+                <div className="absolute -right-6 -bottom-6 w-28 h-28 text-primary/[0.06] pointer-events-none">
+                  <Smartphone className="w-full h-full" />
+                </div>
+                <div className="relative z-10 flex flex-col gap-3">
+                  <div className="flex items-center gap-3">
+                    <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
+                      <Download className="h-5 w-5 text-primary" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
+                      <p className="text-[11px] text-muted-foreground font-medium leading-snug">
+                        Add to your home screen for quick access.
+                      </p>
+                    </div>
+                  </div>
+                  <Button
+                    onClick={handlePwaInstall}
+                    className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
+                  >
+                    <Download className="h-3.5 w-3.5" />
+                    Install Now
+                  </Button>
+                </div>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
 
         {/* Quick Actions Grid */}
         <div className="space-y-4">
@@ -366,9 +489,9 @@ const Dashboard: React.FC = () => {
         {/* Queue Stats Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-tight text-emerald-500">Department Queues</h2>
-            <div className="h-px flex-1 bg-emerald-500/20" />
-            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-black uppercase tracking-widest text-emerald-500 hover:bg-emerald-500/10">
+            <h2 className="text-xl font-black tracking-tight text-primary">Department Queues</h2>
+            <div className="h-px flex-1 bg-primary/20" />
+            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10">
               Refresh
             </Button>
           </div>
@@ -376,13 +499,13 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             {[
               { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: Stethoscope },
-              { id: 'audiometry', label: 'Audiometry', color: 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20', icon: Activity },
+              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: Activity },
               { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: Activity },
               { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: Activity }
             ].map((dept) => (
               <Card 
                 key={dept.id} 
-                className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-emerald-500/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
+                className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
                 onClick={() => fetchQueueList(dept.label)}
               >
                 <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
@@ -400,7 +523,7 @@ const Dashboard: React.FC = () => {
                   <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">
                     {dept.label} Waiting
                   </p>
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-emerald-500 opacity-0 group-hover:opacity-100 transition-opacity">
+                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
                     View Patients <ChevronRight className="h-3 w-3" />
                   </div>
                 </CardContent>
@@ -423,7 +546,7 @@ const Dashboard: React.FC = () => {
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
                         {[
                             { label: 'Total Registered', count: stats?.registration_stats?.total_comprehensive, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                            { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-emerald-600', bg: 'bg-emerald-500/10' },
+                            { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
                             { label: 'Male Patients', count: stats?.registration_stats?.males, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
                             { label: 'Female Patients', count: stats?.registration_stats?.females, icon: User, color: 'text-rose-600', bg: 'bg-rose-500/10' },
                             { label: 'Age 40 & Above', count: stats?.registration_stats?.age_40_above, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-500/10' },
@@ -487,10 +610,10 @@ const Dashboard: React.FC = () => {
 
         {/* Queue List Modal */}
         <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-            <DialogContent className="max-w-2xl sm:max-w-[500px] border-emerald-500/20">
+            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
-                        <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                             <ClipboardList className="w-6 h-6" />
                         </div>
                         <div>
@@ -507,7 +630,7 @@ const Dashboard: React.FC = () => {
                                 {queueEntries.map((entry, idx) => (
                                     <div key={entry.staff_id} className="flex items-center justify-between p-4 rounded-xl border-2 bg-muted/5 hover:bg-muted/10 transition-colors group">
                                         <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-emerald-500/10 flex items-center justify-center text-xs font-black text-emerald-500 border border-emerald-500/20">
+                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
                                                 {entry.first_name?.[0]}{entry.last_name?.[0]}
                                             </div>
                                             <div>
@@ -520,7 +643,7 @@ const Dashboard: React.FC = () => {
                                                <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
                                                     #{entry.queue_number || '--'}
                                                </Badge>
-                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-emerald-500 border-emerald-500/20 h-auto">
+                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20 h-auto">
                                                     WAITING
                                                </Badge>
                                             </div>

@@ -1,6 +1,7 @@
 import pytest
 from app import app, db
 from models import User
+from flask_jwt_extended import create_access_token
 
 @pytest.fixture
 def client():
@@ -29,3 +30,9 @@ def setup_user(client):
     db.session.add(user)
     db.session.commit()
     return user
+
+@pytest.fixture
+def auth_headers(setup_user):
+    with app.app_context():
+        token = create_access_token(identity=str(setup_user.id))
+        return {'Authorization': f'Bearer {token}'}

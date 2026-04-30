@@ -68,23 +68,103 @@ def save_director_review():
     if not staff_id or not screening_year:
         return jsonify({"error": "Staff ID and Screening Year are required"}), 400
         
-    review = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-    
-    if not review:
-        review = DirectorReview(staff_id=staff_id, screening_year=screening_year)
-        # Set first_submitted_at if this is the first time
-        review.first_submitted_at = datetime.now()
-        db.session.add(review)
-        
-    # Update all provided fields
-    # Fields can come from consultation, special tests, etc., but we'll map them to the DirectorReview model
-    for key, value in data.items():
-        if hasattr(review, key) and key not in ['id', 'staff_id', 'screening_year', 'created_at', 'first_submitted_at']:
-            setattr(review, key, value)
-            
+    # 1. Define sets of fields for each model to handle bidirectional sync
+    model_configs = [
+        {
+            'model': DirectorReview,
+            'fields': ['comment_one', 'comment_two', 'comment_three', 'comment_four', 
+                       'overall_assessment', 'overall_lab_remark', 'other_remarks', 
+                       'other_assessments', 'assessment_hx_pe', 'dm_status', 'htn_status', 
+                       'bp', 'pulse', 'spo2', 'hs_status', 'chest_status', 'abdomen', 
+                       'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
+                       'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
+                       'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'fbs_rbs_remark',
+                       'ua_result', 'ua_remark'],
+            'mappings': {'sugar_remark': 'fbs_rbs_remark'}
+        },
+        {
+            'model': ConsultationData,
+            'fields': ['bp', 'pulse', 'spo2', 'hs_status', 'chest_status', 'abdomen', 
+                       'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
+                       'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
+                       'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'sugar_remark', 
+                       'ua_result', 'ua_remark', 'dm_status', 'htn_status', 
+                       'assessment_hx_pe', 'other_assessments', 'overall_lab_remark', 
+                       'other_remarks', 'overall_assessment']
+        },
+        {
+            'model': FBCResult,
+            'fields': ['pcv', 'wbc', 'hgb', 'plt', 'rbc', 'lymp_percent', 'lymp_abs', 
+                       'mid_percent', 'mid_abs', 'gra_percent', 'gra_abs', 'mcv', 
+                       'mch', 'mchc', 'rdw', 'pdw', 'fbc_remark']
+        },
+        {
+            'model': KFTResult,
+            'fields': ['potassium', 'sodium', 'chloride', 'bicarbonate_ca', 'hco3', 
+                       'urea', 'creatinine', 'kft_remark']
+        },
+        {
+            'model': LipidResult,
+            'fields': ['total_cholesterol', 'triglycerides', 'hdl', 'ldl', 'lp_remark']
+        },
+        {
+            'model': LFTResult,
+            'fields': ['ast', 'alt', 'alp', 'tb', 'cb', 'lft_remark']
+        },
+        {
+            'model': SpecialTestsResult,
+            'fields': ['ecg_result', 'ecg_remark', 'spirometry_result', 'spirometry_remark', 
+                       'audiometry_result', 'audiometry_remark', 'weight', 'height']
+        }
+    ]
+
     try:
+        for config in model_configs:
+            model = config['model']
+            fields = config['fields']
+            mappings = config.get('mappings', {})
+            
+            # Find or create record
+            record = model.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+            if not record:
+                record = model(staff_id=staff_id, screening_year=int(screening_year))
+                if model == DirectorReview:
+                    record.first_submitted_at = datetime.now()
+                db.session.add(record)
+            
+            # Update specific fields
+            updated = False
+            for field in fields:
+                # Use mapping if provided, else use the raw field name from the incoming data
+                source_key = field
+                # Inverse lookup for mapping if the incoming data uses the UI name but DB has a different name
+                if field in mappings.values():
+                    # Find the key that maps to this field
+                    for k, v in mappings.items():
+                        if v == field:
+                            source_key = k
+                            break
+                
+                if source_key in data:
+                    val = data[source_key]
+                    if hasattr(record, field):
+                        setattr(record, field, val)
+                        updated = True
+            
+            if not updated and model != DirectorReview:
+                # If nothing was updated for a secondary model, don't necessarily keep it in session if it's new
+                # But for simplicity in this sync, we just commit.
+                pass
+
         db.session.commit()
-        return jsonify({"message": "Director review saved successfully"}), 200
+        
+        # Trigger notification check
+        from utils.notification_logic import trigger_report_ready_notification
+        bind = get_bind()
+        if bind:
+             trigger_report_ready_notification(staff_id, screening_year, bind)
+
+        return jsonify({"message": "Director review and departmental records updated successfully"}), 200
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500

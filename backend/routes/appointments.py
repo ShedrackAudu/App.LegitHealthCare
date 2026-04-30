@@ -4,11 +4,12 @@ from datetime import datetime
 import os
 from utils.email_utils import EmailService
 from decorators import require_permission
+from flask_jwt_extended import jwt_required, get_jwt_identity
 
 appointments_bp = Blueprint('appointments', __name__)
 
 @appointments_bp.route('/appointments', methods=['POST'])
-@require_permission('manage_appointments')
+@require_permission(['manage_appointments', 'patient_access'])
 def create_appointment():
     data = request.json
     staff_id = data.get('staff_id')
@@ -43,34 +44,95 @@ def create_appointment():
     if existing:
         return jsonify({"error": f"The time slot {time_slot} is already booked for this date."}), 409
 
-    # Get patient bio-data from global BioData table
-    from models import BioData
-    patient = BioData.query.filter_by(staff_id=staff_id).first()
+    # Get patient bio-data (search both DCP and DCT if needed)
+    from models import BioData, ScreeningYearBioData
+    from sqlalchemy import text
     
-    if not patient:
-        # Fallback to ScreeningYearBioData if not in master BioData (though it should be)
-        from models import ScreeningYearBioData
+    patient_data = None
+    
+    # 1. Try current context
+    patient = BioData.query.filter_by(staff_id=staff_id).first()
+    if patient:
+        patient_data = {
+            "name": f"{patient.first_name} {patient.last_name}",
+            "dept": patient.department,
+            "gender": patient.gender,
+            "dob": patient.dob.isoformat() if patient.dob else None,
+            "age": patient.age,
+            "phone": patient.phone,
+            "email": patient.email,
+            "nationality": patient.nationality
+        }
+    
+    if not patient_data:
+        # 2. Search explicitly in all clinic binds
+        for bind_key in ['dcp', 'dct']:
+            try:
+                engine = db.get_engine(bind='patients' if bind_key == 'patients' else bind_key)
+                with engine.connect() as conn:
+                    sql = text("SELECT first_name, last_name, department, gender, age, dob, phone, email, nationality FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                    res = conn.execute(sql, {"sid": staff_id}).fetchone()
+                    if res:
+                        patient_data = {
+                            "name": f"{res[0]} {res[1]}",
+                            "dept": res[2],
+                            "gender": res[3],
+                            "dob": str(res[5]) if res[5] else None,
+                            "age": res[4],
+                            "phone": res[6],
+                            "email": res[7],
+                            "nationality": res[8]
+                        }
+                        break
+            except:
+                continue
+
+    if not patient_data:
+        # 3. Last resort fallback to ScreeningYearBioData in current context
         patient_fallback = ScreeningYearBioData.query.filter_by(staff_id=staff_id).first()
-        if not patient_fallback:
-            return jsonify({"error": "Patient not found in directory"}), 404
-        
-        patient_name = f"{patient_fallback.first_name} {patient_fallback.last_name}"
-        dept = patient_fallback.department
-        gender = patient_fallback.gender
-        dob = None
-        age = patient_fallback.age
-        phone = None
-        email = None
-        nationality = None
+        if patient_fallback:
+            patient_data = {
+                "name": f"{patient_fallback.first_name} {patient_fallback.last_name}",
+                "dept": patient_fallback.department,
+                "gender": patient_fallback.gender,
+                "dob": None,
+                "age": patient_fallback.age,
+                "phone": None,
+                "email": None,
+                "nationality": None
+            }
+
+    if not patient_data:
+        return jsonify({"error": "Patient not found in directory"}), 404
+
+    patient_name = patient_data['name']
+    dept = patient_data['dept']
+    gender = patient_data['gender']
+    dob = patient_data['dob']
+    age = patient_data['age']
+    phone = patient_data['phone']
+    email = patient_data['email']
+    nationality = patient_data['nationality']
+
+    # Detect who is booking
+    from flask_jwt_extended import get_jwt, get_jwt_identity
+    from models import StaffUser, PatientPortalUser
+    
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    current_user_id = get_jwt_identity()
+    
+    booked_by_type = portal
+    booked_by_username = "Unknown"
+    
+    if portal == 'patient':
+        booker = PatientPortalUser.query.get(current_user_id)
+        if booker:
+            booked_by_username = booker.username # staff_id
     else:
-        patient_name = f"{patient.first_name} {patient.last_name}"
-        dept = patient.department
-        gender = patient.gender
-        dob = patient.dob.isoformat() if patient.dob else None
-        age = patient.age
-        phone = patient.phone
-        email = patient.email
-        nationality = patient.nationality
+        booker = StaffUser.query.get(current_user_id)
+        if booker:
+            booked_by_username = booker.username
 
     appointment = Appointment(
         staff_id=staff_id,
@@ -84,7 +146,9 @@ def create_appointment():
         nationality=nationality,
         appointment_date=appointment_date,
         time_slot=time_slot,
-        reason=reason
+        reason=reason,
+        booked_by_type=booked_by_type,
+        booked_by_username=booked_by_username
     )
     
     db.session.add(appointment)
@@ -140,10 +204,45 @@ def create_appointment():
     return jsonify({"message": "Appointment booked successfully", "appointment": appointment.to_dict()}), 201
 
 @appointments_bp.route('/appointments', methods=['GET'])
-@require_permission('view_appointments')
+@require_permission('manage_appointments')
 def get_appointments():
     appointments = Appointment.query.order_by(Appointment.appointment_date.desc()).all()
     return jsonify([a.to_dict() for a in appointments]), 200
+
+@appointments_bp.route('/patient/appointments', methods=['GET'])
+@jwt_required()
+def get_patient_appointments():
+    user_id = get_jwt_identity()
+    from models import PatientPortalUser
+    user = PatientPortalUser.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    # Filter by the patient's staff_id (which is their username in the portal)
+    appointments = Appointment.query.filter_by(staff_id=user.username).order_by(Appointment.appointment_date.desc()).all()
+    return jsonify([a.to_dict() for a in appointments]), 200
+
+@appointments_bp.route('/appointments/<int:appointment_id>/complete', methods=['PATCH'])
+@require_permission('manage_appointments')
+def complete_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+        
+    appointment.status = 'Completed'
+    db.session.commit()
+    return jsonify({"message": "Appointment marked as completed", "appointment": appointment.to_dict()}), 200
+
+@appointments_bp.route('/appointments/<int:appointment_id>', methods=['DELETE'])
+@require_permission('manage_appointments')
+def delete_appointment(appointment_id):
+    appointment = Appointment.query.get(appointment_id)
+    if not appointment:
+        return jsonify({"error": "Appointment not found"}), 404
+        
+    db.session.delete(appointment)
+    db.session.commit()
+    return jsonify({"message": "Appointment deleted successfully"}), 200
 
 @appointments_bp.route('/appointments/booked', methods=['GET'])
 def get_booked_slots():

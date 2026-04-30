@@ -182,10 +182,10 @@ export const AISettingsPage = () => {
                     </Card>
 
                     {/* Medical Parameters */}
-                    <Card className="border-2 shadow-xl shadow-emerald-500/5 relative overflow-hidden">
+                    <Card className="border-2 shadow-xl shadow-primary/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Activity className="h-6 w-6 text-emerald-500" />
+                                <Activity className="h-6 w-6 text-primary" />
                                 Medical Parameters Context
                             </CardTitle>
                             <CardDescription className="text-md">
@@ -201,7 +201,7 @@ export const AISettingsPage = () => {
                                             key={param.id} 
                                             className={`flex items-center space-x-3 p-4 border-2 rounded-xl transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
-                                                ? 'border-emerald-500 bg-emerald-500/5' 
+                                                ? 'border-primary bg-primary/5' 
                                                 : 'hover:bg-muted/50'
                                             }`}
                                         >
@@ -209,7 +209,7 @@ export const AISettingsPage = () => {
                                                 id={param.id} 
                                                 checked={(settings.medical_parameters || []).includes(param.id)}
                                                 onCheckedChange={() => handleParamToggle(param.id)}
-                                                className="data-[state=checked]:bg-emerald-600 data-[state=checked]:text-white h-5 w-5"
+                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5"
                                             />
                                             <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-none">{param.label}</Label>
                                         </div>
@@ -225,7 +225,7 @@ export const AISettingsPage = () => {
                                             key={param.id} 
                                             className={`flex items-center space-x-2 p-3 border rounded-lg transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
-                                                ? 'border-emerald-500/50 bg-emerald-500/5' 
+                                                ? 'border-primary/50 bg-primary/5' 
                                                 : 'hover:bg-muted/30'
                                             }`}
                                         >

@@ -18,7 +18,9 @@ import {
   MessageSquare,
   Key,
   Settings2,
-  Calendar
+  Calendar,
+  Activity,
+  Package
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -30,23 +32,25 @@ interface SidebarItem {
   title: string;
   path: string;
   icon: React.ElementType;
-  permission?: string;
+  permission?: string | string[];
 }
 
 const medicalItems: SidebarItem[] = [
-  { title: 'Registration', path: '/registration', icon: UserPlus, permission: 'registration' },
-  { title: 'Consultation', path: '/consultation', icon: Stethoscope, permission: 'consultation' },
-  { title: 'Test Results', path: '/tests', icon: FlaskConical, permission: 'lab_tests' },
-  { title: 'Director Review', path: '/director', icon: ShieldCheck, permission: 'director_review' },
-  { title: 'Patient Report', path: '/patient-report', icon: FileText, permission: 'patient_reports' },
-  { title: 'Screening Matrix', path: '/view-records', icon: Database, permission: 'view_records' },
-  { title: 'Patient Directory', path: '/view-patients', icon: Users, permission: 'view_patients' },
-  { title: 'Messaging', path: '/messages', icon: MessageSquare, permission: 'messaging' },
-  { title: 'Appointments', path: '/appointments', icon: Calendar, permission: 'view_appointments' },
+  { title: 'Registration', path: '/registration', icon: UserPlus },
+  { title: 'Consultation', path: '/consultation', icon: Stethoscope },
+  { title: 'Test Results', path: '/tests', icon: FlaskConical },
+  { title: 'Director Review', path: '/director', icon: ShieldCheck },
+  { title: 'Patient Report', path: '/patient-report', icon: FileText },
+  { title: 'Screening Matrix', path: '/view-records', icon: Database },
+  { title: 'Patient Directory', path: '/view-patients', icon: Users },
+  { title: 'Messaging', path: '/messages', icon: MessageSquare },
+  { title: 'Appointments', path: '/appointments', icon: Calendar },
+  { title: 'Inventory', path: '/inventory', icon: Package, permission: 'view_inventory' },
 ];
 
 
 const adminItems: SidebarItem[] = [
+  { title: 'Security Center', path: '/security-analytics', icon: Activity, permission: 'manage_roles' },
   { title: 'User Management', path: '/user-management', icon: UserCog, permission: 'view_users' },
   { title: 'Role Configuration', path: '/roles-permissions', icon: ShieldCheck, permission: 'manage_roles' },
   { title: 'Audit Trails', path: '/audit-logs', icon: FileText, permission: 'view_audit_logs' },
@@ -71,7 +75,7 @@ export const Sidebar: React.FC = () => {
     return false;
   });
   const { branding, brandingError, unreadMessagesCount } = useAppContext();
-  const { isAdmin, hasPermission } = usePermissions();
+  const { isAdmin, hasPermission, hasAnyPermission } = usePermissions();
   const location = useLocation();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 

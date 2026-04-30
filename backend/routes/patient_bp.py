@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
+from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, PatientPortalUser
 from auth_utils import generate_otp, is_password_strong
 import os
@@ -53,7 +54,7 @@ def search_patient():
                 actual_cols = res_cols.keys()
                 
                 # Columns we want to select
-                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'phone', 'email']
+                requested_cols = ['staff_id', 'first_name', 'middle_name', 'last_name', 'department', 'gender', 'dob', 'nationality', 'race', 'age', 'phone', 'email']
                 available_cols = [c for c in requested_cols if c in actual_cols]
                 
                 select_clause = ", ".join(available_cols)
@@ -65,7 +66,26 @@ def search_patient():
                 
                 if result:
                     # Map result to dictionary using ._mapping for SQLAlchemy 1.4/2.0
-                    row_dict = dict(result._mapping)
+                    raw_dict = dict(result._mapping)
+                    # Case-insensitive wrapper for dictionary access
+                    row_dict = {k.lower(): v for k, v in raw_dict.items()}
+                    
+                    dob = row_dict.get('dob')
+                    age = row_dict.get('age')
+                    
+                    # Calculate age if missing but dob exists
+                    if dob and (not age or str(age).strip().lower() in ['n/a', '', 'none']):
+                        try:
+                            if isinstance(dob, str):
+                                dob_dt = datetime.strptime(dob, '%Y-%m-%d')
+                            else:
+                                dob_dt = dob
+                            today = datetime.now()
+                            age = today.year - dob_dt.year - ((today.month, today.day) < (dob_dt.month, dob_dt.day))
+                        except Exception as e:
+                            current_app.logger.error(f"Age calc error: {e}")
+                            age = 'N/A'
+
                     results.append({
                         "staff_id": str(row_dict.get('staff_id')),
                         "first_name": row_dict.get('first_name'),
@@ -73,7 +93,10 @@ def search_patient():
                         "last_name": row_dict.get('last_name'),
                         "department": row_dict.get('department'),
                         "gender": row_dict.get('gender'),
-                        "dob": str(row_dict.get('dob')) if row_dict.get('dob') else None,
+                        "dob": str(dob) if dob else None,
+                        "nationality": row_dict.get('nationality') if row_dict.get('nationality') else 'N/A',
+                        "race": row_dict.get('race') if row_dict.get('race') else 'N/A',
+                        "age": age if age else 'N/A',
                         "phone": row_dict.get('phone'),
                         "email": row_dict.get('email', ''),
                         "section": ctx.upper(),
@@ -107,12 +130,17 @@ def claim_account():
     # Check if user already exists in ISOLATED database
     existing_user = PatientPortalUser.query.filter(
         (PatientPortalUser.username == staff_id) | 
-        (PatientPortalUser.email == email)
+        (PatientPortalUser.email == email) |
+        (PatientPortalUser.phone == phone)
     ).first()
     
     if existing_user:
         if existing_user.is_verified:
-            return jsonify({"error": "An account with this Staff ID or email already exists."}), 400
+            msg = "An account with this information already exists."
+            if existing_user.username == staff_id: msg = "This Staff ID is already registered."
+            elif existing_user.email == email: msg = "This email is already in use."
+            elif existing_user.phone == phone: msg = "This phone number is already in use."
+            return jsonify({"error": msg}), 400
         # If not verified, we can overwrite/reuse
         user = existing_user
     else:
@@ -124,20 +152,43 @@ def claim_account():
     user.otp_expiry = datetime.now() + timedelta(minutes=15)
     user.set_password(password)
     
+    # Update fields in case we're reusing an unverified user
+    user.phone = phone
+    user.email = email
+    
     if not existing_user:
         db.session.add(user)
     
     try:
+        db.session.flush() # Try flushing to catch constraints early
         db.session.commit()
+        
+        # Sync with Clinical BioData (dcp, dct binds)
+        contexts = ['dcp', 'dct']
+        for ctx in contexts:
+            try:
+                engine = db.engines.get(ctx)
+                if not engine: continue
+                with engine.connect() as conn:
+                    sync_query = text("""
+                        UPDATE bio_data 
+                        SET email = :e, phone = :p 
+                        WHERE LOWER(staff_id) = LOWER(:sid)
+                    """)
+                    conn.execute(sync_query, {"e": email, "p": phone, "sid": staff_id})
+                    conn.commit()
+            except Exception as e:
+                print(f"Claim Sync failed for {staff_id} in {ctx}: {str(e)}")
+
     except Exception as e:
         db.session.rollback()
         error_msg = str(e)
         if "UNIQUE constraint failed" in error_msg:
-            if "users.username" in error_msg or "patient_users.username" in error_msg:
+            if "patient_users.username" in error_msg:
                 return jsonify({"error": "This Staff ID is already registered."}), 400
-            if "users.email" in error_msg or "patient_users.email" in error_msg:
+            if "patient_users.email" in error_msg:
                 return jsonify({"error": "This email is already in use."}), 400
-            if "users.phone" in error_msg or "patient_users.phone" in error_msg:
+            if "patient_users.phone" in error_msg:
                 return jsonify({"error": "This phone number is already in use."}), 400
         return jsonify({"error": f"Database error: {error_msg}"}), 500
     
@@ -242,11 +293,29 @@ def verify_patient_otp():
     return jsonify({"error": "Invalid or expired OTP"}), 400
 
 @patient_bp.route('/api/patient/reports/years', methods=['GET'])
+@jwt_required()
 def get_report_years():
-    staff_id = request.headers.get('X-Staff-ID')
-    if not staff_id:
-        return jsonify({"error": "X-Staff-ID header required"}), 400
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Unauthorized"}), 401
         
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
+
     clean_id = staff_id.strip()
     years_set = set()
     contexts = ['dcp', 'dct']
@@ -273,11 +342,29 @@ def get_report_years():
     return jsonify(years), 200
 
 @patient_bp.route('/api/patient/profile', methods=['GET'])
+@jwt_required()
 def get_patient_profile():
-    staff_id = request.headers.get('X-Staff-ID')
-    if not staff_id:
-        return jsonify({"error": "X-Staff-ID header required"}), 400
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Unauthorized"}), 401
         
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
+
     clean_id = staff_id.strip()
     contexts = ['dcp', 'dct']
     
@@ -316,6 +403,80 @@ def get_patient_profile():
             continue
             
     return jsonify({"error": "Patient profile not found in any clinical section."}), 404
+    
+@patient_bp.route('/api/patient/profile', methods=['PUT'])
+@jwt_required()
+def update_patient_profile():
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    staff_id = None
+    from models import PatientPortalUser, StaffUser
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        if p_user:
+            staff_id = p_user.username
+        else:
+            s_user = StaffUser.query.get(user_id)
+            if s_user:
+                staff_id = s_user.username
+    except ValueError:
+        staff_id = user_id_str
+        
+    if not staff_id:
+        return jsonify({"error": "Staff ID required"}), 400
+        
+    data = request.json
+    new_email = data.get('email')
+    new_phone = data.get('phone')
+    
+    clean_id = staff_id.strip()
+    
+    # 1. Update Portal User (patients bind)
+    portal_user = PatientPortalUser.query.filter_by(username=clean_id).first()
+    if not portal_user:
+        return jsonify({"error": "Portal account not found"}), 404
+        
+    try:
+        if new_email: portal_user.email = new_email
+        if new_phone: portal_user.phone = new_phone
+        db.session.commit()
+    except Exception as e:
+        db.session.rollback()
+        error_msg = str(e).lower()
+        if "unique constraint" in error_msg or "already exists" in error_msg:
+             return jsonify({"error": "Email or phone number is already in use by another account."}), 400
+        return jsonify({"error": f"Failed to update portal account: {str(e)}"}), 500
+
+    # 2. Sync with Clinical BioData (dcp, dct binds)
+    contexts = ['dcp', 'dct']
+    sync_errors = []
+    
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine: continue
+            
+            with engine.connect() as conn:
+                # Update BioData
+                sync_query = text("""
+                    UPDATE bio_data 
+                    SET email = :e, phone = :p 
+                    WHERE LOWER(staff_id) = LOWER(:sid)
+                """)
+                conn.execute(sync_query, {"e": new_email, "p": new_phone, "sid": clean_id})
+                conn.commit()
+                print(f"Sync profile success for {clean_id} in {ctx}")
+        except Exception as e:
+            print(f"Sync profile failed for {clean_id} in {ctx}: {str(e)}")
+            sync_errors.append(ctx)
+            
+    return jsonify({
+        "message": "Profile updated successfully" + (f" (Sync issues in: {', '.join(sync_errors)})" if sync_errors else ""),
+        "user": portal_user.to_dict()
+    }), 200
 
 @patient_bp.route('/api/patient/reset-password/request', methods=['POST'])
 def reset_password_request():

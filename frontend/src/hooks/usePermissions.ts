@@ -3,17 +3,18 @@ import { useAppContext } from '@/context/AppContext';
 export const usePermissions = () => {
   const { user } = useAppContext();
 
-  const hasPermission = (permission_name: string): boolean => {
+  const hasPermission = (permission: string | string[]): boolean => {
     if (!user) return false;
+    if (isAdmin()) return true;
+
+    if (Array.isArray(permission)) {
+      return permission.some(p => hasPermission(p));
+    }
     
-    // Case-insensitive Admin role check
-    const isAdminUser = (user.roles as string[] | undefined)?.some((r: string) => r.toLowerCase() === 'admin');
-    if (isAdminUser) return true;
-    
-    // Check for temporary access codes (matching by permission_name)
+    // Check for temporary access codes (matching by permission name)
     const hasTempAccess = (user.temp_access as any[] | undefined)?.some(
         (t: any) => {
-            const isMatch = t.permission_name === permission_name;
+            const isMatch = t.permission_name === permission;
             const isNotRevoked = !t.is_revoked;
             const isNotExpired = !t.expires_at || new Date(t.expires_at) > new Date();
             return isMatch && isNotRevoked && isNotExpired;
@@ -21,7 +22,7 @@ export const usePermissions = () => {
     );
     if (hasTempAccess) return true;
     
-    return (user.permissions as string[] | undefined)?.includes(permission_name) || false;
+    return (user.permissions as string[] | undefined)?.includes(permission) || false;
   };
 
   const isAdmin = (): boolean => {
@@ -32,5 +33,10 @@ export const usePermissions = () => {
     return (user?.temp_access as any[] | undefined)?.some((t: any) => t.permission_name === 'admin_access') || false;
   };
 
-  return { hasPermission, isAdmin, user };
+  const hasAnyPermission = (permissions: string[]): boolean => {
+    if (isAdmin()) return true;
+    return permissions.some(p => hasPermission(p));
+  };
+
+  return { hasPermission, hasAnyPermission, isAdmin, user };
 };

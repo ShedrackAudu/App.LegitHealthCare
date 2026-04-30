@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import axios from 'axios';
+import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { 
   Clock, 
@@ -26,6 +26,17 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { useAppContext } from '@/context/AppContext';
 import { generateAppointmentSlots } from '@/lib/timeUtils';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow
+} from '@/components/ui/table';
+import { Badge } from '@/components/ui/badge';
+import { motion, AnimatePresence } from 'framer-motion';
 
 const appointmentSchema = z.object({
   appointment_date: z.string().refine((date) => {
@@ -60,6 +71,9 @@ const PatientAppointmentsPage = () => {
   const [isBooking, setIsBooking] = useState(false);
   const [bookedSlots, setBookedSlots] = useState<string[]>([]);
   const [fetchingSlots, setFetchingSlots] = useState(false);
+  
+  const [appointments, setAppointments] = useState<any[]>([]);
+  const [fetchingAppointments, setFetchingAppointments] = useState(false);
 
   const { register, handleSubmit, formState: { errors }, reset, watch, setValue } = useForm<AppointmentValues>({
     resolver: zodResolver(appointmentSchema)
@@ -76,7 +90,7 @@ const PatientAppointmentsPage = () => {
             // Re-format to DD-MM-YYYY for backend consistency
             const [y, m, d] = selectedDate.split('-');
             const formattedDate = `${d}-${m}-${y}`;
-            const res = await axios.get(`/api/appointments/booked?date=${formattedDate}`);
+            const res = await api.get(`/api/appointments/booked?date=${formattedDate}`);
             setBookedSlots(res.data);
             setValue('time_slot', ''); // Reset slot when date changes
         } catch (err) {
@@ -91,7 +105,7 @@ const PatientAppointmentsPage = () => {
   useEffect(() => {
      const fetchProfile = async () => {
         try {
-           const res = await axios.get('/api/patient/profile', {
+           const res = await api.get('/api/patient/profile', {
               headers: { 'X-Staff-ID': user?.username }
            });
            setProfile(res.data);
@@ -105,6 +119,22 @@ const PatientAppointmentsPage = () => {
      if (user?.username) fetchProfile();
   }, [user]);
 
+  const fetchAppointments = async () => {
+    setFetchingAppointments(true);
+    try {
+      const res = await api.get('/api/patient/appointments');
+      setAppointments(res.data);
+    } catch (err) {
+      console.error("Error fetching appointments:", err);
+    } finally {
+      setFetchingAppointments(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
+
   const onBookAppointment = async (data: AppointmentValues) => {
     if (!profile) return;
 
@@ -114,13 +144,14 @@ const PatientAppointmentsPage = () => {
       const [y, m, d] = data.appointment_date.split('-');
       const formattedDate = `${d}-${m}-${y}`;
 
-      await axios.post('/api/appointments', {
+      await api.post('/api/appointments', {
         ...data,
         appointment_date: formattedDate,
         staff_id: profile.staff_id
       });
       toast.success("Appointment booked! Notification sent to Head Doctor.");
       reset();
+      fetchAppointments(); // Refresh history
     } catch (err: any) {
       toast.error(err.response?.data?.error || "Failed to book appointment");
     } finally {
@@ -176,7 +207,7 @@ const PatientAppointmentsPage = () => {
                                         <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black tracking-widest">
                                             {profile?.staff_id}
                                         </span>
-                                        <div className="flex items-center gap-1 text-[9px] font-bold text-emerald-600 uppercase">
+                                        <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase">
                                             <CheckCircle2 className="w-2.5 h-2.5" /> Active
                                         </div>
                                     </div>
@@ -197,13 +228,20 @@ const PatientAppointmentsPage = () => {
                     </Card>
                 </div>
 
-                {/* Right Side: Form */}
+                {/* Right Side: Tabs */}
                 <div className="lg:col-span-2">
-                    <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/5 transition-all">
-                        <CardHeader className="p-4 md:p-6 pb-0">
-                            <CardTitle className="text-lg md:text-xl font-black">Slot Selection</CardTitle>
-                            <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-none mt-1">Fill in your clinical visit details.</CardDescription>
-                        </CardHeader>
+                    <Tabs defaultValue="book" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30 p-1.5 h-14 rounded-2xl border border-primary/5">
+                            <TabsTrigger value="book" className="rounded-xl font-black text-[10px] sm:text-[13px] tracking-normal sm:tracking-widest uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">Book Visit</TabsTrigger>
+                            <TabsTrigger value="history" className="rounded-xl font-black text-[10px] sm:text-[13px] tracking-normal sm:tracking-widest uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">History</TabsTrigger>
+                        </TabsList>
+
+                        <TabsContent value="book" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/5 transition-all">
+                                <CardHeader className="p-4 md:p-6 pb-0">
+                                    <CardTitle className="text-lg md:text-xl font-black">Slot Selection</CardTitle>
+                                    <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-none mt-1">Fill in your clinical visit details.</CardDescription>
+                                </CardHeader>
                         <CardContent className="p-4 md:p-6 pt-2 space-y-3.5">
                             <div className="grid grid-cols-1 gap-3.5">
                                 <div className="space-y-1">
@@ -317,17 +355,132 @@ const PatientAppointmentsPage = () => {
                                 )}
                             </Button>
 
-                            <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-dashed border-emerald-500/10 flex gap-3">
-                                <div className="p-1 bg-emerald-500/10 rounded-lg text-emerald-600 shrink-0 h-fit">
+                            <div className="p-3.5 rounded-xl bg-primary/5 border border-dashed border-primary/10 flex gap-3">
+                                <div className="p-1 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
                                      <Globe className="w-3 h-3" />
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[9px] font-black text-emerald-800 uppercase tracking-wider opacity-60">Next Steps</p>
-                                    <p className="text-[10px] font-semibold text-emerald-700/50 leading-tight">Admin will confirm within 24 hours.</p>
+                                    <p className="text-[10px] font-semibold text-primary/50 leading-tight">Admin will confirm within 24 hours.</p>
                                 </div>
                             </div>
                         </CardContent>
-                    </Card>
+                            </Card>
+                        </TabsContent>
+
+                        <TabsContent value="history" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <Card className="border shadow-xl rounded-2xl overflow-hidden border-primary/5 min-h-[400px]">
+                                <CardHeader className="p-4 md:p-6 pb-4 bg-muted/10">
+                                    <div className="flex justify-between items-center">
+                                        <div>
+                                            <CardTitle className="text-lg md:text-xl font-black">Visit History</CardTitle>
+                                            <CardDescription className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">Status of your clinic appointments</CardDescription>
+                                        </div>
+                                        {fetchingAppointments && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-0">
+                                    <div className="hidden md:block overflow-x-auto">
+                                        <Table>
+                                            <TableHeader className="bg-muted/20 border-b">
+                                                <TableRow className="hover:bg-transparent">
+                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4 pl-6">Schedule</TableHead>
+                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4">Status</TableHead>
+                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4">Booking Info</TableHead>
+                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4 pr-6">Reason</TableHead>
+                                                </TableRow>
+                                            </TableHeader>
+                                            <TableBody>
+                                                {appointments.length === 0 ? (
+                                                    <TableRow>
+                                                        <TableCell colSpan={4} className="h-48 text-center text-muted-foreground font-medium italic opacity-60">
+                                                            No appointment records found.
+                                                        </TableCell>
+                                                    </TableRow>
+                                                ) : (
+                                                    appointments.map((app) => (
+                                                        <TableRow key={app.id} className="hover:bg-muted/5 transition-colors group">
+                                                            <TableCell className="py-4 pl-6">
+                                                                <div className="space-y-1">
+                                                                    <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+                                                                        <Calendar className="h-3.5 w-3.5 text-primary" />
+                                                                        {new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
+                                                                    </div>
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground/60">
+                                                                        <Clock className="h-3.5 w-3.5" />
+                                                                        {app.time_slot}
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="py-4">
+                                                                <Badge className={`${
+                                                                    app.status === 'Completed' ? 'bg-green-500 hover:bg-green-600' : 
+                                                                    app.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-600' : 
+                                                                    'bg-amber-500 hover:bg-amber-600'
+                                                                } text-white border-0 font-black text-[8px] uppercase tracking-widest py-0.5 px-2`}>
+                                                                    {app.status}
+                                                                </Badge>
+                                                            </TableCell>
+                                                            <TableCell className="py-4">
+                                                                <div className="space-y-0.5">
+                                                                    <p className="text-[8px] font-black text-muted-foreground uppercase opacity-60 tracking-tighter">Booked By</p>
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <p className="text-[10px] font-black text-foreground uppercase">
+                                                                            {app.booked_by_type === 'patient' ? 'You' : 'Clinic Staff'}
+                                                                        </p>
+                                                                        {app.booked_by_type === 'patient' && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />}
+                                                                    </div>
+                                                                </div>
+                                                            </TableCell>
+                                                            <TableCell className="py-4 pr-6">
+                                                                <p className="text-[10px] font-bold text-muted-foreground italic line-clamp-1 max-w-[180px] group-hover:line-clamp-none transition-all">
+                                                                    {app.reason}
+                                                                </p>
+                                                            </TableCell>
+                                                        </TableRow>
+                                                    ))
+                                                )}
+                                            </TableBody>
+                                        </Table>
+                                    </div>
+
+                                    <div className="md:hidden p-4 space-y-3">
+                                        {appointments.length === 0 ? (
+                                            <div className="py-12 text-center text-muted-foreground font-medium italic opacity-60">
+                                                No appointment records found.
+                                            </div>
+                                        ) : (
+                                            appointments.map(app => (
+                                                <div key={app.id} className="p-4 rounded-xl border bg-muted/5 space-y-3">
+                                                    <div className="flex justify-between items-start">
+                                                        <div className="flex items-center gap-2">
+                                                            <Calendar className="h-4 w-4 text-primary" />
+                                                            <p className="text-xs font-black">{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                                                        </div>
+                                                        <Badge className={`${
+                                                            app.status === 'Completed' ? 'bg-green-500' : 
+                                                            app.status === 'Cancelled' ? 'bg-red-500' : 
+                                                            'bg-amber-500'
+                                                        } text-white border-0 font-black text-[7px] uppercase tracking-widest py-0 px-2 h-4`}>
+                                                            {app.status}
+                                                        </Badge>
+                                                    </div>
+                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
+                                                        <Clock className="h-3 w-3" />
+                                                        {app.time_slot}
+                                                    </div>
+                                                    <div className="pt-2 border-t border-dashed border-muted/20">
+                                                        <p className="text-[8px] font-black text-muted-foreground uppercase opacity-40 mb-1">Reason</p>
+                                                        <p className="text-[10px] font-medium leading-relaxed italic">{app.reason}</p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        )}
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </TabsContent>
+                    </Tabs>
                 </div>
             </div>
         )}

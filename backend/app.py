@@ -1,41 +1,34 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
-from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
-import json
-from auth_utils import mail, generate_otp, send_otp_email, is_password_strong
-from utils.ip import get_client_ip
-from routes.registration import registration_bp
-from routes.consultation import consultation_bp
-from routes.tests import tests_bp
-from routes.director import director_bp
-from routes.view_data import view_data_bp
-from routes.account_bp import account_bp
-from routes.security_bp import security_bp
-from routes.notifications_bp import notifications_bp
-from routes.branding_bp import branding_bp
-from routes.departments_bp import departments_bp
-from routes.queue_bp import queue_bp
-from routes.ai_bp import ai_bp
-from routes.messaging_bp import messaging_bp
-from routes.contacts_bp import contacts_bp
-from routes.admin_bp import admin_bp
-from routes.email_bp import email_bp
-from routes.config_bp import config_bp
-from routes.appointments import appointments_bp
-from routes.patient_bp import patient_bp
-from socket_handlers import init_socket_handlers
-from flask_socketio import SocketIO, emit
 from datetime import datetime, timedelta
 import os
+import json
 from dotenv import load_dotenv
+
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
+from extensions import mail, jwt, limiter, socketio
+from auth_utils import generate_otp, send_otp_email, is_password_strong
+from utils.ip import get_client_ip
 from setup_system import setup_system
+from socket_handlers import init_socket_handlers
 
 
 load_dotenv()
 
 app = Flask(__name__)
-CORS(app)
-socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Extension Initialization
+limiter.init_app(app)
+
+# CORS Hardening (Phase 5)
+
+# CORS Hardening (Phase 5)
+frontend_url = os.getenv('FRONTEND_URL', '*')
+from flask_cors import CORS
+CORS(app, resources={r"/*": {"origins": frontend_url}})
+
+socketio.init_app(app, cors_allowed_origins=frontend_url)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -69,10 +62,71 @@ app.config['MAIL_PORT'] = int(os.getenv('MAIL_PORT', 587))
 app.config['MAIL_USE_TLS'] = True
 app.config['MAIL_USERNAME'] = os.getenv('MAIL_USERNAME')
 app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
+app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
+app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
+app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
+app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 db.init_app(app)
 bcrypt.init_app(app)
 mail.init_app(app)
+jwt.init_app(app)
+
+# JWT Error Handlers
+@jwt.unauthorized_loader
+def unauthorized_response(callback):
+    return jsonify({"error": "Unauthorized: Missing Authorization Header"}), 401
+
+@jwt.invalid_token_loader
+def invalid_token_response(callback):
+    return jsonify({"error": "Security Alert: Invalid authentication token provided."}), 401
+
+@jwt.expired_token_loader
+def expired_token_response(jwt_header, jwt_payload):
+    return jsonify({"error": "Session Expired: Please log in again to continue."}), 401
+
+from flask_limiter import RateLimitExceeded
+@app.errorhandler(RateLimitExceeded)
+def handle_rate_limit_exceeded(e):
+    return jsonify({
+        "error": "Too many requests",
+        "message": "Security policy limit reached. Please wait a moment before trying again.",
+        "retry_after": e.description
+    }), 429
+def invalid_token_response(callback):
+    return jsonify({"error": "Invalid token"}), 401
+
+@jwt.expired_token_loader
+def expired_token_response(jwt_header, jwt_payload):
+    return jsonify({"error": "Token has expired"}), 401
+
+# Automated Schema Management
+from utils.migrations import ensure_schema
+with app.app_context():
+    ensure_schema(app)
+
+# Import Blueprints (avoid circular imports by importing after extensions init)
+from routes.registration import registration_bp
+from routes.consultation import consultation_bp
+from routes.tests import tests_bp
+from routes.director import director_bp
+from routes.view_data import view_data_bp
+from routes.account_bp import account_bp
+from routes.security_bp import security_bp
+from routes.notifications_bp import notifications_bp
+from routes.branding_bp import branding_bp
+from routes.departments_bp import departments_bp
+from routes.queue_bp import queue_bp
+from routes.ai_bp import ai_bp
+from routes.messaging_bp import messaging_bp
+from routes.contacts_bp import contacts_bp
+from routes.admin_bp import admin_bp
+from routes.email_bp import email_bp
+from routes.config_bp import config_bp
+from routes.appointments import appointments_bp
+from routes.patient_bp import patient_bp
+from routes.files_bp import files_bp
+from routes.inventory_bp import inventory_bp
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)
@@ -93,6 +147,8 @@ app.register_blueprint(email_bp, url_prefix='/api/email')
 app.register_blueprint(config_bp, url_prefix='/api/config')
 app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
+app.register_blueprint(files_bp, url_prefix='/api/files')
+app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
 
 
 
@@ -137,6 +193,7 @@ def signup_status():
 
 @app.route('/signup', methods=['POST'])
 @cross_origin()
+@limiter.limit("3 per hour")
 def signup():
     data = request.json
     
@@ -152,7 +209,14 @@ def signup():
     if not is_password_strong(data.get('password')):
         return jsonify({"error": "Password must be at least 8 chars long with 1 UC, 1 LC, 1 digit, and 1 special symbol."}), 400
         
-    if User.query.filter_by(username=data['username']).first():
+    username = data.get('username', '').strip().lower()
+    
+    # Reject special characters except underscore
+    import re
+    if not re.match(r'^[a-z0-9_]+$', username):
+        return jsonify({"error": "Username can only contain lowercase letters, numbers, and underscores."}), 400
+
+    if User.query.filter_by(username=username).first():
         return jsonify({"error": "Username already exists"}), 400
         
     if User.query.filter_by(email=data['email']).first():
@@ -169,7 +233,7 @@ def signup():
     new_user = User(
         first_name=data['first_name'],
         last_name=data['last_name'],
-        username=data['username'],
+        username=username,
         phone=data['phone'],
         email=data['email']
     )
@@ -203,6 +267,7 @@ def signup():
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
 @app.route('/verify-otp', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -225,6 +290,7 @@ def verify_otp():
     return jsonify({"error": "Invalid or expired OTP"}), 400
 
 @app.route('/login', methods=['POST'])
+@limiter.limit("5 per minute")
 def login():
     data = request.json
     identifier = (data.get('identity') or data.get('username') or '').strip()
@@ -263,30 +329,41 @@ def login():
         user.last_seen_at = datetime.now()
         
         # Log successful login (when 2FA is skipped)
-        login_log = AuditLog(
-            user_id=user.id,
-            action="LOGIN_SUCCESS",
-            resource=f"{portal.capitalize()} Portal",
-            details=json.dumps({
-                "method": "PASSWORD",
-                "identity": identifier,
-                "portal": portal,
-                "timestamp": datetime.now().isoformat()
-            }),
-            ip_address=get_client_ip()
+        try:
+            login_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_SUCCESS",
+                resource=f"{portal.capitalize()} Portal",
+                details=json.dumps({
+                    "method": "PASSWORD",
+                    "identity": identifier,
+                    "portal": portal,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(login_log)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"Login audit failed for {identifier}: {e}")
+        
+        # Generate Real JWT
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"portal": portal}
         )
-        db.session.add(login_log)
-        db.session.commit()
         
         return jsonify({
             "message": "Login successful",
-            "token": "demo-token", 
+            "token": access_token, 
             "user": user.to_dict()
         }), 200
         
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
+@limiter.limit("3 per hour")
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
@@ -326,6 +403,7 @@ def forgot_password():
     }), 200
 
 @app.route('/forgot-password/verify', methods=['POST'])
+@limiter.limit("5 per minute")
 def verify_recovery_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -345,6 +423,7 @@ def verify_recovery_otp():
     return jsonify({"error": "Invalid or expired recovery code"}), 400
 
 @app.route('/forgot-password/reset', methods=['POST'])
+@limiter.limit("3 per hour")
 def reset_password():
     data = request.json
     user_id = data.get('user_id')
@@ -372,6 +451,7 @@ def reset_password():
     return jsonify({"error": "Auth session expired or invalid"}), 400
 
 @app.route('/login/2fa', methods=['POST'])
+@limiter.limit("5 per minute")
 def login_2fa():
     data = request.json
     user_id = data.get('user_id')
@@ -405,22 +485,33 @@ def login_2fa():
         user.last_seen_at = datetime.now()
         
         # Log successful 2FA login
-        login_2fa_log = AuditLog(
-            user_id=user.id,
-            action="LOGIN_2FA_SUCCESS",
-            resource=f"{portal.capitalize()} Portal",
-            details=json.dumps({
-                "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
-                "portal": portal,
-                "timestamp": datetime.now().isoformat()
-            }),
-            ip_address=get_client_ip()
+        try:
+            login_2fa_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_2FA_SUCCESS",
+                resource=f"{portal.capitalize()} Portal",
+                details=json.dumps({
+                    "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
+                    "portal": portal,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(login_2fa_log)
+            db.session.commit()
+        except Exception as e:
+            db.session.rollback()
+            app.logger.error(f"2FA Login audit failed for user {user.id}: {e}")
+        
+        # Generate token
+        access_token = create_access_token(
+            identity=str(user.id),
+            additional_claims={"portal": portal}
         )
-        db.session.add(login_2fa_log)
-        db.session.commit()
         
         return jsonify({
             "message": "Login successful",
+            "token": access_token,
             "user": user.to_dict()
         }), 200
         
@@ -461,4 +552,5 @@ with app.app_context():
         app.logger.error(f"Error initializing system: {e}")
 
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)
+    is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
+    socketio.run(app, debug=is_debug, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)

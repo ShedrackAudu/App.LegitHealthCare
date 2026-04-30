@@ -1,6 +1,6 @@
 import json
 
-def test_update_profile(client, setup_user):
+def test_update_profile(client, setup_user, auth_headers):
     response = client.put('/api/account/profile', 
         json={
             'first_name': 'Updated',
@@ -8,21 +8,21 @@ def test_update_profile(client, setup_user):
             'email': 'updated@example.com',
             'phone': '0987654321'
         },
-        headers={'X-User-ID': str(setup_user.id)}
+        headers=auth_headers
     )
     data = json.loads(response.data)
     assert response.status_code == 200
     assert data['message'] == 'Profile updated successfully'
     assert data['user']['first_name'] == 'Updated'
     
-def test_change_password(client, setup_user):
+def test_change_password(client, setup_user, auth_headers):
     response = client.put('/api/account/password',
         json={
             'current_password': 'TestPass1!',
             'new_password': 'NewStrongPass2@',
             'confirm_password': 'NewStrongPass2@'
         },
-        headers={'X-User-ID': str(setup_user.id)}
+        headers=auth_headers
     )
     data = json.loads(response.data)
     assert response.status_code == 200

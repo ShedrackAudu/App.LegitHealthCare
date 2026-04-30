@@ -23,7 +23,7 @@ import {
   DialogTitle, 
   DialogFooter 
 } from "@/components/ui/dialog";
-import axios from 'axios';
+import api from '@/lib/api';
 
 const PatientManageAccountPage = () => {
   const { user, setUser } = useAppContext();
@@ -55,7 +55,7 @@ const PatientManageAccountPage = () => {
   const fetchProfile = useCallback(async () => {
     if (!user?.username) return;
     try {
-      const response = await axios.get('/api/patient/profile', {
+      const response = await api.get('/api/patient/profile', {
         headers: { 'X-Staff-ID': user.username }
       });
       const p = response.data;
@@ -87,11 +87,13 @@ const PatientManageAccountPage = () => {
     e.preventDefault();
     setSaving(true);
     try {
-      const response = await axios.put('/api/account/profile', {
+      const response = await api.put('/api/patient/profile', {
         first_name: formData.first_name,
         last_name: formData.last_name,
         phone: formData.phone,
         email: formData.email
+      }, {
+        headers: { 'X-Staff-ID': user.username }
       });
       const updatedUser = response.data.user;
       setUser(updatedUser);
@@ -283,10 +285,10 @@ const PatientManageAccountPage = () => {
 
             {/* Right Column: Security */}
             <div className="space-y-6">
-              <Card className="border shadow-lg rounded-2xl overflow-hidden border-emerald-500/10">
-                <CardHeader className="p-5 border-b bg-emerald-500/[0.03]">
+              <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/10">
+                <CardHeader className="p-5 border-b bg-primary/[0.03]">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-emerald-500/10 rounded-xl text-emerald-600">
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
                       <ShieldCheck className="w-4 h-4" />
                     </div>
                     <div>
@@ -299,12 +301,12 @@ const PatientManageAccountPage = () => {
                   <div className="space-y-2.5">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-600">
+                          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
                             <Lock className="w-3.5 h-3.5" />
                           </div>
                           <span className="font-black text-[10px] uppercase tracking-wider">Two-Factor Auth</span>
                         </div>
-                        <div className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${user.is_2fa_enabled ? 'bg-emerald-500 text-white shadow-sm' : 'bg-muted text-muted-foreground'}`}>
+                        <div className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${user.is_2fa_enabled ? 'bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground'}`}>
                           {user.is_2fa_enabled ? 'ON' : 'OFF'}
                         </div>
                      </div>
@@ -312,7 +314,7 @@ const PatientManageAccountPage = () => {
                        Add an extra layer of clinical data protection.
                      </p>
                      <Button 
-                      className={`w-full h-9 rounded-xl font-black shadow-md transition-all active:scale-95 text-[10px] ${user.is_2fa_enabled ? 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/10' : 'shadow-primary/10'}`}
+                      className={`w-full h-9 rounded-xl font-black shadow-md transition-all active:scale-95 text-[10px] ${user.is_2fa_enabled ? 'bg-primary hover:bg-primary0 shadow-primary/10' : 'shadow-primary/10'}`}
                       onClick={() => navigate('/patient/account/2fa')}
                      >
                       {user.is_2fa_enabled ? "Manage 2FA" : "Enable Shield"}
@@ -394,7 +396,7 @@ const PatientManageAccountPage = () => {
                           onClick={async () => {
                             setResetLoading(true);
                             try {
-                              await axios.post('/api/patient/reset-password/request', { email: formData.email });
+                              await api.post('/api/patient/reset-password/request', { email: formData.email });
                               toast.success("Code sent to your email!");
                               setResetStep(2);
                             } catch (err: any) {
@@ -427,7 +429,7 @@ const PatientManageAccountPage = () => {
 
                             setResetLoading(true);
                             try {
-                              await axios.post('/api/patient/reset-password/verify', { 
+                              await api.post('/api/patient/reset-password/verify', { 
                                 email: formData.email,
                                 otp: resetOtp,
                                 new_password: newPassword

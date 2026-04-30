@@ -70,7 +70,6 @@ const DataManagementPage: React.FC = () => {
     try {
       const resp = await axios.post('/api/admin/import', formData, {
         headers: { 
-          'X-User-ID': user?.id?.toString(),
           'X-Company-Context': activeSection,
           'Content-Type': 'multipart/form-data'
         }
@@ -102,12 +101,12 @@ const DataManagementPage: React.FC = () => {
             </p>
           </div>
 
-          <div className="flex flex-col sm:flex-row bg-muted/50 p-1 sm:p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1 sm:gap-0">
+          <div className="flex bg-muted/50 p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1">
             <button
               onClick={() => setActiveTab('export')}
-              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
+              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'export' 
-                ? 'bg-primary shadow-md text-white sm:scale-105' 
+                ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -116,9 +115,9 @@ const DataManagementPage: React.FC = () => {
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`px-6 py-3 sm:py-2 rounded-xl font-black text-sm transition-all flex items-center justify-center sm:justify-start gap-2 w-full sm:w-auto ${
+              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'import' 
-                ? 'bg-primary shadow-md text-white sm:scale-105' 
+                ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
@@ -145,7 +144,7 @@ const DataManagementPage: React.FC = () => {
               <CardContent className="space-y-6">
                  <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
                     <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
-                        <FileSpreadsheet className="w-6 h-6 text-emerald-500" />
+                        <FileSpreadsheet className="w-6 h-6 text-primary" />
                     </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-tight">Full Archive Export</p>
@@ -227,9 +226,9 @@ const DataManagementPage: React.FC = () => {
                   </CardHeader>
                   <CardContent className="space-y-6">
                      <div className="space-y-4">
-                        <div className="bg-emerald-500/5 border border-emerald-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                           <CheckCircle2 className="w-6 h-6 text-emerald-500 shrink-0" />
-                           <p className="text-[11px] text-emerald-700 dark:text-emerald-400 font-bold italic leading-relaxed">
+                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-4 items-center">
+                           <CheckCircle2 className="w-6 h-6 text-primary shrink-0" />
+                           <p className="text-[11px] text-primary dark:text-primary font-bold italic leading-relaxed">
                              Excel headers must match exactly. The system will map data based on the header names provided below.
                            </p>
                         </div>

@@ -1,17 +1,24 @@
 from flask import Blueprint, request, jsonify
-from models import db, User
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from models import db, StaffUser, PatientPortalUser
 from auth_utils import is_password_strong
 
 account_bp = Blueprint('account', __name__)
 
 @account_bp.route('/profile', methods=['PUT'])
+@jwt_required()
 def update_profile():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
 
     data = request.json
-    user = User.query.get(user_id)
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = Model.query.get(user_id)
+    
     if not user:
         return jsonify({"error": "User not found"}), 404
 
@@ -24,8 +31,12 @@ def update_profile():
     return jsonify({"message": "Profile updated successfully", "user": user.to_dict()})
 
 @account_bp.route('/password', methods=['PUT'])
+@jwt_required()
 def update_password():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
@@ -33,7 +44,9 @@ def update_password():
     current_password = data.get('current_password')
     new_password = data.get('new_password')
 
-    user = User.query.get(user_id)
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = Model.query.get(user_id)
+    
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -49,15 +62,21 @@ def update_password():
     return jsonify({"message": "Password updated successfully"})
 
 @account_bp.route('/force-reset-password', methods=['POST'])
+@jwt_required()
 def force_reset_password():
-    user_id = request.headers.get('X-User-ID')
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
     
     data = request.json
     new_password = data.get('new_password')
 
-    user = User.query.get(user_id)
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = Model.query.get(user_id)
+    
     if not user:
         return jsonify({"error": "User not found"}), 404
         
