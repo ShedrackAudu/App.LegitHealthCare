@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { SafeImage } from '@/components/common/SafeImage';
 
 interface SidebarItem {
   title: string;
@@ -127,8 +128,13 @@ export const Sidebar: React.FC = () => {
       <div className="h-14 shrink-0 flex items-center px-4 border-b">
         {/* Clinic Logo */}
         {!isCollapsed ? (
-          (branding?.logo_dark && !brandingError) ? (
-            <img src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+          branding?.logo_dark ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+              alt={branding?.clinic_name || "Logo"} 
+              className="max-h-10 w-auto object-contain" 
+              fallbackText={branding?.clinic_name}
+            />
           ) : (
             <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
               <Building2 className="h-5 w-5 shrink-0" />
@@ -136,8 +142,12 @@ export const Sidebar: React.FC = () => {
             </div>
           )
         ) : (
-          (branding?.logo_light && !brandingError) ? (
-            <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+          branding?.logo_light ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
+              alt="Logo" 
+              className="max-h-8 w-auto object-contain mx-auto" 
+            />
           ) : (
             <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
               <Building2 className="h-5 w-5 shrink-0" />

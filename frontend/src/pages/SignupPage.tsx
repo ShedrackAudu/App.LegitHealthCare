@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { SafeImage } from '@/components/common/SafeImage';
 
 const signupSchema = z.object({
   first_name: z.string().min(2, 'First name must be at least 2 characters'),
@@ -276,16 +277,18 @@ const SignupPage: React.FC = () => {
         <div className="relative z-10 flex flex-col justify-between p-16 w-full text-white">
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
             {branding?.auth_logo ? (
-                <img 
+                <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.auth_logo}`} 
-                  alt="Auth Page Overlay Logo" 
+                  alt={branding?.clinic_name || "Logo"} 
                   className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  fallbackText={branding?.clinic_name}
                 />
             ) : branding?.logo_dark ? (
-                <img 
+                <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
-                  alt="Wordmark Logo" 
+                  alt={branding?.clinic_name || "Logo"} 
                   className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  fallbackText={branding?.clinic_name}
                 />
               ) : (
                 <div className="flex items-center gap-2">
@@ -324,7 +327,7 @@ const SignupPage: React.FC = () => {
           <div className="text-center lg:text-left space-y-2">
              <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
-                    <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
+                    <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
                     <Activity className="w-12 h-12 text-primary" />
                  )}

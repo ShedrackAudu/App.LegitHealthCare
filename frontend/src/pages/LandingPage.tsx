@@ -35,6 +35,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
+import { SafeImage } from '@/components/common/SafeImage';
 
 const LandingPage = () => {
   const [branding, setBranding] = useState<any>(null);
@@ -99,9 +100,9 @@ const LandingPage = () => {
               {/* Desktop Logo: Brandmark Preferred */}
               <div className="hidden md:flex items-center">
                 {branding?.logo_light ? (
-                  <img src={getImageUrl(branding.logo_light, '')} alt="Logo" className="h-10 transition-all" />
+                  <SafeImage src={getImageUrl(branding.logo_light, '')} alt={branding?.clinic_name || "Logo"} className="h-10 transition-all" fallbackText={branding?.clinic_name} />
                 ) : branding?.logo_dark ? (
-                  <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
+                  <SafeImage src={getImageUrl(branding.logo_dark, '')} alt={branding?.clinic_name || "Logo"} className="h-10 transition-all" fallbackText={branding?.clinic_name} />
                 ) : (
                   <div className="flex items-center">
                     <Activity className="h-8 w-8 text-primary mr-2" />
@@ -113,9 +114,9 @@ const LandingPage = () => {
               {/* Mobile Logo: Brandmark Only */}
               <div className="md:hidden">
                 {branding?.logo_light ? (
-                  <img src={getImageUrl(branding.logo_light, '')} alt="Logo" className="h-10 transition-all" />
+                  <SafeImage src={getImageUrl(branding.logo_light, '')} alt="Logo" className="h-10 transition-all" />
                 ) : branding?.logo_dark ? (
-                  <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
+                  <SafeImage src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
                 ) : (
                   <Activity className="h-8 w-8 text-primary" />
                 )}
@@ -213,7 +214,7 @@ const LandingPage = () => {
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Now Live: Patient Portal</span>
                 </motion.div>
                 
-                <h1 className="text-5xl sm:text-7xl lg:text-[105px] font-black leading-[0.95] tracking-tight group">
+                <h1 className="text-5xl sm:text-7xl lg:text-[95px] font-black leading-[0.95] tracking-tight group">
                   <span className="block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
                     {branding?.clinic_name || "Legit HealthCare"}
                   </span>
@@ -223,12 +224,12 @@ const LandingPage = () => {
                     transition={{ delay: 0.5, duration: 1 }}
                     className="block h-2 bg-primary/40 w-1/4 mt-4 rounded-full origin-left group-hover:w-1/2 transition-all duration-700"
                   />
-                  <span className="text-[19px] lg:text-[39px] text-primary font-black mt-6 block tracking-tight whitespace-nowrap">
+                  <span className="text-[19px] lg:text-[35px] text-primary font-black mt-6 block tracking-tight whitespace-nowrap">
                     {branding?.clinic_slogan || "Excellence in Care."}
                   </span>
                 </h1>
                 
-                <p className="text-[13px] sm:text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl font-medium">
+                <p className="text-[13px] sm:text-lg md:text-lg text-muted-foreground leading-relaxed max-w-xl font-medium">
                   The official healthcare management portal for managing staff annual medical screenings with an advanced self-service patient portal for tracking and managing health and personal data.
                 </p>
               </div>
@@ -256,7 +257,7 @@ const LandingPage = () => {
                 <div className="flex -space-x-3">
                   {[1,2,3,4].map(i => (
                     <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold overflow-hidden">
-                      <img src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
+                      <SafeImage src={`https://i.pravatar.cc/100?img=${i+10}`} alt="User" />
                     </div>
                   ))}
                   <div className="w-10 h-10 rounded-full border-2 border-background bg-primary text-white flex items-center justify-center text-[10px] font-black uppercase">
@@ -292,10 +293,10 @@ const LandingPage = () => {
                     whileHover={{ y: -5, scale: 1.02 }}
                     className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
                   >
-                     <img 
+                     <SafeImage 
                       src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
-                      alt="Medical Equipment"
+                      alt="Diagnostics"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
                     <div className="absolute bottom-4 left-4 right-4">
@@ -311,10 +312,10 @@ const LandingPage = () => {
                     transition={{ delay: 0.1 }}
                     className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
                   >
-                     <img 
+                     <SafeImage 
                       src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
-                      alt="Clinical Analytics"
+                      alt="Bio-Analytics"
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
                     <div className="absolute bottom-4 left-4 right-4">
@@ -330,7 +331,7 @@ const LandingPage = () => {
                     transition={{ delay: 0.2 }}
                     className="sm:col-span-2 h-64 sm:h-80 rounded-xl overflow-hidden border border-white/20 shadow-2xl relative group/card cursor-pointer"
                   >
-                     <img 
+                     <SafeImage 
                       src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-105" 
                       alt="Medical Team"

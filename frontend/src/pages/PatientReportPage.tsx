@@ -213,14 +213,16 @@ const PatientReportPage: React.FC = () => {
         <MainLayout>
             {/* All UI chrome — hidden on print */}
             <div className="space-y-3 animate-in fade-in duration-500 pb-4 no-print">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-red-500/10 transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-red-500/10 rounded-2xl">
                             <FileText className="text-red-500 h-8 w-8" />
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">Patient Medical Report</h1>
-                            <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {fmtSec(activeSection)}</p>
+                            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground leading-tight">Patient Medical Report</h1>
+                            <div className="flex items-center gap-2 mt-1">
+                                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {fmtSec(activeSection)}</p>
+                            </div>
                         </div>
                     </div>
                     <PatientSearch
