@@ -93,12 +93,6 @@ def handle_rate_limit_exceeded(e):
         "message": "Security policy limit reached. Please wait a moment before trying again.",
         "retry_after": e.description
     }), 429
-def invalid_token_response(callback):
-    return jsonify({"error": "Invalid token"}), 401
-
-@jwt.expired_token_loader
-def expired_token_response(jwt_header, jwt_payload):
-    return jsonify({"error": "Token has expired"}), 401
 
 # Automated Schema Management
 from utils.migrations import ensure_schema
@@ -295,49 +289,63 @@ def login():
     data = request.json
     identifier = (data.get('identity') or data.get('username') or '').strip()
     password = data.get('password')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
-    app.logger.info(f"Login attempt for: {identifier} (Portal: {portal})")
+    app.logger.info(f"Login attempt for: {identifier} (Portal Param: {portal})")
     
     from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
     
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = None
+    detected_portal = None
+
+    if portal in ['staff', 'auto']:
+        user = StaffUser.query.filter(
+            (func.lower(StaffUser.username) == func.lower(identifier)) | 
+            (func.lower(StaffUser.email) == func.lower(identifier)) | 
+            (StaffUser.phone == identifier)
+        ).first()
+        if user:
+            detected_portal = 'staff'
+
+    # Try Patient if user not found and portal is 'patient' or 'auto'
+    if not user and portal in ['patient', 'auto']:
+        user = PatientPortalUser.query.filter(
+            (func.lower(PatientPortalUser.username) == func.lower(identifier)) | 
+            (func.lower(PatientPortalUser.email) == func.lower(identifier)) | 
+            (PatientPortalUser.phone == identifier)
+        ).first()
+        if user:
+            detected_portal = 'patient'
     
-    user = Model.query.filter(
-        (func.lower(Model.username) == func.lower(identifier)) | 
-        (func.lower(Model.email) == func.lower(identifier)) | 
-        (Model.phone == identifier)
-    ).first()
-    
+    if not user:
+        return jsonify({"error": "Invalid credentials"}), 401
+
     if user and user.check_password(password):
         if not user.is_verified:
             return jsonify({"error": "Please verify your email first"}), 403
             
-        # Optional: Add cross-portal block just in case
-        if portal == 'staff' and not hasattr(user, 'roles'): # PatientPortalUser won't have roles
-             return jsonify({"error": "This account does not have staff access."}), 403
-        
         # 2FA Enforcement
         if getattr(user, 'is_2fa_enabled', False):
             return jsonify({
                 "requires_2fa": True,
                 "user_id": user.id,
+                "portal": detected_portal,
                 "message": "Two-factor authentication required"
             }), 200
             
         user.last_seen_at = datetime.now()
         
-        # Log successful login (when 2FA is skipped)
+        # Log successful login
         try:
             login_log = AuditLog(
                 user_id=user.id,
                 action="LOGIN_SUCCESS",
-                resource=f"{portal.capitalize()} Portal",
+                resource=f"{detected_portal.capitalize()} Portal",
                 details=json.dumps({
                     "method": "PASSWORD",
                     "identity": identifier,
-                    "portal": portal,
+                    "portal": detected_portal,
                     "timestamp": datetime.now().isoformat()
                 }),
                 ip_address=get_client_ip()
@@ -348,15 +356,16 @@ def login():
             db.session.rollback()
             app.logger.error(f"Login audit failed for {identifier}: {e}")
         
-        # Generate Real JWT
+        # Generate JWT with detected portal
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": portal}
+            additional_claims={"portal": detected_portal}
         )
         
         return jsonify({
             "message": "Login successful",
             "token": access_token, 
+            "portal": detected_portal,
             "user": user.to_dict()
         }), 200
         
@@ -367,17 +376,25 @@ def login():
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
     
-    user = Model.query.filter(
-        (func.lower(Model.username) == func.lower(identity)) | 
-        (func.lower(Model.email) == func.lower(identity)) | 
-        (Model.phone == identity)
-    ).first()
+    user = None
+    if portal in ['staff', 'auto']:
+        user = StaffUser.query.filter(
+            (func.lower(StaffUser.username) == func.lower(identity)) | 
+            (func.lower(StaffUser.email) == func.lower(identity)) | 
+            (StaffUser.phone == identity)
+        ).first()
+
+    if not user and portal in ['patient', 'auto']:
+        user = PatientPortalUser.query.filter(
+            (func.lower(PatientPortalUser.username) == func.lower(identity)) | 
+            (func.lower(PatientPortalUser.email) == func.lower(identity)) | 
+            (PatientPortalUser.phone == identity)
+        ).first()
     
     if not user:
         return jsonify({"error": "No account found with that identity."}), 404
@@ -397,9 +414,14 @@ def forgot_password():
         app.logger.error(f"Detailed SMTP error: {e}")
         return jsonify({"error": f"Email Service Error: {str(e)}"}), 500
         
+    detected_portal = 'staff' if StaffUser.query.get(user.id) == user else 'patient'
+    # Actually, it's safer to check the model class
+    detected_portal = 'staff' if isinstance(user, StaffUser) else 'patient'
+
     return jsonify({
         "message": "Recovery code sent to your registered email.",
-        "user_id": user.id
+        "user_id": user.id,
+        "portal": detected_portal
     }), 200
 
 @app.route('/forgot-password/verify', methods=['POST'])
@@ -408,12 +430,15 @@ def verify_recovery_otp():
     data = request.json
     user_id = data.get('user_id')
     otp = data.get('otp')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        # If auto, try both
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -429,20 +454,23 @@ def reset_password():
     user_id = data.get('user_id')
     otp = data.get('otp')
     new_password = data.get('password')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     if not new_password or not is_password_strong(new_password):
         return jsonify({"error": "Password does not meet strength requirements (8+ chars, UC, LC, Digit, Symbol)."}), 400
         
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user:
         return jsonify({"error": "User not found"}), 404
         
     if user.otp_code == otp and user.otp_expiry > datetime.now():
         user.set_password(new_password)
+        user.is_verified = True # Resetting via email/OTP verifies the account
         user.otp_code = None # Clear OTP after success
         user.otp_expiry = None
         db.session.commit()
@@ -456,14 +484,21 @@ def login_2fa():
     data = request.json
     user_id = data.get('user_id')
     code = data.get('code')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user or not getattr(user, 'is_2fa_enabled', False):
         return jsonify({"error": "Invalid request"}), 400
+    
+    # Redetect portal if it was auto
+    detected_portal = portal
+    if portal == 'auto':
+        detected_portal = 'staff' if isinstance(user, StaffUser) else 'patient'
         
     import pyotp
     import json
@@ -489,10 +524,10 @@ def login_2fa():
             login_2fa_log = AuditLog(
                 user_id=user.id,
                 action="LOGIN_2FA_SUCCESS",
-                resource=f"{portal.capitalize()} Portal",
+                resource=f"{detected_portal.capitalize()} Portal",
                 details=json.dumps({
                     "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
-                    "portal": portal,
+                    "portal": detected_portal,
                     "timestamp": datetime.now().isoformat()
                 }),
                 ip_address=get_client_ip()
@@ -506,12 +541,13 @@ def login_2fa():
         # Generate token
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": portal}
+            additional_claims={"portal": detected_portal}
         )
         
         return jsonify({
             "message": "Login successful",
             "token": access_token,
+            "portal": detected_portal,
             "user": user.to_dict()
         }), 200
         

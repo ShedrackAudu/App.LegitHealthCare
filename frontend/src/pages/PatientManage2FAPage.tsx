@@ -83,7 +83,7 @@ const PatientManage2FAPage = () => {
 
     return (
         <PatientLayout>
-            <div className="max-w-4xl mx-auto space-y-5 animate-in fade-in duration-700 pb-20">
+            <div className="space-y-5 animate-in fade-in duration-700 pb-20">
                 <Button variant="ghost" onClick={() => navigate('/patient/account')} className="mb-1 h-8 gap-2 font-black group rounded-xl text-[10px] text-muted-foreground hover:text-primary">
                     <ArrowLeft className="w-3.5 h-3.5 group-hover:-translate-x-1 transition-transform" /> Back
                 </Button>

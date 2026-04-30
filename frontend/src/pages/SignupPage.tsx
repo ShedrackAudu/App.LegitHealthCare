@@ -46,8 +46,8 @@ type SignupValues = z.infer<typeof signupSchema>;
 
 const SignupPage: React.FC = () => {
   const [searchParams] = useSearchParams();
-  const initialPortal = searchParams.get('portal');
-  const [activeTab, setActiveTab] = useState(initialPortal === 'patient' ? 'patient' : 'staff');
+  const portal = searchParams.get('portal');
+  const [activeTab, setActiveTab] = useState<'staff' | 'patient'>(portal === 'patient' ? 'patient' : 'staff');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -157,7 +157,13 @@ const SignupPage: React.FC = () => {
         navigate('/dashboard');
       }
     }
-  }, [user, navigate]);
+
+    if (portal === 'patient') {
+      setActiveTab('patient');
+    } else if (portal === 'staff') {
+      setActiveTab('staff');
+    }
+  }, [user, navigate, portal]);
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<SignupValues>({
     resolver: zodResolver(signupSchema),
@@ -314,7 +320,7 @@ const SignupPage: React.FC = () => {
           <ModeToggle />
         </div>
 
-        <div className="w-full max-w-md space-y-8 py-8">
+        <div className="w-full max-w-md space-y-8 py-8 animate-in fade-in slide-in-from-right-8 duration-500">
           <div className="text-center lg:text-left space-y-2">
              <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
@@ -323,388 +329,396 @@ const SignupPage: React.FC = () => {
                     <Activity className="w-12 h-12 text-primary" />
                  )}
              </Link>
-             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">Join Us</h1>
-             <p className="text-muted-foreground font-medium">Create your {activeTab === 'staff' ? 'Clinic Staff' : 'Patient'} account.</p>
+             <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
+                {activeTab === 'staff' ? 'Staff Registration' : 'Patient Setup'}
+             </h1>
+             <p className="text-muted-foreground font-medium">
+                {activeTab === 'staff' ? 'Join the clinical workforce.' : 'Access your medical records securely.'}
+             </p>
           </div>
 
-          <Tabs 
-            value={activeTab} 
-            onValueChange={(v) => setActiveTab(v as 'staff' | 'patient')} 
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1.5 rounded-2xl h-16 border-2">
-              <TabsTrigger value="staff" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Staff Signup</TabsTrigger>
-              <TabsTrigger value="patient" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Patient Setup</TabsTrigger>
-            </TabsList>
-
-            <TabsContent value="staff">
-              {!isStaffSignupEnabled && !checkingStatus ? (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-center text-center gap-4">
-                    <div className="bg-destructive/20 p-4 rounded-full">
-                      <ShieldCheck className="w-10 h-10 text-destructive" />
+          <div className="w-full">
+            {activeTab === 'staff' ? (
+              <div className="space-y-4">
+                {!isStaffSignupEnabled && !checkingStatus ? (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-center text-center gap-4">
+                      <div className="bg-destructive/20 p-4 rounded-full">
+                        <ShieldCheck className="w-10 h-10 text-destructive" />
+                      </div>
+                      <div className="space-y-2">
+                        <h3 className="text-xl font-black text-destructive uppercase tracking-tight">Registration Locked</h3>
+                        <p className="text-sm font-medium text-muted-foreground leading-relaxed">
+                          Staff account registration is currently disabled by the system administrator. 
+                          Please contact the IT department or your supervisor for access.
+                        </p>
+                      </div>
+                      <Button 
+                        variant="outline" 
+                        className="w-full h-12 rounded-xl font-black uppercase tracking-widest border-2 hover:bg-muted"
+                        onClick={() => navigate('/login')}
+                      >
+                        Return to Login
+                      </Button>
                     </div>
+                  </div>
+                ) : (
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    {error && (
+                      <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
+                        <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
+                        {error}
+                      </div>
+                    )}
+                  
+                  <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <h3 className="text-xl font-black text-destructive uppercase tracking-tight">Registration Locked</h3>
-                      <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-                        Staff account registration is currently disabled by the system administrator. 
-                        Please contact the IT department or your supervisor for access.
-                      </p>
-                    </div>
-                    <Button 
-                      variant="outline" 
-                      className="w-full h-12 rounded-xl font-black uppercase tracking-widest border-2 hover:bg-muted"
-                      onClick={() => navigate('/login?portal=staff')}
-                    >
-                      Return to Login
-                    </Button>
-                  </div>
-                </div>
-              ) : (
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-                  {error && (
-                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                      {error}
-                    </div>
-                  )}
-                
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">First Name</Label>
-                    <div className="relative group">
-                      <Input placeholder="John" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('first_name')} disabled={loading} />
-                      <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Last Name</Label>
-                    <div className="relative group">
-                      <Input placeholder="Doe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('last_name')} disabled={loading} />
-                      <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Username</Label>
-                  <div className="relative group">
-                    <Input placeholder="johndoe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('username')} disabled={loading} />
-                    <AtSign className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone</Label>
-                    <div className="relative group">
-                      <Input placeholder="080..." className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('phone')} disabled={loading} />
-                      <Phone className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email</Label>
-                    <div className="relative group">
-                      <Input type="email" placeholder="john@email.com" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('email')} disabled={loading} />
-                      <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
-                    <div className="relative group">
-                      <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
-                      <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                      <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
-                    </div>
-                    <PasswordStrength password={password} />
-                  </div>
-                  <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
-                    <div className="relative group">
-                      <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
-                      <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                    </div>
-                  </div>
-                </div>
-
-                  <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Account'}
-                  </Button>
-                </form>
-              )}
-            </TabsContent>
-
-            <TabsContent value="patient">
-              {patientStep === 'search' ? (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <div className="bg-primary/5 border-2 border-primary/10 p-5 rounded-2xl flex items-start gap-4">
-                    <div className="bg-primary/20 p-2.5 rounded-xl">
-                      <Search className="w-6 h-6 text-primary" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-black uppercase tracking-tight">Record Finder</h4>
-                      <p className="text-[11px] text-muted-foreground font-medium leading-relaxed mt-1">Provide your clinic-issued Staff ID to claim your patient profile.</p>
-                    </div>
-                  </div>
-
-                  <form onSubmit={handlePatientSearch} className="space-y-4">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID Number</Label>
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">First Name</Label>
                       <div className="relative group">
-                        <Input 
-                          placeholder="e.g. 123456" 
-                          className="h-16 pl-14 text-2xl font-black rounded-2xl border-2 focus:border-primary transition-all bg-muted/20" 
-                          value={patientStaffId}
-                          onChange={(e) => setPatientStaffId(e.target.value.replace(/\D/g, ''))}
-                          inputMode="numeric"
-                        />
-                        <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <Input placeholder="John" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('first_name')} disabled={loading} />
+                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
-                    
-                    <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" disabled={searchLoading}>
-                      {searchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find My Records'}
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Last Name</Label>
+                      <div className="relative group">
+                        <Input placeholder="Doe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('last_name')} disabled={loading} />
+                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Username</Label>
+                    <div className="relative group">
+                      <Input placeholder="johndoe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('username')} disabled={loading} />
+                      <AtSign className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone</Label>
+                      <div className="relative group">
+                        <Input placeholder="080..." className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('phone')} disabled={loading} />
+                        <Phone className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email</Label>
+                      <div className="relative group">
+                        <Input type="email" placeholder="john@email.com" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('email')} disabled={loading} />
+                        <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                      <div className="relative group">
+                        <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
+                        <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+                      </div>
+                      <PasswordStrength password={password} />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                      <div className="relative group">
+                        <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
+                        <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                      </div>
+                    </div>
+                  </div>
+
+                    <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Staff Account'}
                     </Button>
                   </form>
-
-                  {existingUser && (
-                    <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-2">
-                       <Card className="border-2 border-rose-500/20 bg-rose-500/5 rounded-2xl">
-                         <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                            <ShieldCheck className="w-8 h-8 text-rose-500" />
-                            <div className="space-y-1">
-                                <h4 className="text-sm font-black">Account Exists</h4>
-                                <p className="text-[10px] font-medium text-muted-foreground">You already have an account registered with this Staff ID.</p>
-                            </div>
-                            <Button onClick={() => navigate('/login?portal=patient')} className="w-full h-10 rounded-xl font-black text-xs uppercase tracking-widest">Sign In Now</Button>
-                         </CardContent>
-                       </Card>
-                    </motion.div>
-                  )}
-                </div>
-              ) : patientStep === 'claim' ? (
-                <form onSubmit={handlePatientClaim} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
-                  <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl overflow-hidden">
-                    <div className="p-4 flex items-center justify-between border-b border-primary/10">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center font-black text-primary uppercase">
-                          {patientData?.first_name?.[0]}{patientData?.last_name?.[0]}
-                        </div>
-                        <div>
-                          <p className="text-sm font-black leading-none">{patientData?.first_name} {patientData?.middle_name ? patientData.middle_name + ' ' : ''}{patientData?.last_name}</p>
-                          <p className="text-[10px] text-muted-foreground font-bold mt-1">Record Found • {patientData?.staff_id}</p>
-                        </div>
+                )}
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {patientStep === 'search' ? (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <div className="bg-primary/5 border-2 border-primary/10 p-5 rounded-2xl flex items-start gap-4">
+                      <div className="bg-primary/20 p-2.5 rounded-xl">
+                        <Search className="w-6 h-6 text-primary" />
                       </div>
-                      <Badge className="bg-primary text-white font-black text-[10px]">{patientData?.section || 'DCP'}</Badge>
-                    </div>
-
-                    <div className="p-4 grid grid-cols-2 gap-4 bg-muted/10 border-t border-primary/5">
-                      <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Building2 className="w-3 h-3" />
-                            <Label className="text-[9px] font-black uppercase tracking-widest">Department</Label>
-                          </div>
-                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.department || 'N/A'}</p>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <User className="w-3 h-3" />
-                            <Label className="text-[9px] font-black uppercase tracking-widest">Gender</Label>
-                          </div>
-                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.gender || 'N/A'}</p>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <Calendar className="w-3 h-3" />
-                            <Label className="text-[9px] font-black uppercase tracking-widest">Date of Birth</Label>
-                          </div>
-                          <p className="text-xs font-black text-foreground pl-4.5">{patientData?.dob || 'N/A'}</p>
-                      </div>
-
-                      <div className="flex flex-col gap-1.5">
-                          <div className="flex items-center gap-1.5 text-muted-foreground">
-                            <ShieldCheck className="w-3 h-3" />
-                            <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
-                          </div>
-                          <div className="pl-4.5 flex items-center gap-1.5">
-                             <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
-                             <span className="text-xs font-black text-primary uppercase tracking-tight">Verified</span>
-                          </div>
+                      <div>
+                        <h4 className="text-sm font-black uppercase tracking-tight">Record Finder</h4>
+                        <p className="text-[11px] text-muted-foreground font-medium leading-relaxed mt-1">Provide your clinic-issued Staff ID to claim your patient profile.</p>
                       </div>
                     </div>
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Phone</Label>
-                          <div className="relative group">
-                            <Input value={claimData.phone} onChange={e => setClaimData({...claimData, phone: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20 font-bold" />
-                            <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                          </div>
-                       </div>
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Email Address</Label>
-                          <div className="relative group">
-                            <Input type="email" value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                            <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                          </div>
-                       </div>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Create Password</Label>
-                          <div className="relative group">
-                            <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                            <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                            <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                       </div>
-                       <div className="space-y-2">
-                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
-                          <div className="relative group">
-                            <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                            <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
-                            <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                              {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-                            </button>
-                          </div>
-                       </div>
-                    </div>
-
-                    {/* Password Strength & Match Indicators */}
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
-                       <div className="space-y-2">
-                          <PasswordStrength password={claimData.password} />
-                       </div>
-                       <div className="space-y-2">
-                          {(claimData.password || claimData.confirm_password) && (
-                            <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
-                              claimData.password === claimData.confirm_password && claimData.password.length > 0
-                                ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
-                                : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
-                            }`}>
-                              {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
-                                <><CheckCircle2 className="w-4 h-4" /> Passwords Match</>
-                              ) : (
-                                <><X className="w-4 h-4" /> Passwords Do Not Match</>
-                              )}
-                            </div>
-                          )}
-                       </div>
-                    </div>
-                  </div>
-
-                  <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Claim Account'}
-                  </Button>
-                  
-                  <button type="button" onClick={() => {setPatientStep('search'); setPatientStaffId('');}} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
-                    ← Back to Search
-                  </button>
-                </form>
-              ) : (
-                <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                  <AnimatePresence mode="wait">
-                    {!verifySuccess ? (
-                      <motion.form
-                        key="verify-form"
-                        initial={{ opacity: 1 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
-                        onSubmit={handlePatientVerify}
-                        className="space-y-6"
-                      >
-                        <div className="text-center space-y-2">
-                           <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
-                             <Mail className="w-8 h-8" />
-                           </div>
-                           <h3 className="text-xl font-black tracking-tight">Check Your Email</h3>
-                           <p className="text-sm text-muted-foreground font-medium">
-                             We sent a 6-digit code to <br/>
-                             <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
-                           </p>
-                        </div>
-
-                        <div className="space-y-4">
-                          <Input
-                            type="text"
+                    <form onSubmit={handlePatientSearch} className="space-y-4">
+                      <div className="space-y-2">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID Number</Label>
+                        <div className="relative group">
+                          <Input 
+                            placeholder="e.g. 123456" 
+                            className="h-16 pl-14 text-2xl font-black rounded-2xl border-2 focus:border-primary transition-all bg-muted/20" 
+                            value={patientStaffId}
+                            onChange={(e) => setPatientStaffId(e.target.value.replace(/\D/g, ''))}
                             inputMode="numeric"
-                            placeholder="000000"
-                            className="h-20 text-center text-4xl font-black tracking-[1.2rem] border-4 focus:border-primary rounded-2xl bg-muted/20"
-                            value={otp}
-                            onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
-                            maxLength={6}
-                            autoFocus
                           />
-                          
-                          <Button 
-                            type="submit"
-                            className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-                            disabled={verifyLoading || otp.length < 6}
-                          >
-                            {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Finish'}
-                          </Button>
+                          <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
+                      </div>
+                      
+                      <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" disabled={searchLoading}>
+                        {searchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find My Records'}
+                      </Button>
+                    </form>
 
-                        <div className="flex flex-col items-center gap-4 pt-2">
-                          <Button 
-                            variant="link" 
-                            type="button"
-                            className="text-primary font-black uppercase tracking-widest text-[10px] h-auto p-0"
-                            disabled={!canResendOtp || resendingOtp}
-                            onClick={handleResendOTP}
-                          >
-                            {resendingOtp ? 'Sending...' : canResendOtp ? 'Resend New Code' : `Resend available in ${otpTimer}s`}
-                          </Button>
-
-                          <button 
-                            type="button" 
-                            onClick={() => setPatientStep('claim')} 
-                            className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
-                          >
-                             <ArrowLeft className="w-3 h-3" /> Change Profile Email / Password
-                          </button>
-                        </div>
-                      </motion.form>
-                    ) : (
-                      <motion.div
-                        key="success"
-                        initial={{ opacity: 0, scale: 0.5 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center py-10 space-y-6"
-                      >
-                        <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
-                          <CheckCircle2 className="w-14 h-14" />
-                        </div>
-                        <div className="text-center space-y-2">
-                          <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
-                          <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-primary/30">
-                             Claim successful. Syncing your medical <br/> records to your personal dashboard...
-                          </p>
-                        </div>
+                    {existingUser && (
+                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-2">
+                         <Card className="border-2 border-rose-500/20 bg-rose-500/5 rounded-2xl">
+                           <CardContent className="p-4 flex flex-col items-center text-center gap-3">
+                              <ShieldCheck className="w-8 h-8 text-rose-500" />
+                              <div className="space-y-1">
+                                  <h4 className="text-sm font-black">Account Exists</h4>
+                                  <p className="text-[10px] font-medium text-muted-foreground">You already have an account registered with this Staff ID.</p>
+                              </div>
+                              <Button onClick={() => navigate('/login?portal=patient')} className="w-full h-10 rounded-xl font-black text-xs uppercase tracking-widest">Sign In Now</Button>
+                           </CardContent>
+                         </Card>
                       </motion.div>
                     )}
-                  </AnimatePresence>
-                </div>
-              )}
-            </TabsContent>
-          </Tabs>
+                  </div>
+                ) : patientStep === 'claim' ? (
+                  <form onSubmit={handlePatientClaim} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                    <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl overflow-hidden">
+                      <div className="p-4 flex items-center justify-between border-b border-primary/10">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center font-black text-primary uppercase">
+                            {patientData?.first_name?.[0]}{patientData?.last_name?.[0]}
+                          </div>
+                          <div>
+                            <p className="text-sm font-black leading-none">{patientData?.first_name} {patientData?.middle_name ? patientData.middle_name + ' ' : ''}{patientData?.last_name}</p>
+                            <p className="text-[10px] text-muted-foreground font-bold mt-1">Record Found • {patientData?.staff_id}</p>
+                          </div>
+                        </div>
+                        <Badge className="bg-primary text-white font-black text-[10px]">{patientData?.section || 'DCP'}</Badge>
+                      </div>
 
-          <p className="text-center text-[11px] text-muted-foreground font-bold">
-            Already have an account?{' '}
-            <Link to={`/login?portal=${activeTab}`} className="text-primary hover:underline transition-all">Sign In</Link>
-          </p>
+                      <div className="p-4 grid grid-cols-2 gap-4 bg-muted/10 border-t border-primary/5">
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Building2 className="w-3 h-3" />
+                              <Label className="text-[9px] font-black uppercase tracking-widest">Department</Label>
+                            </div>
+                            <p className="text-xs font-black text-foreground pl-4.5">{patientData?.department || 'N/A'}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <User className="w-3 h-3" />
+                              <Label className="text-[9px] font-black uppercase tracking-widest">Gender</Label>
+                            </div>
+                            <p className="text-xs font-black text-foreground pl-4.5">{patientData?.gender || 'N/A'}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <Calendar className="w-3 h-3" />
+                              <Label className="text-[9px] font-black uppercase tracking-widest">Date of Birth</Label>
+                            </div>
+                            <p className="text-xs font-black text-foreground pl-4.5">{patientData?.dob || 'N/A'}</p>
+                        </div>
+
+                        <div className="flex flex-col gap-1.5">
+                            <div className="flex items-center gap-1.5 text-muted-foreground">
+                              <ShieldCheck className="w-3 h-3" />
+                              <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
+                            </div>
+                            <div className="pl-4.5 flex items-center gap-1.5">
+                               <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                               <span className="text-xs font-black text-primary uppercase tracking-tight">Verified</span>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Phone</Label>
+                            <div className="relative group">
+                              <Input value={claimData.phone} onChange={e => setClaimData({...claimData, phone: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20 font-bold" />
+                              <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                            </div>
+                         </div>
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Email Address</Label>
+                            <div className="relative group">
+                              <Input type="email" value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
+                              <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                            </div>
+                         </div>
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Create Password</Label>
+                            <div className="relative group">
+                              <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
+                              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground">
+                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                         </div>
+                         <div className="space-y-2">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                            <div className="relative group">
+                              <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
+                              <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground">
+                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                              </button>
+                            </div>
+                         </div>
+                      </div>
+
+                      {/* Password Strength & Match Indicators */}
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                         <div className="space-y-2">
+                            <PasswordStrength password={claimData.password} />
+                         </div>
+                         <div className="space-y-2">
+                            {(claimData.password || claimData.confirm_password) && (
+                              <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
+                                claimData.password === claimData.confirm_password && claimData.password.length > 0
+                                  ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
+                                  : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
+                              }`}>
+                                {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
+                                  <><CheckCircle2 className="w-4 h-4" /> Passwords Match</>
+                                ) : (
+                                  <><X className="w-4 h-4" /> Passwords Do Not Match</>
+                                )}
+                              </div>
+                            )}
+                         </div>
+                      </div>
+                    </div>
+
+                    <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" disabled={loading}>
+                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Claim Account'}
+                    </Button>
+                    
+                    <button type="button" onClick={() => {setPatientStep('search'); setPatientStaffId('');}} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
+                      ← Back to Search
+                    </button>
+                  </form>
+                ) : (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <AnimatePresence mode="wait">
+                      {!verifySuccess ? (
+                        <motion.form
+                          key="verify-form"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          onSubmit={handlePatientVerify}
+                          className="space-y-6"
+                        >
+                          <div className="text-center space-y-2">
+                             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
+                               <Mail className="w-8 h-8" />
+                             </div>
+                             <h3 className="text-xl font-black tracking-tight">Check Your Email</h3>
+                             <p className="text-sm text-muted-foreground font-medium">
+                               We sent a 6-digit code to <br/>
+                               <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
+                             </p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <Input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="000000"
+                              className="h-20 text-center text-4xl font-black tracking-[1.2rem] border-4 focus:border-primary rounded-2xl bg-muted/20"
+                              value={otp}
+                              onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                              maxLength={6}
+                              autoFocus
+                            />
+                            
+                            <Button 
+                              type="submit"
+                              className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                              disabled={verifyLoading || otp.length < 6}
+                            >
+                              {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Finish'}
+                            </Button>
+                          </div>
+
+                          <div className="flex flex-col items-center gap-4 pt-2">
+                            <Button 
+                              variant="link" 
+                              type="button"
+                              className="text-primary font-black uppercase tracking-widest text-[10px] h-auto p-0"
+                              disabled={!canResendOtp || resendingOtp}
+                              onClick={handleResendOTP}
+                            >
+                              {resendingOtp ? 'Sending...' : canResendOtp ? 'Resend New Code' : `Resend available in ${otpTimer}s`}
+                            </Button>
+
+                            <button 
+                              type="button" 
+                              onClick={() => setPatientStep('claim')} 
+                              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                            >
+                               <ArrowLeft className="w-3 h-3" /> Change Profile Email / Password
+                            </button>
+                          </div>
+                        </motion.form>
+                      ) : (
+                        <motion.div
+                          key="success"
+                          initial={{ opacity: 0, scale: 0.5 }}
+                          animate={{ opacity: 1, scale: 1 }}
+                          className="flex flex-col items-center py-10 space-y-6"
+                        >
+                          <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
+                            <CheckCircle2 className="w-14 h-14" />
+                          </div>
+                          <div className="text-center space-y-2">
+                            <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
+                            <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-primary/30">
+                               Claim successful. Syncing your medical <br/> records to your personal dashboard...
+                            </p>
+                          </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <Link to="/login" className="block group w-full">
+            <Card className="border-2 border-primary/10 hover:border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all shadow-sm group-hover:shadow-md">
+              <CardContent className="p-4 flex items-center justify-between">
+                <div className="flex items-center gap-4">
+                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                    <ArrowLeft className="w-5 h-5" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest mb-0.5">Already have an account?</p>
+                    <p className="text-sm font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Back to Login</p>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </Link>
         </div>
 
-        <div className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30 py-8">
+        <div className="absolute bottom-8 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">
           © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
         </div>
       </div>

@@ -110,7 +110,7 @@ const PatientManageAccountPage = () => {
 
   return (
     <PatientLayout>
-      <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in duration-700 pb-20">
+      <div className="space-y-5 animate-in fade-in duration-700 pb-20">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}

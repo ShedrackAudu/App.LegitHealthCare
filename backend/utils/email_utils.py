@@ -321,7 +321,7 @@ class EmailService:
         
         # Determine Login URL
         base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
-        login_url = f"{base_url}/login?portal={portal_type}"
+        login_url = f"{base_url}/login"
         
         return f"""
         <!DOCTYPE html>
@@ -404,7 +404,7 @@ class EmailService:
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
         
         # Ensure login URL is correct
-        login_url = f"{app_url.rstrip('/')}/login?portal=patient"
+        login_url = f"{app_url.rstrip('/')}/login"
         
         return f"""
         <!DOCTYPE html>

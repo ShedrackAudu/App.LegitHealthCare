@@ -24,8 +24,12 @@ import {
   Smartphone,
   X,
   Package,
-  Calendar
+  Calendar,
+  FileText,
+  Bot,
+  Palette
 } from 'lucide-react';
+import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -61,15 +65,7 @@ const quickActions = [
     permission: 'consultation'
   },
   { 
-    title: 'Appointments', 
-    description: 'Manage clinic schedule and patient bookings.',
-    icon: Calendar, 
-    path: '/appointments',
-    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
-    permission: 'manage_appointments'
-  },
-  { 
-    title: 'Lab Test Results', 
+    title: 'Test Results', 
     description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
     icon: FlaskConical, 
     path: '/tests',
@@ -85,7 +81,7 @@ const quickActions = [
     permission: 'director_review'
   },
   { 
-    title: 'Patient Reports', 
+    title: 'Patient Report', 
     description: 'Generate and export individual patient reports.',
     icon: User, 
     path: '/patient-report',
@@ -93,7 +89,7 @@ const quickActions = [
     permission: 'view_records'
   },
   { 
-    title: 'Clinical Records', 
+    title: 'Screening Matrix', 
     description: 'Search and review detailed clinical findings.',
     icon: Database, 
     path: '/view-records',
@@ -109,12 +105,12 @@ const quickActions = [
     permission: 'view_patients'
   },
   { 
-    title: 'Secure Messaging', 
-    description: 'Internal communication & staff coordination.',
-    icon: Activity, 
-    path: '/messages',
-    color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
-    permission: 'messaging'
+    title: 'Appointments', 
+    description: 'Manage clinic schedule and patient bookings.',
+    icon: Calendar, 
+    path: '/appointments',
+    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    permission: 'manage_appointments'
   },
   { 
     title: 'Inventory', 
@@ -124,16 +120,24 @@ const quickActions = [
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     permission: 'view_inventory'
   },
+  { 
+    title: 'Messaging', 
+    description: 'Internal communication & staff coordination.',
+    icon: Activity, 
+    path: '/messages',
+    color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+    permission: 'messaging'
+  },
 ];
 
 const adminActions = [
   { 
-    title: 'System Settings', 
-    description: 'Manage clinical departments and system configurations.',
-    icon: Settings2, 
-    path: '/system-config',
-    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
-    permission: 'manage_departments'
+    title: 'Security Center', 
+    description: 'Monitor system-wide activity and security analytics.',
+    icon: Activity, 
+    path: '/security-analytics',
+    color: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+    permission: 'manage_roles'
   },
   { 
     title: 'User Management', 
@@ -144,7 +148,7 @@ const adminActions = [
     permission: 'view_users'
   },
   { 
-    title: 'Role & Permissions', 
+    title: 'Role Configuration', 
     description: 'Configure access control and role assignments.',
     icon: ShieldCheck, 
     path: '/roles-permissions',
@@ -152,9 +156,9 @@ const adminActions = [
     permission: 'manage_roles'
   },
   { 
-    title: 'System Audit Logs', 
+    title: 'Audit Trails', 
     description: 'Monitor system-wide activity and security events.',
-    icon: History, 
+    icon: FileText, 
     path: '/audit-logs',
     color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
     permission: 'view_audit_logs'
@@ -168,28 +172,36 @@ const adminActions = [
     permission: 'download_data'
   },
   { 
-    title: 'Branding & Assets', 
-    description: 'Customize clinic logos, names, and visual assets.',
-    icon: User, 
-    path: '/system-branding',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
-    permission: 'manage_branding'
-  },
-  { 
-    title: 'AI Integration', 
-    description: 'Configure AI agents and medical parameters.',
-    icon: Activity, 
-    path: '/ai-integration',
-    color: 'bg-primary/10 text-primary border-primary/20',
-    permission: 'manage_ai'
-  },
-  { 
     title: 'Access Keys', 
     description: 'Generate temporary security entrance codes.',
     icon: Key, 
     path: '/admin/access-keys',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_access_keys'
+  },
+  { 
+    title: 'AI Integration', 
+    description: 'Configure AI agents and medical parameters.',
+    icon: Bot, 
+    path: '/ai-integration',
+    color: 'bg-primary/10 text-primary border-primary/20',
+    permission: 'manage_ai'
+  },
+  { 
+    title: 'System Branding', 
+    description: 'Customize clinic logos, names, and visual assets.',
+    icon: Palette, 
+    path: '/system-branding',
+    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    permission: 'manage_branding'
+  },
+  { 
+    title: 'System Settings', 
+    description: 'Manage clinical departments and system configurations.',
+    icon: Settings2, 
+    path: '/system-config',
+    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    permission: 'manage_departments'
   },
 ];
 
@@ -408,31 +420,31 @@ const Dashboard: React.FC = () => {
             <div className="h-px flex-1 bg-border" />
           </div>
           
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
             {quickActions.map((action) => {
               // Visible to everyone, access handled by ProtectedRoute
               return (
                 <Card 
                   key={action.path}
-                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm"
+                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm flex flex-col h-full"
                   onClick={() => navigate(action.path)}
                 >
-                  <CardHeader className="p-4 pb-2 flex flex-row items-center gap-4 space-y-0">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
-                      <action.icon className="w-5 h-5" />
+                  <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
+                      <action.icon className="w-4.5 h-4.5" />
                     </div>
-                    <div>
-                      <CardTitle className="text-base font-black tracking-tight">{action.title}</CardTitle>
-                      <CardDescription className="text-[11px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
+                    <div className="min-w-0">
+                      <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
+                      <CardDescription className="text-[10px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
                         {action.description}
                       </CardDescription>
                     </div>
                   </CardHeader>
-                  <CardContent className="p-4 pt-0">
-                    <Button variant="ghost" className="mt-2 w-full justify-between p-0 px-2 group-hover:text-primary transition-colors h-7 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/10">
-                      <span className="text-[10px] uppercase font-black tracking-widest">Open Tool</span>
-                      <ChevronRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-                    </Button>
+                  <CardContent className="p-3.5 pt-0 mt-auto">
+                    <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
+                      <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
+                      <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                    </div>
                   </CardContent>
                 </Card>
               );
@@ -455,29 +467,29 @@ const Dashboard: React.FC = () => {
                 <div className="h-px flex-1 bg-primary/20" />
               </div>
               
-              <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
                 {filteredAdminActions.map((action) => (
                   <Card 
                     key={action.path}
-                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm shadow-inner"
+                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm shadow-inner flex flex-col h-full"
                     onClick={() => navigate(action.path)}
                   >
-                    <CardHeader className="p-4 pb-2 flex flex-row items-center gap-4 space-y-0">
-                      <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
-                        <action.icon className="w-5 h-5" />
+                    <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
+                        <action.icon className="w-4.5 h-4.5" />
                       </div>
-                      <div>
-                        <CardTitle className="text-base font-black tracking-tight">{action.title}</CardTitle>
-                        <CardDescription className="text-[11px] font-medium text-muted-foreground line-clamp-1 mt-0.5 italic">
+                      <div className="min-w-0">
+                        <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
+                        <CardDescription className="text-[10px] font-medium text-muted-foreground line-clamp-1 mt-0.5 italic">
                           {action.description}
                         </CardDescription>
                       </div>
                     </CardHeader>
-                    <CardContent className="p-4 pt-0">
-                      <Button variant="ghost" className="mt-2 w-full justify-between p-0 px-2 group-hover:text-primary transition-colors h-7 hover:bg-primary/5 rounded-lg border border-transparent hover:border-primary/10">
-                        <span className="text-[10px] uppercase font-black tracking-widest">Open Tool</span>
-                        <ChevronRight className="w-3 h-3 transition-transform duration-300 group-hover:translate-x-1" />
-                      </Button>
+                    <CardContent className="p-3.5 pt-0 mt-auto">
+                      <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
+                        <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
+                        <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                      </div>
                     </CardContent>
                   </Card>
                 ))}
@@ -543,29 +555,97 @@ const Dashboard: React.FC = () => {
                     <CardDescription>Performance Overview for {activeSection} - {activeYear}</CardDescription>
                 </CardHeader>
                 <CardContent className="p-6 pt-4 border-t border-dashed bg-muted/5">
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                        {[
-                            { label: 'Total Registered', count: stats?.registration_stats?.total_comprehensive, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                            { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' },
-                            { label: 'Male Patients', count: stats?.registration_stats?.males, icon: User, color: 'text-indigo-600', bg: 'bg-indigo-500/10' },
-                            { label: 'Female Patients', count: stats?.registration_stats?.females, icon: User, color: 'text-rose-600', bg: 'bg-rose-500/10' },
-                            { label: 'Age 40 & Above', count: stats?.registration_stats?.age_40_above, icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-500/10' },
-                            { label: 'Age Below 40', count: stats?.registration_stats?.age_below_40, icon: Activity, color: 'text-amber-600', bg: 'bg-amber-500/10' },
-                        ].map((s) => (
-                            <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 border-transparent hover:border-primary/10 transition-all shadow-sm group/stat cursor-default overflow-hidden relative">
-                                <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
-                                <div className="flex items-center gap-2 mb-2 relative z-10">
-                                    <div className={`p-1.5 rounded-lg ${s.bg}`}>
-                                        <s.icon className={`h-4 w-4 ${s.color}`} />
+                    <div className="space-y-6">
+                        {/* Summary Metrics */}
+                        <div className="grid grid-cols-2 gap-4">
+                            {[
+                                { label: 'Total Registered', count: stats?.registration_stats?.total_comprehensive, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                                { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' }
+                            ].map((s) => (
+                                <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 border-transparent hover:border-primary/10 transition-all shadow-sm group/stat cursor-default overflow-hidden relative">
+                                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
+                                    <div className="flex items-center gap-2 mb-2 relative z-10">
+                                        <div className={`p-1.5 rounded-lg ${s.bg}`}>
+                                            <s.icon className={`h-4 w-4 ${s.color}`} />
+                                        </div>
+                                        <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
                                     </div>
-                                    <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
+                                    <div className="flex items-baseline gap-1 relative z-10">
+                                        <h4 className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{s.count?.toLocaleString() || '0'}</h4>
+                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Records</span>
+                                    </div>
                                 </div>
-                                <div className="flex items-baseline gap-1 relative z-10">
-                                    <h4 className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{s.count?.toLocaleString() || '0'}</h4>
-                                    <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Records</span>
+                            ))}
+                        </div>
+
+                        {/* Charts */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {/* Gender Distribution Chart */}
+                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 shadow-sm flex flex-col items-center">
+                                <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
+                                <div className="h-[140px] w-full mt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <PieChart>
+                                            <Pie
+                                                data={[
+                                                    { name: 'Male Patients', value: stats?.registration_stats?.males || 0 },
+                                                    { name: 'Female Patients', value: stats?.registration_stats?.females || 0 }
+                                                ]}
+                                                cx="40%"
+                                                cy="50%"
+                                                innerRadius={45}
+                                                outerRadius={65}
+                                                paddingAngle={5}
+                                                dataKey="value"
+                                                stroke="none"
+                                            >
+                                                <Cell fill="#4f46e5" /> {/* Indigo for Males */}
+                                                <Cell fill="#e11d48" /> {/* Rose for Females */}
+                                            </Pie>
+                                            <Tooltip 
+                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                            />
+                                            <Legend 
+                                                layout="vertical" 
+                                                verticalAlign="middle" 
+                                                align="right" 
+                                                iconType="circle" 
+                                                wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', lineHeight: '24px', right: '5%' }}
+                                            />
+                                        </PieChart>
+                                    </ResponsiveContainer>
                                 </div>
                             </div>
-                        ))}
+
+                            {/* Age Distribution Chart */}
+                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 shadow-sm flex flex-col items-center">
+                                <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Age Demographics</h4>
+                                <div className="h-[140px] w-full mt-2">
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={[
+                                                { name: 'Below 40', value: stats?.registration_stats?.age_below_40 || 0 },
+                                                { name: '40 & Above', value: stats?.registration_stats?.age_40_above || 0 }
+                                            ]}
+                                            margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                                        >
+                                            <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
+                                            <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
+                                            <Tooltip 
+                                                cursor={{ fill: 'var(--primary)', opacity: 0.1 }}
+                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                            />
+                                            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                                                <Cell fill="#d97706" /> {/* Amber */}
+                                                <Cell fill="#9333ea" /> {/* Purple */}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                </div>
+                            </div>
+                        </div>
                     </div>
                 </CardContent>
             </Card>

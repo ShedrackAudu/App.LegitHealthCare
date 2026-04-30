@@ -17,7 +17,7 @@ import { useAppContext } from '@/context/AppContext';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 
 const loginSchema = z.object({
-  identity: z.string().min(3, 'Username, Email, or Phone must be at least 3 characters'),
+  identity: z.string().min(3, 'Staff ID, Username, Email or Phone must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -36,7 +36,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { user, setUser, branding } = useAppContext();
 
-  const [activePortal, setActivePortal] = useState<'staff' | 'patient'>(initialPortal === 'patient' ? 'patient' : 'staff');
+  const [portal, setPortal] = useState<'staff' | 'patient' | 'auto'>('auto');
 
   // Forgot Password State
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -55,11 +55,9 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
-    const portal = searchParams.get('portal');
-    if (portal === 'patient') {
-      setActivePortal('patient');
-    } else if (portal === 'staff') {
-      setActivePortal('staff');
+    const portalParam = searchParams.get('portal');
+    if (portalParam === 'patient' || portalParam === 'staff') {
+      setPortal(portalParam);
     }
 
     if (searchParams.get('forgot') === 'true') {
@@ -88,12 +86,15 @@ const LoginPage = () => {
     try {
       const response = await axios.post('/login', {
         ...data,
-        portal: activePortal
+        portal: portal
       });
       
+      const detectedPortal = response.data.portal;
+
       if (response.data.requires_2fa) {
           setRequires2FA(true);
           setTempUserId(response.data.user_id);
+          setPortal(detectedPortal);
           return;
       }
       
@@ -111,7 +112,7 @@ const LoginPage = () => {
 
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+      const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
         if (err.response?.status === 403) {
@@ -158,9 +159,10 @@ const LoginPage = () => {
         const resp = await axios.post('/login/2fa', {
             user_id: tempUserId,
             code: totpCode,
-            portal: activePortal
+            portal: portal
         });
         
+        const detectedPortal = resp.data.portal;
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
         if (resp.data.token) {
@@ -174,7 +176,7 @@ const LoginPage = () => {
             return;
         }
 
-        const target = resp.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+        const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
         navigate(target);
     } catch (err: any) {
         setError(err.response?.data?.error || "Invalid 2FA code");
@@ -191,9 +193,12 @@ const LoginPage = () => {
     try {
         const resp = await axios.post('/forgot-password', { 
             identity: identifier,
-            portal: activePortal
+            portal: portal
         });
         setFpUserId(resp.data.user_id);
+        if (resp.data.portal) {
+            setPortal(resp.data.portal);
+        }
         toast.success(resp.data.message);
         setForgotPasswordStep('verify');
     } catch (err: any) {
@@ -212,7 +217,7 @@ const LoginPage = () => {
         await axios.post('/forgot-password/verify', { 
             user_id: fpUserId, 
             otp,
-            portal: activePortal
+            portal: portal
         });
         toast.success("OTP Verified Successfully");
         setForgotPasswordStep('reset');
@@ -252,7 +257,7 @@ const LoginPage = () => {
             user_id: fpUserId, 
             otp: otp,
             password: resetPassword,
-            portal: activePortal
+            portal: portal
         });
         toast.success("Password Reset Successful! You can now log in.");
         setIsForgotPassword(false);
@@ -349,7 +354,7 @@ const LoginPage = () => {
                 isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Password Reset' : 
                   forgotPasswordStep === 'verify' ? 'Verify Identity' : 'New Password'
-               ) : 'Login'}
+               ) : 'Sign In'}
              </h1>
              <p className="text-muted-foreground font-medium">
                {isForceReset ? 'Protect your account with a new password.' :
@@ -410,17 +415,7 @@ const LoginPage = () => {
                </form>
             </div>
           ) : !isForgotPassword ? (
-            <Tabs 
-              value={activePortal} 
-              onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1.5 rounded-2xl h-16 border-2">
-                <TabsTrigger value="staff" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Clinical Staff</TabsTrigger>
-                <TabsTrigger value="patient" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Patient Portal</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="staff">
+            <div className="space-y-6">
                 <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
                   {error && (
                     <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
@@ -432,16 +427,16 @@ const LoginPage = () => {
                   {!requires2FA ? (
                     <>
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email or Username</Label>
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                         <div className="relative group">
                           <Input 
                               id="identity" 
-                              placeholder="Enter your credentials" 
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              placeholder="Staff ID, Username, Email or Phone" 
+                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                               {...register('identity')} 
                               disabled={loading} 
                           />
-                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <User className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                         {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
                       </div>
@@ -455,15 +450,15 @@ const LoginPage = () => {
                               id="password" 
                               type={showPassword ? "text" : "password"} 
                               placeholder="••••••••"
-                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                               {...register('password')} 
                               disabled={loading} 
                           />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <Lock className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                            className="absolute right-4 top-4.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                             disabled={loading}
                           >
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -475,14 +470,14 @@ const LoginPage = () => {
                       <div className="flex justify-end pt-1">
                         <button 
                             type="button"
-                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); identifier && setIdentifier(identifier); }}
+                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); }}
                             className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
                         >
                             Forgot Password?
                         </button>
                       </div>
 
-                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
+                      <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Log In'}
                       </Button>
                     </>
@@ -513,103 +508,7 @@ const LoginPage = () => {
                     </div>
                   )}
                 </form>
-              </TabsContent>
-              
-              <TabsContent value="patient">
-                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
-                  {error && (
-                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                      {error}
-                    </div>
-                  )}
-                  
-                  {!requires2FA ? (
-                    <>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Patient ID (Staff ID)</Label>
-                        <div className="relative group">
-                          <Input 
-                              id="identity-patient" 
-                              placeholder="e.g. 310520" 
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20 font-black"
-                              {...register('identity')} 
-                              disabled={loading} 
-                              onChange={(e) => {
-                                e.target.value = e.target.value.replace(/\D/g, '');
-                                register('identity').onChange(e);
-                              }}
-                          />
-                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
-                        <div className="relative group">
-                          <Input 
-                              id="password-patient" 
-                              type={showPassword ? "text" : "password"} 
-                              placeholder="••••••••"
-                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
-                              {...register('password')} 
-                              disabled={loading} 
-                          />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                            disabled={loading}
-                          >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end pt-1">
-                        <button 
-                            type="button"
-                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); }}
-                            className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
-                        >
-                            Forgot Password?
-                        </button>
-                      </div>
-
-                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Enter Portal'}
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="space-y-5">
-                      <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary">
-                          Security verification required. Enter the code to continue.
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Verification Code</Label>
-                        <Input 
-                            value={totpCode}
-                            onChange={e => setTotpCode(e.target.value)}
-                            placeholder="000 000" 
-                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
-                            maxLength={6}
-                            disabled={loading} 
-                        />
-                      </div>
-                      <div className="flex gap-3">
-                          <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
-                              Cancel
-                          </Button>
-                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                            Verify
-                          </Button>
-                      </div>
-                    </div>
-                  )}
-                </form>
-              </TabsContent>
-            </Tabs>
+            </div>
           ) : (
             <div className="space-y-6 animate-in slide-in-from-left-8 duration-500">
                {error && (
@@ -622,10 +521,10 @@ const LoginPage = () => {
                {forgotPasswordStep === 'identify' && (
                   <form onSubmit={handleIdentify} className="space-y-5">
                     <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Account Identity</Label>
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                       <div className="relative group">
                         <Input 
-                            placeholder="Username, Email, or Phone" 
+                            placeholder="Staff ID, Username, Email or Phone" 
                             className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
@@ -722,10 +621,37 @@ const LoginPage = () => {
           )}
 
           {!isForgotPassword && (
-            <p className="text-center text-[11px] text-muted-foreground font-bold italic">
-              Don't have an account?{' '}
-              <Link to={`/signup?portal=${activePortal}`} className="text-primary hover:underline transition-all">Sign Up</Link>
-            </p>
+            <div className="space-y-4 text-center">
+                <p className="text-[11px] text-muted-foreground font-bold italic">
+                    Don't have an account? Sign Up as:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                    <Link 
+                        to="/signup?portal=staff" 
+                        className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <Activity className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 leading-none">Clinical Staff</span>
+                          <span className="block text-[8px] font-bold text-muted-foreground leading-none">Management & Care</span>
+                        </div>
+                    </Link>
+                    <Link 
+                        to="/signup?portal=patient" 
+                        className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <User className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none">Patient</span>
+                          <span className="block text-[8px] font-bold text-muted-foreground leading-none">Results & Records</span>
+                        </div>
+                    </Link>
+                </div>
+            </div>
           )}
         </div>
 

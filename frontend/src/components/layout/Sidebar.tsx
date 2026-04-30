@@ -43,9 +43,9 @@ const medicalItems: SidebarItem[] = [
   { title: 'Patient Report', path: '/patient-report', icon: FileText },
   { title: 'Screening Matrix', path: '/view-records', icon: Database },
   { title: 'Patient Directory', path: '/view-patients', icon: Users },
-  { title: 'Messaging', path: '/messages', icon: MessageSquare },
   { title: 'Appointments', path: '/appointments', icon: Calendar },
   { title: 'Inventory', path: '/inventory', icon: Package, permission: 'view_inventory' },
+  { title: 'Messaging', path: '/messages', icon: MessageSquare },
 ];
 
 

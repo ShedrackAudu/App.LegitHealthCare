@@ -242,7 +242,7 @@ const PatientSearchPage = () => {
                 </CardContent>
                 <CardFooter>
                   <Button 
-                    onClick={() => navigate('/login?portal=patient')}
+                    onClick={() => navigate('/login')}
                     className="w-full h-12 font-bold rounded-xl"
                   >
                     Go to Patient Login

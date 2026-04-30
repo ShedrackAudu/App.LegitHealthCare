@@ -230,7 +230,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         }
     }
     setUser(null);
-    navigate('/login?portal=staff');
+    navigate('/login');
   };
 
   return (

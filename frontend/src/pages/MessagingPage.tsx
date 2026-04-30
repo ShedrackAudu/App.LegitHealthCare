@@ -113,10 +113,11 @@ export default function MessagingPage() {
   };
 
   useEffect(() => {
-    if (activeChat) {
+    if (activeChat && socket) {
+      console.log('Joining chat room:', activeChat.id);
       fetchHistory(activeChat.id);
-      socket?.emit('join_chat', { chat_id: activeChat.id });
-      socket?.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
+      socket.emit('join_chat', { chat_id: activeChat.id });
+      socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
 
       // Fetch group details if group
       if (activeChat.type === 'group') {
@@ -124,12 +125,13 @@ export default function MessagingPage() {
       }
     }
     setReplyingTo(null);
-  }, [activeChat]);
+  }, [activeChat, socket, user.id]);
 
   useEffect(() => {
     if (!socket) return;
 
-    socket.on('new_message', (msg) => {
+    const onNewMessage = (msg: any) => {
+      console.log('Socket: Received new_message', msg);
       if (activeChat && (
         (msg.group_id && `group_${msg.group_id}` === activeChat.id) ||
         (!msg.group_id && (`dm_${msg.sender_id}` === activeChat.id || `dm_${msg.receiver_id}` === activeChat.id))
@@ -144,53 +146,65 @@ export default function MessagingPage() {
       
       // Update sidebar regardless of whether it was the active chat
       fetchConversations();
-    });
+    };
 
-    socket.on('typing_status', (data) => {
+    const onTypingStatus = (data: any) => {
       if (activeChat && data.chat_id === activeChat.id) {
         setPartnerTyping(data.status === 'start');
       }
-    });
+    };
 
-    socket.on('messages_read', (data) => {
+    const onMessagesRead = (data: any) => {
       if (activeChat && data.chat_id === activeChat.id) {
         setMessages(prev => prev.map(m => m.sender_id === user.id ? { ...m, read_at: new Date().toISOString() } : m));
       }
-    });
+    };
 
-    socket.on('message_reacted', (data) => {
+    const onMessageReacted = (data: any) => {
       if (activeChat && data.chat_id === activeChat.id) {
         setMessages(prev => prev.map(m => m.id === data.message_id ? { ...m, reactions: data.reactions } : m));
       }
-    });
+    };
 
-    socket.on('user_presence', (data) => {
+    const onUserPresence = (data: any) => {
       const isOnline = data.status === 'online';
-      
-      // Update conversations list
       setConversations(prev => prev.map(c => 
         c.id === `dm_${data.user_id}` 
           ? { ...c, other_user: { ...c.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : c.other_user.last_seen_at } } 
           : c
       ));
 
-      // Update active chat if it matches this user
       setActiveChat((prev: any) => {
         if (prev && prev.type === 'direct' && prev.other_user.id === data.user_id) {
           return { ...prev, other_user: { ...prev.other_user, is_online: isOnline, last_seen_at: isOnline ? new Date().toISOString() : prev.other_user.last_seen_at } };
         }
         return prev;
       });
-    });
+    };
+
+    const onConnect = () => {
+      console.log('Socket reconnected, re-joining chat...');
+      if (activeChat) {
+        socket.emit('join_chat', { chat_id: activeChat.id });
+      }
+    };
+
+    socket.on('new_message', onNewMessage);
+    socket.on('typing_status', onTypingStatus);
+    socket.on('messages_read', onMessagesRead);
+    socket.on('message_reacted', onMessageReacted);
+    socket.on('user_presence', onUserPresence);
+    socket.on('connect', onConnect);
 
     return () => {
-      socket.off('new_message');
-      socket.off('typing_status');
-      socket.off('messages_read');
-      socket.off('message_reacted');
-      socket.off('user_presence');
+      socket.off('new_message', onNewMessage);
+      socket.off('typing_status', onTypingStatus);
+      socket.off('messages_read', onMessagesRead);
+      socket.off('message_reacted', onMessageReacted);
+      socket.off('user_presence', onUserPresence);
+      socket.off('connect', onConnect);
     };
-  }, [socket, activeChat]);
+  }, [socket, activeChat, user.id]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: 'smooth' });

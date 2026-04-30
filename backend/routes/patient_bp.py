@@ -32,7 +32,7 @@ def search_patient():
                 return jsonify({
                     "error": "An account for this Staff ID already exists in the Patient Portal.",
                     "already_exists": True,
-                    "login_url": "/login?portal=patient"
+                    "login_url": "/login"
                 }), 409
     except Exception as e:
         print(f"Error checking for existing user in portal bind: {str(e)}")

@@ -123,7 +123,7 @@ const LandingPage = () => {
             </div>
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
-              <Link to="/login?portal=patient">
+              <Link to="/login">
                 <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-4 rounded-xl border-2 text-[10px] uppercase tracking-widest h-9">
                   Patient Portal
                 </Button>
@@ -132,10 +132,10 @@ const LandingPage = () => {
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
                 <Link to="/login">
-                  <Button variant="ghost" className="font-semibold px-4 rounded-xl">Login</Button>
+                  <Button variant="ghost" className="font-semibold px-4 rounded-xl">Sign In</Button>
                 </Link>
-                <Link to="/signup">
-                  <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Get Started</Button>
+                <Link to="/signup?portal=patient">
+                  <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Join Portal</Button>
                 </Link>
               </div>
             </div>
@@ -159,7 +159,7 @@ const LandingPage = () => {
             <div className="flex flex-col space-y-4 text-lg font-bold">
               <a href="#services" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">Services</a>
               <a href="#about" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">About</a>
-              <Link to="/login?portal=patient" onClick={() => setMenuOpen(false)} className="text-primary">
+              <Link to="/login" onClick={() => setMenuOpen(false)} className="text-primary">
                 Patient Portal
               </Link>
             </div>
@@ -233,11 +233,11 @@ const LandingPage = () => {
                 </p>
               </div>
 
-              <div className="flex flex-row items-center gap-3 sm:gap-5">
-                <Link to="/signup">
+              <div className="flex flex-col sm:flex-row items-center gap-3 sm:gap-5">
+                <Link to="/signup?portal=patient">
                   <Button size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-1 active:translate-y-0.5 transition-all bg-primary relative overflow-hidden group">
                     <span className="relative z-10 flex items-center">
-                      Get Started <ArrowRight className="ml-3 h-5 w-5" />
+                      Join Portal <ArrowRight className="ml-3 h-5 w-5" />
                     </span>
                     <motion.div 
                       className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"
@@ -246,7 +246,7 @@ const LandingPage = () => {
                 </Link>
                 <Link to="/login">
                   <Button variant="outline" size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-xl hover:bg-muted/50 hover:border-primary/50 transition-all">
-                    Login
+                    Sign In
                   </Button>
                 </Link>
               </div>
