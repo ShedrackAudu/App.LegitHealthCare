@@ -131,6 +131,9 @@ def add_item():
         return jsonify({"error": "Item name is required"}), 400
     
     sku = data.get('sku')
+    if sku and str(sku).strip() == "":
+        sku = None
+        
     if sku and InventoryItem.query.filter_by(sku=sku).first():
         return jsonify({"error": "Item with this SKU already exists"}), 400
 
@@ -141,11 +144,18 @@ def add_item():
         except ValueError:
             pass
 
+    # Sanitize IDs to handle empty strings from frontend
+    cat_id = data.get('category_id')
+    cat_id = int(cat_id) if cat_id and str(cat_id).strip() != "" else None
+    
+    sup_id = data.get('supplier_id')
+    sup_id = int(sup_id) if sup_id and str(sup_id).strip() != "" else None
+
     item = InventoryItem(
         name=name,
         sku=sku,
-        category_id=data.get('category_id'),
-        supplier_id=data.get('supplier_id'),
+        category_id=cat_id,
+        supplier_id=sup_id,
         description=data.get('description'),
         unit=data.get('unit'),
         stock_level=data.get('stock_level', 0),
@@ -183,13 +193,20 @@ def update_item(item_id):
     item.name = data.get('name', item.name)
     
     new_sku = data.get('sku')
+    if new_sku and str(new_sku).strip() == "":
+        new_sku = None
+        
     if new_sku and new_sku != item.sku:
         if InventoryItem.query.filter_by(sku=new_sku).first():
             return jsonify({"error": "Item with this SKU already exists"}), 400
         item.sku = new_sku
         
-    item.category_id = data.get('category_id', item.category_id)
-    item.supplier_id = data.get('supplier_id', item.supplier_id)
+    cat_id = data.get('category_id', item.category_id)
+    item.category_id = int(cat_id) if cat_id and str(cat_id).strip() != "" else None
+    
+    sup_id = data.get('supplier_id', item.supplier_id)
+    item.supplier_id = int(sup_id) if sup_id and str(sup_id).strip() != "" else None
+
     item.description = data.get('description', item.description)
     item.unit = data.get('unit', item.unit)
     item.min_stock_level = data.get('min_stock_level', item.min_stock_level)

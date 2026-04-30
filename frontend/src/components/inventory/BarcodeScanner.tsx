@@ -21,7 +21,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
         showTorchButtonIfSupported: true,
         rememberLastUsedCamera: true,
         experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
+            useBarCodeDetectorIfSupported: false
         },
         formatsToSupport: [
           Html5QrcodeSupportedFormats.QR_CODE,
