@@ -120,7 +120,15 @@ def init_socket_handlers(socketio):
                 return
 
         status = data.get('status') # 'start' or 'stop'
-        emit('typing_status', {'chat_id': room, 'user_id': user_id, 'status': status}, to=room, include_self=False)
+        if room.startswith('dm_'):
+            # Emit to both rooms for real-time visibility on both ends
+            try:
+                other_id = int(room.split('_')[1])
+                emit('typing_status', {'chat_id': f"dm_{other_id}", 'user_id': user_id, 'status': status}, to=f"dm_{other_id}", include_self=False)
+                emit('typing_status', {'chat_id': f"dm_{user_id}", 'user_id': user_id, 'status': status}, to=f"dm_{user_id}", include_self=False)
+            except: pass
+        else:
+            emit('typing_status', {'chat_id': room, 'user_id': user_id, 'status': status}, to=room, include_self=False)
 
     @socketio.on('send_message')
     def on_send_message(data):
@@ -161,13 +169,19 @@ def init_socket_handlers(socketio):
         db.session.commit()
         
         # Emit to the room (includes sender if they are in the room)
-        emit('new_message', msg.to_dict(), to=chat_id)
-        
-        # If it's a DM, also emit to receiver's private room for global unread count/notifications
         if msg.receiver_id:
+            # For DMs, emit to both the sender's and receiver's specific chat rooms
+            # User A sees chat with B as 'dm_B', User B sees chat with A as 'dm_A'
+            emit('new_message', msg.to_dict(), to=f"dm_{msg.receiver_id}")
+            emit('new_message', msg.to_dict(), to=f"dm_{msg.sender_id}")
+            
+            # Global notification for sidebar unread counts
             emit('message_notification', msg.to_dict(), to=f"user_{msg.receiver_id}")
         else:
-            # For groups, notify all members who aren't currently in the room
+            # Group message
+            emit('new_message', msg.to_dict(), to=f"group_{msg.group_id}")
+            
+            # Notify all members who aren't currently in the room
             members = ChatGroupMember.query.filter_by(group_id=msg.group_id).all()
             for m in members:
                 if m.user_id != sender_id:
@@ -207,11 +221,18 @@ def init_socket_handlers(socketio):
         msg.reactions = json.dumps(reactions)
         db.session.commit()
         
-        emit('message_reacted', {
+        # Emit update to all relevant rooms
+        payload = {
             'message_id': msg_id,
             'reactions': reactions,
             'chat_id': chat_id
-        }, to=chat_id)
+        }
+        if msg.group_id:
+            emit('message_reacted', payload, to=f"group_{msg.group_id}")
+        else:
+            # For DMs, emit to both rooms so both UIs update real-time
+            emit('message_reacted', {**payload, 'chat_id': f"dm_{msg.receiver_id}"}, to=f"dm_{msg.receiver_id}")
+            emit('message_reacted', {**payload, 'chat_id': f"dm_{msg.sender_id}"}, to=f"dm_{msg.sender_id}")
 
     @socketio.on('mark_read')
     def on_read(data):
@@ -242,7 +263,12 @@ def init_socket_handlers(socketio):
                     'read_at': datetime.now()
                 })
                 db.session.commit()
-                emit('messages_read', {'chat_id': chat_id, 'user_id': user_id}, to=chat_id)
+                # Emit to both sides so the sender sees the read status update
+                emit('messages_read', {'chat_id': f"dm_{user_id}", 'user_id': user_id}, to=f"dm_{other_id}")
+                emit('messages_read', {'chat_id': f"dm_{other_id}", 'user_id': user_id}, to=f"dm_{user_id}")
+                
+                # Update sidebar unread counts
+                emit('unread_update', {'user_id': user_id}, to=f"user_{user_id}")
             except: return
         else:
             try:
