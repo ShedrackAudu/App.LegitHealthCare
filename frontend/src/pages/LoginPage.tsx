@@ -343,9 +343,9 @@ const LoginPage = () => {
           <ModeToggle />
         </div>
 
-        <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-          <div className="text-center lg:text-left space-y-2">
-             <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
+        <div className="w-full max-w-sm space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className="text-left space-y-1">
+             <Link to="/" className="lg:hidden flex justify-start mb-4 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
                     <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
@@ -359,7 +359,7 @@ const LoginPage = () => {
                   forgotPasswordStep === 'verify' ? 'Verify Identity' : 'New Password'
                ) : 'Sign In'}
              </h1>
-             <p className="text-muted-foreground font-medium">
+             <p className="text-muted-foreground font-medium text-sm sm:text-base">
                {isForceReset ? 'Protect your account with a new password.' :
                 isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Enter your details to begin.' : 
@@ -419,7 +419,7 @@ const LoginPage = () => {
             </div>
           ) : !isForgotPassword ? (
             <div className="space-y-6">
-                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
+                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4">
                   {error && (
                     <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
@@ -429,7 +429,7 @@ const LoginPage = () => {
                   
                   {!requires2FA ? (
                     <>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                         <div className="relative group">
                           <Input 
@@ -444,7 +444,7 @@ const LoginPage = () => {
                         {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="flex items-center justify-between ml-1">
                           <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Password</Label>
                         </div>
@@ -522,8 +522,8 @@ const LoginPage = () => {
                )}
 
                {forgotPasswordStep === 'identify' && (
-                  <form onSubmit={handleIdentify} className="space-y-5">
-                    <div className="space-y-2">
+                  <form onSubmit={handleIdentify} className="space-y-4">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                       <div className="relative group">
                         <Input 
@@ -543,9 +543,19 @@ const LoginPage = () => {
                     <button 
                         type="button" 
                         onClick={() => setIsForgotPassword(false)} 
-                        className="w-full text-center text-xs font-black uppercase tracking-tighter text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                        className="block group w-full mt-2"
                     >
-                        <ArrowLeft className="w-3 h-3" /> Back to Login
+                      <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <ArrowLeft className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
+                            <p className="text-[13px] font-black tracking-tight text-foreground group-hover:text-primary transition-colors leading-none">Back to Login</p>
+                          </div>
+                        </div>
+                      </div>
                     </button>
                   </form>
                )}
@@ -618,20 +628,37 @@ const LoginPage = () => {
                     <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !resetPassword || resetPassword !== confirmPassword}>
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Finish'}
                     </Button>
+                    <button 
+                        type="button" 
+                        onClick={() => setIsForgotPassword(false)} 
+                        className="block group w-full mt-4"
+                    >
+                      <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <ArrowLeft className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
+                            <p className="text-[13px] font-black tracking-tight text-foreground group-hover:text-primary transition-colors leading-none">Back to Login</p>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   </form>
                )}
             </div>
           )}
 
           {!isForgotPassword && (
-            <div className="space-y-4 text-center">
+            <div className="space-y-4 text-left">
                 <p className="text-[11px] text-muted-foreground font-bold italic">
                     Don't have an account? Sign Up as:
                 </p>
                 <div className="grid grid-cols-2 gap-3">
                     <Link 
                         to="/signup?portal=staff" 
-                        className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
+                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
                     >
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
                           <Activity className="w-4 h-4 text-blue-500" />
@@ -643,7 +670,7 @@ const LoginPage = () => {
                     </Link>
                     <Link 
                         to="/signup?portal=patient" 
-                        className="flex flex-col items-center text-center gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
+                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
                     >
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
                           <User className="w-4 h-4 text-emerald-500" />
@@ -658,7 +685,7 @@ const LoginPage = () => {
           )}
         </div>
 
-        <div className="absolute bottom-8 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
           © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
         </div>
       </div>

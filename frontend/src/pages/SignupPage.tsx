@@ -323,9 +323,9 @@ const SignupPage: React.FC = () => {
           <ModeToggle />
         </div>
 
-        <div className="w-full max-w-md space-y-8 py-8 animate-in fade-in slide-in-from-right-8 duration-500">
-          <div className="text-center lg:text-left space-y-2">
-             <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
+        <div className="w-full max-w-md space-y-6 py-6 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className="text-left space-y-1">
+             <Link to="/" className="lg:hidden flex justify-start mb-4 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
                     <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
@@ -335,7 +335,7 @@ const SignupPage: React.FC = () => {
              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
                 {activeTab === 'staff' ? 'Staff Registration' : 'Patient Setup'}
              </h1>
-             <p className="text-muted-foreground font-medium">
+             <p className="text-muted-foreground font-medium text-sm sm:text-base">
                 {activeTab === 'staff' ? 'Join the clinical workforce.' : 'Access your medical records securely.'}
              </p>
           </div>
@@ -345,11 +345,11 @@ const SignupPage: React.FC = () => {
               <div className="space-y-4">
                 {!isStaffSignupEnabled && !checkingStatus ? (
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-center text-center gap-4">
+                    <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-start text-left gap-4">
                       <div className="bg-destructive/20 p-4 rounded-full">
                         <ShieldCheck className="w-10 h-10 text-destructive" />
                       </div>
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <h3 className="text-xl font-black text-destructive uppercase tracking-tight">Registration Locked</h3>
                         <p className="text-sm font-medium text-muted-foreground leading-relaxed">
                           Staff account registration is currently disabled by the system administrator. 
@@ -366,7 +366,7 @@ const SignupPage: React.FC = () => {
                     </div>
                   </div>
                 ) : (
-                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                     {error && (
                       <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
                         <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
@@ -375,14 +375,14 @@ const SignupPage: React.FC = () => {
                     )}
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">First Name</Label>
                       <div className="relative group">
                         <Input placeholder="John" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('first_name')} disabled={loading} />
                         <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Last Name</Label>
                       <div className="relative group">
                         <Input placeholder="Doe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('last_name')} disabled={loading} />
@@ -391,7 +391,7 @@ const SignupPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="space-y-2">
+                  <div className="space-y-1">
                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Username</Label>
                     <div className="relative group">
                       <Input placeholder="johndoe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('username')} disabled={loading} />
@@ -400,14 +400,14 @@ const SignupPage: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone</Label>
                       <div className="relative group">
                         <Input placeholder="080..." className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('phone')} disabled={loading} />
                         <Phone className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email</Label>
                       <div className="relative group">
                         <Input type="email" placeholder="john@email.com" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('email')} disabled={loading} />
@@ -417,7 +417,7 @@ const SignupPage: React.FC = () => {
                   </div>
 
                   <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
                       <div className="relative group">
                         <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
@@ -426,7 +426,7 @@ const SignupPage: React.FC = () => {
                       </div>
                       <PasswordStrength password={password} />
                     </div>
-                    <div className="space-y-2">
+                    <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
                       <div className="relative group">
                         <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
@@ -476,22 +476,31 @@ const SignupPage: React.FC = () => {
                     </form>
 
                     {existingUser && (
-                      <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-2">
-                         <Card className="border-2 border-rose-500/20 bg-rose-500/5 rounded-2xl">
-                           <CardContent className="p-4 flex flex-col items-center text-center gap-3">
-                              <ShieldCheck className="w-8 h-8 text-rose-500" />
-                              <div className="space-y-1">
-                                  <h4 className="text-sm font-black">Account Exists</h4>
-                                  <p className="text-[10px] font-medium text-muted-foreground">You already have an account registered with this Staff ID.</p>
-                              </div>
-                              <Button onClick={() => navigate('/login?portal=patient')} className="w-full h-10 rounded-xl font-black text-xs uppercase tracking-widest">Sign In Now</Button>
-                           </CardContent>
-                         </Card>
+                      <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-1">
+                         <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-start gap-3">
+                            <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-500 shrink-0">
+                               <ShieldCheck className="w-5 h-5" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                               <h4 className="text-[11px] font-black uppercase tracking-wider text-rose-500">Account Found</h4>
+                               <div className="flex items-center justify-between gap-2 mt-0.5">
+                                 <p className="text-[10px] font-medium text-muted-foreground leading-tight">
+                                   This Staff ID is already <br /> registered in our portal.
+                                 </p>
+                                 <button 
+                                   onClick={() => navigate('/login?portal=patient')} 
+                                   className="text-[9px] font-black uppercase tracking-widest bg-rose-500 text-white px-3 py-1.5 rounded-lg hover:bg-rose-600 transition-colors shadow-lg shadow-rose-500/20 whitespace-nowrap"
+                                 >
+                                   Sign In Now
+                                 </button>
+                               </div>
+                            </div>
+                         </div>
                       </motion.div>
                     )}
                   </div>
                 ) : patientStep === 'claim' ? (
-                  <form onSubmit={handlePatientClaim} className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-500">
+                  <form onSubmit={handlePatientClaim} className="space-y-1 animate-in fade-in slide-in-from-right-4 duration-500">
                     <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl overflow-hidden">
                       <div className="p-4 flex items-center justify-between border-b border-primary/10">
                         <div className="flex items-center gap-3">
@@ -544,17 +553,17 @@ const SignupPage: React.FC = () => {
                       </div>
                     </div>
 
-                    <div className="space-y-4">
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Phone</Label>
+                    <div className="space-y-1">
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone Number</Label>
                             <div className="relative group">
                               <Input value={claimData.phone} onChange={e => setClaimData({...claimData, phone: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20 font-bold" />
                               <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                             </div>
                          </div>
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Current Email Address</Label>
+                         <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email Address</Label>
                             <div className="relative group">
                               <Input type="email" value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                               <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -562,9 +571,9 @@ const SignupPage: React.FC = () => {
                          </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                         <div className="space-y-2">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Create Password</Label>
+                      <div className="grid grid-cols-2 gap-4">
+                         <div className="space-y-1">
+                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
                             <div className="relative group">
                               <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -573,7 +582,7 @@ const SignupPage: React.FC = () => {
                               </button>
                             </div>
                          </div>
-                         <div className="space-y-2">
+                         <div className="space-y-1">
                             <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
                             <div className="relative group">
                               <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
@@ -586,7 +595,7 @@ const SignupPage: React.FC = () => {
                       </div>
 
                       {/* Password Strength & Match Indicators */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-2">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                          <div className="space-y-2">
                             <PasswordStrength password={claimData.password} />
                          </div>
@@ -627,12 +636,12 @@ const SignupPage: React.FC = () => {
                           onSubmit={handlePatientVerify}
                           className="space-y-6"
                         >
-                          <div className="text-center space-y-2">
-                             <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary mx-auto mb-4">
-                               <Mail className="w-8 h-8" />
+                          <div className="text-left space-y-1">
+                             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
+                               <Mail className="w-6 h-6" />
                              </div>
-                             <h3 className="text-xl font-black tracking-tight">Check Your Email</h3>
-                             <p className="text-sm text-muted-foreground font-medium">
+                             <h3 className="text-xl font-black tracking-tight leading-none">Check Your Email</h3>
+                             <p className="text-xs text-muted-foreground font-medium">
                                We sent a 6-digit code to <br/>
                                <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
                              </p>
@@ -659,7 +668,7 @@ const SignupPage: React.FC = () => {
                             </Button>
                           </div>
 
-                          <div className="flex flex-col items-center gap-4 pt-2">
+                          <div className="flex flex-col items-start gap-4 pt-2">
                             <Button 
                               variant="link" 
                               type="button"
@@ -680,21 +689,21 @@ const SignupPage: React.FC = () => {
                           </div>
                         </motion.form>
                       ) : (
-                        <motion.div
-                          key="success"
-                          initial={{ opacity: 0, scale: 0.5 }}
-                          animate={{ opacity: 1, scale: 1 }}
-                          className="flex flex-col items-center py-10 space-y-6"
-                        >
-                          <div className="w-24 h-24 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
-                            <CheckCircle2 className="w-14 h-14" />
-                          </div>
-                          <div className="text-center space-y-2">
-                            <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
-                            <p className="text-sm font-medium text-muted-foreground italic leading-relaxed pl-4 border-l-4 border-primary/30">
-                               Claim successful. Syncing your medical <br/> records to your personal dashboard...
-                            </p>
-                          </div>
+                         <motion.div
+                           key="success"
+                           initial={{ opacity: 0, scale: 0.5 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           className="flex flex-col items-start py-6 space-y-4"
+                         >
+                           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
+                             <CheckCircle2 className="w-10 h-10" />
+                           </div>
+                           <div className="text-left space-y-1">
+                             <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
+                             <p className="text-xs font-medium text-muted-foreground italic leading-relaxed pl-3 border-l-2 border-primary/30">
+                                Claim successful. Syncing your medical <br/> records to your personal dashboard...
+                             </p>
+                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
@@ -704,24 +713,22 @@ const SignupPage: React.FC = () => {
             )}
           </div>
 
-          <Link to="/login" className="block group w-full">
-            <Card className="border-2 border-primary/10 hover:border-primary/30 bg-primary/5 hover:bg-primary/10 transition-all shadow-sm group-hover:shadow-md">
-              <CardContent className="p-4 flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                    <ArrowLeft className="w-5 h-5" />
-                  </div>
-                  <div className="text-left">
-                    <p className="text-[10px] font-black text-primary/70 uppercase tracking-widest mb-0.5">Already have an account?</p>
-                    <p className="text-sm font-black tracking-tight text-foreground group-hover:text-primary transition-colors">Back to Login</p>
-                  </div>
+          <Link to="/login" className="block group w-full mt-2">
+            <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                  <ArrowLeft className="w-4.5 h-4.5" />
                 </div>
-              </CardContent>
-            </Card>
+                <div className="text-left">
+                  <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Already have an account?</p>
+                  <p className="text-[13px] font-black tracking-tight text-foreground group-hover:text-primary transition-colors leading-none">Back to Login</p>
+                </div>
+              </div>
+            </div>
           </Link>
         </div>
 
-        <div className="absolute bottom-8 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
           © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
         </div>
       </div>
