@@ -83,6 +83,42 @@ const DataManagementPage: React.FC = () => {
     }
   };
 
+  const handleDownloadTemplate = async () => {
+    try {
+      const resp = await axios.get('/api/admin/import/patient-template', {
+        headers: { 
+            'X-User-ID': user?.id?.toString(),
+            'X-Company-Context': activeSection 
+        },
+        responseType: 'blob'
+      });
+      
+      const url = window.URL.createObjectURL(new Blob([resp.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', 'Bulk_Patient_Import_Template.xlsx');
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      toast.success("Import template downloaded.");
+    } catch (err: any) {
+        if (err.response && err.response.data instanceof Blob) {
+            const reader = new FileReader();
+            reader.onload = () => {
+                try {
+                    const errorData = JSON.parse(reader.result as string);
+                    toast.error(errorData.error || "Failed to download template.");
+                } catch (e) {
+                    toast.error("Failed to download template.");
+                }
+            };
+            reader.readAsText(err.response.data);
+        } else {
+            toast.error(err.response?.data?.error || err.message || "Failed to download template.");
+        }
+    }
+  };
+
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
@@ -219,11 +255,20 @@ const DataManagementPage: React.FC = () => {
                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2 border border-amber-500/20">
                         <Import className="w-6 h-6" />
                      </div>
-                     <CardTitle className="text-2xl font-black tracking-tight">Bulk Patient Import</CardTitle>
-                     <CardDescription className="text-sm font-bold text-muted-foreground">
-                        Excel-based data ingestion for bulk registration into the {activeSection} directory.
-                     </CardDescription>
-                  </CardHeader>
+                      <CardTitle className="text-2xl font-black tracking-tight">Bulk Patient Import</CardTitle>
+                      <CardDescription className="text-sm font-bold text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                         <span>Excel-based data ingestion for bulk registration into the {activeSection} directory.</span>
+                         <Button 
+                          variant="outline" 
+                          size="sm" 
+                          onClick={handleDownloadTemplate}
+                          className="h-8 rounded-lg font-black text-[10px] gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all shrink-0"
+                         >
+                            <Download className="w-3.5 h-3.5" />
+                            Download Template
+                         </Button>
+                      </CardDescription>
+                   </CardHeader>
                   <CardContent className="space-y-6">
                      <div className="space-y-4">
                         <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-4 items-center">
@@ -245,6 +290,7 @@ const DataManagementPage: React.FC = () => {
                                 { name: 'department', req: false, desc: 'Work unit' },
                                 { name: 'phone', req: false, desc: 'Contact number' },
                                 { name: 'email', req: false, desc: 'Official email' },
+                                { name: 'race', req: false, desc: 'Ethnicity' },
                                 { name: 'nationality', req: false, desc: 'Country' }
                             ].map((col) => (
                                 <div key={col.name} className="p-2.5 bg-muted/20 border-2 border-transparent hover:border-amber-500/20 rounded-xl flex items-center justify-between transition-all group">

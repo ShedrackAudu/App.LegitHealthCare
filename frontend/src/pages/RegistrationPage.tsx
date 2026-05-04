@@ -45,7 +45,7 @@ const registrationSchema = z.object({
   dob: z.string().min(1, 'Date of Birth is required'),
   age: z.number(),
   phone: z.string().min(1, 'Phone is required'),
-  email: z.string().email('Invalid email'),
+  email: z.string().email('Invalid email').optional().or(z.literal('')),
   race: z.string().min(1, 'Race is required'),
   nationality: z.string().min(1, 'Nationality is required'),
 });

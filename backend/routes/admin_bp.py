@@ -539,7 +539,7 @@ def export_patients():
             
         df = pd.DataFrame(data)
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='Patient Directory')
         
         output.seek(0)
@@ -656,7 +656,7 @@ def export_screening_matrix():
             
         df = pd.DataFrame(data)
         output = io.BytesIO()
-        with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name=f'Screening {year}')
             
         output.seek(0)
@@ -674,6 +674,38 @@ def export_screening_matrix():
 def export_data():
     # Keep legacy route for compatibility, but redirect to patient directory export
     return export_patients()
+
+@admin_bp.route('/api/admin/import/patient-template', methods=['GET'])
+@require_permission('download_data')
+def download_patient_template():
+    try:
+        import pandas as pd
+        import io
+        from flask import send_file
+        
+        # Headers as per import_data expectation and UI display
+        cols = [
+            'staff_id', 'first_name', 'middle_name', 'last_name', 
+            'gender', 'dob', 'age', 'department', 'phone', 
+            'email', 'race', 'nationality'
+        ]
+        
+        df = pd.DataFrame(columns=cols)
+        
+        output = io.BytesIO()
+        # Using openpyxl for consistency with other template downloads in the system
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='Patient Template')
+        
+        output.seek(0)
+        return send_file(
+            output,
+            mimetype='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
+            as_attachment=True,
+            download_name="Bulk_Patient_Import_Template.xlsx"
+        )
+    except Exception as e:
+        return jsonify({"error": f"Template generation failed: {str(e)}"}), 500
 
 @admin_bp.route('/api/admin/import', methods=['POST'])
 @require_permission('system_maintenance')
@@ -698,24 +730,60 @@ def import_data():
         
         count = 0
         added_new = 0
+        from models import BioData
+        from datetime import datetime
+
+        def clean_val(val):
+            if pd.isna(val) or str(val).strip().lower() == 'nan':
+                return None
+            return str(val).strip()
+
         for _, row in df.iterrows():
-            staff_id = str(row['staff_id'])
+            staff_id = str(row.get('staff_id', '')).strip()
+            if not staff_id or staff_id == 'nan' or staff_id == 'None' or staff_id == '': continue
+            if staff_id.endswith('.0'): staff_id = staff_id[:-2]
             
             # Check if exists
-            from models import BioData
             patient = BioData.query.filter_by(staff_id=staff_id).first()
             
             if not patient:
+                # Age calculation logic from DOB
+                dob_val = row.get('dob')
+                age_val = row.get('age')
+                
+                parsed_dob = None
+                calculated_age = None
+                
+                if pd.notnull(dob_val):
+                    try:
+                        if isinstance(dob_val, datetime):
+                            parsed_dob = dob_val.date()
+                        else:
+                            # Use pandas to handle various date formats
+                            parsed_dob = pd.to_datetime(dob_val).date()
+                        
+                        # Calculate age
+                        today = datetime.now().date()
+                        calculated_age = today.year - parsed_dob.year - ((today.month, today.day) < (parsed_dob.month, parsed_dob.day))
+                    except:
+                        parsed_dob = None
+                
+                # Final age: prefer calculated, fallback to provided, fallback to 0
+                final_age = calculated_age if calculated_age is not None else (int(age_val) if pd.notnull(age_val) else 0)
+
                 patient = BioData(
                     staff_id=staff_id,
-                    first_name=str(row['first_name']),
-                    last_name=str(row['last_name']),
-                    middle_name=str(row.get('middle_name', '')),
-                    gender=str(row.get('gender', '')),
-                    age=int(row.get('age', 0)) if pd.notnull(row.get('age')) else None,
-                    department=str(row.get('department', '')),
-                    phone=str(row.get('phone', '')),
-                    email=str(row.get('email', ''))
+                    first_name=clean_val(row.get('first_name')) or '',
+                    last_name=clean_val(row.get('last_name')) or '',
+                    middle_name=clean_val(row.get('middle_name')),
+                    gender=clean_val(row.get('gender')),
+                    dob=parsed_dob,
+                    age=final_age,
+                    department=clean_val(row.get('department')),
+                    phone=clean_val(row.get('phone')),
+                    email=clean_val(row.get('email')),
+                    race=clean_val(row.get('race')),
+                    nationality=clean_val(row.get('nationality'))
                 )
                 db.session.add(patient)
                 added_new += 1
