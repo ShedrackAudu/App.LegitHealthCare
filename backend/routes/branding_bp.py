@@ -219,19 +219,21 @@ def get_pwa_manifest():
             icon_src = raw_logo
         else:
             # Relative path — make it absolute using backend URL
+            # Note: backend_url is now reliable thanks to ProxyFix
             icon_src = backend_url + raw_logo
         is_svg = raw_logo.lower().endswith('.svg')
     else:
         # Fallback: use the frontend's built-in favicon
-        icon_src = (frontend_url + '/favicon.svg') if frontend_url else '/favicon.svg'
+        # If we have a frontend_url, use it. Otherwise use the request root.
+        icon_src = (frontend_url + '/favicon.svg') if frontend_url else (backend_url + '/favicon.svg')
         is_svg = True
 
     manifest = {
         "name": clinic_name,
         "short_name": clinic_name[:12],
         "description": "Premium Healthcare Management System",
-        "start_url": start_url,
-        "scope": scope,
+        "start_url": (frontend_url + '/') if frontend_url else '/',
+        "scope": (frontend_url + '/') if frontend_url else '/',
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#0d9488",
@@ -247,7 +249,7 @@ def get_pwa_manifest():
     }
 
     manifest_data = json.dumps(manifest)
-    response = Response(manifest_data, mimetype='application/manifest+json')
+    response = Response(manifest_data, mimetype='application/manifest+json; charset=utf-8')
     # Instruct browser not to cache the manifest long-term so clinic
     # name/logo changes propagate within minutes instead of days.
     response.headers['Cache-Control'] = 'no-cache, max-age=300'
