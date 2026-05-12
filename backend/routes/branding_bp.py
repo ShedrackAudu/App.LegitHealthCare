@@ -195,23 +195,7 @@ def get_pwa_manifest():
 
     # Frontend origin — used for start_url and scope so the installed PWA
     # opens the React app, not the Flask backend.
-    # We prioritize Origin/Referer to automatically handle custom domains
-    # perfectly without relying on manual env var updates.
-    frontend_url = ''
-    origin = request.headers.get('Origin')
-    if origin:
-        frontend_url = origin.rstrip('/')
-    else:
-        referer = request.headers.get('Referer')
-        if referer:
-            from urllib.parse import urlparse
-            parsed = urlparse(referer)
-            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
-
-    # Fallback to env var if headers are completely missing
-    if not frontend_url:
-        frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
-
+    frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
     start_url = (frontend_url + '/') if frontend_url else '/'
     scope = (frontend_url + '/') if frontend_url else '/'
 
@@ -223,21 +207,19 @@ def get_pwa_manifest():
             icon_src = raw_logo
         else:
             # Relative path — make it absolute using backend URL
-            # Note: backend_url is now reliable thanks to ProxyFix
             icon_src = backend_url + raw_logo
         is_svg = raw_logo.lower().endswith('.svg')
     else:
         # Fallback: use the frontend's built-in favicon
-        # If we have a frontend_url, use it. Otherwise use the request root.
-        icon_src = (frontend_url + '/favicon.svg') if frontend_url else (backend_url + '/favicon.svg')
+        icon_src = (frontend_url + '/favicon.svg') if frontend_url else '/favicon.svg'
         is_svg = True
 
     manifest = {
         "name": clinic_name,
         "short_name": clinic_name[:12],
         "description": "Premium Healthcare Management System",
-        "start_url": (frontend_url + '/') if frontend_url else '/',
-        "scope": (frontend_url + '/') if frontend_url else '/',
+        "start_url": start_url,
+        "scope": scope,
         "display": "standalone",
         "background_color": "#ffffff",
         "theme_color": "#0d9488",
@@ -253,7 +235,7 @@ def get_pwa_manifest():
     }
 
     manifest_data = json.dumps(manifest)
-    response = Response(manifest_data, mimetype='application/manifest+json; charset=utf-8')
+    response = Response(manifest_data, mimetype='application/manifest+json')
     # Instruct browser not to cache the manifest long-term so clinic
     # name/logo changes propagate within minutes instead of days.
     response.headers['Cache-Control'] = 'no-cache, max-age=300'

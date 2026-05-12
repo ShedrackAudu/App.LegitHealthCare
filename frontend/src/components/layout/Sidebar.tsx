@@ -125,44 +125,36 @@ export const Sidebar: React.FC = () => {
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="h-14 shrink-0 flex items-center px-4 border-b">
+      <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b hover:bg-muted/30 transition-colors cursor-pointer group">
         {/* Clinic Logo */}
-        <Link 
-          to="/" 
-          className={cn(
-            "flex items-center w-full transition-opacity hover:opacity-80",
-            isCollapsed ? "justify-center" : "justify-start"
-          )}
-        >
-          {!isCollapsed ? (
-            branding?.logo_dark ? (
-              <SafeImage 
-                src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
-                alt={branding?.clinic_name || "Logo"} 
-                className="max-h-10 w-auto object-contain" 
-                fallbackText={branding?.clinic_name}
-              />
-            ) : (
-              <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
-                <Building2 className="h-5 w-5 shrink-0" />
-                {branding?.clinic_name || 'LEGIT HC'}
-              </div>
-            )
+        {!isCollapsed ? (
+          branding?.logo_dark ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+              alt={branding?.clinic_name || "Logo"} 
+              className="max-h-10 w-auto object-contain group-hover:opacity-80 transition-opacity" 
+              fallbackText={branding?.clinic_name}
+            />
           ) : (
-            branding?.logo_light ? (
-              <SafeImage 
-                src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
-                alt="Logo" 
-                className="max-h-8 w-auto object-contain mx-auto" 
-              />
-            ) : (
-              <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
-                <Building2 className="h-5 w-5 shrink-0" />
-              </div>
-            )
-          )}
-        </Link>
-      </div>
+            <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary/80 transition-colors">
+              <Building2 className="h-5 w-5 shrink-0" />
+              {branding?.clinic_name || 'LEGIT HC'}
+            </div>
+          )
+        ) : (
+          branding?.logo_light ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
+              alt="Logo" 
+              className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
+            />
+          ) : (
+            <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary/80 transition-colors">
+              <Building2 className="h-5 w-5 shrink-0" />
+            </div>
+          )
+        )}
+      </Link>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
         <div
