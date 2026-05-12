@@ -195,18 +195,22 @@ def get_pwa_manifest():
 
     # Frontend origin — used for start_url and scope so the installed PWA
     # opens the React app, not the Flask backend.
-    frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
+    # We prioritize Origin/Referer to automatically handle custom domains
+    # perfectly without relying on manual env var updates.
+    frontend_url = ''
+    origin = request.headers.get('Origin')
+    if origin:
+        frontend_url = origin.rstrip('/')
+    else:
+        referer = request.headers.get('Referer')
+        if referer:
+            from urllib.parse import urlparse
+            parsed = urlparse(referer)
+            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+
+    # Fallback to env var if headers are completely missing
     if not frontend_url:
-        # Fallback: Try to infer from Origin or Referer (useful when custom domains are added)
-        origin = request.headers.get('Origin')
-        if origin:
-            frontend_url = origin.rstrip('/')
-        else:
-            referer = request.headers.get('Referer')
-            if referer:
-                from urllib.parse import urlparse
-                parsed = urlparse(referer)
-                frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+        frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
 
     start_url = (frontend_url + '/') if frontend_url else '/'
     scope = (frontend_url + '/') if frontend_url else '/'
