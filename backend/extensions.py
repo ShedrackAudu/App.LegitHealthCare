@@ -8,4 +8,4 @@ from flask_socketio import SocketIO
 mail = Mail()
 jwt = JWTManager()
 limiter = Limiter(key_func=get_remote_address, storage_uri="memory://")
-socketio = SocketIO(async_mode='threading')
+socketio = SocketIO()
