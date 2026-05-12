@@ -34,23 +34,7 @@ import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-const registrationSchema = z.object({
-  staff_id: z.string().min(1, 'Staff ID is required'),
-  patient_id: z.string().min(1, 'Patient ID is required'),
-  first_name: z.string().min(1, 'First Name is required'),
-  middle_name: z.string().optional(),
-  last_name: z.string().min(1, 'Last Name is required'),
-  department: z.string().min(1, 'Department is required'),
-  gender: z.string().min(1, 'Gender is required'),
-  dob: z.string().min(1, 'Date of Birth is required'),
-  age: z.number(),
-  phone: z.string().min(1, 'Phone is required'),
-  email: z.string().email('Invalid email').optional().or(z.literal('')),
-  race: z.string().min(1, 'Race is required'),
-  nationality: z.string().min(1, 'Nationality is required'),
-});
 
-type RegistrationValues = z.infer<typeof registrationSchema>;
 
 const RegistrationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
@@ -59,6 +43,24 @@ const RegistrationPage: React.FC = () => {
   const navigate = useNavigate();
   const editStaffId = searchParams.get('edit');
   const isEditMode = !!editStaffId;
+
+  const registrationSchema = z.object({
+    staff_id: z.string().min(1, 'Staff ID is required'),
+    patient_id: isEditMode ? z.string().optional() : z.string().min(1, 'Patient ID is required'),
+    first_name: z.string().min(1, 'First Name is required'),
+    middle_name: z.string().optional(),
+    last_name: z.string().min(1, 'Last Name is required'),
+    department: z.string().min(1, 'Department is required'),
+    gender: z.string().min(1, 'Gender is required'),
+    dob: z.string().min(1, 'Date of Birth is required'),
+    age: z.number(),
+    phone: z.string().min(1, 'Phone is required'),
+    email: z.string().email('Invalid email').optional().or(z.literal('')),
+    race: z.string().min(1, 'Race is required'),
+    nationality: z.string().min(1, 'Nationality is required'),
+  });
+
+  type RegistrationValues = z.infer<typeof registrationSchema>;
 
   const [loading, setLoading] = useState(false);
   const [searching, setSearching] = useState(false);
@@ -486,13 +488,13 @@ const RegistrationPage: React.FC = () => {
                   {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-primary font-bold">Patient ID <span className="text-rose-500">*</span></Label>
+                  <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
                   <Input 
-                    {...register('patient_id', { required: true })} 
+                    {...register('patient_id', { required: !isEditMode })} 
                     className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
-                    placeholder="e.g. 12345" 
+                    placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
                     inputMode="numeric"
-                    required
+                    required={!isEditMode}
                     onChange={(e) => {
                       const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
                       e.target.value = val;

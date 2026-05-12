@@ -269,6 +269,8 @@ const AppointmentsPage = () => {
               }}
               searching={isSearching}
               themeColor="primary"
+              year={activeYear}
+              strict={true}
           />
         </div>
 

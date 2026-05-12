@@ -560,6 +560,8 @@ const DirectorPage: React.FC = () => {
                         searching={searching}
                         themeColor="primary"
                         placeholder="Search Staff ID or Name..."
+                        year={activeYear}
+                        strict={true}
                     />
                 </div>
 

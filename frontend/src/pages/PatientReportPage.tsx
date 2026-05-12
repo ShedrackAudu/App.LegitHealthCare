@@ -233,6 +233,8 @@ const PatientReportPage: React.FC = () => {
                         themeColor="primary"
                         placeholder="Search Staff ID or Name..."
                         buttonText="Retrieve Report"
+                        year={activeYear}
+                        strict={true}
                     />
                 </div>
             </div>{/* end no-print chrome */}

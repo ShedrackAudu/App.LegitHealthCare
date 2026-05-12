@@ -215,17 +215,17 @@ const LandingPage = () => {
                 </motion.div>
                 
                 <h1 className="text-5xl sm:text-7xl lg:text-[95px] font-black leading-[0.95] tracking-tight group">
-                  <span className="block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                    {branding?.clinic_name || "Legit HealthCare"}
+                  <span className="block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 pb-4">
+                    {branding?.clinic_slogan || "Excellence in Care."}
                   </span>
                   <motion.span 
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ delay: 0.5, duration: 1 }}
-                    className="block h-2 bg-primary/40 w-1/4 mt-4 rounded-full origin-left group-hover:w-1/2 transition-all duration-700"
+                    className="block h-2 bg-primary/40 w-1/4 mt-8 rounded-full origin-left group-hover:w-1/2 transition-all duration-700"
                   />
-                  <span className="text-[19px] lg:text-[35px] text-primary font-black mt-6 block tracking-tight whitespace-nowrap">
-                    {branding?.clinic_slogan || "Excellence in Care."}
+                  <span className="text-[19px] lg:text-[35px] text-primary font-black mt-10 block tracking-tight pb-2">
+                    {branding?.clinic_name || "Legit HealthCare"}
                   </span>
                 </h1>
                 

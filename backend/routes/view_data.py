@@ -93,21 +93,39 @@ def search_patients():
     per_page = request.args.get('per_page', 10, type=int)
     year = request.args.get('year')
     
-    if len(query) < 1: 
+    if not query or len(query) < 1: 
         return jsonify({"results": [], "total": 0, "pages": 0}), 200
     
     search = f"%{query}%"
+    strict = request.args.get('strict', 'false').lower() == 'true'
     
     # 1. Base Query with Filtering
-    base_query = BioData.query.filter(
-        (BioData.staff_id.ilike(search)) |
-        (BioData.first_name.ilike(search)) |
-        (BioData.middle_name.ilike(search)) |
-        (BioData.last_name.ilike(search)) |
-        (BioData.department.ilike(search)) |
-        (BioData.phone.ilike(search)) |
-        (BioData.email.ilike(search))
-    ).order_by(BioData.created_at.desc())
+    if strict and year:
+        # Filter strictly for patients registered in the specific screening matrix
+        base_query = BioData.query.join(
+            ScreeningYearBioData, 
+            BioData.staff_id == ScreeningYearBioData.staff_id
+        ).filter(
+            ScreeningYearBioData.screening_year == int(year)
+        ).filter(
+            (BioData.staff_id.ilike(search)) |
+            (BioData.first_name.ilike(search)) |
+            (BioData.middle_name.ilike(search)) |
+            (BioData.last_name.ilike(search)) |
+            (BioData.department.ilike(search)) |
+            (BioData.phone.ilike(search)) |
+            (BioData.email.ilike(search))
+        ).order_by(BioData.created_at.desc())
+    else:
+        base_query = BioData.query.filter(
+            (BioData.staff_id.ilike(search)) |
+            (BioData.first_name.ilike(search)) |
+            (BioData.middle_name.ilike(search)) |
+            (BioData.last_name.ilike(search)) |
+            (BioData.department.ilike(search)) |
+            (BioData.phone.ilike(search)) |
+            (BioData.email.ilike(search))
+        ).order_by(BioData.created_at.desc())
 
     # 2. Paginate
     pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
