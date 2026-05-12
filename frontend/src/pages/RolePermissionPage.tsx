@@ -55,7 +55,7 @@ const AccordionRole = ({ role, permissions, isAdminRole, onTogglePermission, onS
       
       <div className={`transition-all duration-500 ease-in-out overflow-hidden ${isOpen ? 'max-h-[2000px] opacity-100' : 'max-h-0 opacity-0 pointer-events-none'}`}>
         <CardContent className="p-6 bg-background">
-          <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-y-8 gap-x-6">
+          <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-y-8 gap-x-6 max-h-[400px] overflow-y-auto lg:max-h-none lg:overflow-visible pr-2 custom-scrollbar">
             {isAdminRole && (
               <div className="col-span-full bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 flex gap-3 mb-2">
                 <ShieldCheck className="h-5 w-5 text-rose-500 shrink-0" />
