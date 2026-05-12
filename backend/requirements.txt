@@ -59,7 +59,7 @@ urllib3
 Werkzeug
 wsproto
 psycopg2-binary
-gunicorn
+gunicorn[eventlet]
 sendgrid
 pandas
 openpyxl
