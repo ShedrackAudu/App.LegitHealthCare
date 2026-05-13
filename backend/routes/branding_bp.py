@@ -188,27 +188,31 @@ def get_pwa_manifest():
     clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
 
     # Backend origin — used to make icon URLs absolute.
-    # Falls back to the request origin so relative paths always resolve.
+    # We prefer the APP_URL env var, but fall back to the actual request URL
+    # to ensure icons always resolve even if the domain just changed.
     backend_url = os.getenv('APP_URL', '').rstrip('/')
     if not backend_url:
         backend_url = request.url_root.rstrip('/')
 
     # Frontend origin — used for start_url and scope so the installed PWA
     # opens the React app, not the Flask backend.
-    # Dynamically resolve from Origin or Referer to support custom domains seamlessly.
-    frontend_url = request.headers.get('Origin')
+    # We try: 1. FRONTEND_URL env var, 2. Origin header, 3. Referer header.
+    frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
     if not frontend_url:
-        referer = request.headers.get('Referer')
-        if referer:
-            from urllib.parse import urlparse
-            parsed = urlparse(referer)
-            frontend_url = f"{parsed.scheme}://{parsed.netloc}"
-            
-    # Fallback to environment variable if headers are missing
-    if not frontend_url:
-        frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
-        
-    frontend_url = frontend_url.rstrip('/') if frontend_url else ''
+        # Origin header is sent by browsers for cross-origin manifest fetches
+        origin = request.headers.get('Origin', '').rstrip('/')
+        if origin:
+            frontend_url = origin
+        else:
+            # Fallback to Referer if Origin is missing (some older browsers/proxies)
+            referer = request.headers.get('Referer', '')
+            if referer:
+                from urllib.parse import urlparse
+                parsed = urlparse(referer)
+                frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+
+    # Final fallback: if we still don't have a frontend URL, we assume 
+    # the frontend is on the same domain as the backend (unlikely in production).
     start_url = (frontend_url + '/') if frontend_url else '/'
     scope = (frontend_url + '/') if frontend_url else '/'
 
@@ -220,7 +224,9 @@ def get_pwa_manifest():
             icon_src = raw_logo
         else:
             # Relative path — make it absolute using backend URL
-            icon_src = backend_url + raw_logo
+            # Ensure raw_logo starts with /
+            clean_logo = raw_logo if raw_logo.startswith('/') else f"/{raw_logo}"
+            icon_src = backend_url + clean_logo
         is_svg = raw_logo.lower().endswith('.svg')
     else:
         # Fallback: use the frontend's built-in favicon
