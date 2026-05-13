@@ -1031,11 +1031,29 @@ def clear_patient_biodata():
     admin_id = get_jwt_identity()
     context = request.headers.get('X-Company-Context', 'General').upper()
     try:
-        from models import BioData, ScreeningYearBioData
+        from models import (
+            BioData, ScreeningYearBioData, ConsultationData, FBCResult, 
+            KFTResult, LipidResult, LFTResult, SpecialTestsResult, 
+            DirectorReview, QueueEntry, TestResultArchive, PatientFile, Appointment, ReportVerification
+        )
         
-        # Clear all patient bio-data in the active context
-        BioData.query.delete()
+        # Clear all child tables first to prevent ForeignKey violations
         ScreeningYearBioData.query.delete()
+        ConsultationData.query.delete()
+        FBCResult.query.delete()
+        KFTResult.query.delete()
+        LipidResult.query.delete()
+        LFTResult.query.delete()
+        SpecialTestsResult.query.delete()
+        DirectorReview.query.delete()
+        QueueEntry.query.delete()
+        TestResultArchive.query.delete()
+        PatientFile.query.delete()
+        Appointment.query.delete()
+        ReportVerification.query.delete()
+        
+        # Finally delete the parent table
+        BioData.query.delete()
         
         db.session.commit()
         
