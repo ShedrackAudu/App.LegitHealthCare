@@ -216,22 +216,45 @@ def get_pwa_manifest():
     start_url = (frontend_url + '/') if frontend_url else '/'
     scope = (frontend_url + '/') if frontend_url else '/'
 
-    # Resolve icon URL to an absolute URL
-    raw_logo = branding.logo_light if branding and branding.logo_light else None
-    if raw_logo:
-        if raw_logo.startswith('http'):
-            # Already absolute
-            icon_src = raw_logo
+    # Resolve icon(s)
+    icons_list = []
+    
+    raw_icon = None
+    if branding:
+        raw_icon = branding.favicon if branding.favicon else branding.logo_light
+
+    if raw_icon:
+        # Custom uploaded icon (Favicon or Logo)
+        if raw_icon.startswith('http'):
+            icon_src = raw_icon
         else:
-            # Relative path — make it absolute using backend URL
-            # Ensure raw_logo starts with /
-            clean_logo = raw_logo if raw_logo.startswith('/') else f"/{raw_logo}"
-            icon_src = backend_url + clean_logo
-        is_svg = raw_logo.lower().endswith('.svg')
+            clean_icon = raw_icon if raw_icon.startswith('/') else f"/{raw_icon}"
+            icon_src = backend_url + clean_icon
+        
+        is_svg = raw_icon.lower().endswith('.svg')
+        icons_list = [{
+            "src": icon_src,
+            "sizes": "any" if is_svg else "512x512",
+            "type": "image/svg+xml" if is_svg else "image/png",
+            "purpose": "any maskable"
+        }]
     else:
-        # Fallback: use the frontend's built-in favicon
-        icon_src = (frontend_url + '/favicon.svg') if frontend_url else '/favicon.svg'
-        is_svg = True
+        # Fallback to default frontend icons
+        base = frontend_url if frontend_url else ''
+        icons_list = [
+            {
+                "src": f"{base}/icons/icon-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": f"{base}/icons/icon-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
 
     manifest = {
         "name": clinic_name,
@@ -243,14 +266,7 @@ def get_pwa_manifest():
         "background_color": "#ffffff",
         "theme_color": "#0d9488",
         "orientation": "portrait",
-        "icons": [
-            {
-                "src": icon_src,
-                "sizes": "any" if is_svg else "512x512",
-                "type": "image/svg+xml" if is_svg else "image/png",
-                "purpose": "any maskable"
-            }
-        ]
+        "icons": icons_list
     }
 
     manifest_data = json.dumps(manifest)
