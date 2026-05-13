@@ -38,11 +38,15 @@ if raw_db_url:
         raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
     
     app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
-    # For Render/Production, consolidate all binds into the same main database
+    
+    has_params = '?' in raw_db_url
+    separator = '&' if has_params else '?'
+    
+    # For Render/Production, use PostgreSQL schemas for multi-tenant isolation
     app.config['SQLALCHEMY_BINDS'] = {
-        'dcp': raw_db_url,
-        'dct': raw_db_url,
-        'patients': raw_db_url
+        'dcp': raw_db_url + separator + "options=-csearch_path%3Ddcp,public",
+        'dct': raw_db_url + separator + "options=-csearch_path%3Ddct,public",
+        'patients': raw_db_url + separator + "options=-csearch_path%3Dpatients,public"
     }
 else:
     # Use SQLite for local development
@@ -161,6 +165,15 @@ init_socket_handlers(socketio)
 
 def init_db():
     with app.app_context():
+        # Create schemas in postgres
+        if 'SQLALCHEMY_DATABASE_URI' in app.config and app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgresql'):
+            with db.engine.connect() as conn:
+                from sqlalchemy import text
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS dcp;"))
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS dct;"))
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS patients;"))
+                conn.commit()
+
         # Create tables in default database
         db.create_all()
         # Create tables in all other binds
