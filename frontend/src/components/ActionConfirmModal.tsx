@@ -8,6 +8,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { AlertTriangle, Info, HelpCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -21,6 +22,7 @@ interface ActionConfirmModalProps {
   cancelText?: string;
   variant?: 'danger' | 'warning' | 'info';
   loading?: boolean;
+  verificationText?: string;
 }
 
 export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
@@ -33,7 +35,16 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   cancelText = "Cancel",
   variant = 'danger',
   loading = false,
+  verificationText,
 }) => {
+  const [typedVerification, setTypedVerification] = React.useState("");
+
+  React.useEffect(() => {
+    if (isOpen) {
+      setTypedVerification("");
+    }
+  }, [isOpen]);
+
   const Icon = variant === 'danger' ? AlertTriangle : variant === 'warning' ? HelpCircle : Info;
   const variantStyles = {
     danger: "bg-destructive/10 text-destructive border-destructive/20",
@@ -61,6 +72,22 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
                         {description}
                     </DialogDescription>
                 </div>
+                {verificationText && (
+                    <div className="space-y-3 mt-4 text-left w-full px-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center block">
+                            Type <span className="text-destructive bg-destructive/10 px-2 py-0.5 rounded-md select-all">{verificationText}</span> to confirm
+                        </label>
+                        <Input 
+                            value={typedVerification}
+                            onChange={(e) => setTypedVerification(e.target.value)}
+                            placeholder={verificationText}
+                            className="h-12 border-2 focus-visible:ring-destructive text-center font-bold tracking-widest uppercase"
+                            autoComplete="off"
+                            autoCorrect="off"
+                            spellCheck="false"
+                        />
+                    </div>
+                )}
             </div>
 
             <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-2">
@@ -76,7 +103,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
                     onClick={() => {
                         onConfirm();
                     }}
-                    disabled={loading}
+                    disabled={loading || (!!verificationText && typedVerification !== verificationText)}
                     className={cn("flex-1 h-14 rounded-2xl font-black text-lg active:scale-95 transition-all order-1 sm:order-2", buttonStyles[variant])}
                 >
                     {loading ? "Processing..." : confirmText}

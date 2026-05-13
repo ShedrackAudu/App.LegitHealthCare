@@ -1024,6 +1024,42 @@ def clear_audit_logs():
         db.session.rollback()
         current_app.logger.error(f"Audit clear failed: {str(e)}")
         return jsonify({"error": f"Internal system error during maintenance: {str(e)}"}), 500
+
+@admin_bp.route('/api/admin/biodata/clear', methods=['DELETE'])
+@require_permission('system_maintenance')
+def clear_patient_biodata():
+    admin_id = get_jwt_identity()
+    context = request.headers.get('X-Company-Context', 'General').upper()
+    try:
+        from models import BioData, ScreeningYearBioData
+        
+        # Clear all patient bio-data in the active context
+        BioData.query.delete()
+        ScreeningYearBioData.query.delete()
+        
+        db.session.commit()
+        
+        # Record this destructive action
+        log = AuditLog(
+            user_id=admin_id,
+            action="CLEAR_PATIENT_DIRECTORY",
+            resource=f"Database:{context}",
+            details=json.dumps({
+                "action": "FULL_CLEAR",
+                "timestamp": datetime.now().isoformat(),
+                "performed_by": admin_id,
+                "context": context
+            }),
+            ip_address=get_client_ip()
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify({"message": f"Patient directory for {context} cleared successfully."}), 200
+    except Exception as e:
+        db.session.rollback()
+        current_app.logger.error(f"Patient directory clear failed: {str(e)}")
+        return jsonify({"error": f"Internal system error during maintenance: {str(e)}"}), 500
 @admin_bp.route('/api/admin/users', methods=['POST'])
 @require_permission('manage_roles')
 def create_user():
