@@ -24,11 +24,14 @@ limiter.init_app(app)
 # CORS Hardening (Phase 5)
 
 # CORS Hardening (Phase 5)
-frontend_url = os.getenv('FRONTEND_URL', '*')
+frontend_urls = [url.strip() for url in os.getenv('FRONTEND_URL', '*').split(',')]
+if 'http://localhost:5173' in frontend_urls and 'http://localhost:5174' not in frontend_urls:
+    frontend_urls.append('http://localhost:5174')
+    
 from flask_cors import CORS
-CORS(app, resources={r"/*": {"origins": frontend_url}}, supports_credentials=True)
+CORS(app, resources={r"/*": {"origins": frontend_urls}}, supports_credentials=True)
 
-socketio.init_app(app, cors_allowed_origins=frontend_url)
+socketio.init_app(app, cors_allowed_origins=frontend_urls)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -185,9 +188,9 @@ from werkzeug.exceptions import HTTPException
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    # Pass through HTTP errors (like 404) so they're handled correctly
+    # Pass through HTTP errors (like 404, 429) as JSON so they're handled correctly by frontend
     if isinstance(e, HTTPException):
-        return e
+        return jsonify({"error": e.description}), e.code
     
     app.logger.error(f"Unhandled Exception: {e}")
     # Return a generic error message in production
@@ -200,7 +203,6 @@ def set_db_context():
 
 
 @app.route('/api/config/staff-signup-status', methods=['GET'])
-@cross_origin()
 def signup_status():
     from models import SystemConfig
     config = SystemConfig.query.get('staff_signup_enabled')
@@ -209,7 +211,6 @@ def signup_status():
     return jsonify({"staff_signup_enabled": is_enabled}), 200
 
 @app.route('/signup', methods=['POST'])
-@cross_origin()
 @limiter.limit("3 per hour")
 def signup():
     data = request.json

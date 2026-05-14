@@ -344,25 +344,31 @@ const SignupPage: React.FC = () => {
             {activeTab === 'staff' ? (
               <div className="space-y-4">
                 {!isStaffSignupEnabled && !checkingStatus ? (
-                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                    <div className="bg-destructive/10 border-2 border-destructive/20 p-6 rounded-2xl flex flex-col items-start text-left gap-4">
-                      <div className="bg-destructive/20 p-4 rounded-full">
-                        <ShieldCheck className="w-10 h-10 text-destructive" />
+                  <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 flex flex-col items-center justify-center py-6 w-full">
+                    <div className="relative w-full">
+                      <div className="relative bg-background border-2 border-destructive/20 p-8 rounded-3xl flex flex-col items-center text-center gap-6 overflow-hidden w-full">
+                        
+                        {/* Decorative background stripes */}
+                        <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(220,38,38,0.03)_10px,rgba(220,38,38,0.03)_20px)] pointer-events-none"></div>
+
+                        <div className="relative bg-destructive/10 p-5 rounded-2xl ring-4 ring-destructive/5 mb-2">
+                          <ShieldCheck className="w-12 h-12 text-destructive animate-pulse" strokeWidth={2.5} />
+                          <div className="absolute -top-2 -right-2 bg-destructive w-5 h-5 rounded-full border-4 border-background flex items-center justify-center">
+                            <Lock className="w-2.5 h-2.5 text-white" />
+                          </div>
+                        </div>
+                        
+                        <div className="space-y-3 relative z-10">
+                          <h3 className="text-2xl font-black text-destructive tracking-tighter uppercase">Registration Locked</h3>
+                          <div className="h-1 w-12 bg-destructive/20 rounded-full mx-auto"></div>
+                          <p className="text-sm font-semibold text-muted-foreground leading-relaxed">
+                            Staff account registration has been temporarily disabled by the system administrator.
+                          </p>
+                          <p className="text-xs font-bold text-destructive/80 bg-destructive/5 py-2 px-4 rounded-xl inline-block mt-2 border border-destructive/10">
+                            Contact IT for manual provisioning
+                          </p>
+                        </div>
                       </div>
-                      <div className="space-y-1">
-                        <h3 className="text-xl font-black text-destructive uppercase tracking-tight">Registration Locked</h3>
-                        <p className="text-sm font-medium text-muted-foreground leading-relaxed">
-                          Staff account registration is currently disabled by the system administrator. 
-                          Please contact the IT department or your supervisor for access.
-                        </p>
-                      </div>
-                      <Button 
-                        variant="outline" 
-                        className="w-full h-12 rounded-xl font-black uppercase tracking-widest border-2 hover:bg-muted"
-                        onClick={() => navigate('/login')}
-                      >
-                        Return to Login
-                      </Button>
                     </div>
                   </div>
                 ) : (
