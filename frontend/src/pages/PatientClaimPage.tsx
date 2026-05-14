@@ -9,6 +9,8 @@ import { motion } from 'framer-motion';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
+import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 
 const PatientClaimPage = () => {
   const location = useLocation();
@@ -217,7 +219,10 @@ const PatientClaimPage = () => {
                 </CardHeader>
                 <CardContent className="p-6 pt-2 space-y-4">
                   <div className="space-y-1.5">
-                    <FieldLabel>Password</FieldLabel>
+                    <div className="flex justify-between items-center mb-1">
+                      <FieldLabel>Password</FieldLabel>
+                      <PasswordStrength password={formData.password} />
+                    </div>
                     <Input 
                       name="password" 
                       type="password" 
@@ -229,7 +234,10 @@ const PatientClaimPage = () => {
                     />
                   </div>
                   <div className="space-y-1.5">
-                    <FieldLabel>Confirm</FieldLabel>
+                    <div className="flex justify-between items-center mb-1">
+                      <FieldLabel>Confirm</FieldLabel>
+                      <PasswordMatchIndicator password={formData.password} confirmPassword={formData.confirm_password} />
+                    </div>
                     <Input 
                       name="confirm_password" 
                       type="password" 

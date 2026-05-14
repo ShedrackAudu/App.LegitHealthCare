@@ -4,8 +4,10 @@ import {
   User, Mail, Phone, Shield, ShieldCheck, 
   Save, ArrowLeft, Building2, Calendar, IdCard,
   Lock, Key, Fingerprint, ShieldEllipsis, Flag, Compass, Globe,
-  Loader2
+  Loader2, Eye, EyeOff
 } from 'lucide-react';
+import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -50,6 +52,9 @@ const PatientManageAccountPage = () => {
   const [resetStep, setResetStep] = useState(1); // 1: Request, 2: Verify & New Pass
   const [resetOtp, setResetOtp] = useState('');
   const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [resetLoading, setResetLoading] = useState(false);
 
   const fetchProfile = useCallback(async () => {
@@ -376,14 +381,49 @@ const PatientManageAccountPage = () => {
                             />
                           </div>
                           <div className="space-y-1.5">
-                            <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">New Passcode</Label>
-                            <Input 
-                              type="password"
-                              className="h-11 rounded-xl border font-bold px-4 text-sm"
-                              value={newPassword}
-                              onChange={(e) => setNewPassword(e.target.value)}
-                              placeholder="••••••••"
-                            />
+                            <div className="flex justify-between items-center mb-0.5">
+                              <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">New Passcode</Label>
+                              <PasswordStrength password={newPassword} />
+                            </div>
+                            <div className="relative group">
+                              <Input 
+                                type={showPassword ? "text" : "password"}
+                                className="h-11 rounded-xl border font-bold px-4 pr-10 text-sm"
+                                value={newPassword}
+                                onChange={(e) => setNewPassword(e.target.value)}
+                                placeholder="••••••••"
+                              />
+                              <button 
+                                type="button" 
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                              >
+                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
+                          </div>
+
+                          <div className="space-y-1.5">
+                            <div className="flex justify-between items-center mb-0.5">
+                              <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">Confirm Passcode</Label>
+                              <PasswordMatchIndicator password={newPassword} confirmPassword={confirmPassword} />
+                            </div>
+                            <div className="relative group">
+                              <Input 
+                                type={showConfirmPassword ? "text" : "password"}
+                                className="h-11 rounded-xl border font-bold px-4 pr-10 text-sm"
+                                value={confirmPassword}
+                                onChange={(e) => setConfirmPassword(e.target.value)}
+                                placeholder="••••••••"
+                              />
+                              <button 
+                                type="button" 
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                              >
+                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                              </button>
+                            </div>
                           </div>
                         </div>
                       )}
@@ -438,6 +478,7 @@ const PatientManageAccountPage = () => {
                               setShowResetModal(false);
                               setResetOtp('');
                               setNewPassword('');
+                              setConfirmPassword('');
                               setResetStep(1);
                             } catch (err: any) {
                               toast.error(err.response?.data?.error || "Verification failed.");

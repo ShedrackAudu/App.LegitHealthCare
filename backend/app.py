@@ -234,12 +234,6 @@ def signup():
     if not re.match(r'^[a-z0-9_]+$', username):
         return jsonify({"error": "Username can only contain lowercase letters, numbers, and underscores."}), 400
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already exists"}), 400
-        
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({"error": "Email already exists"}), 400
-
     # Config Check
     if data.get('email') != 'admin@legit.com':
         from models import SystemConfig
@@ -248,21 +242,47 @@ def signup():
         if not is_enabled:
             return jsonify({"error": "Staff registration is currently disabled by the system administrator."}), 403
 
-    new_user = User(
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        username=username,
-        phone=data['phone'],
-        email=data['email']
-    )
-    new_user.set_password(data['password'])
+    existing_user_by_username = User.query.filter_by(username=username).first()
+    if existing_user_by_username:
+        if existing_user_by_username.is_verified:
+            return jsonify({"error": "Username already exists"}), 400
+        else:
+            # Re-use unverified account
+            new_user = existing_user_by_username
+            new_user.first_name = data['first_name']
+            new_user.last_name = data['last_name']
+            new_user.phone = data['phone']
+            new_user.email = data['email']
+            new_user.set_password(data['password'])
+    else:
+        existing_user_by_email = User.query.filter_by(email=data['email']).first()
+        if existing_user_by_email:
+            if existing_user_by_email.is_verified:
+                return jsonify({"error": "Email already exists"}), 400
+            else:
+                # Re-use unverified account
+                new_user = existing_user_by_email
+                new_user.first_name = data['first_name']
+                new_user.last_name = data['last_name']
+                new_user.username = username
+                new_user.phone = data['phone']
+                new_user.set_password(data['password'])
+        else:
+            new_user = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                username=username,
+                phone=data['phone'],
+                email=data['email']
+            )
+            new_user.set_password(data['password'])
+            db.session.add(new_user)
     
     # Generate OTP
     otp = generate_otp()
     new_user.otp_code = otp
     new_user.otp_expiry = datetime.now() + timedelta(minutes=10)
     
-    db.session.add(new_user)
     db.session.commit()
     
     try:
@@ -374,7 +394,25 @@ def login():
 
     if user and user.check_password(password):
         if not user.is_verified:
-            return jsonify({"error": "Please verify your email first"}), 403
+            # Generate a new OTP so they can continue
+            otp = generate_otp()
+            user.otp_code = otp
+            user.otp_expiry = datetime.now() + timedelta(minutes=10)
+            db.session.commit()
+            
+            # Try to send it
+            try:
+                send_otp_email(user, otp)
+            except:
+                pass # Silently fail, user can resend on the next page
+                
+            return jsonify({
+                "error": "Please verify your email first", 
+                "needs_verification": True,
+                "user_id": user.id,
+                "email": user.email,
+                "portal": detected_portal
+            }), 403
             
         # 2FA Enforcement
         if getattr(user, 'is_2fa_enabled', False):

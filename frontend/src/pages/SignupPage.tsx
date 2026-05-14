@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,6 +21,7 @@ import { toast } from 'react-hot-toast';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 import { SafeImage } from '@/components/common/SafeImage';
 
 const signupSchema = z.object({
@@ -54,6 +55,7 @@ const SignupPage: React.FC = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, branding, setUser } = useAppContext();
 
   // Patient Claim State
@@ -82,6 +84,29 @@ const SignupPage: React.FC = () => {
   });
   const [isStaffSignupEnabled, setIsStaffSignupEnabled] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
+  const [resumingVerification, setResumingVerification] = useState(false);
+
+  useEffect(() => {
+    // Check if we are resuming verification from login
+    if (location.state?.resuming) {
+        const { portal, user_id, email, patientData: pData, claimData: cData } = location.state;
+        if (portal === 'staff') {
+            setActiveTab('staff');
+            setStaffStep('verify');
+            setStaffUserId(user_id);
+            setStaffEmail(email);
+            setResumingVerification(true);
+            setOtpTimer(60);
+        } else if (portal === 'patient') {
+            setActiveTab('patient');
+            setPatientStep('verify');
+            setPatientData(pData || { email });
+            setClaimData(cData || { ...claimData, email });
+            setResumingVerification(true);
+            setOtpTimer(60);
+        }
+    }
+  }, [location.state]);
 
   useEffect(() => {
     let interval: any;
@@ -460,7 +485,10 @@ const SignupPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                          <PasswordStrength password={password} />
+                        </div>
                         <div className="relative group">
                           <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
                           <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
@@ -468,34 +496,19 @@ const SignupPage: React.FC = () => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                          <PasswordMatchIndicator password={password} confirmPassword={confirmPassword} />
+                        </div>
                         <div className="relative group">
                           <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
                           <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none">{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
                         </div>
                       </div>
                     </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                      <div className="space-y-2">
-                        <PasswordStrength password={password} />
-                      </div>
-                      <div className="space-y-2">
-                         {(password || confirmPassword) && (
-                           <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
-                             password === confirmPassword && password.length > 0
-                               ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
-                               : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
-                           }`}>
-                             {password === confirmPassword && password.length > 0 ? (
-                               <><CheckCircle2 className="w-4 h-4" /> Match</>
-                             ) : (
-                               <><X className="w-4 h-4" /> mismatch</>
-                             )}
-                           </div>
-                         )}
-                      </div>
-                    </div>
+
 
                     <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Staff Account'}
@@ -516,7 +529,12 @@ const SignupPage: React.FC = () => {
                              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
                                <Mail className="w-6 h-6" />
                              </div>
-                             <h3 className="text-xl font-black tracking-tight leading-none">Verify Account</h3>
+                             <div className="flex items-center gap-2">
+                               <h3 className="text-xl font-black tracking-tight leading-none">Verify Account</h3>
+                               {resumingVerification && (
+                                 <Badge className="bg-amber-500 text-white text-[8px] uppercase tracking-widest font-black py-0.5 px-2 h-auto rounded-full">Resumed</Badge>
+                               )}
+                             </div>
                              <p className="text-xs text-muted-foreground font-medium">
                                We sent a 6-digit code to <br/>
                                <span className="text-foreground font-bold">{staffEmail}</span>
@@ -718,7 +736,10 @@ const SignupPage: React.FC = () => {
 
                       <div className="grid grid-cols-2 gap-4">
                          <div className="space-y-1">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                            <div className="flex justify-between items-center mb-1">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                              <PasswordStrength password={claimData.password} />
+                            </div>
                             <div className="relative group">
                               <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                               <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -728,7 +749,10 @@ const SignupPage: React.FC = () => {
                             </div>
                          </div>
                          <div className="space-y-1">
-                            <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                            <div className="flex justify-between items-center mb-1">
+                              <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                              <PasswordMatchIndicator password={claimData.password} confirmPassword={claimData.confirm_password} />
+                            </div>
                             <div className="relative group">
                               <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                               <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
@@ -739,27 +763,7 @@ const SignupPage: React.FC = () => {
                          </div>
                       </div>
 
-                      {/* Password Strength & Match Indicators */}
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
-                         <div className="space-y-2">
-                            <PasswordStrength password={claimData.password} />
-                         </div>
-                         <div className="space-y-2">
-                            {(claimData.password || claimData.confirm_password) && (
-                              <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
-                                claimData.password === claimData.confirm_password && claimData.password.length > 0
-                                  ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
-                                  : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
-                              }`}>
-                                {claimData.password === claimData.confirm_password && claimData.password.length > 0 ? (
-                                  <><CheckCircle2 className="w-4 h-4" /> Passwords Match</>
-                                ) : (
-                                  <><X className="w-4 h-4" /> Passwords Do Not Match</>
-                                )}
-                              </div>
-                            )}
-                         </div>
-                      </div>
+
                     </div>
 
                     <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" disabled={loading}>
@@ -785,7 +789,12 @@ const SignupPage: React.FC = () => {
                              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
                                <Mail className="w-6 h-6" />
                              </div>
-                             <h3 className="text-xl font-black tracking-tight leading-none">Check Your Email</h3>
+                             <div className="flex items-center gap-2">
+                               <h3 className="text-xl font-black tracking-tight leading-none">Check Your Email</h3>
+                               {resumingVerification && (
+                                 <Badge className="bg-amber-500 text-white text-[8px] uppercase tracking-widest font-black py-0.5 px-2 h-auto rounded-full">Resumed</Badge>
+                               )}
+                             </div>
                              <p className="text-xs text-muted-foreground font-medium">
                                We sent a 6-digit code to <br/>
                                <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>

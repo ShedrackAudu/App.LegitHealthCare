@@ -15,6 +15,7 @@ import { toast } from 'react-hot-toast';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 import { SafeImage } from '@/components/common/SafeImage';
 
 const loginSchema = z.object({
@@ -116,7 +117,18 @@ const LoginPage = () => {
       const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
-        if (err.response?.status === 403) {
+        if (err.response?.status === 403 && err.response?.data?.needs_verification) {
+            const { user_id, email, portal: detectedPortal } = err.response.data;
+            toast.success("Verification required. A new code has been sent to your email.");
+            navigate('/signup', { 
+                state: { 
+                    resuming: true, 
+                    portal: detectedPortal, 
+                    user_id, 
+                    email 
+                } 
+            });
+        } else if (err.response?.status === 403) {
             setError(err.response?.data?.error || "Your account is not verified.");
         } else {
             setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
@@ -379,7 +391,10 @@ const LoginPage = () => {
 
                <form onSubmit={handleForceReset} className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Permanent Password</Label>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Permanent Password</Label>
+                      <PasswordStrength password={forceResetData.newPassword} />
+                    </div>
                     <div className="relative group">
                       <Input 
                           type="password" 
@@ -391,11 +406,13 @@ const LoginPage = () => {
                       />
                       <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
-                    <PasswordStrength password={forceResetData.newPassword} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm Permanent Password</Label>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm Permanent Password</Label>
+                      <PasswordMatchIndicator password={forceResetData.newPassword} confirmPassword={forceResetData.confirmPassword} />
+                    </div>
                     <div className="relative group">
                       <Input 
                           type="password" 
@@ -407,9 +424,6 @@ const LoginPage = () => {
                       />
                       <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
-                    {forceResetData.confirmPassword && forceResetData.newPassword !== forceResetData.confirmPassword && (
-                      <p className="text-[10px] text-destructive font-black ml-1 uppercase animate-in fade-in">Passwords do not match</p>
-                    )}
                   </div>
 
                   <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
@@ -593,7 +607,10 @@ const LoginPage = () => {
                   <form onSubmit={handleResetPassword} className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Password</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Password</Label>
+                          <PasswordStrength password={resetPassword} />
+                        </div>
                         <div className="relative group">
                           <Input 
                               type="password" 
@@ -605,11 +622,13 @@ const LoginPage = () => {
                           />
                           <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
-                        <PasswordStrength password={resetPassword} />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm New Password</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm New Password</Label>
+                          <PasswordMatchIndicator password={resetPassword} confirmPassword={confirmPassword} />
+                        </div>
                         <div className="relative group">
                           <Input 
                               type="password" 
@@ -621,7 +640,6 @@ const LoginPage = () => {
                           />
                           <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
-                        {confirmPassword && resetPassword !== confirmPassword && <p className="text-[10px] text-destructive font-black ml-1 uppercase">Passwords do not match</p>}
                       </div>
                     </div>
                     
