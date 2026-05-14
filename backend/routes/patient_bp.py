@@ -7,6 +7,7 @@ from sqlalchemy import text
 from datetime import datetime, timedelta
 
 from utils.email_utils import EmailService
+from extensions import limiter
 
 patient_bp = Blueprint('patient_bp', __name__)
 
@@ -109,6 +110,7 @@ def search_patient():
     return jsonify(results[0]), 200
 
 @patient_bp.route('/api/patient/claim', methods=['POST'])
+@limiter.limit("5 per hour")
 def claim_account():
     data = request.json
     staff_id = data.get('staff_id', '').strip()
@@ -228,6 +230,7 @@ def claim_account():
     }), 200
 
 @patient_bp.route('/api/patient/resend-otp', methods=['POST'])
+@limiter.limit("5 per hour")
 def resend_otp():
     data = request.json
     email = data.get('email')
@@ -269,6 +272,7 @@ def resend_otp():
     }), 200
 
 @patient_bp.route('/api/patient/verify-otp', methods=['POST'])
+@limiter.limit("5 per hour")
 def verify_patient_otp():
     data = request.json
     email = data.get('email')
@@ -476,6 +480,7 @@ def update_patient_profile():
     }), 200
 
 @patient_bp.route('/api/patient/reset-password/request', methods=['POST'])
+@limiter.limit("5 per hour")
 def reset_password_request():
     data = request.json
     email = data.get('email')

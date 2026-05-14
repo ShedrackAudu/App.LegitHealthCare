@@ -211,7 +211,7 @@ def signup_status():
     return jsonify({"staff_signup_enabled": is_enabled}), 200
 
 @app.route('/signup', methods=['POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def signup():
     data = request.json
     
@@ -284,8 +284,35 @@ def signup():
     
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
+@app.route('/api/resend-otp', methods=['POST'])
+@limiter.limit("5 per hour")
+def resend_otp():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+        
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "If an account exists, a new code has been sent."}), 200
+        
+    otp = generate_otp()
+    user.otp_code = otp
+    user.otp_expiry = datetime.now() + timedelta(minutes=10)
+    db.session.commit()
+    
+    try:
+        success = send_otp_email(user, otp)
+        if not success:
+             return jsonify({"error": "Failed to connect to email server"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        
+    return jsonify({"message": "New code sent!"}), 200
+
+
 @app.route('/verify-otp', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per hour")
 def verify_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -398,7 +425,7 @@ def login():
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
@@ -480,7 +507,7 @@ def verify_recovery_otp():
     return jsonify({"error": "Invalid or expired recovery code"}), 400
 
 @app.route('/forgot-password/reset', methods=['POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def reset_password():
     data = request.json
     user_id = data.get('user_id')

@@ -70,6 +70,9 @@ const SignupPage: React.FC = () => {
   const [resendingOtp, setResendingOtp] = useState(false);
   const [verifyLoading, setVerifyLoading] = useState(false);
   const [verifySuccess, setVerifySuccess] = useState(false);
+  const [staffStep, setStaffStep] = useState<'form' | 'verify'>('form');
+  const [staffUserId, setStaffUserId] = useState<number | null>(null);
+  const [staffEmail, setStaffEmail] = useState('');
 
   const [claimData, setClaimData] = useState({
     phone: '',
@@ -80,10 +83,10 @@ const SignupPage: React.FC = () => {
   const [isStaffSignupEnabled, setIsStaffSignupEnabled] = useState(true);
   const [checkingStatus, setCheckingStatus] = useState(true);
 
-  // OTP Timer Effect
   useEffect(() => {
     let interval: any;
-    if (patientStep === 'verify' && otpTimer > 0 && !canResendOtp) {
+    const isVerifying = (activeTab === 'patient' && patientStep === 'verify') || (activeTab === 'staff' && staffStep === 'verify');
+    if (isVerifying && otpTimer > 0 && !canResendOtp) {
       interval = setInterval(() => {
         setOtpTimer((prev) => prev - 1);
       }, 1000);
@@ -92,15 +95,18 @@ const SignupPage: React.FC = () => {
       clearInterval(interval);
     }
     return () => clearInterval(interval);
-  }, [patientStep, otpTimer, canResendOtp]);
+  }, [patientStep, staffStep, activeTab, otpTimer, canResendOtp]);
 
   const handleResendOTP = async () => {
     if (!canResendOtp) return;
     setResendingOtp(true);
     try {
-      await axios.post('/api/patient/resend-otp', {
-        email: claimData.email || patientData.email,
-        first_name: patientData.first_name
+      const email = activeTab === 'patient' ? (claimData.email || patientData.email) : staffEmail;
+      const first_name = activeTab === 'patient' ? patientData.first_name : 'Staff Member';
+      
+      await axios.post(activeTab === 'patient' ? '/api/patient/resend-otp' : '/api/resend-otp', {
+        email,
+        first_name
       });
       toast.success('New code sent!');
       setOtpTimer(60);
@@ -130,6 +136,31 @@ const SignupPage: React.FC = () => {
       setTimeout(() => {
         setUser(resp.data.user);
         navigate('/patient/dashboard');
+      }, 2000);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || 'Invalid OTP');
+    } finally {
+      setVerifyLoading(false);
+    }
+  };
+
+  const handleStaffVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (otp.length < 6) {
+      toast.error('Enter 6-digit code');
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      const resp = await axios.post('/verify-otp', {
+        user_id: staffUserId,
+        otp,
+        portal: 'staff'
+      });
+      setVerifySuccess(true);
+      toast.success('Verified successfully!');
+      setTimeout(() => {
+        navigate('/login');
       }, 2000);
     } catch (err: any) {
       toast.error(err.response?.data?.error || 'Invalid OTP');
@@ -178,7 +209,12 @@ const SignupPage: React.FC = () => {
     setError(null);
     try {
       const response = await axios.post('/signup', data);
-      navigate('/verify-otp', { state: { userId: response.data.user_id } });
+      setStaffUserId(response.data.user_id);
+      setStaffEmail(data.email);
+      setStaffStep('verify');
+      setOtpTimer(60);
+      setCanResendOtp(false);
+      toast.success('Account created! Please check your email for the verification code.');
     } catch (err: any) {
       setError(err.response?.data?.error || 'Something went wrong. Please try again.');
     } finally {
@@ -371,7 +407,7 @@ const SignupPage: React.FC = () => {
                       </div>
                     </div>
                   </div>
-                ) : (
+                ) : staffStep === 'form' ? (
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-3">
                     {error && (
                       <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
@@ -422,29 +458,132 @@ const SignupPage: React.FC = () => {
                     </div>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-1">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
-                      <div className="relative group">
-                        <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
-                        <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                        <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
+                        <div className="relative group">
+                          <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
+                          <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+                        </div>
                       </div>
-                      <PasswordStrength password={password} />
-                    </div>
-                    <div className="space-y-1">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
-                      <div className="relative group">
-                        <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
-                        <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm</Label>
+                        <div className="relative group">
+                          <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
+                          <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                        </div>
                       </div>
                     </div>
-                  </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                      <div className="space-y-2">
+                        <PasswordStrength password={password} />
+                      </div>
+                      <div className="space-y-2">
+                         {(password || confirmPassword) && (
+                           <div className={`text-[10px] font-black uppercase tracking-[0.2em] px-4 py-3 rounded-2xl border-2 transition-all flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-300 w-full justify-center ${
+                             password === confirmPassword && password.length > 0
+                               ? 'bg-primary/10 border-primary/20 text-primary shadow-xl shadow-primary/10' 
+                               : 'bg-rose-500/10 border-rose-500/20 text-rose-500 shadow-xl shadow-rose-500/10'
+                           }`}>
+                             {password === confirmPassword && password.length > 0 ? (
+                               <><CheckCircle2 className="w-4 h-4" /> Match</>
+                             ) : (
+                               <><X className="w-4 h-4" /> mismatch</>
+                             )}
+                           </div>
+                         )}
+                      </div>
+                    </div>
 
                     <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Staff Account'}
                     </Button>
                   </form>
+                ) : (
+                  <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+                    <AnimatePresence mode="wait">
+                      {!verifySuccess ? (
+                        <motion.form
+                          key="staff-verify-form"
+                          initial={{ opacity: 1 }}
+                          exit={{ opacity: 0, scale: 0.95 }}
+                          onSubmit={handleStaffVerify}
+                          className="space-y-6"
+                        >
+                          <div className="text-left space-y-1">
+                             <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
+                               <Mail className="w-6 h-6" />
+                             </div>
+                             <h3 className="text-xl font-black tracking-tight leading-none">Verify Account</h3>
+                             <p className="text-xs text-muted-foreground font-medium">
+                               We sent a 6-digit code to <br/>
+                               <span className="text-foreground font-bold">{staffEmail}</span>
+                             </p>
+                          </div>
+
+                          <div className="space-y-4">
+                            <Input
+                              type="text"
+                              inputMode="numeric"
+                              placeholder="000000"
+                              className="h-20 text-center text-4xl font-black tracking-[1.2rem] border-4 focus:border-primary rounded-2xl bg-muted/20"
+                              value={otp}
+                              onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
+                              maxLength={6}
+                              autoFocus
+                            />
+                            
+                            <Button 
+                              type="submit"
+                              className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
+                              disabled={verifyLoading || otp.length < 6}
+                            >
+                              {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Continue'}
+                            </Button>
+                          </div>
+
+                          <div className="flex flex-col items-start gap-4 pt-2">
+                            <Button 
+                              variant="link" 
+                              type="button"
+                              className="text-primary font-black uppercase tracking-widest text-[10px] h-auto p-0"
+                              disabled={!canResendOtp || resendingOtp}
+                              onClick={handleResendOTP}
+                            >
+                              {resendingOtp ? 'Sending...' : canResendOtp ? 'Resend New Code' : `Resend available in ${otpTimer}s`}
+                            </Button>
+
+                            <button 
+                              type="button" 
+                              onClick={() => setStaffStep('form')} 
+                              className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                            >
+                               <ArrowLeft className="w-3 h-3" /> Back to Signup Form
+                            </button>
+                          </div>
+                        </motion.form>
+                      ) : (
+                         <motion.div
+                           key="staff-success"
+                           initial={{ opacity: 0, scale: 0.5 }}
+                           animate={{ opacity: 1, scale: 1 }}
+                           className="flex flex-col items-start py-6 space-y-4"
+                         >
+                           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
+                             <CheckCircle2 className="w-10 h-10" />
+                           </div>
+                           <div className="text-left space-y-1">
+                             <h3 className="text-2xl font-black text-primary tracking-tight">Verified!</h3>
+                             <p className="text-xs font-medium text-muted-foreground italic leading-relaxed pl-3 border-l-2 border-primary/30">
+                                Your staff account is now active. <br/> Redirecting to login...
+                             </p>
+                           </div>
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                  </div>
                 )}
               </div>
             ) : (
