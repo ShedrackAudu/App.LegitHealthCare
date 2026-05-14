@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, current_app, send_from_directory,
 from models import db, PatientFile, StaffUser, PatientPortalUser
 from werkzeug.utils import secure_filename
 from decorators import require_permission
-from flask_jwt_extended import get_jwt_identity, get_jwt
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 import os
 import uuid
 import mimetypes
@@ -81,16 +81,28 @@ def list_files(staff_id, year):
     return jsonify([f.to_dict() for f in files]), 200
 
 @files_bp.route('/view/<int:file_id>', methods=['GET', 'OPTIONS'])
+@jwt_required()
 def view_file(file_id):
     if request.method == 'OPTIONS':
         return _cors_headers(Response('', status=204))
 
-    # Basic JWT check manually if not using decorator to allow easier PDF viewing in new tabs if needed
-    # But for now, let's keep it secure
     pf = PatientFile.query.get_or_404(file_id)
     
-    # We should ideally check permissions here too if it was sensitive, 
-    # but for simplicity let's serve from static
+    # Security check: Determine if requester is authorized
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+
+    if portal == 'patient':
+        # Patient can only view their own files
+        patient = PatientPortalUser.query.get(user_id)
+        if not patient or patient.username.lower() != pf.staff_id.lower():
+            return jsonify({"error": "Unauthorized: You do not have permission to view this file."}), 403
+    else:
+        # Staff must have clinical viewing permissions
+        staff = StaffUser.query.get(user_id)
+        if not staff or not (staff.has_permission('view_clinical_data') or staff.has_permission('view_records') or staff.username == 'admin'):
+            return jsonify({"error": "Unauthorized: Clinical permission required to view patient files."}), 403
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
     # The file_path in DB is 'patient_files/staff_id/year/unique_filename'
     directory = os.path.join(upload_folder, os.path.dirname(pf.file_path))

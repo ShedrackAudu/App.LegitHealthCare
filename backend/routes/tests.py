@@ -279,7 +279,11 @@ def bulk_upload(test_type):
             for excel_col, model_field in current_mapping.items():
                 if excel_col in df.columns:
                     val = row[excel_col]
-                    setattr(record, model_field, str(val) if pd.notna(val) else None)
+                    # Robust cleaning to avoid 'nan' strings in database
+                    if pd.isna(val) or str(val).strip().lower() == 'nan':
+                        setattr(record, model_field, None)
+                    else:
+                        setattr(record, model_field, str(val).strip())
             
             try:
                 if test_type == 'kft':

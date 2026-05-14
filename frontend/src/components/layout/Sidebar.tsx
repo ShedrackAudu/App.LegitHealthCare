@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, useLocation } from 'react-router-dom';
+import { NavLink, useLocation, Link } from 'react-router-dom';
 import {
   LayoutDashboard,
   UserPlus,
@@ -27,6 +27,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { useAppContext } from '@/context/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { SafeImage } from '@/components/common/SafeImage';
 
 interface SidebarItem {
   title: string;
@@ -43,9 +44,9 @@ const medicalItems: SidebarItem[] = [
   { title: 'Patient Report', path: '/patient-report', icon: FileText },
   { title: 'Screening Matrix', path: '/view-records', icon: Database },
   { title: 'Patient Directory', path: '/view-patients', icon: Users },
-  { title: 'Messaging', path: '/messages', icon: MessageSquare },
   { title: 'Appointments', path: '/appointments', icon: Calendar },
   { title: 'Inventory', path: '/inventory', icon: Package, permission: 'view_inventory' },
+  { title: 'Messaging', path: '/messages', icon: MessageSquare },
 ];
 
 
@@ -124,27 +125,36 @@ export const Sidebar: React.FC = () => {
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <div className="h-14 shrink-0 flex items-center px-4 border-b">
+      <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b hover:bg-muted/30 transition-colors cursor-pointer group">
         {/* Clinic Logo */}
         {!isCollapsed ? (
-          (branding?.logo_dark && !brandingError) ? (
-            <img src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} alt="Logo" className="max-h-10 w-auto object-contain" />
+          branding?.logo_dark ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+              alt={branding?.clinic_name || "Logo"} 
+              className="max-h-10 w-auto object-contain group-hover:opacity-80 transition-opacity" 
+              fallbackText={branding?.clinic_name}
+            />
           ) : (
-            <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
+            <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary/80 transition-colors">
               <Building2 className="h-5 w-5 shrink-0" />
               {branding?.clinic_name || 'LEGIT HC'}
             </div>
           )
         ) : (
-          (branding?.logo_light && !brandingError) ? (
-            <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="max-h-8 w-auto object-contain mx-auto" />
+          branding?.logo_light ? (
+            <SafeImage 
+              src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
+              alt="Logo" 
+              className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
+            />
           ) : (
-            <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
+            <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary/80 transition-colors">
               <Building2 className="h-5 w-5 shrink-0" />
             </div>
           )
         )}
-      </div>
+      </Link>
 
       <div className="flex flex-col flex-1 py-4 overflow-hidden">
         <div

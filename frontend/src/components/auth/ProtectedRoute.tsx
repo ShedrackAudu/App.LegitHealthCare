@@ -24,11 +24,7 @@ export const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   const userRoles = user?.roles?.map((r: any) => typeof r === 'string' ? r : r.name) || [];
 
   if (!user) {
-    // Determine target portal based on path to ensure correct login form is shown
-    const isPatientPath = location.pathname.startsWith('/patient');
-    const loginPath = isPatientPath ? '/login?portal=patient' : '/login?portal=staff';
-    
-    return <Navigate to={loginPath} state={{ from: location }} replace />;
+    return <Navigate to="/login" state={{ from: location }} replace />;
   }
 
   // Handle Forced Password Reset

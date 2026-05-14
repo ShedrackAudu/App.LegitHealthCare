@@ -14,14 +14,14 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
   useEffect(() => {
     scannerRef.current = new Html5QrcodeScanner(
       "reader",
-      { 
-        fps: 10, 
+      {
+        fps: 10,
         // Removing qrbox allows scanning the entire video frame, which is much better for wide 1D barcodes
         aspectRatio: 1.777778,
         showTorchButtonIfSupported: true,
         rememberLastUsedCamera: true,
         experimentalFeatures: {
-            useBarCodeDetectorIfSupported: true
+          useBarCodeDetectorIfSupported: true
         },
         formatsToSupport: [
           Html5QrcodeSupportedFormats.QR_CODE,

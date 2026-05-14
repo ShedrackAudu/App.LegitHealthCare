@@ -7,10 +7,12 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Activity, Loader2, ArrowLeft } from 'lucide-react';
 import { ModeToggle } from '@/components/mode-toggle';
+import { useAppContext } from '@/context/AppContext';
 
 const OTPPage = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const { branding } = useAppContext();
   const [otp, setOtp] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,14 +58,14 @@ const OTPPage = () => {
       </div>
       <div className="w-full max-w-sm">
         <Card className="border-border shadow-xl bg-card">
-          <CardHeader className="py-4 text-center">
-            <Link to="/" className="flex items-center justify-center mb-3 hover:opacity-80 transition-opacity">
+          <CardHeader className="py-4 text-left space-y-1">
+            <Link to="/" className="flex items-center justify-start mb-3 hover:opacity-80 transition-opacity">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
                 <Activity className="w-8 h-8 text-primary" />
               </div>
             </Link>
             <CardTitle className="text-2xl font-bold tracking-tight">Verify Email</CardTitle>
-            <CardDescription className="text-muted-foreground mt-1 text-sm">
+            <CardDescription className="text-muted-foreground mt-0.5 text-sm">
               Enter the code sent to your email.
             </CardDescription>
           </CardHeader>
@@ -79,8 +81,8 @@ const OTPPage = () => {
                   {error}
                 </div>
               )}
-              <div className="space-y-2">
-                <Label htmlFor="otp" className="text-center block text-sm mb-2">Enter Verification Code</Label>
+              <div className="space-y-1 text-left">
+                <Label htmlFor="otp" className="text-left block text-sm mb-1">Enter Verification Code</Label>
                 <Input 
                   id="otp" 
                   placeholder="000000" 
@@ -102,12 +104,12 @@ const OTPPage = () => {
               <ArrowLeft className="mr-2 h-4 w-4" />
               Back to Signup
             </Link>
-            <div className="text-[10px] text-center text-muted-foreground/50">
-              © 2026 Legit HealthCare Services Ltd.
-            </div>
           </CardFooter>
         </Card>
       </div>
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
+          © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
+        </div>
     </div>
   );
 };

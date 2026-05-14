@@ -5,7 +5,7 @@ import os
 import json
 from dotenv import load_dotenv
 
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies
 from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
 from extensions import mail, jwt, limiter, socketio
 from auth_utils import generate_otp, send_otp_email, is_password_strong
@@ -24,11 +24,14 @@ limiter.init_app(app)
 # CORS Hardening (Phase 5)
 
 # CORS Hardening (Phase 5)
-frontend_url = os.getenv('FRONTEND_URL', '*')
+frontend_urls = [url.strip() for url in os.getenv('FRONTEND_URL', '*').split(',')]
+if 'http://localhost:5173' in frontend_urls and 'http://localhost:5174' not in frontend_urls:
+    frontend_urls.append('http://localhost:5174')
+    
 from flask_cors import CORS
-CORS(app, resources={r"/*": {"origins": frontend_url}})
+CORS(app, resources={r"/*": {"origins": frontend_urls}}, supports_credentials=True)
 
-socketio.init_app(app, cors_allowed_origins=frontend_url)
+socketio.init_app(app, cors_allowed_origins=frontend_urls)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -38,11 +41,15 @@ if raw_db_url:
         raw_db_url = raw_db_url.replace("postgres://", "postgresql://", 1)
     
     app.config['SQLALCHEMY_DATABASE_URI'] = raw_db_url
-    # For Render/Production, consolidate all binds into the same main database
+    
+    has_params = '?' in raw_db_url
+    separator = '&' if has_params else '?'
+    
+    # For Render/Production, use PostgreSQL schemas for multi-tenant isolation
     app.config['SQLALCHEMY_BINDS'] = {
-        'dcp': raw_db_url,
-        'dct': raw_db_url,
-        'patients': raw_db_url
+        'dcp': raw_db_url + separator + "options=-csearch_path%3Ddcp,public",
+        'dct': raw_db_url + separator + "options=-csearch_path%3Ddct,public",
+        'patients': raw_db_url + separator + "options=-csearch_path%3Dpatients,public"
     }
 else:
     # Use SQLite for local development
@@ -54,7 +61,12 @@ else:
     }
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'default-secret-key-for-dev-only')
+app.config['SECRET_KEY'] = os.getenv('SECRET_KEY')
+if not app.config['SECRET_KEY']:
+    if os.getenv('FLASK_ENV') == 'production':
+        raise RuntimeError("CRITICAL SECURITY ERROR: SECRET_KEY environment variable MUST be set in production.")
+    app.config['SECRET_KEY'] = 'dev-secret-key-insecure-only-for-local'
+    print("WARNING: Using insecure default SECRET_KEY. This is only acceptable for local development.")
 
 # Email config (to be filled by user)
 app.config['MAIL_SERVER'] = os.getenv('MAIL_SERVER', 'smtp.gmail.com')
@@ -65,6 +77,11 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+app.config['JWT_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
+app.config['JWT_COOKIE_CSRF_PROTECT'] = False # Set to True later for full CSRF protection
+app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
+app.config['JWT_COOKIE_SAMESITE'] = 'Lax' if os.getenv('FLASK_ENV') != 'production' else 'None'
 app.config['MAX_CONTENT_LENGTH'] = 16 * 1024 * 1024 # 16MB limit
 
 db.init_app(app)
@@ -93,12 +110,6 @@ def handle_rate_limit_exceeded(e):
         "message": "Security policy limit reached. Please wait a moment before trying again.",
         "retry_after": e.description
     }), 429
-def invalid_token_response(callback):
-    return jsonify({"error": "Invalid token"}), 401
-
-@jwt.expired_token_loader
-def expired_token_response(jwt_header, jwt_payload):
-    return jsonify({"error": "Token has expired"}), 401
 
 # Automated Schema Management
 from utils.migrations import ensure_schema
@@ -157,6 +168,15 @@ init_socket_handlers(socketio)
 
 def init_db():
     with app.app_context():
+        # Create schemas in postgres
+        if 'SQLALCHEMY_DATABASE_URI' in app.config and app.config['SQLALCHEMY_DATABASE_URI'].startswith('postgresql'):
+            with db.engine.connect() as conn:
+                from sqlalchemy import text
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS dcp;"))
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS dct;"))
+                conn.execute(text("CREATE SCHEMA IF NOT EXISTS patients;"))
+                conn.commit()
+
         # Create tables in default database
         db.create_all()
         # Create tables in all other binds
@@ -168,9 +188,9 @@ from werkzeug.exceptions import HTTPException
 
 @app.errorhandler(Exception)
 def handle_exception(e):
-    # Pass through HTTP errors (like 404) so they're handled correctly
+    # Pass through HTTP errors (like 404, 429) as JSON so they're handled correctly by frontend
     if isinstance(e, HTTPException):
-        return e
+        return jsonify({"error": e.description}), e.code
     
     app.logger.error(f"Unhandled Exception: {e}")
     # Return a generic error message in production
@@ -183,7 +203,6 @@ def set_db_context():
 
 
 @app.route('/api/config/staff-signup-status', methods=['GET'])
-@cross_origin()
 def signup_status():
     from models import SystemConfig
     config = SystemConfig.query.get('staff_signup_enabled')
@@ -192,8 +211,7 @@ def signup_status():
     return jsonify({"staff_signup_enabled": is_enabled}), 200
 
 @app.route('/signup', methods=['POST'])
-@cross_origin()
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def signup():
     data = request.json
     
@@ -216,12 +234,6 @@ def signup():
     if not re.match(r'^[a-z0-9_]+$', username):
         return jsonify({"error": "Username can only contain lowercase letters, numbers, and underscores."}), 400
 
-    if User.query.filter_by(username=username).first():
-        return jsonify({"error": "Username already exists"}), 400
-        
-    if User.query.filter_by(email=data['email']).first():
-        return jsonify({"error": "Email already exists"}), 400
-
     # Config Check
     if data.get('email') != 'admin@legit.com':
         from models import SystemConfig
@@ -230,21 +242,47 @@ def signup():
         if not is_enabled:
             return jsonify({"error": "Staff registration is currently disabled by the system administrator."}), 403
 
-    new_user = User(
-        first_name=data['first_name'],
-        last_name=data['last_name'],
-        username=username,
-        phone=data['phone'],
-        email=data['email']
-    )
-    new_user.set_password(data['password'])
+    existing_user_by_username = User.query.filter_by(username=username).first()
+    if existing_user_by_username:
+        if existing_user_by_username.is_verified:
+            return jsonify({"error": "Username already exists"}), 400
+        else:
+            # Re-use unverified account
+            new_user = existing_user_by_username
+            new_user.first_name = data['first_name']
+            new_user.last_name = data['last_name']
+            new_user.phone = data['phone']
+            new_user.email = data['email']
+            new_user.set_password(data['password'])
+    else:
+        existing_user_by_email = User.query.filter_by(email=data['email']).first()
+        if existing_user_by_email:
+            if existing_user_by_email.is_verified:
+                return jsonify({"error": "Email already exists"}), 400
+            else:
+                # Re-use unverified account
+                new_user = existing_user_by_email
+                new_user.first_name = data['first_name']
+                new_user.last_name = data['last_name']
+                new_user.username = username
+                new_user.phone = data['phone']
+                new_user.set_password(data['password'])
+        else:
+            new_user = User(
+                first_name=data['first_name'],
+                last_name=data['last_name'],
+                username=username,
+                phone=data['phone'],
+                email=data['email']
+            )
+            new_user.set_password(data['password'])
+            db.session.add(new_user)
     
     # Generate OTP
     otp = generate_otp()
     new_user.otp_code = otp
     new_user.otp_expiry = datetime.now() + timedelta(minutes=10)
     
-    db.session.add(new_user)
     db.session.commit()
     
     try:
@@ -266,8 +304,35 @@ def signup():
     
     return jsonify({"message": "User created. Please verify OTP sent to your email.", "user_id": new_user.id}), 201
 
+@app.route('/api/resend-otp', methods=['POST'])
+@limiter.limit("5 per hour")
+def resend_otp():
+    data = request.json
+    email = data.get('email')
+    if not email:
+        return jsonify({"error": "Email is required"}), 400
+        
+    user = User.query.filter_by(email=email).first()
+    if not user:
+        return jsonify({"message": "If an account exists, a new code has been sent."}), 200
+        
+    otp = generate_otp()
+    user.otp_code = otp
+    user.otp_expiry = datetime.now() + timedelta(minutes=10)
+    db.session.commit()
+    
+    try:
+        success = send_otp_email(user, otp)
+        if not success:
+             return jsonify({"error": "Failed to connect to email server"}), 500
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+        
+    return jsonify({"message": "New code sent!"}), 200
+
+
 @app.route('/verify-otp', methods=['POST'])
-@limiter.limit("5 per minute")
+@limiter.limit("5 per hour")
 def verify_otp():
     data = request.json
     user_id = data.get('user_id')
@@ -295,49 +360,81 @@ def login():
     data = request.json
     identifier = (data.get('identity') or data.get('username') or '').strip()
     password = data.get('password')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
-    app.logger.info(f"Login attempt for: {identifier} (Portal: {portal})")
+    app.logger.info(f"Login attempt for: {identifier} (Portal Param: {portal})")
     
     from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
     
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = None
+    detected_portal = None
+
+    if portal in ['staff', 'auto']:
+        user = StaffUser.query.filter(
+            (func.lower(StaffUser.username) == func.lower(identifier)) | 
+            (func.lower(StaffUser.email) == func.lower(identifier)) | 
+            (StaffUser.phone == identifier)
+        ).first()
+        if user:
+            detected_portal = 'staff'
+
+    # Try Patient if user not found and portal is 'patient' or 'auto'
+    if not user and portal in ['patient', 'auto']:
+        user = PatientPortalUser.query.filter(
+            (func.lower(PatientPortalUser.username) == func.lower(identifier)) | 
+            (func.lower(PatientPortalUser.email) == func.lower(identifier)) | 
+            (PatientPortalUser.phone == identifier)
+        ).first()
+        if user:
+            detected_portal = 'patient'
     
-    user = Model.query.filter(
-        (func.lower(Model.username) == func.lower(identifier)) | 
-        (func.lower(Model.email) == func.lower(identifier)) | 
-        (Model.phone == identifier)
-    ).first()
-    
+    if not user:
+        return jsonify({"error": "Invalid credentials"}), 401
+
     if user and user.check_password(password):
         if not user.is_verified:
-            return jsonify({"error": "Please verify your email first"}), 403
+            # Generate a new OTP so they can continue
+            otp = generate_otp()
+            user.otp_code = otp
+            user.otp_expiry = datetime.now() + timedelta(minutes=10)
+            db.session.commit()
             
-        # Optional: Add cross-portal block just in case
-        if portal == 'staff' and not hasattr(user, 'roles'): # PatientPortalUser won't have roles
-             return jsonify({"error": "This account does not have staff access."}), 403
-        
+            # Try to send it
+            try:
+                send_otp_email(user, otp)
+            except:
+                pass # Silently fail, user can resend on the next page
+                
+            return jsonify({
+                "error": "Please verify your email first", 
+                "needs_verification": True,
+                "user_id": user.id,
+                "email": user.email,
+                "portal": detected_portal
+            }), 403
+            
         # 2FA Enforcement
         if getattr(user, 'is_2fa_enabled', False):
             return jsonify({
                 "requires_2fa": True,
                 "user_id": user.id,
+                "portal": detected_portal,
                 "message": "Two-factor authentication required"
             }), 200
             
         user.last_seen_at = datetime.now()
         
-        # Log successful login (when 2FA is skipped)
+        # Log successful login
         try:
             login_log = AuditLog(
                 user_id=user.id,
                 action="LOGIN_SUCCESS",
-                resource=f"{portal.capitalize()} Portal",
+                resource=f"{detected_portal.capitalize()} Portal",
                 details=json.dumps({
                     "method": "PASSWORD",
                     "identity": identifier,
-                    "portal": portal,
+                    "portal": detected_portal,
                     "timestamp": datetime.now().isoformat()
                 }),
                 ip_address=get_client_ip()
@@ -348,39 +445,56 @@ def login():
             db.session.rollback()
             app.logger.error(f"Login audit failed for {identifier}: {e}")
         
-        # Generate Real JWT
+        # Generate JWT with detected portal
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": portal}
+            additional_claims={"portal": detected_portal}
         )
         
-        return jsonify({
+        response = jsonify({
             "message": "Login successful",
             "token": access_token, 
+            "portal": detected_portal,
             "user": user.to_dict()
-        }), 200
+        })
+        set_access_cookies(response, access_token)
+        return response, 200
         
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def forgot_password():
     data = request.json
     identity = data.get('identity', '').strip()
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
     from sqlalchemy import func
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
     
-    user = Model.query.filter(
-        (func.lower(Model.username) == func.lower(identity)) | 
-        (func.lower(Model.email) == func.lower(identity)) | 
-        (Model.phone == identity)
-    ).first()
+    user = None
+    if portal in ['staff', 'auto']:
+        user = StaffUser.query.filter(
+            (func.lower(StaffUser.username) == func.lower(identity)) | 
+            (func.lower(StaffUser.email) == func.lower(identity)) | 
+            (StaffUser.phone == identity)
+        ).first()
+
+    if not user and portal in ['patient', 'auto']:
+        user = PatientPortalUser.query.filter(
+            (func.lower(PatientPortalUser.username) == func.lower(identity)) | 
+            (func.lower(PatientPortalUser.email) == func.lower(identity)) | 
+            (PatientPortalUser.phone == identity)
+        ).first()
     
     if not user:
-        return jsonify({"error": "No account found with that identity."}), 404
+        # Standardize response to prevent user enumeration (SEC-007)
+        # We return a 200 OK even if the user isn't found to keep attackers guessing.
+        return jsonify({
+            "message": "If an account with that identity exists, a recovery code has been sent to the registered email.",
+            "user_id": None,
+            "portal": portal
+        }), 200
         
     otp = generate_otp()
     user.otp_code = otp
@@ -397,9 +511,14 @@ def forgot_password():
         app.logger.error(f"Detailed SMTP error: {e}")
         return jsonify({"error": f"Email Service Error: {str(e)}"}), 500
         
+    detected_portal = 'staff' if StaffUser.query.get(user.id) == user else 'patient'
+    # Actually, it's safer to check the model class
+    detected_portal = 'staff' if isinstance(user, StaffUser) else 'patient'
+
     return jsonify({
-        "message": "Recovery code sent to your registered email.",
-        "user_id": user.id
+        "message": "If an account with that identity exists, a recovery code has been sent to the registered email.",
+        "user_id": user.id,
+        "portal": detected_portal
     }), 200
 
 @app.route('/forgot-password/verify', methods=['POST'])
@@ -408,12 +527,15 @@ def verify_recovery_otp():
     data = request.json
     user_id = data.get('user_id')
     otp = data.get('otp')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        # If auto, try both
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user:
         return jsonify({"error": "User not found"}), 404
         
@@ -423,26 +545,29 @@ def verify_recovery_otp():
     return jsonify({"error": "Invalid or expired recovery code"}), 400
 
 @app.route('/forgot-password/reset', methods=['POST'])
-@limiter.limit("3 per hour")
+@limiter.limit("5 per hour")
 def reset_password():
     data = request.json
     user_id = data.get('user_id')
     otp = data.get('otp')
     new_password = data.get('password')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     if not new_password or not is_password_strong(new_password):
         return jsonify({"error": "Password does not meet strength requirements (8+ chars, UC, LC, Digit, Symbol)."}), 400
         
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user:
         return jsonify({"error": "User not found"}), 404
         
     if user.otp_code == otp and user.otp_expiry > datetime.now():
         user.set_password(new_password)
+        user.is_verified = True # Resetting via email/OTP verifies the account
         user.otp_code = None # Clear OTP after success
         user.otp_expiry = None
         db.session.commit()
@@ -456,14 +581,21 @@ def login_2fa():
     data = request.json
     user_id = data.get('user_id')
     code = data.get('code')
-    portal = data.get('portal', 'staff')
+    portal = data.get('portal', 'auto')
     
     from models import StaffUser, PatientPortalUser
-    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = StaffUser.query.get(user_id) if portal == 'staff' else PatientPortalUser.query.get(user_id) if portal == 'patient' else None
     
-    user = Model.query.get(user_id)
+    if not user:
+        user = StaffUser.query.get(user_id) or PatientPortalUser.query.get(user_id)
+        
     if not user or not getattr(user, 'is_2fa_enabled', False):
         return jsonify({"error": "Invalid request"}), 400
+    
+    # Redetect portal if it was auto
+    detected_portal = portal
+    if portal == 'auto':
+        detected_portal = 'staff' if isinstance(user, StaffUser) else 'patient'
         
     import pyotp
     import json
@@ -489,10 +621,10 @@ def login_2fa():
             login_2fa_log = AuditLog(
                 user_id=user.id,
                 action="LOGIN_2FA_SUCCESS",
-                resource=f"{portal.capitalize()} Portal",
+                resource=f"{detected_portal.capitalize()} Portal",
                 details=json.dumps({
                     "method": "2FA_TOTP" if user.totp_secret else "2FA_BACKUP",
-                    "portal": portal,
+                    "portal": detected_portal,
                     "timestamp": datetime.now().isoformat()
                 }),
                 ip_address=get_client_ip()
@@ -506,42 +638,24 @@ def login_2fa():
         # Generate token
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": portal}
+            additional_claims={"portal": detected_portal}
         )
         
-        return jsonify({
+        response = jsonify({
             "message": "Login successful",
             "token": access_token,
+            "portal": detected_portal,
             "user": user.to_dict()
-        }), 200
+        })
+        set_access_cookies(response, access_token)
+        return response, 200
         
     return jsonify({"error": "Invalid 2FA code"}), 401
 @app.route('/api/logout', methods=['POST'])
 def logout():
-    data = request.json
-    user_id = data.get('user_id')
-    portal = data.get('portal', 'staff')
-    
-    if user_id:
-        try:
-            logout_log = AuditLog(
-                user_id=user_id,
-                action="LOGOUT",
-                resource=f"{portal.capitalize()} Portal",
-                details=json.dumps({
-                    "portal": portal,
-                    "timestamp": datetime.now().isoformat()
-                }),
-                ip_address=get_client_ip()
-            )
-            db.session.add(logout_log)
-            db.session.commit()
-            return jsonify({"message": "Logout recorded"}), 200
-        except Exception as e:
-            app.logger.error(f"Failed to log logout for user {user_id}: {e}")
-            return jsonify({"error": "Logout logging failed"}), 500
-            
-    return jsonify({"message": "Logout complete (client-only)"}), 200
+    response = jsonify({"message": "Logout complete"})
+    unset_jwt_cookies(response)
+    return response, 200
 
 # Initialize Database and System (Run on startup)
 with app.app_context():

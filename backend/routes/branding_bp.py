@@ -188,31 +188,73 @@ def get_pwa_manifest():
     clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
 
     # Backend origin — used to make icon URLs absolute.
-    # Falls back to the request origin so relative paths always resolve.
+    # We prefer the APP_URL env var, but fall back to the actual request URL
+    # to ensure icons always resolve even if the domain just changed.
     backend_url = os.getenv('APP_URL', '').rstrip('/')
     if not backend_url:
         backend_url = request.url_root.rstrip('/')
 
     # Frontend origin — used for start_url and scope so the installed PWA
     # opens the React app, not the Flask backend.
+    # We try: 1. FRONTEND_URL env var, 2. Origin header, 3. Referer header.
     frontend_url = os.getenv('FRONTEND_URL', '').rstrip('/')
+    if not frontend_url:
+        # Origin header is sent by browsers for cross-origin manifest fetches
+        origin = request.headers.get('Origin', '').rstrip('/')
+        if origin:
+            frontend_url = origin
+        else:
+            # Fallback to Referer if Origin is missing (some older browsers/proxies)
+            referer = request.headers.get('Referer', '')
+            if referer:
+                from urllib.parse import urlparse
+                parsed = urlparse(referer)
+                frontend_url = f"{parsed.scheme}://{parsed.netloc}"
+
+    # Final fallback: if we still don't have a frontend URL, we assume 
+    # the frontend is on the same domain as the backend (unlikely in production).
     start_url = (frontend_url + '/') if frontend_url else '/'
     scope = (frontend_url + '/') if frontend_url else '/'
 
-    # Resolve icon URL to an absolute URL
-    raw_logo = branding.logo_light if branding and branding.logo_light else None
-    if raw_logo:
-        if raw_logo.startswith('http'):
-            # Already absolute
-            icon_src = raw_logo
+    # Resolve icon(s)
+    icons_list = []
+    
+    raw_icon = None
+    if branding:
+        raw_icon = branding.favicon if branding.favicon else branding.logo_light
+
+    if raw_icon:
+        # Custom uploaded icon (Favicon or Logo)
+        if raw_icon.startswith('http'):
+            icon_src = raw_icon
         else:
-            # Relative path — make it absolute using backend URL
-            icon_src = backend_url + raw_logo
-        is_svg = raw_logo.lower().endswith('.svg')
+            clean_icon = raw_icon if raw_icon.startswith('/') else f"/{raw_icon}"
+            icon_src = backend_url + clean_icon
+        
+        is_svg = raw_icon.lower().endswith('.svg')
+        icons_list = [{
+            "src": icon_src,
+            "sizes": "any" if is_svg else "512x512",
+            "type": "image/svg+xml" if is_svg else "image/png",
+            "purpose": "any maskable"
+        }]
     else:
-        # Fallback: use the frontend's built-in favicon
-        icon_src = (frontend_url + '/favicon.svg') if frontend_url else '/favicon.svg'
-        is_svg = True
+        # Fallback to default frontend icons
+        base = frontend_url if frontend_url else ''
+        icons_list = [
+            {
+                "src": f"{base}/icons/icon-192x192.png",
+                "sizes": "192x192",
+                "type": "image/png",
+                "purpose": "any maskable"
+            },
+            {
+                "src": f"{base}/icons/icon-512x512.png",
+                "sizes": "512x512",
+                "type": "image/png",
+                "purpose": "any maskable"
+            }
+        ]
 
     manifest = {
         "name": clinic_name,
@@ -224,14 +266,7 @@ def get_pwa_manifest():
         "background_color": "#ffffff",
         "theme_color": "#0d9488",
         "orientation": "portrait",
-        "icons": [
-            {
-                "src": icon_src,
-                "sizes": "any" if is_svg else "512x512",
-                "type": "image/svg+xml" if is_svg else "image/png",
-                "purpose": "any maskable"
-            }
-        ]
+        "icons": icons_list
     }
 
     manifest_data = json.dumps(manifest)

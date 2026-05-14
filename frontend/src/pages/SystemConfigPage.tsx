@@ -159,7 +159,7 @@ const SystemConfigPage: React.FC = () => {
         open: false,
         title: '',
         description: '',
-        actionType: 'queue' as 'queue' | 'audit' | 'signup'
+        actionType: 'queue' as 'queue' | 'audit' | 'signup' | 'biodata'
     });
 
     const [brandingLoading, setBrandingLoading] = useState(false);
@@ -385,6 +385,24 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleClearBioData = async () => {
+        setMaintenanceSaving(true);
+        try {
+            await axios.delete('/api/admin/biodata/clear', {
+                headers: { 
+                    'X-Company-Context': activeSection,
+                    'X-User-ID': user?.id?.toString() 
+                }
+            });
+            toast.success(`Patient directory for ${activeSection?.toUpperCase() || 'current context'} cleared successfully.`);
+            setConfirmMaintenanceModal((prev) => ({ ...prev, open: false }));
+        } catch(err: any) {
+            toast.error(err.response?.data?.error || "Failed to clear patient directory.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
     const handleToggleSignup = async () => {
         setMaintenanceSaving(true);
         try {
@@ -412,6 +430,8 @@ const SystemConfigPage: React.FC = () => {
             handleResetQueue();
         } else if (confirmMaintenanceModal.actionType === 'audit') {
             handleClearAudit();
+        } else if (confirmMaintenanceModal.actionType === 'biodata') {
+            handleClearBioData();
         }
     };
     return (
@@ -876,6 +896,30 @@ const SystemConfigPage: React.FC = () => {
                                             Clear Audit Trail
                                         </Button>
                                     </div>
+
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Clear Patient Directory Data</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Permanently delete all patient bio-data and directory records for the active <strong className="text-foreground uppercase">{activeSection || 'Section'}</strong> context. <strong className="text-destructive font-black">Warning: Use with caution.</strong>
+                                            </p>
+                                        </div>
+                                        <Button 
+                                            onClick={() => setConfirmMaintenanceModal({
+                                                open: true,
+                                                title: 'Clear Patient Directory',
+                                                description: `Are you sure you want to permanently delete all patient bio-data for the active context? This action is irreversible.`,
+                                                actionType: 'biodata'
+                                            })} 
+                                            disabled={maintenanceSaving} 
+                                            variant="destructive" 
+                                            size="lg" 
+                                            className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
+                                        >
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
+                                            Clear Patient Directory
+                                        </Button>
+                                    </div>
                                 </CardContent>
                             </Card>
                         </div>
@@ -890,8 +934,13 @@ const SystemConfigPage: React.FC = () => {
                 loading={maintenanceSaving}
                 title={confirmMaintenanceModal.title}
                 description={confirmMaintenanceModal.description}
-                confirmText="Reset Now"
+                confirmText={confirmMaintenanceModal.actionType === 'queue' ? 'Reset Queue' : 'Confirm Action'}
                 variant="danger"
+                verificationText={
+                    confirmMaintenanceModal.actionType === 'biodata' ? 'DELETE ALL' : 
+                    confirmMaintenanceModal.actionType === 'audit' ? 'CLEAR LOGS' : 
+                    undefined
+                }
             />
 
             <ActionConfirmModal
@@ -903,6 +952,7 @@ const SystemConfigPage: React.FC = () => {
                 confirmText="Delete Item"
                 variant="danger"
                 loading={deleting}
+                verificationText="DELETE"
             />
         </MainLayout>
     );

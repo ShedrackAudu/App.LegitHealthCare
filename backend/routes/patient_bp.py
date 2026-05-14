@@ -7,6 +7,7 @@ from sqlalchemy import text
 from datetime import datetime, timedelta
 
 from utils.email_utils import EmailService
+from extensions import limiter
 
 patient_bp = Blueprint('patient_bp', __name__)
 
@@ -22,20 +23,17 @@ def search_patient():
     clean_id = staff_id.strip()
     
     # Check if this patient already has a verified account in the portal
-    # Explicitly check the 'patients' bind via raw SQL to ensure engine accuracy
     try:
-        patients_engine = db.get_engine(app=current_app, bind='patients')
-        with patients_engine.connect() as conn:
-            check_q = text("SELECT id FROM patient_users WHERE username = :sid AND is_verified = 1")
-            res = conn.execute(check_q, {"sid": clean_id}).fetchone()
-            if res:
-                return jsonify({
-                    "error": "An account for this Staff ID already exists in the Patient Portal.",
-                    "already_exists": True,
-                    "login_url": "/login?portal=patient"
-                }), 409
+        # Use ORM to leverage RoutingSession logic which is more reliable in production
+        existing = PatientPortalUser.query.filter_by(username=clean_id, is_verified=True).first()
+        if existing:
+            return jsonify({
+                "error": "An account for this Staff ID already exists in the Patient Portal.",
+                "already_exists": True,
+                "login_url": "/login"
+            }), 409
     except Exception as e:
-        print(f"Error checking for existing user in portal bind: {str(e)}")
+        current_app.logger.error(f"Error checking for existing user in portal: {str(e)}")
         # Continue search anyway if check fails
 
 
@@ -112,6 +110,7 @@ def search_patient():
     return jsonify(results[0]), 200
 
 @patient_bp.route('/api/patient/claim', methods=['POST'])
+@limiter.limit("5 per hour")
 def claim_account():
     data = request.json
     staff_id = data.get('staff_id', '').strip()
@@ -231,6 +230,7 @@ def claim_account():
     }), 200
 
 @patient_bp.route('/api/patient/resend-otp', methods=['POST'])
+@limiter.limit("5 per hour")
 def resend_otp():
     data = request.json
     email = data.get('email')
@@ -272,6 +272,7 @@ def resend_otp():
     }), 200
 
 @patient_bp.route('/api/patient/verify-otp', methods=['POST'])
+@limiter.limit("5 per hour")
 def verify_patient_otp():
     data = request.json
     email = data.get('email')
@@ -479,6 +480,7 @@ def update_patient_profile():
     }), 200
 
 @patient_bp.route('/api/patient/reset-password/request', methods=['POST'])
+@limiter.limit("5 per hour")
 def reset_password_request():
     data = request.json
     email = data.get('email')

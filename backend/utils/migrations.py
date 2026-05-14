@@ -25,7 +25,8 @@ def ensure_schema(app):
                     if 'is_notified_ready' not in columns:
                         app.logger.info(f"Adding 'is_notified_ready' column to {name} database...")
                         with engine.connect() as conn:
-                            # Standard SQL works for both SQLite and PostgreSQL
+                            # Note: Table names and column names cannot be bound as parameters in SQL.
+                            # However, we ensure they come from a safe, hardcoded set of allowed values.
                             conn.execute(text("ALTER TABLE screening_year_bio_data ADD COLUMN is_notified_ready BOOLEAN DEFAULT FALSE"))
                             conn.commit()
                         app.logger.info(f"Successfully updated {name} schema.")
@@ -40,77 +41,69 @@ def ensure_schema(app):
                             app.logger.info(f"Detected restrictive FK '{con_name}' on audit_logs in {name}. Removal in progress...")
                             try:
                                 with engine.connect() as conn:
-                                    # Standard SQL for dropping constraints
+                                    # We use a literal text block for the drop constraint
+                                    # Since con_name is retrieved from the DB metadata, it is trusted.
                                     conn.execute(text(f"ALTER TABLE audit_logs DROP CONSTRAINT {con_name}"))
                                     conn.commit()
                                 app.logger.info(f"Successfully removed FK '{con_name}' from {name} database.")
                             except Exception as e:
-                                # SQLite might use a different syntax or not support naming, but Render/Postgres will work here
                                 app.logger.debug(f"Could not drop constraint {con_name} (might be SQLite): {e}")
 
                 # 3. Add must_reset_password to users and patient_users
-                table_cols_to_check = {
-                    'users': 'must_reset_password',
-                    'patient_users': 'must_reset_password'
-                }
-                
-                for table, col in table_cols_to_check.items():
-                    if table in inspector.get_table_names():
-                        columns = [c['name'] for c in inspector.get_columns(table)]
-                        if col not in columns:
-                            app.logger.info(f"Adding '{col}' column to {table} table in {name} database...")
-                            try:
-                                with engine.connect() as conn:
-                                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} BOOLEAN DEFAULT FALSE"))
-                                    conn.commit()
-                                app.logger.info(f"Successfully added '{col}' to {table} in {name}.")
-                            except Exception as e:
-                                app.logger.error(f"Failed to add '{col}' to {table}: {e}")
+                if 'users' in inspector.get_table_names():
+                    cols = [c['name'] for c in inspector.get_columns('users')]
+                    if 'must_reset_password' not in cols:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN must_reset_password BOOLEAN DEFAULT FALSE"))
+                            conn.commit()
+
+                if 'patient_users' in inspector.get_table_names():
+                    cols = [c['name'] for c in inspector.get_columns('patient_users')]
+                    if 'must_reset_password' not in cols:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE patient_users ADD COLUMN must_reset_password BOOLEAN DEFAULT FALSE"))
+                            conn.commit()
 
                 # 4. Add contact fields to app_branding
                 if 'app_branding' in inspector.get_table_names():
                     columns = [c['name'] for c in inspector.get_columns('app_branding')]
-                    branding_cols = {
-                        'whatsapp': 'VARCHAR(50)',
-                        'email': 'VARCHAR(120)',
-                        'phone': 'VARCHAR(50)'
-                    }
-                    for col_name, col_type in branding_cols.items():
-                        if col_name not in columns:
-                            app.logger.info(f"Adding '{col_name}' column to app_branding table in {name} database...")
-                            try:
-                                with engine.connect() as conn:
-                                    conn.execute(text(f"ALTER TABLE app_branding ADD COLUMN {col_name} {col_type}"))
-                                    conn.commit()
-                                app.logger.info(f"Successfully added '{col_name}' to app_branding in {name}.")
-                            except Exception as e:
-                                app.logger.error(f"Failed to add '{col_name}' to app_branding: {e}")
+                    if 'whatsapp' not in columns:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE app_branding ADD COLUMN whatsapp VARCHAR(50)"))
+                            conn.commit()
+                    if 'email' not in columns:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE app_branding ADD COLUMN email VARCHAR(120)"))
+                            conn.commit()
+                    if 'phone' not in columns:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE app_branding ADD COLUMN phone VARCHAR(50)"))
+                            conn.commit()
                 
                 # 5. Comprehensive Appointment Table Update
                 if 'appointments' in inspector.get_table_names():
                     columns = [c['name'] for c in inspector.get_columns('appointments')]
-                    appointment_cols = {
-                        'status': "VARCHAR(20) DEFAULT 'Pending'",
-                        'booked_by_type': "VARCHAR(20)",
-                        'booked_by_username': "VARCHAR(50)",
-                        'phone': "VARCHAR(20)",
-                        'email': "VARCHAR(100)",
-                        'nationality': "VARCHAR(100)",
-                        'gender': "VARCHAR(20)",
-                        'dob': "VARCHAR(50)",
-                        'age': "INTEGER"
-                    }
+                    # Use explicit statements for each column to avoid dynamic string execution (SEC-010)
+                    appointment_updates = [
+                        ('status', "ALTER TABLE appointments ADD COLUMN status VARCHAR(20) DEFAULT 'Pending'"),
+                        ('booked_by_type', "ALTER TABLE appointments ADD COLUMN booked_by_type VARCHAR(20)"),
+                        ('booked_by_username', "ALTER TABLE appointments ADD COLUMN booked_by_username VARCHAR(50)"),
+                        ('phone', "ALTER TABLE appointments ADD COLUMN phone VARCHAR(20)"),
+                        ('email', "ALTER TABLE appointments ADD COLUMN email VARCHAR(100)"),
+                        ('nationality', "ALTER TABLE appointments ADD COLUMN nationality VARCHAR(100)"),
+                        ('gender', "ALTER TABLE appointments ADD COLUMN gender VARCHAR(20)"),
+                        ('dob', "ALTER TABLE appointments ADD COLUMN dob VARCHAR(50)"),
+                        ('age', "ALTER TABLE appointments ADD COLUMN age INTEGER")
+                    ]
                     
-                    for col_name, col_type in appointment_cols.items():
-                        if col_name not in columns:
-                            app.logger.info(f"Adding '{col_name}' column to appointments table in {name} database...")
-                            try:
-                                with engine.connect() as conn:
-                                    conn.execute(text(f"ALTER TABLE appointments ADD COLUMN {col_name} {col_type}"))
+                    with engine.connect() as conn:
+                        for col_name, sql in appointment_updates:
+                            if col_name not in columns:
+                                try:
+                                    conn.execute(text(sql))
                                     conn.commit()
-                                app.logger.info(f"Successfully added '{col_name}' to appointments in {name}.")
-                            except Exception as e:
-                                app.logger.error(f"Failed to add '{col_name}' to appointments: {e}")
+                                except Exception as e:
+                                    app.logger.error(f"Failed to add '{col_name}' to appointments: {e}")
 
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

@@ -24,6 +24,7 @@ import {
   ArrowRightLeft,
   QrCode
 } from 'lucide-react';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { cn } from '@/lib/utils';
 import BarcodeScanner from '@/components/inventory/BarcodeScanner';
 import { Button } from '@/components/ui/button';
@@ -88,6 +89,20 @@ const InventoryPage: React.FC = () => {
   const [adjustmentType, setAdjustmentType] = useState('Addition');
   const [adjustmentQuantity, setAdjustmentQuantity] = useState('');
   const [adjustmentReason, setAdjustmentReason] = useState('');
+
+  const [confirmModal, setConfirmModal] = useState<{
+    isOpen: boolean;
+    title: string;
+    description: string;
+    onConfirm: () => void;
+    variant: 'danger' | 'warning' | 'info';
+  }>({
+    isOpen: false,
+    title: '',
+    description: '',
+    onConfirm: () => {},
+    variant: 'danger'
+  });
 
   const [newCategory, setNewCategory] = useState({ name: '', description: '' });
   const [editingCategory, setEditingCategory] = useState<any>(null);
@@ -424,66 +439,93 @@ const InventoryPage: React.FC = () => {
   };
 
   const handleDeleteItem = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this item?")) return;
-    try {
-      const baseUrl = (window as any).API_BASE_URL || '/api';
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${baseUrl}/api/inventory/items/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        toast.success("Item deleted successfully.");
-        fetchData();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to delete item.");
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Item?",
+      description: "Are you sure you want to delete this inventory item? This action cannot be undone.",
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const baseUrl = (window as any).API_BASE_URL || '/api';
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${baseUrl}/api/inventory/items/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            toast.success("Item deleted successfully.");
+            fetchData();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || "Failed to delete item.");
+          }
+        } catch (error) {
+          toast.error("An unexpected error occurred.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred.");
-    }
+    });
   };
 
   const handleDeleteCategory = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this category? This will not delete items in this category.")) return;
-    try {
-      const baseUrl = (window as any).API_BASE_URL || '/api';
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${baseUrl}/api/inventory/categories/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        toast.success("Category deleted successfully.");
-        fetchData();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to delete category.");
+    setConfirmModal({
+      isOpen: true,
+      title: "Delete Category?",
+      description: "Are you sure you want to delete this category? Items within this category will remain but become uncategorized.",
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const baseUrl = (window as any).API_BASE_URL || '/api';
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${baseUrl}/api/inventory/categories/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            toast.success("Category deleted successfully.");
+            fetchData();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || "Failed to delete category.");
+          }
+        } catch (error) {
+          toast.error("An unexpected error occurred.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred.");
-    }
+    });
   };
 
   const handleDeleteSupplier = async (id: number) => {
-    if (!window.confirm("Are you sure you want to delete this supplier?")) return;
-    try {
-      const baseUrl = (window as any).API_BASE_URL || '/api';
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${baseUrl}/api/inventory/suppliers/${id}`, {
-        method: 'DELETE',
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
-      if (res.ok) {
-        toast.success("Supplier deleted successfully.");
-        fetchData();
-      } else {
-        const err = await res.json();
-        toast.error(err.error || "Failed to delete supplier.");
+    setConfirmModal({
+      isOpen: true,
+      title: "Remove Supplier?",
+      description: "Are you sure you want to delete this supplier from your records?",
+      variant: 'danger',
+      onConfirm: async () => {
+        try {
+          const baseUrl = (window as any).API_BASE_URL || '/api';
+          const token = localStorage.getItem('token');
+          const res = await fetch(`${baseUrl}/api/inventory/suppliers/${id}`, {
+            method: 'DELETE',
+            headers: { 'Authorization': `Bearer ${token}` }
+          });
+          if (res.ok) {
+            toast.success("Supplier deleted successfully.");
+            fetchData();
+          } else {
+            const err = await res.json();
+            toast.error(err.error || "Failed to delete supplier.");
+          }
+        } catch (error) {
+          toast.error("An unexpected error occurred.");
+        } finally {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
+        }
       }
-    } catch (error) {
-      toast.error("An unexpected error occurred.");
-    }
+    });
   };
 
   const filteredItems = items.filter(item => 
@@ -704,28 +746,42 @@ const InventoryPage: React.FC = () => {
           </Card>
         </div>
 
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-4">
-          <TabsList className="bg-muted/50 p-1 grid grid-cols-2 md:inline-flex h-auto gap-1">
-            <TabsTrigger value="items" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-1.5 sm:py-1">
-              <Box className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Stock Items</span>
-            </TabsTrigger>
-            <TabsTrigger value="categories" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-1.5 sm:py-1">
-              <Layers className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Categories</span>
-            </TabsTrigger>
-            <TabsTrigger value="suppliers" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-1.5 sm:py-1">
-              <Truck className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Suppliers</span>
-            </TabsTrigger>
-            <TabsTrigger value="transactions" className="flex items-center justify-center gap-1 sm:gap-2 text-xs sm:text-sm py-1.5 sm:py-1">
-              <History className="h-3 w-3 sm:h-4 sm:w-4 shrink-0" />
-              <span className="truncate">Activity Log</span>
-            </TabsTrigger>
-          </TabsList>
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+          <div className="flex justify-start">
+            <TabsList className="bg-muted/50 dark:bg-muted/20 p-1.5 grid grid-cols-2 sm:flex h-auto gap-1.5 rounded-2xl border border-border/50 backdrop-blur-sm w-full sm:w-auto">
+              <TabsTrigger 
+                value="items" 
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+              >
+                <Box className="h-4 w-4 shrink-0" />
+                <span>Stock Items</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="categories" 
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+              >
+                <Layers className="h-4 w-4 shrink-0" />
+                <span>Categories</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="suppliers" 
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+              >
+                <Truck className="h-4 w-4 shrink-0" />
+                <span>Suppliers</span>
+              </TabsTrigger>
+              <TabsTrigger 
+                value="transactions" 
+                className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
+              >
+                <History className="h-4 w-4 shrink-0" />
+                <span>Activity Log</span>
+              </TabsTrigger>
+            </TabsList>
+          </div>
 
           <TabsContent value="items" className="space-y-4">
-            <div className="flex flex-row gap-2 items-center justify-between w-full">
+            <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between w-full">
               <div className="relative flex-1 md:w-96">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
@@ -840,7 +896,7 @@ const InventoryPage: React.FC = () => {
 
           <TabsContent value="categories">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle>Inventory Categories</CardTitle>
                   <CardDescription>Manage groupings for clinical items.</CardDescription>
@@ -903,7 +959,7 @@ const InventoryPage: React.FC = () => {
 
           <TabsContent value="suppliers">
             <Card>
-              <CardHeader className="flex flex-row items-center justify-between">
+              <CardHeader className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                 <div>
                   <CardTitle>Registered Suppliers</CardTitle>
                   <CardDescription>Vendors and clinical supply partners.</CardDescription>
@@ -1281,14 +1337,14 @@ const InventoryPage: React.FC = () => {
                 </div>
                 
                 {fastAdjustSearchTerm && !selectedItem && (
-                  <div className="absolute z-10 w-full mt-1 bg-white dark:bg-slate-950 border rounded-md shadow-lg max-h-48 overflow-y-auto">
+                  <div className="absolute z-10 w-full mt-1 bg-popover border rounded-md shadow-lg max-h-48 overflow-y-auto">
                     {items.filter(i => 
                       i.name.toLowerCase().includes(fastAdjustSearchTerm.toLowerCase()) || 
                       (i.sku && i.sku.toLowerCase().includes(fastAdjustSearchTerm.toLowerCase()))
                     ).map(item => (
                       <div 
                         key={item.id} 
-                        className="px-3 py-2 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer flex justify-between items-center"
+                        className="px-3 py-2 hover:bg-accent hover:text-accent-foreground cursor-pointer flex justify-between items-center"
                         onClick={() => {
                           setSelectedItem(item);
                           setFastAdjustSearchTerm(item.name);
@@ -1359,6 +1415,15 @@ const InventoryPage: React.FC = () => {
             onClose={() => setIsScannerOpen(false)} 
           />
         )}
+
+        <ActionConfirmModal
+          isOpen={confirmModal.isOpen}
+          onClose={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+          onConfirm={confirmModal.onConfirm}
+          title={confirmModal.title}
+          description={confirmModal.description}
+          variant={confirmModal.variant}
+        />
       </div>
     </MainLayout>
   );

@@ -120,6 +120,8 @@ const ViewRecordsPage: React.FC = () => {
                         searching={loading}
                         themeColor="primary"
                         placeholder="Search Staff ID or Name..."
+                        year={activeYear}
+                        strict={true}
                     />
                 </div>
 

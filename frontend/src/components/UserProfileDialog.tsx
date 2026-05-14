@@ -29,7 +29,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
   
   return (
     <Dialog open={isOpen} onOpenChange={onOpenChange}>
-      <DialogContent hideClose={true} className="max-w-md p-0 overflow-hidden rounded-3xl border-none shadow-2xl animate-in zoom-in-95 duration-200">
+      <DialogContent hideClose={true} className="max-w-md p-0 rounded-3xl border-none shadow-2xl animate-in zoom-in-95 duration-200 max-h-[90vh] overflow-y-auto">
         <div className="relative h-32 bg-gradient-to-br from-primary via-primary/80 to-primary/60">
           <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
           <Button 

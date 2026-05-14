@@ -15,9 +15,11 @@ import { toast } from 'react-hot-toast';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
+import { SafeImage } from '@/components/common/SafeImage';
 
 const loginSchema = z.object({
-  identity: z.string().min(3, 'Username, Email, or Phone must be at least 3 characters'),
+  identity: z.string().min(3, 'Staff ID, Username, Email or Phone must be at least 3 characters'),
   password: z.string().min(6, 'Password must be at least 6 characters'),
 });
 
@@ -36,7 +38,7 @@ const LoginPage = () => {
   const navigate = useNavigate();
   const { user, setUser, branding } = useAppContext();
 
-  const [activePortal, setActivePortal] = useState<'staff' | 'patient'>(initialPortal === 'patient' ? 'patient' : 'staff');
+  const [portal, setPortal] = useState<'staff' | 'patient' | 'auto'>('auto');
 
   // Forgot Password State
   const [isForgotPassword, setIsForgotPassword] = useState(false);
@@ -55,11 +57,9 @@ const LoginPage = () => {
   });
 
   useEffect(() => {
-    const portal = searchParams.get('portal');
-    if (portal === 'patient') {
-      setActivePortal('patient');
-    } else if (portal === 'staff') {
-      setActivePortal('staff');
+    const portalParam = searchParams.get('portal');
+    if (portalParam === 'patient' || portalParam === 'staff') {
+      setPortal(portalParam);
     }
 
     if (searchParams.get('forgot') === 'true') {
@@ -88,12 +88,15 @@ const LoginPage = () => {
     try {
       const response = await axios.post('/login', {
         ...data,
-        portal: activePortal
+        portal: portal
       });
       
+      const detectedPortal = response.data.portal;
+
       if (response.data.requires_2fa) {
           setRequires2FA(true);
           setTempUserId(response.data.user_id);
+          setPortal(detectedPortal);
           return;
       }
       
@@ -111,10 +114,21 @@ const LoginPage = () => {
 
       setUser(response.data.user);
       localStorage.setItem('user', JSON.stringify(response.data.user));
-      const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+      const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
-        if (err.response?.status === 403) {
+        if (err.response?.status === 403 && err.response?.data?.needs_verification) {
+            const { user_id, email, portal: detectedPortal } = err.response.data;
+            toast.success("Verification required. A new code has been sent to your email.");
+            navigate('/signup', { 
+                state: { 
+                    resuming: true, 
+                    portal: detectedPortal, 
+                    user_id, 
+                    email 
+                } 
+            });
+        } else if (err.response?.status === 403) {
             setError(err.response?.data?.error || "Your account is not verified.");
         } else {
             setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
@@ -158,9 +172,10 @@ const LoginPage = () => {
         const resp = await axios.post('/login/2fa', {
             user_id: tempUserId,
             code: totpCode,
-            portal: activePortal
+            portal: portal
         });
         
+        const detectedPortal = resp.data.portal;
         setUser(resp.data.user);
         localStorage.setItem('user', JSON.stringify(resp.data.user));
         if (resp.data.token) {
@@ -174,7 +189,7 @@ const LoginPage = () => {
             return;
         }
 
-        const target = resp.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
+        const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
         navigate(target);
     } catch (err: any) {
         setError(err.response?.data?.error || "Invalid 2FA code");
@@ -191,9 +206,12 @@ const LoginPage = () => {
     try {
         const resp = await axios.post('/forgot-password', { 
             identity: identifier,
-            portal: activePortal
+            portal: portal
         });
         setFpUserId(resp.data.user_id);
+        if (resp.data.portal) {
+            setPortal(resp.data.portal);
+        }
         toast.success(resp.data.message);
         setForgotPasswordStep('verify');
     } catch (err: any) {
@@ -212,7 +230,7 @@ const LoginPage = () => {
         await axios.post('/forgot-password/verify', { 
             user_id: fpUserId, 
             otp,
-            portal: activePortal
+            portal: portal
         });
         toast.success("OTP Verified Successfully");
         setForgotPasswordStep('reset');
@@ -252,7 +270,7 @@ const LoginPage = () => {
             user_id: fpUserId, 
             otp: otp,
             password: resetPassword,
-            portal: activePortal
+            portal: portal
         });
         toast.success("Password Reset Successful! You can now log in.");
         setIsForgotPassword(false);
@@ -290,16 +308,18 @@ const LoginPage = () => {
         <div className="relative z-10 flex flex-col justify-between p-16 w-full text-white">
           <Link to="/" className="flex items-center gap-3 w-fit hover:scale-105 transition-all duration-500">
             {branding?.auth_logo ? (
-                <img 
+                <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.auth_logo}`} 
-                  alt="Auth Page Overlay Logo" 
+                  alt={branding?.clinic_name || "Logo"} 
                   className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  fallbackText={branding?.clinic_name}
                 />
             ) : branding?.logo_dark ? (
-                <img 
+                <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
-                  alt="Wordmark Logo" 
+                  alt={branding?.clinic_name || "Logo"} 
                   className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  fallbackText={branding?.clinic_name}
                 />
               ) : (
                 <div className="flex items-center gap-2">
@@ -335,11 +355,11 @@ const LoginPage = () => {
           <ModeToggle />
         </div>
 
-        <div className="w-full max-w-sm space-y-8 animate-in fade-in slide-in-from-right-8 duration-500">
-          <div className="text-center lg:text-left space-y-2">
-             <Link to="/" className="lg:hidden flex justify-center mb-6 hover:scale-105 transition-transform duration-300">
+        <div className="w-full max-w-sm space-y-6 animate-in fade-in slide-in-from-right-8 duration-500">
+          <div className="text-left space-y-1">
+             <Link to="/" className="lg:hidden flex justify-start mb-4 hover:scale-105 transition-transform duration-300">
                  {branding?.logo_light ? (
-                    <img src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" />
+                    <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
                     <Activity className="w-12 h-12 text-primary" />
                  )}
@@ -349,9 +369,9 @@ const LoginPage = () => {
                 isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Password Reset' : 
                   forgotPasswordStep === 'verify' ? 'Verify Identity' : 'New Password'
-               ) : 'Login'}
+               ) : 'Sign In'}
              </h1>
-             <p className="text-muted-foreground font-medium">
+             <p className="text-muted-foreground font-medium text-sm sm:text-base">
                {isForceReset ? 'Protect your account with a new password.' :
                 isForgotPassword ? (
                   forgotPasswordStep === 'identify' ? 'Enter your details to begin.' : 
@@ -371,7 +391,10 @@ const LoginPage = () => {
 
                <form onSubmit={handleForceReset} className="space-y-5">
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Permanent Password</Label>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Permanent Password</Label>
+                      <PasswordStrength password={forceResetData.newPassword} />
+                    </div>
                     <div className="relative group">
                       <Input 
                           type="password" 
@@ -383,11 +406,13 @@ const LoginPage = () => {
                       />
                       <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
-                    <PasswordStrength password={forceResetData.newPassword} />
                   </div>
 
                   <div className="space-y-2">
-                    <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm Permanent Password</Label>
+                    <div className="flex justify-between items-center mb-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm Permanent Password</Label>
+                      <PasswordMatchIndicator password={forceResetData.newPassword} confirmPassword={forceResetData.confirmPassword} />
+                    </div>
                     <div className="relative group">
                       <Input 
                           type="password" 
@@ -399,9 +424,6 @@ const LoginPage = () => {
                       />
                       <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
-                    {forceResetData.confirmPassword && forceResetData.newPassword !== forceResetData.confirmPassword && (
-                      <p className="text-[10px] text-destructive font-black ml-1 uppercase animate-in fade-in">Passwords do not match</p>
-                    )}
                   </div>
 
                   <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
@@ -410,18 +432,8 @@ const LoginPage = () => {
                </form>
             </div>
           ) : !isForgotPassword ? (
-            <Tabs 
-              value={activePortal} 
-              onValueChange={(v) => setActivePortal(v as 'staff' | 'patient')} 
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-8 bg-muted/30 p-1.5 rounded-2xl h-16 border-2">
-                <TabsTrigger value="staff" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Clinical Staff</TabsTrigger>
-                <TabsTrigger value="patient" className="rounded-xl h-full data-[state=active]:bg-primary data-[state=active]:text-white shadow-lg shadow-primary/10 font-black text-[12px] uppercase tracking-widest transition-all">Patient Portal</TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="staff">
-                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
+            <div className="space-y-6">
+                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-4">
                   {error && (
                     <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
                       <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
@@ -431,22 +443,22 @@ const LoginPage = () => {
                   
                   {!requires2FA ? (
                     <>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email or Username</Label>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                         <div className="relative group">
                           <Input 
                               id="identity" 
-                              placeholder="Enter your credentials" 
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              placeholder="Staff ID, Username, Email or Phone" 
+                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                               {...register('identity')} 
                               disabled={loading} 
                           />
-                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <User className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                         {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
                       </div>
 
-                      <div className="space-y-2">
+                      <div className="space-y-1">
                         <div className="flex items-center justify-between ml-1">
                           <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Password</Label>
                         </div>
@@ -455,15 +467,15 @@ const LoginPage = () => {
                               id="password" 
                               type={showPassword ? "text" : "password"} 
                               placeholder="••••••••"
-                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                               {...register('password')} 
                               disabled={loading} 
                           />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <Lock className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                            className="absolute right-4 top-4.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                             disabled={loading}
                           >
                             {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
@@ -475,14 +487,14 @@ const LoginPage = () => {
                       <div className="flex justify-end pt-1">
                         <button 
                             type="button"
-                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); identifier && setIdentifier(identifier); }}
+                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); }}
                             className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
                         >
                             Forgot Password?
                         </button>
                       </div>
 
-                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
+                      <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
                         {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Log In'}
                       </Button>
                     </>
@@ -513,103 +525,7 @@ const LoginPage = () => {
                     </div>
                   )}
                 </form>
-              </TabsContent>
-              
-              <TabsContent value="patient">
-                <form onSubmit={requires2FA ? onVerify2FA : handleSubmit(onSubmit)} className="space-y-5">
-                  {error && (
-                    <div className="bg-destructive/5 border-2 border-destructive/10 text-destructive text-[11px] p-3 rounded-xl font-bold flex items-center gap-2">
-                      <div className="w-1.5 h-1.5 rounded-full bg-destructive animate-pulse" />
-                      {error}
-                    </div>
-                  )}
-                  
-                  {!requires2FA ? (
-                    <>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Patient ID (Staff ID)</Label>
-                        <div className="relative group">
-                          <Input 
-                              id="identity-patient" 
-                              placeholder="e.g. 310520" 
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20 font-black"
-                              {...register('identity')} 
-                              disabled={loading} 
-                              onChange={(e) => {
-                                e.target.value = e.target.value.replace(/\D/g, '');
-                                register('identity').onChange(e);
-                              }}
-                          />
-                          <User className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                        </div>
-                      </div>
-
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
-                        <div className="relative group">
-                          <Input 
-                              id="password-patient" 
-                              type={showPassword ? "text" : "password"} 
-                              placeholder="••••••••"
-                              className="pl-12 pr-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
-                              {...register('password')} 
-                              disabled={loading} 
-                          />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
-                          <button
-                            type="button"
-                            onClick={() => setShowPassword(!showPassword)}
-                            className="absolute right-4 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
-                            disabled={loading}
-                          >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
-                          </button>
-                        </div>
-                      </div>
-
-                      <div className="flex justify-end pt-1">
-                        <button 
-                            type="button"
-                            onClick={() => { setIsForgotPassword(true); setForgotPasswordStep('identify'); setError(null); }}
-                            className="text-xs text-primary hover:underline font-black uppercase tracking-tighter"
-                        >
-                            Forgot Password?
-                        </button>
-                      </div>
-
-                      <Button type="submit" className="w-full h-12 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Enter Portal'}
-                      </Button>
-                    </>
-                  ) : (
-                    <div className="space-y-5">
-                      <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 text-[11px] text-center font-bold text-primary">
-                          Security verification required. Enter the code to continue.
-                      </div>
-                      <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Verification Code</Label>
-                        <Input 
-                            value={totpCode}
-                            onChange={e => setTotpCode(e.target.value)}
-                            placeholder="000 000" 
-                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
-                            maxLength={6}
-                            disabled={loading} 
-                        />
-                      </div>
-                      <div className="flex gap-3">
-                          <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
-                              Cancel
-                          </Button>
-                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                            Verify
-                          </Button>
-                      </div>
-                    </div>
-                  )}
-                </form>
-              </TabsContent>
-            </Tabs>
+            </div>
           ) : (
             <div className="space-y-6 animate-in slide-in-from-left-8 duration-500">
                {error && (
@@ -620,12 +536,12 @@ const LoginPage = () => {
                )}
 
                {forgotPasswordStep === 'identify' && (
-                  <form onSubmit={handleIdentify} className="space-y-5">
-                    <div className="space-y-2">
-                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Account Identity</Label>
+                  <form onSubmit={handleIdentify} className="space-y-4">
+                    <div className="space-y-1">
+                      <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Staff ID, Username, Email or Phone</Label>
                       <div className="relative group">
                         <Input 
-                            placeholder="Username, Email, or Phone" 
+                            placeholder="Staff ID, Username, Email or Phone" 
                             className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
@@ -641,9 +557,19 @@ const LoginPage = () => {
                     <button 
                         type="button" 
                         onClick={() => setIsForgotPassword(false)} 
-                        className="w-full text-center text-xs font-black uppercase tracking-tighter text-muted-foreground hover:text-primary transition-colors flex items-center justify-center gap-2"
+                        className="block group w-full mt-2"
                     >
-                        <ArrowLeft className="w-3 h-3" /> Back to Login
+                      <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <ArrowLeft className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
+                            <p className="text-[13px] font-black tracking-tight text-foreground group-hover:text-primary transition-colors leading-none">Back to Login</p>
+                          </div>
+                        </div>
+                      </div>
                     </button>
                   </form>
                )}
@@ -681,7 +607,10 @@ const LoginPage = () => {
                   <form onSubmit={handleResetPassword} className="space-y-5">
                     <div className="space-y-4">
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Password</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">New Password</Label>
+                          <PasswordStrength password={resetPassword} />
+                        </div>
                         <div className="relative group">
                           <Input 
                               type="password" 
@@ -693,11 +622,13 @@ const LoginPage = () => {
                           />
                           <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
-                        <PasswordStrength password={resetPassword} />
                       </div>
 
                       <div className="space-y-2">
-                        <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm New Password</Label>
+                        <div className="flex justify-between items-center mb-1">
+                          <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Confirm New Password</Label>
+                          <PasswordMatchIndicator password={resetPassword} confirmPassword={confirmPassword} />
+                        </div>
                         <div className="relative group">
                           <Input 
                               type="password" 
@@ -709,27 +640,70 @@ const LoginPage = () => {
                           />
                           <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
-                        {confirmPassword && resetPassword !== confirmPassword && <p className="text-[10px] text-destructive font-black ml-1 uppercase">Passwords do not match</p>}
                       </div>
                     </div>
                     
                     <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !resetPassword || resetPassword !== confirmPassword}>
                       {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Finish'}
                     </Button>
+                    <button 
+                        type="button" 
+                        onClick={() => setIsForgotPassword(false)} 
+                        className="block group w-full mt-4"
+                    >
+                      <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
+                        <div className="flex items-center gap-3">
+                          <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <ArrowLeft className="w-4.5 h-4.5" />
+                          </div>
+                          <div className="text-left">
+                            <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
+                            <p className="text-[13px] font-black tracking-tight text-foreground group-hover:text-primary transition-colors leading-none">Back to Login</p>
+                          </div>
+                        </div>
+                      </div>
+                    </button>
                   </form>
                )}
             </div>
           )}
 
           {!isForgotPassword && (
-            <p className="text-center text-[11px] text-muted-foreground font-bold italic">
-              Don't have an account?{' '}
-              <Link to={`/signup?portal=${activePortal}`} className="text-primary hover:underline transition-all">Sign Up</Link>
-            </p>
+            <div className="space-y-4 text-left">
+                <p className="text-[11px] text-muted-foreground font-bold italic">
+                    Don't have an account? Sign Up as:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
+                    <Link 
+                        to="/signup?portal=staff" 
+                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <Activity className="w-4 h-4 text-blue-500" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 leading-none">Clinical Staff</span>
+                          <span className="block text-[8px] font-bold text-muted-foreground leading-none">Management & Care</span>
+                        </div>
+                    </Link>
+                    <Link 
+                        to="/signup?portal=patient" 
+                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
+                    >
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                          <User className="w-4 h-4 text-emerald-500" />
+                        </div>
+                        <div className="space-y-0.5">
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none">Patient</span>
+                          <span className="block text-[8px] font-bold text-muted-foreground leading-none">Results & Records</span>
+                        </div>
+                    </Link>
+                </div>
+            </div>
           )}
         </div>
 
-        <div className="absolute bottom-8 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/30">
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
           © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
         </div>
       </div>

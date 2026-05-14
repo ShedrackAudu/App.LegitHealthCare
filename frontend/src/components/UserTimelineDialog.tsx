@@ -86,7 +86,7 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl p-0 overflow-hidden border-0 shadow-2xl rounded-2xl bg-card">
+      <DialogContent className="max-w-2xl p-0 border-0 shadow-2xl rounded-2xl bg-card max-h-[90vh] overflow-y-auto">
         <DialogHeader className="p-6 bg-muted/30 border-b">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">

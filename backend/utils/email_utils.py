@@ -6,6 +6,7 @@ from email.mime.text import MIMEText
 from email.mime.application import MIMEApplication
 from dotenv import load_dotenv
 from datetime import datetime
+from markupsafe import escape
 
 ENV_PATH = os.path.join(os.path.dirname(os.path.dirname(__file__)), '.env')
 
@@ -321,7 +322,12 @@ class EmailService:
         
         # Determine Login URL
         base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
-        login_url = f"{base_url}/login?portal={portal_type}"
+        login_url = f"{base_url}/login"
+        
+        # Escape user-controlled data (SEC-008)
+        e_first_name = escape(first_name)
+        e_username = escape(username)
+        e_password = escape(password)
         
         return f"""
         <!DOCTYPE html>
@@ -359,15 +365,15 @@ class EmailService:
                     </div>
                     
                     <div class="content">
-                        <div class="greeting">Hello {first_name}!</div>
+                        <div class="greeting">Hello {e_first_name}!</div>
                         
                         <div class="body-text">
                             Your account has been successfully created based on your request. Below are your login details:
                         </div>
                         
                         <div class="details-box">
-                            <p><strong>Username:</strong> {username}</p>
-                            <p><strong>Temporary Password:</strong> {password}</p>
+                            <p><strong>Username:</strong> {e_username}</p>
+                            <p><strong>Temporary Password:</strong> {e_password}</p>
                         </div>
                         
                         <div class="body-text">
@@ -404,7 +410,11 @@ class EmailService:
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
         
         # Ensure login URL is correct
-        login_url = f"{app_url.rstrip('/')}/login?portal=patient"
+        login_url = f"{app_url.rstrip('/')}/login"
+        
+        # Escape user-controlled data (SEC-008)
+        e_first_name = escape(first_name)
+        e_screening_year = escape(screening_year)
         
         return f"""
         <!DOCTYPE html>
@@ -441,10 +451,10 @@ class EmailService:
                     </div>
                     
                     <div class="content">
-                        <div class="greeting">Dear {first_name},</div>
+                        <div class="greeting">Dear {e_first_name},</div>
                         
                         <div class="body-text">
-                            We are pleased to inform you that your medical report for the <strong>{screening_year} Annual Medical Screening</strong> is now complete and ready for your review.
+                            We are pleased to inform you that your medical report for the <strong>{e_screening_year} Annual Medical Screening</strong> is now complete and ready for your review.
                         </div>
                         
                         <div class="body-text">
@@ -490,6 +500,11 @@ class EmailService:
         # Signup URL for patients to claim account
         signup_url = f"{app_url.rstrip('/')}/signup?portal=patient"
         
+        # Escape user-controlled data (SEC-008)
+        e_first_name = escape(first_name)
+        e_year = escape(year)
+        e_clinic_name = escape(clinic_name)
+        
         return f"""
         <!DOCTYPE html>
         <html>
@@ -526,10 +541,10 @@ class EmailService:
                     </div>
                     
                     <div class="content">
-                        <div class="greeting">Dear {first_name},</div>
+                        <div class="greeting">Dear {e_first_name},</div>
                         
                         <div class="body-text">
-                            We are pleased to inform you that you have been successfully registered for the <strong>{year} medical screening program</strong>.
+                            We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.
                         </div>
                         
                         <div class="body-text">
@@ -559,7 +574,7 @@ class EmailService:
                         <div class="signature">
                             Kind regards,<br>
                             ICT Department<br>
-                            {clinic_name}
+                            {e_clinic_name}
                         </div>
                         
                         <div class="whatsapp-section">

@@ -58,9 +58,13 @@ services:
     name: legit-healthcare-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class eventlet -w 1 app:app
+    startCommand: gunicorn --worker-class gevent -w 1 app:app
     rootDir: backend
-    plan: free
+    plan: starter
+    disk:
+      name: legit-healthcare-uploads
+      mountPath: /opt/render/project/src/backend/static/uploads
+      sizeGB: 1
     envVars:
       # REQUIRED: Set to the backend's own public URL (no trailing slash)
       # Example: https://legit-healthcare-api.onrender.com

@@ -460,7 +460,7 @@ const UserManagementPage: React.FC = () => {
               initial={{ opacity: 0, scale: 0.95, y: 20 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative w-full max-w-lg bg-card border-2 shadow-2xl rounded-2xl overflow-hidden"
+              className="relative w-full max-w-lg bg-card border-2 shadow-2xl rounded-2xl overflow-y-auto max-h-[90vh]"
             >
               <div className="p-6 border-b bg-muted/30">
                 <div className="flex items-center justify-between">
@@ -620,7 +620,7 @@ const UserManagementPage: React.FC = () => {
           setGeneratedPassword('');
         }
       }}>
-        <DialogContent className="sm:max-w-[500px] overflow-hidden">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <UserCog className="h-5 w-5 text-primary" />
@@ -729,7 +729,7 @@ const UserManagementPage: React.FC = () => {
                     disabled={saving}
                   >
                     {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                    Create & Send Credentials
+                    Create Account
                   </Button>
                 </div>
               </motion.div>
@@ -797,7 +797,7 @@ const UserManagementPage: React.FC = () => {
           setGeneratedPassword('');
         }
       }}>
-        <DialogContent className="sm:max-w-[500px] overflow-hidden">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               <Users className="h-5 w-5 text-primary" />
@@ -944,7 +944,7 @@ const UserManagementPage: React.FC = () => {
                       className="flex-[2] rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20"
                       disabled={onboardLoading}
                     >
-                      {onboardLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Portal Account"}
+                      {onboardLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Account"}
                     </Button>
                   </div>
                 </form>

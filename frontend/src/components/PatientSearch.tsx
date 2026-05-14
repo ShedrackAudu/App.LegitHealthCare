@@ -15,6 +15,8 @@ interface PatientSearchProps {
   initialValue?: string;
   searching?: boolean;
   buttonText?: string;
+  year?: string | number;
+  strict?: boolean;
 }
 
 export const PatientSearch: React.FC<PatientSearchProps> = ({
@@ -26,7 +28,9 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   activeSection,
   initialValue = "",
   searching = false,
-  buttonText = "Retrieve Record"
+  buttonText = "Retrieve Record",
+  year,
+  strict = false
 }) => {
   const [searchId, setSearchId] = useState(initialValue);
   const [searchResults, setSearchResults] = useState<any[]>([]);
@@ -45,7 +49,8 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       }
       const fetchResults = async () => {
         try {
-          const res = await axios.get(`/api/patients/search?q=${searchId}`, {
+          const url = `/api/patients/search?q=${searchId}${year ? `&year=${year}` : ''}${strict ? '&strict=true' : ''}`;
+          const res = await axios.get(url, {
             headers: { 'X-Company-Context': activeSection }
           });
           // Handle both old (list) and new (paginated) formats for safety
@@ -60,7 +65,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     } else {
       setSearchResults([]);
     }
-  }, [searchId, activeSection, isSelecting]);
+  }, [searchId, activeSection, isSelecting, year, strict]);
 
   const colorClasses = {
     emerald: {

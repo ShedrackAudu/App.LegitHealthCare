@@ -94,7 +94,7 @@ const PatientOTPPage = () => {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden">
+    <div className="min-h-screen bg-background flex items-center justify-center p-6 relative overflow-hidden text-left">
       <div className="absolute top-0 left-0 w-full h-full -z-10 bg-grid-white/[0.02]" />
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] -z-10" />
 
@@ -104,8 +104,8 @@ const PatientOTPPage = () => {
         className="w-full max-w-sm"
       >
         <Card className="border-border shadow-xl bg-card">
-          <CardHeader className="text-center pb-2">
-            <Link to="/" className="flex justify-center mb-4 transition-opacity hover:opacity-80">
+          <CardHeader className="text-left pb-2 space-y-1">
+            <Link to="/" className="flex justify-start mb-4 transition-opacity hover:opacity-80">
               {branding?.logo_light ? (
                 <img 
                   src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
@@ -119,7 +119,7 @@ const PatientOTPPage = () => {
               )}
             </Link>
             <CardTitle className="text-2xl font-bold">Verify Your Email</CardTitle>
-            <CardDescription>
+            <CardDescription className="mt-0.5">
               We've sent a 6-digit code to <br />
               <strong className="text-foreground">{email}</strong>
             </CardDescription>
@@ -134,7 +134,7 @@ const PatientOTPPage = () => {
                   onSubmit={handleVerify}
                   className="space-y-6"
                 >
-                  <div className="space-y-4 text-center">
+                  <div className="space-y-1 text-left">
                     <Input
                       type="text"
                       inputMode="numeric"
@@ -195,6 +195,9 @@ const PatientOTPPage = () => {
           )}
         </Card>
       </motion.div>
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
+          © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
+        </div>
     </div>
   );
 };

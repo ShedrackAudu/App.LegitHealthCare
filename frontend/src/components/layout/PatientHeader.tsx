@@ -91,7 +91,7 @@ export const PatientHeader: React.FC = () => {
         }
     }
     setUser(null);
-    navigate('/login?portal=patient');
+    navigate('/login');
   };
 
   return (

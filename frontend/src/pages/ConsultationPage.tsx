@@ -441,6 +441,8 @@ const ConsultationPage: React.FC = () => {
               }}
               searching={searching}
               themeColor="emerald"
+              year={activeYear}
+              strict={true}
             />
           </div>
         </div>

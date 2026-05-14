@@ -138,7 +138,7 @@ const TestResultsPage: React.FC = () => {
             }
             const fetchResults = async () => {
                 try {
-                    const res = await axios.get(`/api/patients/search?q=${searchId}`, {
+                    const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
                     setSearchResults(res.data.results || []);

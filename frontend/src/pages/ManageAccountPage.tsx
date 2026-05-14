@@ -23,6 +23,7 @@ import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
+import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 
 const ManageAccountPage = () => {
     const { user, setUser } = useAppContext();
@@ -219,22 +220,18 @@ const ManageAccountPage = () => {
                                         <Input type="password" value={currentPassword} onChange={e => setCurrentPassword(e.target.value)} required />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>New Password <span className="text-destructive">*</span></Label>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <Label>New Password <span className="text-destructive">*</span></Label>
+                                            <PasswordStrength password={newPassword} />
+                                        </div>
                                         <Input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)} required />
-                                        <PasswordStrength password={newPassword} />
                                     </div>
                                     <div className="space-y-2">
-                                        <Label>Confirm New Password <span className="text-destructive">*</span></Label>
-                                        <div className="relative">
-                                            <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
-                                            <div className="absolute right-3 top-2.5">
-                                                {confirmPassword && (
-                                                    newPassword === confirmPassword ? 
-                                                    <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in duration-300" /> : 
-                                                    <X className="h-5 w-5 text-rose-500 animate-in zoom-in duration-300" />
-                                                )}
-                                            </div>
+                                        <div className="flex justify-between items-center mb-1">
+                                            <Label>Confirm New Password <span className="text-destructive">*</span></Label>
+                                            <PasswordMatchIndicator password={newPassword} confirmPassword={confirmPassword} />
                                         </div>
+                                        <Input type="password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} required />
                                     </div>
                                 </CardContent>
                                 <CardFooter>

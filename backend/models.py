@@ -29,8 +29,8 @@ class RoutingSession(Session):
                     'ai_settings', 'app_branding', 'users', 'departments', 'roles', 
                     'permissions', 'user_roles', 'role_permissions', 'audit_logs', 
                     'temp_access_codes', 'access_requests', 'system_config', 
-                    'appointments', 'report_verifications', 'chat_messages', 
-                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications', 'patient_files',
+                    'report_verifications', 'chat_messages', 
+                    'chat_groups', 'chat_group_members', 'user_contacts', 'notifications',
                     'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions'
                 ]:
                     return _db.engine
@@ -807,10 +807,10 @@ class PatientFile(db.Model):
     filename = db.Column(db.String(255), nullable=False) # Original filename
     file_path = db.Column(db.String(512), nullable=False) # Path relative to uploads dir
     file_size = db.Column(db.Integer) # In bytes
-    uploaded_by = db.Column(db.Integer, db.ForeignKey('users.id')) # Staff ID of the uploader
+    uploaded_by = db.Column(db.Integer) # Staff ID of the uploader
     created_at = db.Column(db.DateTime, default=datetime.now)
 
-    uploader = db.relationship('StaffUser', backref=db.backref('uploaded_files', lazy=True))
+    uploader = db.relationship('StaffUser', primaryjoin='PatientFile.uploaded_by == StaffUser.id', foreign_keys=[uploaded_by], backref=db.backref('uploaded_files', lazy=True))
 
     def to_dict(self):
         return {
