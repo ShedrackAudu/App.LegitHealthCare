@@ -105,5 +105,20 @@ def ensure_schema(app):
                                 except Exception as e:
                                     app.logger.error(f"Failed to add '{col_name}' to appointments: {e}")
 
+                # 6. Add ua_remark_others to consultation_data and director_reviews
+                if 'consultation_data' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('consultation_data')]
+                    if 'ua_remark_others' not in columns:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE consultation_data ADD COLUMN ua_remark_others VARCHAR(255)"))
+                            conn.commit()
+
+                if 'director_reviews' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('director_reviews')]
+                    if 'ua_remark_others' not in columns:
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE director_reviews ADD COLUMN ua_remark_others VARCHAR(255)"))
+                            conn.commit()
+
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

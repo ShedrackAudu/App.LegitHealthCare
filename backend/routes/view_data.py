@@ -429,7 +429,7 @@ def get_screening_records(year):
             "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
             "jaundice": c.jaundice, "murmur": c.murmur, "chest_status": c.chest_status,
             "psa": c.psa, "psa_remark": c.psa_remark, "fbs": c.fbs, "rbs": c.rbs, 
-            "sugar_remark": c.sugar_remark, "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "sugar_remark": c.sugar_remark, "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "dm": c.dm_status, "htn": c.htn_status, "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2,
             "hs": c.hs_status, "breast": c.breast_exam, "breast_remark": c.breast_remark,
             "abdomen": c.abdomen, "hx_pe": c.assessment_hx_pe, "other_assessments": c.other_assessments,
@@ -612,7 +612,7 @@ def get_patient_report(staff_id, year):
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
             "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment,
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
-            "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
             "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam
         }

@@ -934,7 +934,7 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
         const tv = parseFloat(tcho) || 0;
         const tgv = parseFloat(tg) || 0;
         const hdl = tv * 0.35;
-        const ldl = tv + (tgv / 5) + hdl; // Following literal user instruction: TCHO+TG/5,+HDL
+        const ldl = tv - ((tgv / 5) + hdl);
         setValue('hdl', hdl.toFixed(2));
         setValue('ldl', ldl.toFixed(2));
     }, [tcho, tg, setValue]);
@@ -1060,7 +1060,8 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
             rbs: '',
             sugar_remark: '',
             ua_result: '',
-            ua_remark: ''
+            ua_remark: '',
+            ua_remark_others: ''
         }
     });
 
@@ -1175,7 +1176,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
                     <Activity className="h-4 w-4" /> Urine Analysis (U/A)
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                         <Label>U/A Result <span className="text-rose-500">*</span></Label>
                         <Select onValueChange={(v) => setValue('ua_result', v)} value={watch('ua_result')}>
@@ -1201,6 +1202,10 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>U/A Remark Others</Label>
+                        <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-12 border-2 rounded-xl" />
                     </div>
                 </div>
             </div>

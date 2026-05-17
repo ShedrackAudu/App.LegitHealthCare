@@ -130,7 +130,7 @@ def generate_overview():
             "Consultation:chest_status": ("Chest Status", consultation.chest_status),
             "Consultation:psa": ("PSA", f"{consultation.psa} (Remark: {consultation.psa_remark})"),
             "Consultation:sugar": ("Blood Sugar", f"FBS: {consultation.fbs}, RBS: {consultation.rbs} (Remark: {consultation.sugar_remark})"),
-            "Consultation:urinalysis": ("Urinalysis", f"Result: {consultation.ua_result} (Remark: {consultation.ua_remark})"),
+            "Consultation:urinalysis": ("Urinalysis", f"Result: {consultation.ua_result} (Remark: {consultation.ua_remark}, Others: {consultation.ua_remark_others})"),
             "Consultation:dm_status": ("Diabetes Status", consultation.dm_status),
             "Consultation:htn_status": ("Hypertension Status", consultation.htn_status),
             "Consultation:bp": ("Blood Pressure", consultation.bp),

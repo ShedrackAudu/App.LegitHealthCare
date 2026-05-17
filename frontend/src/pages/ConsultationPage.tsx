@@ -69,6 +69,7 @@ const consultationSchema = z.object({
   sugar_remark: z.string().min(1, 'FBS/RBS Remark is required'),
   ua_result: z.string().min(1, 'U/A Result is required'),
   ua_remark: z.string().min(1, 'U/A Remark is required'),
+  ua_remark_others: z.string().optional().or(z.literal('')),
   dm_status: z.string().min(1, 'DM Status is required'),
   htn_status: z.string().min(1, 'HTN Status is required'),
   bp: z.string().min(1, 'BP is required'),
@@ -79,7 +80,7 @@ const consultationSchema = z.object({
   breast_remark: z.string().min(1, 'Breast Remark is required'),
   abdomen: z.string().min(1, 'Abdomen is required'),
   assessment_hx_pe: z.string().min(1, 'Assessment HX/PE is required'),
-  other_assessments: z.string().min(1, 'Other Assessments is required'),
+  other_assessments: z.string().optional().or(z.literal('')),
   other_remarks: z.string().optional().or(z.literal('')),
   overall_assessment: z.string().optional().or(z.literal('')),
 });
@@ -264,6 +265,7 @@ const ConsultationPage: React.FC = () => {
       sugar_remark: '',
       ua_result: '',
       ua_remark: '',
+      ua_remark_others: '',
       dm_status: '',
       htn_status: '',
       hs_status: '',
@@ -345,7 +347,7 @@ const ConsultationPage: React.FC = () => {
         heart_dx: 'No', palor: 'No', jaundice: 'No', murmur: 'No',
         chest_status: '', psa: '', psa_remark: '',
         fbs: '', rbs: '', sugar_remark: '',
-        ua_result: '', ua_remark: '', dm_status: '',
+        ua_result: '', ua_remark: '', ua_remark_others: '', dm_status: '',
         htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
         breast_exam: '', breast_remark: '', abdomen: '',
         assessment_hx_pe: '', other_assessments: '',
@@ -425,7 +427,7 @@ const ConsultationPage: React.FC = () => {
                     <h3 className="text-lg font-black tracking-tighter leading-none">{queueCount}</h3>
                   </div>
                 </div>
-                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-10 transition-opacity">
                   VIEW <ChevronRight className="h-3 w-3" />
                 </div>
               </CardContent>
@@ -497,7 +499,7 @@ const ConsultationPage: React.FC = () => {
                 <CardContent className="p-8">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History & Screening</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
                         <RadioField name="luts" control={control} label="LUTS" />
                         <RadioField name="chronic_cough" control={control} label="Chronic Cough" />
@@ -507,10 +509,20 @@ const ConsultationPage: React.FC = () => {
                         <RadioField name="palor" control={control} label="Palor" />
                         <RadioField name="jaundice" control={control} label="Jaundice" />
                         <RadioField name="murmur" control={control} label="Murmur" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Physical Examination and General Assessment</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
                         <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
+                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
+                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
+                        <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
+                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                       </div>
                     </div>
 
@@ -536,9 +548,6 @@ const ConsultationPage: React.FC = () => {
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Systematic Findings & Lab Data</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
-                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
-                        <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="psa" control={control} label="Prostate-Specific Antigen - PSA" options={['Negative', 'Not Applicable', 'Positive']} />
                         <SelectField name="psa_remark" control={control} label="PSA Remark" options={['Normal', 'Abnormal', 'Not Applicable']} />
                         <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} />
@@ -546,13 +555,16 @@ const ConsultationPage: React.FC = () => {
                         <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                         <SelectField name="ua_result" control={control} label="Sugar & Protein - U/A" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                         <SelectField name="ua_remark" control={control} label="U/A Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">U/A Remark Others</Label>
+                          <Input {...register('ua_remark_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="font-bold">Other Assessments <span className="text-red-500">*</span></Label>
+                        <Label className="font-bold">Other Assessments</Label>
                         <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-primary/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
                       </div>
                       <div className="space-y-2">

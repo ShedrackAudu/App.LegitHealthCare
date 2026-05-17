@@ -452,6 +452,7 @@ class ConsultationData(db.Model):
     sugar_remark = db.Column(db.String(50)) # Normal, Abnormal...
     ua_result = db.Column(db.String(50)) # No Abnormality...
     ua_remark = db.Column(db.String(50))
+    ua_remark_others = db.Column(db.String(255))
     dm_status = db.Column(db.String(50)) # Yes-On Regular Meds, etc.
     htn_status = db.Column(db.String(50))
     bp = db.Column(db.String(20))
@@ -578,6 +579,7 @@ class DirectorReview(db.Model):
     fbs_rbs_remark = db.Column(db.String(50))
     ua_result = db.Column(db.String(50))
     ua_remark = db.Column(db.String(50))
+    ua_remark_others = db.Column(db.String(255))
     
     # Missing Clinical Fields from Consultation
     luts = db.Column(db.String(10))

@@ -579,7 +579,7 @@ def export_screening_matrix():
                 "Murmur": "", "Chest Status": "", "LUTS": "", "Chronic Cough": "", "Chest Pain": "", 
                 "Chest Infection": "", "Heart Dx": "", "DM Status": "", "HTN Status": "", "PSA": "", 
                 "PSA Remark": "", "FBS": "", "RBS": "", "Sugar Remark": "", "UA Result": "", 
-                "UA Remark": "", "Breast Exam": "", "Breast Remark": "", "Abdomen": "", 
+                "UA Remark": "", "UA Remark Others": "", "Breast Exam": "", "Breast Remark": "", "Abdomen": "", 
                 "Assessment HX PE": "", "Overall Lab Remark": "", "Other Assessments": "", "Other Remarks": "", 
                 "Overall Assessment": "", "Consulted By": "", "Consultation Date": "",
                 "PCV": "", "WBC": "", "HGB": "", "PLT": "", "RBC": "", 
@@ -603,7 +603,7 @@ def export_screening_matrix():
                 
             c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if c:
-                row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Abdomen": c.abdomen, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
+                row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "UA Remark Others": c.ua_remark_others, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Abdomen": c.abdomen, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
 
 
                 
@@ -639,7 +639,7 @@ def export_screening_matrix():
                     "Breast Remark": dr.breast_remark, "Abdomen": dr.abdomen, "PSA": dr.psa, 
                     "PSA Remark": dr.psa_remark, "FBS": dr.fbs, "RBS": dr.rbs, 
                     "Sugar Remark": dr.fbs_rbs_remark, "UA Result": dr.ua_result, 
-                    "UA Remark": dr.ua_remark
+                    "UA Remark": dr.ua_remark, "UA Remark Others": dr.ua_remark_others
                 }
                 for k_key, v_val in overrides.items():
                     if v_val:

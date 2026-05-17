@@ -1,13 +1,13 @@
 from flask import Blueprint, request, jsonify
 from models import db, Race, Nationality, Department
-from models import db, Race, Nationality, Department
 from decorators import require_permission
+from flask_jwt_extended import jwt_required
 
 config_bp = Blueprint('config', __name__)
 
 # Race CRUD
 @config_bp.route('/races', methods=['GET'])
-@require_permission('system_maintenance')
+@jwt_required()
 def get_races():
     races = Race.query.order_by(Race.name.asc()).all()
     return jsonify([{"id": r.id, "name": r.name} for r in races]), 200
@@ -39,7 +39,7 @@ def delete_race(id):
 
 # Nationality CRUD
 @config_bp.route('/nationalities', methods=['GET'])
-@require_permission('system_maintenance')
+@jwt_required()
 def get_nationalities():
     nationalities = Nationality.query.order_by(Nationality.name.asc()).all()
     return jsonify([{"id": n.id, "name": n.name} for n in nationalities]), 200
@@ -71,7 +71,7 @@ def delete_nationality(id):
 
 # Department CRUD (Existing logic moved or duplicated for consistency in System Config)
 @config_bp.route('/departments', methods=['GET'])
-@require_permission('system_maintenance')
+@jwt_required()
 def get_departments():
     depts = Department.query.order_by(Department.name.asc()).all()
     return jsonify([{"id": d.id, "name": d.name} for d in depts]), 200

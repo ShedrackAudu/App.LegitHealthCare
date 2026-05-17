@@ -204,13 +204,13 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 }
             }
 
-            // LDL: TCHO + TRIGLYCERIDES(TG)/5 + HDL
+            // LDL: TCHO - (TRIGLYCERIDES(TG)/5 + HDL)
             if (name === 'total_cholesterol' || name === 'triglycerides' || name === 'hdl') {
                 const tcho = parseFloat(value.total_cholesterol);
                 const tg = parseFloat(value.triglycerides);
                 const hdl = parseFloat(value.hdl);
                 if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hdl)) {
-                    const ldl = tcho + (tg / 5) + hdl;
+                    const ldl = tcho - ((tg / 5) + hdl);
                     setValue('ldl', ldl.toFixed(2));
                 }
             }

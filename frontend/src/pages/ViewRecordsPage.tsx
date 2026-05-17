@@ -158,7 +158,7 @@ const ViewRecordsPage: React.FC = () => {
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
                                                     <TableHead className="min-w-[1400px] bg-muted/90 border-r text-center" colSpan={14}>Patient Profile</TableHead>
-                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={30}>Consultation & Vitals</TableHead>
+                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={31}>Consultation & Vitals</TableHead>
                                                     <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
                                                     <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
@@ -207,6 +207,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px]">Sugar Remark</TableHead>
                                                     <TableHead className="min-w-[100px]">U/A Result</TableHead>
                                                     <TableHead className="min-w-[120px]">U/A Remark</TableHead>
+                                                    <TableHead className="min-w-[140px]">U/A Remark Others</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Exam</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Remark</TableHead>
                                                     <TableHead className="min-w-[100px]">Chest Status</TableHead>
@@ -325,6 +326,7 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.sugar_remark || ''}>{r.consultation?.sugar_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.ua_result || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.ua_remark || ''}>{r.consultation?.ua_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.ua_remark_others || ''}>{r.consultation?.ua_remark_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.breast || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.breast_remark || ''}>{r.consultation?.breast_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_status || '-'}</TableCell>

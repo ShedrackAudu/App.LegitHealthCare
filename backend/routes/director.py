@@ -79,7 +79,7 @@ def save_director_review():
                        'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
                        'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
                        'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'fbs_rbs_remark',
-                       'ua_result', 'ua_remark'],
+                       'ua_result', 'ua_remark', 'ua_remark_others'],
             'mappings': {'sugar_remark': 'fbs_rbs_remark'}
         },
         {
@@ -88,7 +88,7 @@ def save_director_review():
                        'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
                        'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
                        'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'sugar_remark', 
-                       'ua_result', 'ua_remark', 'dm_status', 'htn_status', 
+                       'ua_result', 'ua_remark', 'ua_remark_others', 'dm_status', 'htn_status', 
                        'assessment_hx_pe', 'other_assessments', 'overall_lab_remark', 
                        'other_remarks', 'overall_assessment']
         },

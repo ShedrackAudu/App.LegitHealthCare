@@ -295,7 +295,7 @@ def bulk_upload(test_type):
                     tcho = float(record.total_cholesterol) if record.total_cholesterol else 0
                     tg = float(record.triglycerides) if record.triglycerides else 0
                     hdl = round(tcho * 0.35, 2)
-                    ldl = round(tcho + (tg / 5) + hdl, 2)
+                    ldl = round(tcho - ((tg / 5) + hdl), 2)
                     record.hdl = str(hdl)
                     record.ldl = str(ldl)
             except: pass

@@ -52,6 +52,7 @@ def get_screening_patient(year, staff_id):
             "sugar_remark": consultation.sugar_remark,
             "ua_result": consultation.ua_result,
             "ua_remark": consultation.ua_remark,
+            "ua_remark_others": consultation.ua_remark_others,
             "dm_status": consultation.dm_status,
             "htn_status": consultation.htn_status,
             "bp": consultation.bp,
@@ -94,7 +95,7 @@ def save_consultation():
     fields = [
         'luts', 'chronic_cough', 'chronic_chest_pain', 'chest_infection', 'heart_dx',
         'palor', 'jaundice', 'murmur', 'chest_status', 'psa', 'psa_remark',
-        'fbs', 'rbs', 'sugar_remark', 'ua_result', 'ua_remark', 'dm_status',
+        'fbs', 'rbs', 'sugar_remark', 'ua_result', 'ua_remark', 'ua_remark_others', 'dm_status',
         'htn_status', 'bp', 'pulse', 'spo2', 'hs_status', 'breast_exam',
         'breast_remark', 'abdomen', 'assessment_hx_pe', 'other_assessments',
         'overall_lab_remark', 'other_remarks', 'overall_assessment'
