@@ -501,26 +501,26 @@ const ConsultationPage: React.FC = () => {
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
+                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
+                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <RadioField name="luts" control={control} label="LUTS" />
                         <RadioField name="chronic_cough" control={control} label="Chronic Cough" />
                         <RadioField name="chronic_chest_pain" control={control} label="Chronic Chest Pain" />
                         <RadioField name="chest_infection" control={control} label="Chest Infection" />
                         <RadioField name="heart_dx" control={control} label="Heart DX" />
-                        <RadioField name="palor" control={control} label="Palor" />
-                        <RadioField name="jaundice" control={control} label="Jaundice" />
-                        <RadioField name="murmur" control={control} label="Murmur" />
                       </div>
                     </div>
 
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Physical Examination and General Assessment</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">General Examinations</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
+                        <RadioField name="palor" control={control} label="Palor" />
+                        <RadioField name="jaundice" control={control} label="Jaundice" />
+                        <RadioField name="murmur" control={control} label="Murmur" />
                         <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
-                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
-                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                       </div>
