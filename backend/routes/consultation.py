@@ -61,7 +61,9 @@ def get_screening_patient(year, staff_id):
             "hs_status": consultation.hs_status,
             "breast_exam": consultation.breast_exam,
             "breast_remark": consultation.breast_remark,
+            "breast_others": consultation.breast_others,
             "abdomen": consultation.abdomen,
+            "abdomen_others": consultation.abdomen_others,
             "assessment_hx_pe": consultation.assessment_hx_pe,
             "other_assessments": consultation.other_assessments,
             "overall_lab_remark": consultation.overall_lab_remark,
@@ -97,7 +99,7 @@ def save_consultation():
         'palor', 'jaundice', 'murmur', 'chest_status', 'psa', 'psa_remark',
         'fbs', 'rbs', 'sugar_remark', 'ua_result', 'ua_remark', 'ua_remark_others', 'dm_status',
         'htn_status', 'bp', 'pulse', 'spo2', 'hs_status', 'breast_exam',
-        'breast_remark', 'abdomen', 'assessment_hx_pe', 'other_assessments',
+        'breast_remark', 'breast_others', 'abdomen', 'abdomen_others', 'assessment_hx_pe', 'other_assessments',
         'overall_lab_remark', 'other_remarks', 'overall_assessment'
     ]
     

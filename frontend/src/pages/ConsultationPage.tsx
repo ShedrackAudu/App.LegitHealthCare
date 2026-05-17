@@ -70,6 +70,8 @@ const consultationSchema = z.object({
   ua_result: z.string().min(1, 'U/A Result is required'),
   ua_remark: z.string().min(1, 'U/A Remark is required'),
   ua_remark_others: z.string().optional().or(z.literal('')),
+  breast_others: z.string().optional().or(z.literal('')),
+  abdomen_others: z.string().optional().or(z.literal('')),
   dm_status: z.string().min(1, 'DM Status is required'),
   htn_status: z.string().min(1, 'HTN Status is required'),
   bp: z.string().min(1, 'BP is required'),
@@ -266,6 +268,8 @@ const ConsultationPage: React.FC = () => {
       ua_result: '',
       ua_remark: '',
       ua_remark_others: '',
+      breast_others: '',
+      abdomen_others: '',
       dm_status: '',
       htn_status: '',
       hs_status: '',
@@ -347,7 +351,7 @@ const ConsultationPage: React.FC = () => {
         heart_dx: 'No', palor: 'No', jaundice: 'No', murmur: 'No',
         chest_status: '', psa: '', psa_remark: '',
         fbs: '', rbs: '', sugar_remark: '',
-        ua_result: '', ua_remark: '', ua_remark_others: '', dm_status: '',
+        ua_result: '', ua_remark: '', ua_remark_others: '', breast_others: '', abdomen_others: '', dm_status: '',
         htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
         breast_exam: '', breast_remark: '', abdomen: '',
         assessment_hx_pe: '', other_assessments: '',
@@ -520,7 +524,15 @@ const ConsultationPage: React.FC = () => {
                         <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">Breast Others</Label>
+                          <Input {...register('breast_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">Abdomen Others</Label>
+                          <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                       </div>
@@ -530,7 +542,7 @@ const ConsultationPage: React.FC = () => {
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Vital Signs & Core Metrics</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P (mm/Hg) <span className="text-red-500">*</span></Label>
                             <Input {...register('bp')} className="h-12" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
@@ -539,7 +551,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('pulse')} className="h-12" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 % <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 (%) <span className="text-red-500">*</span></Label>
                           <Input {...register('spo2')} className="h-12" />
                         </div>
                       </div>

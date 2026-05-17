@@ -200,6 +200,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[80px]">Murmur</TableHead>
                                                     <TableHead className="min-w-[100px]">HS Status</TableHead>
                                                     <TableHead className="min-w-[120px]">Abdomen Status</TableHead>
+                                                    <TableHead className="min-w-[140px]">Abdomen Others</TableHead>
                                                     <TableHead className="min-w-[100px]">PSA Level</TableHead>
                                                     <TableHead className="min-w-[120px]">PSA Remark</TableHead>
                                                     <TableHead className="min-w-[100px]">FBS</TableHead>
@@ -210,6 +211,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[140px]">U/A Remark Others</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Exam</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Remark</TableHead>
+                                                    <TableHead className="min-w-[140px]">Breast Others</TableHead>
                                                     <TableHead className="min-w-[100px]">Chest Status</TableHead>
                                                     <TableHead className="min-w-[120px] font-black">Assessment</TableHead>
                                                     <TableHead className="min-w-[150px] italic">Assess. Hx/PE</TableHead>
@@ -319,6 +321,7 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.murmur || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.hs || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.abdomen || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.abdomen_others || ''}>{r.consultation?.abdomen_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.psa || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.psa_remark || ''}>{r.consultation?.psa_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.fbs || '-'}</TableCell>
@@ -329,6 +332,7 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.ua_remark_others || ''}>{r.consultation?.ua_remark_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.breast || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.breast_remark || ''}>{r.consultation?.breast_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.breast_others || ''}>{r.consultation?.breast_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_status || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.director_review?.assessment || r.consultation?.assessment || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.hx_pe || r.consultation?.hx_pe || ''}>{r.director_review?.hx_pe || r.consultation?.hx_pe || '-'}</TableCell>

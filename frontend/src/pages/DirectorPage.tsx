@@ -379,7 +379,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Normal', 'Abnormal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Remark" options={['Normal', 'Not Applicable']} />
+                        <div className="space-y-1">
+                            <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Breast Others</Label>
+                            <Input {...register('breast_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                        </div>
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
+                        <div className="space-y-1">
+                            <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Abdomen Others</Label>
+                            <Input {...register('abdomen_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                        </div>
                     </div>
                 </AccordionSection>
 
@@ -392,9 +400,9 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="md:col-span-1">
                                 <SelectField name="htn_status" control={control} label="HTN" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2% <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
@@ -405,6 +413,10 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                             <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
+                                <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                             </div>
                              <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>

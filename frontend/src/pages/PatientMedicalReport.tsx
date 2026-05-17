@@ -599,7 +599,7 @@ const PatientMedicalReport: React.FC = () => {
                             <div className="vitals-grid">
                                 <div className="vital-col">
                                     <span><span className="vital-label text-slate-500">Blood Pressure:</span> {reportData.results.consultation?.bp || '-'}</span>
-                                    <span><span className="vital-label text-slate-500">Unit:</span> mm/hg</span>
+                                    <span><span className="vital-label text-slate-500">Unit:</span> mm/Hg</span>
                                 </div>
                                 <div className="vital-col" style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px' }}>
                                     <span><span className="vital-label text-slate-500">Pulse Rate:</span> {reportData.results.consultation?.pulse || '-'}</span>

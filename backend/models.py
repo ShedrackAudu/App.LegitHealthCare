@@ -461,7 +461,9 @@ class ConsultationData(db.Model):
     hs_status = db.Column(db.String(20)) # Present, S3, S4
     breast_exam = db.Column(db.String(20))
     breast_remark = db.Column(db.String(50))
+    breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
+    abdomen_others = db.Column(db.String(255))
     assessment_hx_pe = db.Column(db.String(100)) # Satisfactory...
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
@@ -571,7 +573,9 @@ class DirectorReview(db.Model):
     hs_status = db.Column(db.String(20))
     breast_exam = db.Column(db.String(20))
     breast_remark = db.Column(db.String(50))
+    breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
+    abdomen_others = db.Column(db.String(255))
     psa = db.Column(db.String(20))
     psa_remark = db.Column(db.Text)
     fbs = db.Column(db.String(20))

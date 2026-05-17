@@ -431,8 +431,8 @@ def get_screening_records(year):
             "psa": c.psa, "psa_remark": c.psa_remark, "fbs": c.fbs, "rbs": c.rbs, 
             "sugar_remark": c.sugar_remark, "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "dm": c.dm_status, "htn": c.htn_status, "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2,
-            "hs": c.hs_status, "breast": c.breast_exam, "breast_remark": c.breast_remark,
-            "abdomen": c.abdomen, "hx_pe": c.assessment_hx_pe, "other_assessments": c.other_assessments,
+            "hs": c.hs_status, "breast": c.breast_exam, "breast_remark": c.breast_remark, "breast_others": c.breast_others,
+            "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "hx_pe": c.assessment_hx_pe, "other_assessments": c.other_assessments,
             "lab_remark": c.overall_lab_remark, "remarks": c.other_remarks, "assessment": c.overall_assessment
         }
         if f: record["fbc"] = {
@@ -610,11 +610,11 @@ def get_patient_report(staff_id, year):
     if c:
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
-            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment,
+            "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
             "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others
         }
     
     f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
