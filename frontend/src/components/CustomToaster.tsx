@@ -15,9 +15,9 @@ export const CustomToaster = () => {
           className={`${
             t.visible ? 'animate-in fade-in slide-in-from-right-8 duration-500' : 'animate-out fade-out slide-out-to-right-8 duration-500'
           } max-w-sm w-full bg-background/60 backdrop-blur-2xl border-2 rounded-2xl pointer-events-auto flex overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:bg-background/80 ${
-              t.type === 'success' ? 'border-emerald-500/20 shadow-[0_20px_50px_rgba(16,185,129,0.15)]' : 
-              t.type === 'error' ? 'border-rose-500/20 shadow-[0_20px_50px_rgba(244,63,94,0.15)]' : 
-              'border-border shadow-[0_20px_50px_rgba(0,0,0,0.1)]'
+              t.type === 'success' ? 'border-emerald-500/20' : 
+              t.type === 'error' ? 'border-rose-500/20' : 
+              'border-border'
           }`}
         >
           {/* Progress Bar Accent - Depleting Timer */}

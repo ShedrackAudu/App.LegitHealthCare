@@ -314,14 +314,14 @@ const LoginPage = () => {
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.auth_logo}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  className="h-[62px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
             ) : branding?.logo_dark ? (
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  className="h-[41px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
               ) : (

@@ -508,7 +508,7 @@ const LandingPage = () => {
                     <WorkflowStep number="03" title="Real-Time Access" text="Receive instant notifications and view your medical reports as soon as they are finalized." />
                  </div>
               </div>
-               <div className="relative rounded-3xl overflow-hidden border border-white/20 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.3)] h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/security ring-1 ring-white/10">
+               <div className="relative rounded-3xl overflow-hidden border border-white/20 h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/security ring-1 ring-white/10">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
                   <Activity className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/security:rotate-0" />
                   <div className="text-center relative z-10 space-y-6">
@@ -641,7 +641,7 @@ interface FeatureCardProps {
 }
 
 const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
-  <div className="bg-card p-10 rounded-3xl border-2 border-border hover:border-primary/40 hover:shadow-[0_20px_60px_-15px_rgba(0,0,0,0.1)] transition-all group flex flex-col h-full items-start">
+  <div className="bg-card p-10 rounded-3xl border-2 border-border hover:border-primary/40 transition-all group flex flex-col h-full items-start">
     <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-primary-foreground group-hover:rotate-6 transition-all duration-300">
       {icon}
     </div>

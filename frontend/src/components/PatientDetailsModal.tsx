@@ -116,7 +116,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                     </div>
                     {/* Active Status Dot */}
                     <div className="absolute bottom-1 right-1 sm:bottom-2 right-2 w-4 h-4 sm:w-5 sm:h-5 bg-background rounded-full p-0.5 shadow-lg">
-                        <div className="w-full h-full bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <div className="w-full h-full bg-primary rounded-full animate-pulse" />
                     </div>
                 </div>
               </div>

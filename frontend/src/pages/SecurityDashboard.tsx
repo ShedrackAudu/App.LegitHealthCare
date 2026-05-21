@@ -254,7 +254,7 @@ export default function SecurityDashboard() {
              
              <div className="relative z-10 p-6 flex items-center gap-6 h-full">
                 <div className="h-20 w-20 rounded-xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30 group-hover:bg-rose-500/30 transition-colors">
-                   <ShieldAlert className="h-10 w-10 text-rose-500 drop-shadow-[0_0_8px_rgba(244,63,94,0.5)]" />
+                   <ShieldAlert className="h-10 w-10 text-rose-500" />
                 </div>
                 <div className="flex-1">
                    <p className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-[0.3em]">Threat Alert</p>
