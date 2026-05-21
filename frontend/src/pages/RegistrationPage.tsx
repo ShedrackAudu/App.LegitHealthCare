@@ -326,7 +326,7 @@ const RegistrationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 border-primary/10 transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border border-primary/10 transition-all">
           <div className="flex items-center gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
@@ -352,7 +352,7 @@ const RegistrationPage: React.FC = () => {
 
           {!isEditMode && (
             <div className="w-full lg:max-w-xl relative">
-              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+              <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border focus-within:border-primary/50 transition-all relative">
                 <div className="flex items-center gap-2 flex-1 px-2 h-11">
                   <Search className="h-5 w-5 text-muted-foreground shrink-0" />
                   <Input
@@ -373,7 +373,7 @@ const RegistrationPage: React.FC = () => {
 
                 {/* Search Results Card */}
                 {searchResults.length > 0 && (
-                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] border-2 border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] border border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
                     <CardHeader className="py-3 bg-primary/5 border-b">
                       <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
                     </CardHeader>
@@ -462,7 +462,7 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Form Section */}
-        <Card className="border-2">
+        <Card className="border">
           <CardHeader className="bg-primary/5 border-b py-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -666,7 +666,7 @@ const RegistrationPage: React.FC = () => {
 
       {/* Clear Form Confirmation Dialog */}
       <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-2">
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border">
           <div className="p-6 pt-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
                 <Trash2 className="w-8 h-8" />
@@ -707,7 +707,7 @@ const RegistrationPage: React.FC = () => {
 };
 
 const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border-2 transition-all overflow-hidden">
+  <Card className="border transition-all overflow-hidden">
     <CardContent className="p-2 sm:p-4 flex items-center gap-2 sm:gap-4 h-full">
       <div className={`p-2 sm:p-3 rounded-xl bg-muted/50 ${color} shrink-0`}>
         <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
