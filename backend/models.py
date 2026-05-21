@@ -106,6 +106,15 @@ class StaffUser(db.Model):
             if role.name == 'Admin': return True
             for perm in role.permissions:
                 if perm.name == permission_name: return True
+        
+        # Check active temporary access codes
+        if hasattr(self, 'temp_codes') and self.temp_codes:
+            now = datetime.now()
+            for t in self.temp_codes:
+                if t.permission and t.permission.name == permission_name:
+                    if not t.is_revoked:
+                        if not t.expires_at or t.expires_at > now:
+                            return True
         return False
 
     def set_password(self, password):
@@ -132,10 +141,10 @@ class StaffUser(db.Model):
             "permissions": list(set([p.name for role in self.roles for p in role.permissions])),
             "temp_access": [
                 {
-                    "permission_name": t.permission.name,
+                    "permission_name": t.permission.name if t.permission else "Unknown",
                     "is_revoked": t.is_revoked,
                     "expires_at": t.expires_at.isoformat() if t.expires_at else None
-                } for t in self.temp_codes
+                } for t in self.temp_codes if t.permission
             ] if hasattr(self, 'temp_codes') else []
         }
 
@@ -249,7 +258,7 @@ class TempAccessCode(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', foreign_keys=[user_id], backref=db.backref('temp_codes', lazy=True))
-    permission = db.relationship('Permission', backref=db.backref('temp_codes', lazy=True))
+    permission = db.relationship('Permission', backref=db.backref('permission_temp_codes', lazy=True))
     generator = db.relationship('StaffUser', foreign_keys=[generated_by])
 
     def to_dict(self):

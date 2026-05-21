@@ -121,6 +121,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
             handleItemSelect(searchResults[activeSearchIndex]);
           } else {
+            setSearchResults([]);
             onSearch(searchId);
           }
           break;
@@ -129,6 +130,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           break;
       }
     } else if (e.key === 'Enter') {
+      setSearchResults([]);
       onSearch(searchId);
     }
   };
@@ -147,7 +149,10 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           />
         </div>
         <Button 
-          onClick={() => onSearch(searchId)}
+          onClick={() => {
+            setSearchResults([]);
+            onSearch(searchId);
+          }}
           disabled={searching || !searchId.trim()}
           className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}
         >

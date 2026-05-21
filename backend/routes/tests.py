@@ -30,9 +30,19 @@ def save_test_result(test_type):
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    perm_name = PERM_MAP.get(test_type, 'lab_tests')
-    if not user.has_permission(perm_name) and user.username != 'admin':
-        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+    if test_type == 'special':
+        has_perm = (
+            user.has_permission('lab_tests') or 
+            user.has_permission('lab_ecg') or 
+            user.has_permission('lab_spirometry') or 
+            user.has_permission('lab_audiometry')
+        )
+        if not has_perm and user.username != 'admin':
+            return jsonify({"error": "Permission for special tests required"}), 403
+    else:
+        perm_name = PERM_MAP.get(test_type, 'lab_tests')
+        if not user.has_permission(perm_name) and user.username != 'admin':
+            return jsonify({"error": f"Permission '{perm_name}' required"}), 403
 
     data = request.json
     staff_id = data.get('staff_id')
@@ -130,9 +140,19 @@ def get_test_result(test_type, staff_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    perm_name = PERM_MAP.get(test_type, 'lab_tests')
-    if not user.has_permission(perm_name) and user.username != 'admin':
-        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+    if test_type == 'special':
+        has_perm = (
+            user.has_permission('lab_tests') or 
+            user.has_permission('lab_ecg') or 
+            user.has_permission('lab_spirometry') or 
+            user.has_permission('lab_audiometry')
+        )
+        if not has_perm and user.username != 'admin':
+            return jsonify({"error": "Permission for special tests required"}), 403
+    else:
+        perm_name = PERM_MAP.get(test_type, 'lab_tests')
+        if not user.has_permission(perm_name) and user.username != 'admin':
+            return jsonify({"error": f"Permission '{perm_name}' required"}), 403
 
     screening_year = request.args.get('year')
     if not screening_year:

@@ -126,6 +126,15 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
       });
 
+      newSocket.on('unread_update', () => {
+        axios.get('/api/messages/conversations').then(resp => {
+          const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
+          setUnreadMessagesCount(total);
+        }).catch(err => {
+          // Interceptor will handle 401
+        });
+      });
+
       newSocket.on('user_update', (updatedUser) => {
         if (user && updatedUser.id === user.id) {
           const wasRevoked = (user.temp_access?.length || 0) > (updatedUser.temp_access?.length || 0);

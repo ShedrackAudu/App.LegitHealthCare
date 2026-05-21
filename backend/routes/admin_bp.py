@@ -330,27 +330,51 @@ def manage_config():
 def request_access():
     data = request.json
     user_id = data.get('user_id')
+    if user_id is not None:
+        user_id = int(user_id)
     path = data.get('path', 'Unknown')
     
+    # Strip trailing slash for consistent matching
+    clean_path = path.rstrip('/')
+    
     # Map paths to permissions
-    path_map = {
-        '/user-management': 'view_users',
-        '/roles-permissions': 'manage_roles',
-        '/audit-logs': 'view_audit_logs',
-        '/data-management': 'download_data',
-        '/system-branding': 'manage_branding',
-        '/ai-integration': 'manage_ai',
-        '/departments': 'manage_departments',
-        '/registration': 'registration',
-        '/consultation': 'consultation',
-        '/tests': 'lab_tests',
-        '/director': 'director_review',
-        '/view-patients': 'view_patients',
-        '/view-records': 'view_records',
-        '/patient-report': 'view_records',
-        '/messages': 'messaging'
-    }
-    perm_name = path_map.get(path, 'system_maintenance')
+    if clean_path.startswith('/tests/'):
+        test_sub = clean_path.split('/')[-1]
+        test_mapping = {
+            'fbc': 'lab_fbc',
+            'kft': 'lab_kft',
+            'lipid': 'lab_lipid',
+            'lft': 'lab_lft',
+            'ecg': 'lab_ecg',
+            'spirometry': 'lab_spirometry',
+            'audiometry': 'lab_audiometry',
+            'routine': 'lab_essential_diagnostics'
+        }
+        perm_name = test_mapping.get(test_sub, 'lab_tests')
+    else:
+        path_map = {
+            '/user-management': 'view_users',
+            '/roles-permissions': 'manage_roles',
+            '/security-analytics': 'manage_roles',
+            '/audit-logs': 'view_audit_logs',
+            '/data-management': 'download_data',
+            '/system-branding': 'manage_branding',
+            '/ai-integration': 'manage_ai',
+            '/system-config': 'manage_departments',
+            '/departments': 'manage_departments',
+            '/registration': 'registration',
+            '/consultation': 'consultation',
+            '/appointments': 'manage_appointments',
+            '/tests': 'lab_tests',
+            '/director': 'director_review',
+            '/view-patients': 'view_patients',
+            '/view-records': 'view_records',
+            '/patient-report': 'patient_reports',
+            '/messages': 'messaging',
+            '/inventory': 'view_inventory',
+            '/admin/access-keys': 'manage_access_keys'
+        }
+        perm_name = path_map.get(clean_path, 'system_maintenance')
 
     req = AccessRequest(
         user_id=user_id,
@@ -408,6 +432,9 @@ def verify_access_code():
     code_str = data.get('code')
     user_id = get_jwt_identity()
     
+    # Coerce user_id to integer for consistency
+    user_id_int = int(user_id) if user_id is not None else None
+    
     code_obj = TempAccessCode.query.filter_by(code=code_str, is_revoked=False).first()
     
     if not code_obj:
@@ -416,34 +443,32 @@ def verify_access_code():
     if code_obj.expires_at and code_obj.expires_at < datetime.now():
         return jsonify({"error": "Access code has expired"}), 403
         
-    if code_obj.user_id and str(code_obj.user_id) != str(user_id):
+    if code_obj.user_id and code_obj.user_id != user_id_int:
         return jsonify({"error": "This code is assigned to another user"}), 403
 
     # If it's single-use and already used, don't allow re-activation
     if not code_obj.is_multi_use and code_obj.times_used > 0:
         return jsonify({"error": "This single-use code has already been activated"}), 403
 
-    # Success - Grant Permission (By upgrading user to Admin for this prototype)
-    # NEW: Instead of granting Admin role, we just mark it as activated.
-    # The User.has_permission method now checks for active TempAccessCode.
-    user = User.query.get(user_id) # Ensure user object is loaded for to_dict()
+    user = User.query.get(user_id_int)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     
     code_obj.times_used += 1
     if not code_obj.user_id:
-        code_obj.user_id = user_id
+        code_obj.user_id = user_id_int
         
     # We do NOT set is_revoked = True here, because the user needs the access until expires_at.
     # The 'times_used' check above prevents re-activation of single-use codes.
-
         
     db.session.commit() # Commit changes to code_obj before logging/emitting
     
     # Log the activity
     audit = AuditLog(
-        user_id=user_id,
+        user_id=user_id_int,
         action='Activate Access Code',
         resource=f"TempAccessCode:{code_obj.code}",
-        details=f"Activated temporary access to {code_obj.permission.name} for {code_obj.duration_minutes} minutes.",
+        details=f"Activated temporary access to {code_obj.permission.name if code_obj.permission else 'Unknown'} for {code_obj.duration_minutes} minutes.",
         ip_address=get_client_ip()
     )
     db.session.add(audit)
@@ -452,13 +477,13 @@ def verify_access_code():
     # Real-time notification to frontend
     try:
         from extensions import socketio
-        socketio.emit('user_update', user.to_dict(), room=f"user_{user_id}")
+        socketio.emit('user_update', user.to_dict(), room=f"user_{user_id_int}")
     except Exception as e:
         print(f"Socket emit failed: {e}")
         
     return jsonify({
         "message": "Access granted successfully!",
-        "redirect": code_obj.page_route if hasattr(code_obj, 'page_route') else None, # Assuming page_route might be on code_obj
+        "redirect": code_obj.page_route if hasattr(code_obj, 'page_route') else None,
         "user": user.to_dict()
     }), 200
 

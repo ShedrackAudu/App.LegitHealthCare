@@ -14,7 +14,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @registration_bp.route('/patient/<staff_id>', methods=['GET'])
-@require_permission('registration')
+@jwt_required()
 def get_patient(staff_id):
     # Comprehensive search (always in the context's main bio_data)
     bind = get_bind()

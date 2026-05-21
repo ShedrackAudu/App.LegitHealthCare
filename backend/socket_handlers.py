@@ -245,31 +245,20 @@ def init_socket_handlers(socketio):
         if chat_id.startswith('dm_'):
             try:
                 other_id = int(chat_id.split('_')[1])
-                # In DM, only the receiver can mark messages as read
-                # In the 'dm_X' room model, User X is the receiver.
-                if user_id != other_id:
-                    return
-
-                # Mark all unread messages from anyone TO user_id in this context as read
-                # (Actually should be from the other person specifically if we knew who they were, 
-                # but the current chat_id 'dm_X' doesn't specify sender. 
-                # The frontend usually sends the user's own ID as X when they open their inbox?)
-                # Wait, MessagingPage line 120: socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
-                # If activeChat.id is 'dm_5' and I am user 5, then other_id is 5.
-                
-                # We need to know who the SENDER of the messages being read is.
-                # For now, we'll allow marking all incoming DMs as read if it's the user's own room.
-                ChatMessage.query.filter_by(receiver_id=user_id, read_at=None).update({
+                # Mark all unread messages from OTHER_ID to USER_ID as read
+                ChatMessage.query.filter_by(sender_id=other_id, receiver_id=user_id, read_at=None).update({
                     'read_at': datetime.now()
                 })
                 db.session.commit()
-                # Emit to both sides so the sender sees the read status update
-                emit('messages_read', {'chat_id': f"dm_{user_id}", 'user_id': user_id}, to=f"dm_{other_id}")
-                emit('messages_read', {'chat_id': f"dm_{other_id}", 'user_id': user_id}, to=f"dm_{user_id}")
+                # Emit to both sides so they see the read status update
+                emit('messages_read', {'chat_id': f"dm_{other_id}", 'user_id': user_id}, to=f"dm_{other_id}")
+                emit('messages_read', {'chat_id': f"dm_{user_id}", 'user_id': user_id}, to=f"dm_{user_id}")
                 
                 # Update sidebar unread counts
                 emit('unread_update', {'user_id': user_id}, to=f"user_{user_id}")
-            except: return
+            except Exception as e:
+                print(f"Error marking read: {e}")
+                return
         else:
             try:
                 group_id = int(chat_id.split('_')[1])
@@ -278,4 +267,8 @@ def init_socket_handlers(socketio):
                     member.last_read_at = datetime.now()
                     db.session.commit()
                     emit('messages_read', {'chat_id': chat_id, 'user_id': user_id}, to=chat_id)
-            except: return
+                    # Update sidebar unread counts
+                    emit('unread_update', {'user_id': user_id}, to=f"user_{user_id}")
+            except Exception as e:
+                print(f"Error marking group read: {e}")
+                return

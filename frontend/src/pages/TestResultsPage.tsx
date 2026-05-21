@@ -223,6 +223,7 @@ const TestResultsPage: React.FC = () => {
                     if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
                         selectPatient(searchResults[activeSearchIndex]);
                     } else {
+                        setSearchResults([]);
                         handleSearch();
                     }
                     break;
@@ -231,6 +232,7 @@ const TestResultsPage: React.FC = () => {
                     break;
             }
         } else if (e.key === 'Enter') {
+            setSearchResults([]);
             handleSearch();
         }
     };
@@ -246,6 +248,7 @@ const TestResultsPage: React.FC = () => {
     const handleSearch = async () => {
         if (!searchId) return;
         setSearching(true);
+        setSearchResults([]);
         try {
             const response = await axios.get(`/patient/${searchId}`, {
                 headers: { 'X-Company-Context': activeSection }
@@ -326,7 +329,7 @@ const TestResultsPage: React.FC = () => {
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
                                 {(selectedTest === 'ecg' || selectedTest === 'spirometry' || selectedTest === 'audiometry') && (
                                     <Card 
-                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 hidden sm:block shadow-sm"
+                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
                                         onClick={() => fetchQueueList(selectedTest || '')}
                                     >
                                         <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">

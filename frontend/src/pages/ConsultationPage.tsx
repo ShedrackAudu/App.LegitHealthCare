@@ -418,7 +418,7 @@ const ConsultationPage: React.FC = () => {
           </div>          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
             {/* Queue Status Card */}
             <Card
-              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 hidden sm:block shadow-sm"
+              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
               onClick={fetchQueueList}
             >
               <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
