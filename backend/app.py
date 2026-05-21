@@ -77,7 +77,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
-app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies', 'query_string']
 app.config['JWT_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = False # Set to True later for full CSRF protection
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
@@ -200,6 +200,11 @@ def handle_exception(e):
 @app.before_request
 def set_db_context():
     pass
+
+
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat()}), 200
 
 
 @app.route('/api/config/staff-signup-status', methods=['GET'])

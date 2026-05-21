@@ -87,7 +87,7 @@ export default defineConfig({
           },
           {
             // Network-first for API calls so fresh data is always preferred
-            urlPattern: /\/api\/.*/i,
+            urlPattern: /^\/api\/(?!files\/view\/).*/i,
             handler: 'NetworkFirst',
             options: {
               cacheName: 'api-cache',

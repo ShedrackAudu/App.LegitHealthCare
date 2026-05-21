@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, Department
+from models import db, Department, AuditLog
 from decorators import require_permission
 
 departments_bp = Blueprint('departments_bp', __name__)
@@ -35,6 +35,7 @@ def add_department():
     dep = Department(name=name)
     db.session.add(dep)
     db.session.commit()
+    AuditLog.log_action("Add Department", resource=f"Department:{dep.id}", details={"name": name})
     return jsonify({"message": "Department added successfully", "id": dep.id, "name": dep.name}), 201
 
 @departments_bp.route('/<int:dep_id>', methods=['DELETE'])
@@ -46,4 +47,5 @@ def delete_department(dep_id):
         
     db.session.delete(dep)
     db.session.commit()
+    AuditLog.log_action("Delete Department", resource=f"Department:{dep_id}", details={"name": dep.name})
     return jsonify({"message": "Department deleted successfully"}), 200

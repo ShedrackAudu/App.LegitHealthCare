@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from models import db, StaffUser, PatientPortalUser
+from models import db, StaffUser, PatientPortalUser, AuditLog
 from auth_utils import is_password_strong
 
 account_bp = Blueprint('account', __name__)
@@ -28,6 +28,7 @@ def update_profile():
     user.email = data.get('email', user.email)
     
     db.session.commit()
+    AuditLog.log_action("Update Profile", resource=f"User:{user_id}", details={"portal": portal})
     return jsonify({"message": "Profile updated successfully", "user": user.to_dict()})
 
 @account_bp.route('/password', methods=['PUT'])
@@ -58,6 +59,7 @@ def update_password():
         
     user.set_password(new_password)
     db.session.commit()
+    AuditLog.log_action("Update Password", resource=f"User:{user_id}", details={"portal": portal})
     
     return jsonify({"message": "Password updated successfully"})
 
@@ -89,5 +91,6 @@ def force_reset_password():
     user.set_password(new_password)
     user.must_reset_password = False
     db.session.commit()
+    AuditLog.log_action("Forced Reset Password", resource=f"User:{user_id}", details={"portal": portal})
     
     return jsonify({"message": "Password updated successfully", "user": user.to_dict()})

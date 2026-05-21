@@ -47,6 +47,10 @@ class RoutingSession(Session):
             # 2. Check for dynamic context (e.g., 'X-Company-Context' header)
             if request:
                 context = request.headers.get('X-Company-Context', '').lower()
+                # Fallback to query parameter for browser-initiated requests
+                # (iframe, img, a tags cannot send custom headers)
+                if not context:
+                    context = request.args.get('company', '').lower()
                 if context in _db.engines:
                     return _db.engines[context]
         except:
@@ -745,6 +749,65 @@ class AuditLog(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
+
+    @classmethod
+    def log_action(cls, action, resource=None, details=None, user_id=None, ip_address=None, commit=False):
+        """
+        Creates and adds an audit log entry. Auto-detects user and IP if not provided.
+        """
+        try:
+            from flask_jwt_extended import get_jwt_identity, get_jwt
+            from utils.ip import get_client_ip
+            
+            if user_id is None:
+                try:
+                    user_id = get_jwt_identity()
+                except Exception:
+                    pass
+                if user_id is None:
+                    try:
+                        from flask import session
+                        user_id = session.get('user_id')
+                    except Exception:
+                        pass
+            
+            if ip_address is None:
+                try:
+                    ip_address = get_client_ip()
+                except Exception:
+                    pass
+
+            portal_type = 'staff'
+            try:
+                claims = get_jwt()
+                portal_type = claims.get('portal', 'staff')
+            except Exception:
+                pass
+
+            details_str = None
+            if details is not None:
+                if isinstance(details, (dict, list)):
+                    if isinstance(details, dict) and 'portal' not in details:
+                        details['portal'] = portal_type
+                    details_str = json.dumps(details)
+                else:
+                    details_str = str(details)
+            else:
+                details_str = json.dumps({"portal": portal_type})
+
+            log = cls(
+                user_id=user_id,
+                action=action,
+                resource=resource,
+                details=details_str,
+                ip_address=ip_address
+            )
+            db.session.add(log)
+            if commit:
+                db.session.commit()
+        except Exception as e:
+            import sys
+            sys.stderr.write(f"[AUDIT LOG ERROR] Failed to log action: {e}\n")
 
     def to_dict(self):
         details_data = {}

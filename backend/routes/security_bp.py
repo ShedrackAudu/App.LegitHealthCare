@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
-from models import db
+from models import db, AuditLog
 from auth_utils import generate_totp_secret, get_totp_uri
 from extensions import limiter
 import pyotp
@@ -34,6 +34,7 @@ def generate_2fa():
     # Store secret temporarily, unverified
     user.totp_secret = secret
     db.session.commit()
+    AuditLog.log_action("Generate 2FA Setup Key", resource=f"User:{user_id}", details={"portal": portal})
     
     return jsonify({"secret": secret, "uri": uri})
 
@@ -64,6 +65,7 @@ def enable_2fa():
         backup_codes = [''.join(secrets.choice(string.ascii_uppercase + string.digits) for _ in range(8)) for _ in range(6)]
         user.backup_codes = json.dumps(backup_codes)
         db.session.commit()
+        AuditLog.log_action("Enable 2FA", resource=f"User:{user_id}", details={"portal": portal})
         return jsonify({"message": "2FA established", "backup_codes": backup_codes})
     
     return jsonify({"error": "Invalid code"}), 400
@@ -97,6 +99,7 @@ def disable_2fa():
         user.totp_secret = None
         user.backup_codes = None
         db.session.commit()
+        AuditLog.log_action("Disable 2FA", resource=f"User:{user_id}", details={"portal": portal})
         return jsonify({"message": "2FA disabled"})
         
     return jsonify({"error": "Invalid code to disable"}), 400

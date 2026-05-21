@@ -394,6 +394,9 @@ const RegistrationPage: React.FC = () => {
                                 <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                 <p className="text-xs text-muted-foreground flex items-center gap-2">
                                   <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
+                                  {p.patient_id && (
+                                    <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">PID: {p.patient_id}</span>
+                                  )}
                                   • <span>{p.department}</span>
                                 </p>
                               </div>
@@ -416,8 +419,8 @@ const RegistrationPage: React.FC = () => {
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
           <StatCard
             title="Total Registered"
-            value={stats?.total_comprehensive?.toLocaleString() || '0'}
-            sub="Global Bio-Data"
+            value={stats?.year_total?.toLocaleString() || '0'}
+            sub={`${activeYear} Screening`}
             icon={Users}
             color="text-blue-600"
           />

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
@@ -116,6 +116,12 @@ def save_test_result(test_type):
             ).delete(synchronize_session=False)
 
     try:
+        # Log action
+        AuditLog.log_action(
+            action=f"Save Test ({test_type.upper()})",
+            resource=f"Patient:{staff_id}",
+            details={"message": f"Saved/Updated {test_type.upper()} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": test_type}
+        )
         db.session.commit()
         
         # Trigger notification check
@@ -323,6 +329,12 @@ def bulk_upload(test_type):
             processed_staff_ids.append(staff_id)
             success_count += 1
 
+        # Log action
+        AuditLog.log_action(
+            action=f"Bulk Upload Test ({test_type.upper()})",
+            resource=f"Test:{test_type}",
+            details={"message": f"Bulk uploaded {success_count} {test_type.upper()} test results for screening year {screening_year}.", "screening_year": screening_year, "success_count": success_count, "skip_count": skip_count}
+        )
         db.session.commit()
 
         # Trigger notification check for all processed patients

@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult
+from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, AuditLog
 from openai import OpenAI
 from decorators import require_permission
 import json
@@ -78,6 +78,7 @@ def update_settings():
         settings.sample_comments = json.dumps(data.get('sample_comments', []))
         
         db.session.commit()
+        AuditLog.log_action("Update AI Settings", resource=f"AISettings:{settings.id}", details={"model_selection": settings.model_selection})
         return jsonify({"message": "AI settings updated successfully and persisted to .env"}), 200
     except Exception as e:
         db.session.rollback()

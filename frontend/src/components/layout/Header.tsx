@@ -61,7 +61,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
     activeSection, setActiveSection, 
     activeYear, setActiveYear,
     user, setUser,
-    branding, brandingError
+    branding, brandingError,
+    socket
   } = useAppContext();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
@@ -169,6 +170,21 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         return () => clearInterval(interval);
     }
   }, [user]);
+
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notif: any) => {
+      setNotifications(prev => [notif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    socket.on('notification', handleNotification);
+
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket]);
 
   const fetchNotifications = async () => {
       if (!user) return;
@@ -339,7 +355,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80" sideOffset={8}>
               <DropdownMenuLabel className="flex items-center justify-between px-4 py-3">
-                <span className="text-xs font-black uppercase tracking-widest text-foreground">Administrative Alerts</span>
+                <span className="text-xs font-black uppercase tracking-widest text-foreground">System Notifications</span>
                 {notifications.length > 0 && (
                   <button 
                     onClick={(e) => { 
@@ -357,7 +373,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               <div className="max-h-[300px] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-10 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    No active system alerts.
+                    No active notifications.
                   </div>
                 ) : (
                   notifications.map((n) => (

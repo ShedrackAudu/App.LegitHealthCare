@@ -220,6 +220,17 @@ const Dashboard: React.FC = () => {
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [pwaInstalled, setPwaInstalled] = useState(false);
   const [pwaDismissed, setPwaDismissed] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+  const [serverConnected, setServerConnected] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
 
   useEffect(() => {
     if (window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone) {
@@ -271,14 +282,16 @@ const Dashboard: React.FC = () => {
     }
   };
   
-  const fetchDashboardStats = async () => {
+   const fetchDashboardStats = async () => {
     try {
       const resp = await axios.get(`/api/dashboard/stats?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setStats(resp.data);
+      setServerConnected(true);
     } catch (err) {
       console.error("Dashboard stats fetch failed:", err);
+      setServerConnected(false);
     }
   };
 
@@ -288,8 +301,10 @@ const Dashboard: React.FC = () => {
             headers: { 'X-Company-Context': activeSection }
         });
         setQueueStats(resp.data);
+        setServerConnected(true);
     } catch (err) {
         console.error("Queue stats fetch failed:", err);
+        setServerConnected(false);
     }
   };
 
@@ -321,6 +336,21 @@ const Dashboard: React.FC = () => {
     
     return () => clearInterval(interval);
   }, [activeSection, activeYear]);
+
+  React.useEffect(() => {
+    const checkConnection = async () => {
+      try {
+        await axios.get('/api/ping');
+        setServerConnected(true);
+      } catch (err) {
+        setServerConnected(false);
+      }
+    };
+
+    checkConnection();
+    const interval = setInterval(checkConnection, 15000); // Check every 15 seconds
+    return () => clearInterval(interval);
+  }, []);
 
   // Mocking user profile for now
   const user = JSON.parse(localStorage.getItem('user') || '{"first_name": "Health"}');
@@ -357,12 +387,33 @@ const Dashboard: React.FC = () => {
             </p>
           </div>
           <div className="flex items-center gap-3 bg-card border-2 rounded-xl p-2 md:p-3 md:px-5 shadow-sm w-full md:w-auto justify-start md:justify-end">
-             <div className="w-8 h-8 md:w-10 md:h-10 rounded-full bg-primary/10 flex items-center justify-center shrink-0">
-                <Activity className="w-5 h-5 md:w-6 md:h-6 text-primary" />
+             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${
+                serverConnected === null ? 'bg-muted text-muted-foreground' : 
+                serverConnected ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
+             }`}>
+                <Activity className={`w-5 h-5 md:w-6 md:h-6 ${serverConnected === null ? 'animate-pulse' : serverConnected ? 'animate-pulse' : ''}`} />
              </div>
              <div className="text-left md:text-right min-w-0">
                 <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
-                <p className="text-xs md:text-sm font-bold text-primary truncate">Connected & Optimized</p>
+                <div className="flex items-center md:justify-end gap-1.5 mt-0.5">
+                   {serverConnected && (
+                      <span className="relative flex h-2 w-2">
+                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                   )}
+                   {!serverConnected && serverConnected !== null && (
+                      <span className="relative flex h-2 w-2">
+                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                      </span>
+                   )}
+                   <p className={`text-xs md:text-sm font-bold truncate transition-colors duration-300 ${
+                      serverConnected === null ? 'text-muted-foreground' : 
+                      serverConnected ? 'text-emerald-600 font-black' : 'text-rose-600 font-black'
+                   }`}>
+                      {serverConnected === null ? 'Checking...' : serverConnected ? 'Connected' : 'Disconnected'}
+                   </p>
+                </div>
              </div>
           </div>
         </div>
@@ -559,7 +610,7 @@ const Dashboard: React.FC = () => {
                         {/* Summary Metrics */}
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Total Registered', count: stats?.registration_stats?.total_comprehensive, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                                { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
                                 { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' }
                             ].map((s) => (
                                 <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 border-transparent hover:border-primary/10 transition-all shadow-sm group/stat cursor-default overflow-hidden relative">
@@ -583,7 +634,7 @@ const Dashboard: React.FC = () => {
                             {/* Gender Distribution Chart */}
                             <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 shadow-sm flex flex-col items-center">
                                 <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
-                                <div className="h-[140px] w-full mt-2">
+                                <div className="h-[150px] md:h-[140px] w-full mt-2">
                                     <ResponsiveContainer width="100%" height="100%">
                                         <PieChart>
                                             <Pie
@@ -591,10 +642,10 @@ const Dashboard: React.FC = () => {
                                                     { name: 'Male Patients', value: stats?.registration_stats?.males || 0 },
                                                     { name: 'Female Patients', value: stats?.registration_stats?.females || 0 }
                                                 ]}
-                                                cx="40%"
-                                                cy="50%"
-                                                innerRadius={45}
-                                                outerRadius={65}
+                                                cx={isMobile ? "50%" : "40%"}
+                                                cy={isMobile ? "46%" : "50%"}
+                                                innerRadius={isMobile ? 32 : 45}
+                                                outerRadius={isMobile ? 45 : 65}
                                                 paddingAngle={5}
                                                 dataKey="value"
                                                 stroke="none"
@@ -607,11 +658,27 @@ const Dashboard: React.FC = () => {
                                                 itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                             />
                                             <Legend 
-                                                layout="vertical" 
-                                                verticalAlign="middle" 
-                                                align="right" 
-                                                iconType="circle" 
-                                                wrapperStyle={{ fontSize: '10px', fontWeight: 'bold', lineHeight: '24px', right: '5%' }}
+                                                layout={isMobile ? "horizontal" : "vertical"}
+                                                verticalAlign={isMobile ? "bottom" : "middle"}
+                                                align={isMobile ? "left" : "right"}
+                                                iconType="circle"
+                                                content={isMobile ? (props: any) => {
+                                                    const { payload } = props;
+                                                    return (
+                                                        <div className="flex flex-col gap-1 pl-2">
+                                                            {payload?.map((entry: any, index: number) => (
+                                                                <div key={`item-${index}`} className="flex items-center gap-2 text-[10px] font-bold">
+                                                                    <span 
+                                                                        className="w-2.5 h-2.5 rounded-full inline-block shrink-0" 
+                                                                        style={{ backgroundColor: entry.color }}
+                                                                    />
+                                                                    <span style={{ color: entry.color }}>{entry.value}</span>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    );
+                                                } : undefined}
+                                                wrapperStyle={isMobile ? { bottom: '0px', left: '10px' } : { fontSize: '10px', fontWeight: 'bold', lineHeight: '24px', right: '5%' }}
                                             />
                                         </PieChart>
                                     </ResponsiveContainer>

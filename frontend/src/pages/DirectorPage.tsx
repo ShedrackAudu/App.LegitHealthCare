@@ -550,9 +550,9 @@ const DirectorPage: React.FC = () => {
     };
 
     return (
-        <MainLayout>
-            <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+        <MainLayout noScroll={!!patient}>
+            <div className={`animate-in fade-in duration-500 ${patient ? 'flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0' : 'space-y-8 pb-20'}`}>
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-primary/10 rounded-2xl">
                             <ShieldCheck className="h-8 w-8 text-primary" />
@@ -595,14 +595,16 @@ const DirectorPage: React.FC = () => {
                         </div>
                     </Card>
                 ) : (
-                    <ReviewContent 
-                        patient={patient} 
-                        history={history} 
-                        loading={loading} 
-                        onSubmit={handleSaveAll} 
-                        activeYear={activeYear}
-                        activeSection={activeSection}
-                    />
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
+                        <ReviewContent 
+                            patient={patient} 
+                            history={history} 
+                            loading={loading} 
+                            onSubmit={handleSaveAll} 
+                            activeYear={activeYear}
+                            activeSection={activeSection}
+                        />
+                    </div>
                 )}
             </div>
         </MainLayout>

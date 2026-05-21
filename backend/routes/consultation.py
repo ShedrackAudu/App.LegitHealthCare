@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, ConsultationData, ScreeningYearBioData
+from models import db, ConsultationData, ScreeningYearBioData, AuditLog
 from sqlalchemy.orm import Session
 from decorators import require_permission
 import sys
@@ -135,6 +135,13 @@ def save_consultation():
         QueueEntry.screening_year == screening_year, 
         QueueEntry.department == 'Consultation'
     ).delete(synchronize_session=False)
+
+    # Log action
+    AuditLog.log_action(
+        action='Save Consultation',
+        resource=f"Patient:{staff_id}",
+        details={"message": f"Saved/Updated consultation details for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year}
+    )
 
     db.session.commit()
     

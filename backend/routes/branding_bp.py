@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
-from models import db, AppBranding
+from models import db, AppBranding, AuditLog
 from werkzeug.utils import secure_filename
 from decorators import require_permission
 import os
@@ -135,6 +135,7 @@ def update_branding():
         branding.auth_logo = auth_logo_url
 
     db.session.commit()
+    AuditLog.log_action("Update Branding", resource=f"AppBranding:{branding.id}", details={"clinic_name": branding.clinic_name})
     return jsonify({"message": "Branding updated successfully"}), 200
 
 @branding_bp.route('/uploads/<filename>', methods=['GET', 'OPTIONS'])
@@ -164,6 +165,7 @@ def clear_branding_asset():
     if branding:
         setattr(branding, field, None)
         db.session.commit()
+        AuditLog.log_action("Clear Branding Asset", resource=f"AppBranding:{branding.id}", details={"field": field})
     
     return jsonify({"message": f"Cleared {field}"}), 200
 

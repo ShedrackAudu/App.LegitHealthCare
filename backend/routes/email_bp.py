@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 import os
 from dotenv import set_key, load_dotenv
+from models import AuditLog
 
 email_bp = Blueprint('email_bp', __name__)
 
@@ -38,6 +39,7 @@ def update_email_settings():
         
         # Reload env in current process
         load_dotenv(ENV_PATH, override=True)
+        AuditLog.log_action("Update Email Settings", resource="MailSettings", details={"MAIL_SERVER": data.get('MAIL_SERVER'), "MAIL_USERNAME": data.get('MAIL_USERNAME')})
         
         return jsonify({"message": "Email settings updated successfully. System may need restart for changes to take effect in some modules."}), 200
     except Exception as e:
@@ -72,6 +74,7 @@ def test_email_settings():
     )
     
     if success:
+        AuditLog.log_action("Test Email Settings", resource="MailSettings", details={"recipient": recipient})
         return jsonify({"message": f"Test email sent successfully to {recipient}!"}), 200
     else:
         return jsonify({"error": "Failed to send test email. Please check your credentials (Gmail App Password) and SMTP settings."}), 500
@@ -127,6 +130,7 @@ def send_patient_report():
         )
 
         if success:
+            AuditLog.log_action("Send Patient Report", resource=f"Patient:{data.get('staff_id', recipient)}", details={"recipient": recipient, "screening_year": screening_year})
             return jsonify({"message": f"Medical report sent successfully to {recipient}"}), 200
         else:
             return jsonify({"error": "Failed to send email. Check Email/SMTP settings."}), 500

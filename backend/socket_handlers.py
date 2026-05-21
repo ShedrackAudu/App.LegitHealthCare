@@ -1,7 +1,7 @@
 from flask import request, session
 from flask_socketio import emit, join_room, leave_room, disconnect
 from flask_jwt_extended import decode_token
-from models import db, User, ChatMessage, ChatGroupMember, ChatGroup
+from models import db, User, ChatMessage, ChatGroupMember, ChatGroup, Notification, AuditLog
 from datetime import datetime
 import json
 
@@ -167,6 +167,7 @@ def init_socket_handlers(socketio):
             
         db.session.add(msg)
         db.session.commit()
+        AuditLog.log_action("Send Message", resource=f"ChatMessage:{msg.id}", details={"chat_id": chat_id, "message_type": msg_type}, user_id=sender_id)
         
         # Emit to the room (includes sender if they are in the room)
         if msg.receiver_id:
@@ -177,6 +178,24 @@ def init_socket_handlers(socketio):
             
             # Global notification for sidebar unread counts
             emit('message_notification', msg.to_dict(), to=f"user_{msg.receiver_id}")
+            
+            # Create system notification
+            try:
+                sender = User.query.get(sender_id)
+                sender_name = f"{sender.first_name} {sender.last_name}" if sender else "Someone"
+                msg_snippet = content if len(content) <= 100 else f"{content[:100]}..."
+                notif = Notification(
+                    user_id=msg.receiver_id,
+                    type='message',
+                    title='New Message',
+                    message=f"From {sender_name}: {msg_snippet}",
+                    link='/messages'
+                )
+                db.session.add(notif)
+                db.session.commit()
+                emit('notification', notif.to_dict(), to=f"user_{msg.receiver_id}")
+            except Exception as e:
+                print(f"Error creating DM notification: {e}")
         else:
             # Group message
             emit('new_message', msg.to_dict(), to=f"group_{msg.group_id}")
@@ -186,6 +205,34 @@ def init_socket_handlers(socketio):
             for m in members:
                 if m.user_id != sender_id:
                     emit('message_notification', msg.to_dict(), to=f"user_{m.user_id}")
+            
+            # Create system notifications
+            try:
+                sender = User.query.get(sender_id)
+                sender_name = f"{sender.first_name} {sender.last_name}" if sender else "Someone"
+                group = ChatGroup.query.get(msg.group_id)
+                group_name = group.name if group else "Group"
+                msg_snippet = content if len(content) <= 100 else f"{content[:100]}..."
+                
+                notifications_to_emit = []
+                for m in members:
+                    if m.user_id != sender_id:
+                        notif = Notification(
+                            user_id=m.user_id,
+                            type='message',
+                            title=f"New Message in {group_name}",
+                            message=f"{sender_name}: {msg_snippet}",
+                            link='/messages'
+                        )
+                        db.session.add(notif)
+                        notifications_to_emit.append((m.user_id, notif))
+                
+                if notifications_to_emit:
+                    db.session.commit()
+                    for uid, notif in notifications_to_emit:
+                        emit('notification', notif.to_dict(), to=f"user_{uid}")
+            except Exception as e:
+                print(f"Error creating Group notification: {e}")
 
     @socketio.on('react_message')
     def on_react(data):
@@ -220,6 +267,7 @@ def init_socket_handlers(socketio):
             
         msg.reactions = json.dumps(reactions)
         db.session.commit()
+        AuditLog.log_action("React Message", resource=f"ChatMessage:{msg_id}", details={"emoji": emoji, "chat_id": chat_id}, user_id=user_id)
         
         # Emit update to all relevant rooms
         payload = {
@@ -250,6 +298,7 @@ def init_socket_handlers(socketio):
                     'read_at': datetime.now()
                 })
                 db.session.commit()
+                AuditLog.log_action("Mark Messages Read", resource=f"Conversation:dm_{other_id}", details={"other_id": other_id}, user_id=user_id)
                 # Emit to both sides so they see the read status update
                 emit('messages_read', {'chat_id': f"dm_{other_id}", 'user_id': user_id}, to=f"dm_{other_id}")
                 emit('messages_read', {'chat_id': f"dm_{user_id}", 'user_id': user_id}, to=f"dm_{user_id}")
@@ -266,6 +315,7 @@ def init_socket_handlers(socketio):
                 if member:
                     member.last_read_at = datetime.now()
                     db.session.commit()
+                    AuditLog.log_action("Mark Messages Read", resource=f"ChatGroup:{group_id}", details={"group_id": group_id}, user_id=user_id)
                     emit('messages_read', {'chat_id': chat_id, 'user_id': user_id}, to=chat_id)
                     # Update sidebar unread counts
                     emit('unread_update', {'user_id': user_id}, to=f"user_{user_id}")

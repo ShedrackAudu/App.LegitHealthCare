@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
+from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview, AuditLog
 from datetime import datetime
 from decorators import require_permission
 
@@ -156,6 +156,12 @@ def save_director_review():
                 # But for simplicity in this sync, we just commit.
                 pass
 
+        # Log action
+        AuditLog.log_action(
+            action='Save Director Review',
+            resource=f"Patient:{staff_id}",
+            details={"message": f"Saved/Updated director review for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year}
+        )
         db.session.commit()
         
         # Trigger notification check

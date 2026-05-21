@@ -397,6 +397,9 @@ const TestResultsPage: React.FC = () => {
                                                                         <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                                                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                                                                             <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
+                                                                            {p.patient_id && (
+                                                                                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">PID: {p.patient_id}</span>
+                                                                            )}
                                                                             • <span>{p.department}</span>
                                                                         </p>
                                                                     </div>

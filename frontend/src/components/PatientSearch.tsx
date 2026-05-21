@@ -188,6 +188,9 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
                           <p className={`font-bold capitalize ${isActive ? activeText : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                           <p className="text-xs text-muted-foreground flex items-center gap-2">
                             <span className="bg-muted px-1.5 py-0.5 rounded uppercase font-bold">{p.staff_id}</span>
+                            {p.patient_id && (
+                              <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">PID: {p.patient_id}</span>
+                            )}
                             • <span className="font-medium">{p.department}</span>
                           </p>
                         </div>

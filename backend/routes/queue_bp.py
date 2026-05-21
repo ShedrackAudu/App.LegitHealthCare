@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, QueueEntry, BioData, ScreeningYearBioData
+from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
 from decorators import require_permission
 
@@ -99,6 +99,7 @@ def reset_queue():
     
     QueueEntry.query.delete()
     db.session.commit()
+    AuditLog.log_action("Reset Clinic Queue", resource="QueueEntry", details={"context": bind})
     return jsonify({"message": "Patient queuing tracker has been reset to zero for all departments."}), 200
 
 @queue_bp.route('/assign-number', methods=['POST'])
@@ -128,5 +129,6 @@ def assign_queue_number():
         
     entry.queue_number = new_number
     db.session.commit()
+    AuditLog.log_action("Assign Queue Number", resource=f"QueueEntry:{entry.id}", details={"staff_id": staff_id, "department": department, "queue_number": new_number, "context": bind})
     
     return jsonify({"message": f"Queue number updated to {new_number} for {staff_id}"}), 200

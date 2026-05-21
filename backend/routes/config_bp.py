@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, Race, Nationality, Department
+from models import db, Race, Nationality, Department, AuditLog
 from decorators import require_permission
 from flask_jwt_extended import jwt_required
 
@@ -25,6 +25,7 @@ def add_race():
     new_race = Race(name=data['name'])
     db.session.add(new_race)
     db.session.commit()
+    AuditLog.log_action("Add Race", resource=f"Race:{new_race.id}", details={"name": new_race.name})
     return jsonify({"id": new_race.id, "name": new_race.name}), 201
 
 @config_bp.route('/races/<int:id>', methods=['DELETE'])
@@ -35,6 +36,7 @@ def delete_race(id):
         return jsonify({"error": "Race not found"}), 404
     db.session.delete(race)
     db.session.commit()
+    AuditLog.log_action("Delete Race", resource=f"Race:{id}", details={"name": race.name})
     return jsonify({"message": "Race deleted"}), 200
 
 # Nationality CRUD
@@ -57,6 +59,7 @@ def add_nationality():
     new_nat = Nationality(name=data['name'])
     db.session.add(new_nat)
     db.session.commit()
+    AuditLog.log_action("Add Nationality", resource=f"Nationality:{new_nat.id}", details={"name": new_nat.name})
     return jsonify({"id": new_nat.id, "name": new_nat.name}), 201
 
 @config_bp.route('/nationalities/<int:id>', methods=['DELETE'])
@@ -67,6 +70,7 @@ def delete_nationality(id):
         return jsonify({"error": "Nationality not found"}), 404
     db.session.delete(nat)
     db.session.commit()
+    AuditLog.log_action("Delete Nationality", resource=f"Nationality:{id}", details={"name": nat.name})
     return jsonify({"message": "Nationality deleted"}), 200
 
 # Department CRUD (Existing logic moved or duplicated for consistency in System Config)
@@ -89,6 +93,7 @@ def add_department():
     new_dept = Department(name=data['name'])
     db.session.add(new_dept)
     db.session.commit()
+    AuditLog.log_action("Add Department", resource=f"Department:{new_dept.id}", details={"name": new_dept.name})
     return jsonify({"id": new_dept.id, "name": new_dept.name}), 201
 
 @config_bp.route('/departments/<int:id>', methods=['DELETE'])
@@ -99,4 +104,5 @@ def delete_department(id):
         return jsonify({"error": "Department not found"}), 404
     db.session.delete(dept)
     db.session.commit()
+    AuditLog.log_action("Delete Department", resource=f"Department:{id}", details={"name": dept.name})
     return jsonify({"message": "Department deleted"}), 200
