@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ const PatientOTPPage = () => {
       setTimer(60);
       setCanResend(false);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to resend OTP');
+      toast.error(getErrorMessage(err, 'Failed to resend OTP'));
     } finally {
       setResending(false);
     }
@@ -87,7 +88,7 @@ const PatientOTPPage = () => {
       
     } catch (err: any) {
       console.error('OTP Error:', err);
-      toast.error(err.response?.data?.error || 'Invalid or expired OTP');
+      toast.error(getErrorMessage(err, 'Invalid or expired OTP'));
     } finally {
       setLoading(false);
     }

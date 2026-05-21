@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { User, Mail, Phone, Lock, Hash, Calendar, Building, MapPin, Check, AlertCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -83,7 +84,7 @@ const PatientClaimPage = () => {
       });
     } catch (err: any) {
       console.error('Claim error:', err);
-      toast.error(err.response?.data?.error || 'Failed to initiate account claiming.');
+      toast.error(getErrorMessage(err, 'Failed to initiate account claiming.'));
     } finally {
       setLoading(false);
     }

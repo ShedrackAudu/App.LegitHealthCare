@@ -1,4 +1,6 @@
 import axios from 'axios';
+import { toast } from 'react-hot-toast';
+import { isNetworkError, NETWORK_ERROR_MESSAGE, SERVER_UNREACHABLE_MESSAGE } from './networkError';
 
 // Get the API URL from environment variables (Vite uses VITE_ prefix)
 // Fallback to localhost for development
@@ -17,6 +19,44 @@ if (token) {
   axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
 }
 
+// -------------------------------------------------------------------
+// Debounced network error toast — prevents flooding the user with
+// duplicate "no internet" toasts when multiple requests fail at once.
+// -------------------------------------------------------------------
+let lastNetworkToastTime = 0;
+const TOAST_DEBOUNCE_MS = 3000;
+
+function showNetworkToast(message: string) {
+  const now = Date.now();
+  if (now - lastNetworkToastTime > TOAST_DEBOUNCE_MS) {
+    lastNetworkToastTime = now;
+    toast.error(message, { id: 'network-error', duration: 5000 });
+  }
+}
+
+// -------------------------------------------------------------------
+// Global network-error interceptor (on the default axios instance)
+// Enriches the error so downstream catch blocks can detect offline/
+// server-unreachable situations without duplicating detection logic.
+// Also shows a debounced toast to immediately notify the user.
+// -------------------------------------------------------------------
+axios.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (isNetworkError(error)) {
+      const msg = !navigator.onLine
+        ? NETWORK_ERROR_MESSAGE
+        : SERVER_UNREACHABLE_MESSAGE;
+      // Attach a friendly message for downstream catch blocks
+      error._isNetworkError = true;
+      error._networkMessage = msg;
+      // Show toast so the user knows immediately
+      showNetworkToast(msg);
+    }
+    return Promise.reject(error);
+  }
+);
+
 const api = axios.create({
   baseURL: API_BASE_URL,
   withCredentials: true,
@@ -26,6 +66,15 @@ const api = axios.create({
 api.interceptors.response.use(
   (response) => response,
   (error) => {
+    // Detect network errors first
+    if (isNetworkError(error)) {
+      const msg = !navigator.onLine
+        ? NETWORK_ERROR_MESSAGE
+        : SERVER_UNREACHABLE_MESSAGE;
+      error._isNetworkError = true;
+      error._networkMessage = msg;
+      showNetworkToast(msg);
+    }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');
       localStorage.removeItem('user');

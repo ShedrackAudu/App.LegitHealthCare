@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -117,7 +118,9 @@ const LoginPage = () => {
       const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
-        if (err.response?.status === 403 && err.response?.data?.needs_verification) {
+        if (err._isNetworkError) {
+            setError(err._networkMessage);
+        } else if (err.response?.status === 403 && err.response?.data?.needs_verification) {
             const { user_id, email, portal: detectedPortal } = err.response.data;
             toast.success("Verification required. A new code has been sent to your email.");
             navigate('/signup', { 
@@ -131,7 +134,7 @@ const LoginPage = () => {
         } else if (err.response?.status === 403) {
             setError(err.response?.data?.error || "Your account is not verified.");
         } else {
-            setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+            setError(getErrorMessage(err, 'Invalid credentials. Please try again.'));
         }
     } finally {
       setLoading(false);
@@ -158,7 +161,7 @@ const LoginPage = () => {
       const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
       navigate(target);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to update password");
+      toast.error(getErrorMessage(err, "Failed to update password"));
     } finally {
       setLoading(false);
     }
@@ -192,7 +195,7 @@ const LoginPage = () => {
         const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
         navigate(target);
     } catch (err: any) {
-        setError(err.response?.data?.error || "Invalid 2FA code");
+        setError(getErrorMessage(err, "Invalid 2FA code"));
     } finally {
         setLoading(false);
     }
@@ -215,7 +218,7 @@ const LoginPage = () => {
         toast.success(resp.data.message);
         setForgotPasswordStep('verify');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Account not found");
+        setError(getErrorMessage(err, "Account not found"));
     } finally {
         setLoading(false);
     }
@@ -235,7 +238,7 @@ const LoginPage = () => {
         toast.success("OTP Verified Successfully");
         setForgotPasswordStep('reset');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Invalid OTP");
+        setError(getErrorMessage(err, "Invalid OTP"));
     } finally {
         setLoading(false);
     }
@@ -280,7 +283,7 @@ const LoginPage = () => {
         setResetPassword('');
         setConfirmPassword('');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Failed to reset password");
+        setError(getErrorMessage(err, "Failed to reset password"));
     } finally {
         setLoading(false);
     }

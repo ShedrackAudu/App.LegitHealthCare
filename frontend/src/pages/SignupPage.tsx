@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -137,7 +138,7 @@ const SignupPage: React.FC = () => {
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to resend');
+      toast.error(getErrorMessage(err, 'Failed to resend'));
     } finally {
       setResendingOtp(false);
     }
@@ -163,7 +164,7 @@ const SignupPage: React.FC = () => {
         navigate('/patient/dashboard');
       }, 2000);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Invalid OTP');
+      toast.error(getErrorMessage(err, 'Invalid OTP'));
     } finally {
       setVerifyLoading(false);
     }
@@ -188,7 +189,7 @@ const SignupPage: React.FC = () => {
         navigate('/login');
       }, 2000);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Invalid OTP');
+      toast.error(getErrorMessage(err, 'Invalid OTP'));
     } finally {
       setVerifyLoading(false);
     }
@@ -241,7 +242,7 @@ const SignupPage: React.FC = () => {
       setCanResendOtp(false);
       toast.success('Account created! Please check your email for the verification code.');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(getErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -275,7 +276,7 @@ const SignupPage: React.FC = () => {
         setExistingUser(true);
         toast.error('Account already exists for this Staff ID.');
       } else {
-        toast.error(err.response?.data?.error || 'Staff ID not found or server error.');
+        toast.error(getErrorMessage(err, 'Staff ID not found or server error.'));
       }
     } finally {
       setSearchLoading(false);
@@ -314,7 +315,7 @@ const SignupPage: React.FC = () => {
       setPatientStep('verify');
       toast.success('Verification code sent to your email!');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to claim account.');
+      toast.error(getErrorMessage(err, 'Failed to claim account.'));
     } finally {
       setLoading(false);
     }
