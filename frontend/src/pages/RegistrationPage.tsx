@@ -326,7 +326,7 @@ const RegistrationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 border-primary/10 transition-all">
           <div className="flex items-center gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
@@ -366,14 +366,14 @@ const RegistrationPage: React.FC = () => {
                 <Button 
                   onClick={handleSearch}
                   disabled={searching || !searchId.trim()}
-                  className="bg-primary hover:bg-primary/90 shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                  className="bg-primary hover:bg-primary/90 px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                 >
                   {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
                 </Button>
 
                 {/* Search Results Card */}
                 {searchResults.length > 0 && (
-                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] shadow-2xl border-2 border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
+                  <Card className="absolute top-full left-0 right-0 mt-2 z-[100] border-2 border-primary/20 overflow-hidden animate-in fade-in slide-in-from-top-2 duration-300">
                     <CardHeader className="py-3 bg-primary/5 border-b">
                       <CardTitle className="text-xs uppercase tracking-widest text-primary/70">Matching Profiles</CardTitle>
                     </CardHeader>
@@ -462,7 +462,7 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Form Section */}
-        <Card className="border-2 shadow-lg">
+        <Card className="border-2">
           <CardHeader className="bg-primary/5 border-b py-4">
             <CardTitle className="text-lg flex items-center gap-2">
               <ClipboardList className="h-5 w-5 text-primary" />
@@ -653,7 +653,7 @@ const RegistrationPage: React.FC = () => {
                     <X className="mr-2 h-5 w-5" /> Cancel
                   </Button>
                 )}
-                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg shadow-xl" disabled={loading}>
+                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
                   {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
                     <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
                   )}
@@ -666,7 +666,7 @@ const RegistrationPage: React.FC = () => {
 
       {/* Clear Form Confirmation Dialog */}
       <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-2 shadow-2xl">
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border-2">
           <div className="p-6 pt-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
                 <Trash2 className="w-8 h-8" />
@@ -695,7 +695,7 @@ const RegistrationPage: React.FC = () => {
                     setIsClearDialogOpen(false);
                     toast.success("Form cleared successfully");
                 }}
-                className="flex-1 font-black h-11 shadow-lg shadow-destructive/20 active:scale-95 transition-all px-8"
+                className="flex-1 font-black h-11 active:scale-95 transition-all px-8"
             >
               Yes, Clear Form
             </Button>
@@ -707,7 +707,7 @@ const RegistrationPage: React.FC = () => {
 };
 
 const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border-2 shadow-sm hover:shadow-md transition-all overflow-hidden">
+  <Card className="border-2 transition-all overflow-hidden">
     <CardContent className="p-2 sm:p-4 flex items-center gap-2 sm:gap-4 h-full">
       <div className={`p-2 sm:p-3 rounded-xl bg-muted/50 ${color} shrink-0`}>
         <Icon className="h-5 w-5 sm:h-6 sm:w-6" />

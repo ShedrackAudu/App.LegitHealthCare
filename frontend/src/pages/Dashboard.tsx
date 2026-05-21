@@ -386,7 +386,7 @@ const Dashboard: React.FC = () => {
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
           </div>
-          <div className="flex items-center gap-3 bg-card border-2 rounded-xl p-2 md:p-3 md:px-5 shadow-sm w-full md:w-auto justify-start md:justify-end">
+          <div className="flex items-center gap-3 bg-card border-2 rounded-xl p-2 md:p-3 md:px-5 w-full md:w-auto justify-start md:justify-end">
              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${
                 serverConnected === null ? 'bg-muted text-muted-foreground' : 
                 serverConnected ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
@@ -428,7 +428,7 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.35 }}
               className="block sm:hidden"
             >
-              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4 shadow-lg shadow-primary/5">
+              <div className="relative overflow-hidden rounded-xl border-2 border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4">
                 <button
                   onClick={() => setPwaDismissed(true)}
                   className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
@@ -453,7 +453,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <Button
                     onClick={handlePwaInstall}
-                    className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all gap-2"
+                    className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider active:scale-95 transition-all gap-2"
                   >
                     <Download className="h-3.5 w-3.5" />
                     Install Now
@@ -477,7 +477,7 @@ const Dashboard: React.FC = () => {
               return (
                 <Card 
                   key={action.path}
-                  className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm flex flex-col h-full"
+                  className="group cursor-pointer transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm flex flex-col h-full"
                   onClick={() => navigate(action.path)}
                 >
                   <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
@@ -522,7 +522,7 @@ const Dashboard: React.FC = () => {
                 {filteredAdminActions.map((action) => (
                   <Card 
                     key={action.path}
-                    className="group cursor-pointer hover:shadow-xl transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm shadow-inner flex flex-col h-full"
+                    className="group cursor-pointer transition-all duration-300 border-2 hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm flex flex-col h-full"
                     onClick={() => navigate(action.path)}
                   >
                     <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
@@ -568,7 +568,7 @@ const Dashboard: React.FC = () => {
             ].map((dept) => (
               <Card 
                 key={dept.id} 
-                className="group cursor-pointer hover:shadow-lg transition-all border-2 hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
+                className="group cursor-pointer transition-all border-2 hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
                 onClick={() => fetchQueueList(dept.label)}
               >
                 <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
@@ -597,7 +597,7 @@ const Dashboard: React.FC = () => {
 
         {/* Recent Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 border-2 shadow-lg">
+            <Card className="lg:col-span-2 border-2">
                 <CardHeader className="pb-2">
                     <CardTitle className="flex items-center gap-2">
                         <Activity className="h-5 w-5 text-primary" />
@@ -613,7 +613,7 @@ const Dashboard: React.FC = () => {
                                 { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
                                 { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' }
                             ].map((s) => (
-                                <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 border-transparent hover:border-primary/10 transition-all shadow-sm group/stat cursor-default overflow-hidden relative">
+                                <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 border-transparent hover:border-primary/10 transition-all group/stat cursor-default overflow-hidden relative">
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
                                     <div className="flex items-center gap-2 mb-2 relative z-10">
                                         <div className={`p-1.5 rounded-lg ${s.bg}`}>
@@ -632,7 +632,7 @@ const Dashboard: React.FC = () => {
                         {/* Charts */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Gender Distribution Chart */}
-                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 shadow-sm flex flex-col items-center">
+                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 flex flex-col items-center">
                                 <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
                                 <div className="h-[150px] md:h-[140px] w-full mt-2">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -686,7 +686,7 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             {/* Age Distribution Chart */}
-                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 shadow-sm flex flex-col items-center">
+                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border-2 flex flex-col items-center">
                                 <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Age Demographics</h4>
                                 <div className="h-[140px] w-full mt-2">
                                     <ResponsiveContainer width="100%" height="100%">
@@ -717,7 +717,7 @@ const Dashboard: React.FC = () => {
                 </CardContent>
             </Card>
 
-            <Card className="border-2 shadow-lg">
+            <Card className="border-2">
                 <CardHeader>
                     <CardTitle className="flex items-center gap-2">
                         <User className="h-5 w-5 text-primary" />
