@@ -111,7 +111,7 @@ export const PatientHeader: React.FC = () => {
         </div>
 
         {/* Right Side: Install, Theme, Notifications, Profile */}
-        <div className="flex items-center gap-2 md:gap-4 shrink-0 px-4">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 px-4">
           {deferredPrompt && (
             <Button
               variant="outline"
@@ -148,7 +148,7 @@ export const PatientHeader: React.FC = () => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 w-auto px-2 border-2 rounded-lg ml-1 bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 group">
+              <Button variant="outline" className="h-9 w-auto px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 group">
                 <div className="p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <User className="h-4 w-4 text-primary" />
                 </div>

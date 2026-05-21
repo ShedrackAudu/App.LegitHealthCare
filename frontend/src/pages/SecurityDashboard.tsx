@@ -92,7 +92,7 @@ export default function SecurityDashboard() {
 
   return (
     <MainLayout title="Security Command Center">
-      <div className="space-y-4 pb-8 animate-in slide-in-from-bottom-2 duration-500">
+      <div className="space-y-4 pb-8 animate-in slide-in-from-bottom-2 duration-500 dashboard-page">
         
         {/* Compact Stats Row */}
         <div className="grid gap-3 md:grid-cols-2 lg:grid-cols-4">
@@ -150,7 +150,7 @@ export default function SecurityDashboard() {
                   <Tooltip 
                     contentStyle={{ 
                       backgroundColor: 'hsl(var(--card))', 
-                      borderRadius: '0.75rem', 
+                      borderRadius: '0px', 
                       border: '1px solid hsl(var(--border))', 
                       boxShadow: '0 25px 50px -12px rgb(0 0 0 / 0.1)',
                       fontSize: '10px',
@@ -198,7 +198,7 @@ export default function SecurityDashboard() {
                     <Tooltip 
                       contentStyle={{ 
                         backgroundColor: 'hsl(var(--card))', 
-                        borderRadius: '0.5rem', 
+                        borderRadius: '0px', 
                         border: '1px solid hsl(var(--border))', 
                         fontSize: '10px',
                         color: 'hsl(var(--foreground))'

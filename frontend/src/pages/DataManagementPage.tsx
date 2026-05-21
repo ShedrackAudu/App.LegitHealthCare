@@ -179,7 +179,7 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
                         <FileSpreadsheet className="w-6 h-6 text-primary" />
                     </div>
                     <div>
@@ -219,7 +219,7 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
                         <Activity className="w-6 h-6 text-indigo-500" />
                     </div>
                     <div>
@@ -335,7 +335,7 @@ const DataManagementPage: React.FC = () => {
         )}
 
         <div className="mt-12 bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-inner">
-            <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
+            <div className="p-6 bg-white dark:bg-card rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
                 <ShieldCheck className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">

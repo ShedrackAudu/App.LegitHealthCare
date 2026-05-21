@@ -155,6 +155,7 @@ const SystemConfigPage: React.FC = () => {
 
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
     const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
+    const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
         title: '',
@@ -231,6 +232,9 @@ const SystemConfigPage: React.FC = () => {
             });
             if (response.data.staff_signup_enabled !== undefined) {
                 setStaffSignupEnabled(response.data.staff_signup_enabled === 'true');
+            }
+            if (response.data.default_theme !== undefined) {
+                setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
             }
         } catch (err) {
             console.error("Failed to load system configuration");
@@ -425,6 +429,27 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleSaveDefaultTheme = async (themeValue: 'light' | 'dark') => {
+        setMaintenanceSaving(true);
+        try {
+            await axios.post('/api/admin/config', 
+                { default_theme: themeValue },
+                {
+                    headers: {
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    }
+                }
+            );
+            setDefaultThemeSetting(themeValue);
+            toast.success(`Default system theme updated to ${themeValue}.`);
+        } catch (err) {
+            toast.error("Failed to update default theme setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
     const handleMaintenanceConfirm = () => {
         if (confirmMaintenanceModal.actionType === 'queue') {
             handleResetQueue();
@@ -470,6 +495,10 @@ const SystemConfigPage: React.FC = () => {
                         <TabsTrigger value="doctor" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Stethoscope className="h-4 w-4" />
                             Doctor
+                        </TabsTrigger>
+                        <TabsTrigger value="settings" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <Settings2 className="h-4 w-4" />
+                            Settings
                         </TabsTrigger>
                         <TabsTrigger value="maintenance" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <RotateCcw className="h-4 w-4" />
@@ -783,13 +812,13 @@ const SystemConfigPage: React.FC = () => {
                                             </CardTitle>
                                             <CardDescription>How the signature will appear on patient reports.</CardDescription>
                                         </CardHeader>
-                                        <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[160px] bg-slate-50 shadow-inner rounded-b-2xl">
-                                            <div className="border-2 border-dashed border-slate-200 p-6 rounded-2xl bg-white flex flex-col items-center gap-1 shadow-sm">
-                                                <div className="h-12 w-48 mb-2 border-b-2 border-slate-900/10 flex items-center justify-center italic text-slate-300 select-none">
+                                        <CardContent className="pt-6 flex flex-col items-center justify-center min-h-[160px] bg-slate-50 dark:bg-background shadow-inner rounded-b-2xl">
+                                            <div className="border-2 border-dashed border-slate-200 dark:border-zinc-800 p-6 rounded-2xl bg-white dark:bg-card flex flex-col items-center gap-1 shadow-sm">
+                                                <div className="h-12 w-48 mb-2 border-b-2 border-slate-900/10 dark:border-white/10 flex items-center justify-center italic text-slate-300 dark:text-zinc-700 select-none">
                                                     Signature Image
                                                 </div>
-                                                <div className="font-black text-slate-900 text-lg leading-tight">{brandingData.doctor_name || "Doctor Name"}</div>
-                                                <div className="font-bold text-slate-500 text-sm">{brandingData.doctor_post || "Consultant in Charge"}</div>
+                                                <div className="font-black text-slate-900 dark:text-white text-lg leading-tight">{brandingData.doctor_name || "Doctor Name"}</div>
+                                                <div className="font-bold text-slate-500 dark:text-zinc-400 text-sm">{brandingData.doctor_post || "Consultant in Charge"}</div>
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -809,18 +838,18 @@ const SystemConfigPage: React.FC = () => {
                         )}
                     </TabsContent>
 
-                    <TabsContent value="maintenance">
+                    <TabsContent value="settings">
                         <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
-                                <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
+                            <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
                                     <div className="flex items-center gap-4">
-                                        <div className="p-3 bg-destructive/10 rounded-2xl">
-                                            <RotateCcw className="h-6 w-6 text-destructive" />
+                                        <div className="p-3 bg-primary/10 rounded-2xl">
+                                            <Settings2 className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
-                                            <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
-                                            <CardDescription>Critical administrative actions to manage system state.</CardDescription>
+                                            <CardTitle className="text-xl text-primary font-black">System Settings</CardTitle>
+                                            <CardDescription>Manage general configuration and display options.</CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>
@@ -849,6 +878,57 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
 
+                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Configure the default application theme (Light or Dark) for all users when they don't have a local preference.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
+                                            <div className="flex gap-2">
+                                                <Button 
+                                                    onClick={() => handleSaveDefaultTheme('light')}
+                                                    disabled={maintenanceSaving}
+                                                    variant={defaultThemeSetting === 'light' ? "default" : "outline"}
+                                                    size="sm"
+                                                    className="font-bold"
+                                                >
+                                                    Light
+                                                </Button>
+                                                <Button 
+                                                    onClick={() => handleSaveDefaultTheme('dark')}
+                                                    disabled={maintenanceSaving}
+                                                    variant={defaultThemeSetting === 'dark' ? "default" : "outline"}
+                                                    size="sm"
+                                                    className="font-bold"
+                                                >
+                                                    Dark
+                                                </Button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </TabsContent>
+
+                    <TabsContent value="maintenance">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                            <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
+                                <CardHeader className="border-b bg-muted/5 p-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-destructive/10 rounded-2xl">
+                                            <RotateCcw className="h-6 w-6 text-destructive" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
+                                            <CardDescription>Critical administrative actions to manage system state.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-8 space-y-6">
                                     <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Reset Daily Patient Queues</h4>

@@ -195,7 +195,7 @@ const PatientDashboard = () => {
 
   return (
     <PatientLayout>
-      <div className="space-y-5 animate-in fade-in duration-700">
+      <div className="space-y-5 animate-in fade-in duration-700 dashboard-page">
         {/* Header Section with Live Clock */}
         {/* Header Section - More Compact */}
         <div className="flex flex-row items-center justify-between gap-2 border-b border-primary/5 pb-3">

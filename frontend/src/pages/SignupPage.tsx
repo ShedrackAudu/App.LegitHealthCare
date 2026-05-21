@@ -322,7 +322,7 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20 registration-page">
       {/* Left Side: Branding & Visuals (Consistent with Login) */}
       <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 

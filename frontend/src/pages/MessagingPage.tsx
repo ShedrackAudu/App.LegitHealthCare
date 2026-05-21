@@ -1260,7 +1260,7 @@ export default function MessagingPage() {
       {/* Group Member Management Dialog */}
       <Dialog open={isManagingMembers} onOpenChange={setIsManagingMembers}>
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
-          <DialogHeader className="p-6 bg-zinc-900 text-white">
+          <DialogHeader className="p-6 bg-zinc-900 dark:bg-background text-white">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-2xl font-black">Group Settings</DialogTitle>

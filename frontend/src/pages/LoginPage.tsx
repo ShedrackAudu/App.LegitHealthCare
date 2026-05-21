@@ -679,9 +679,9 @@ const LoginPage = () => {
                 <div className="grid grid-cols-2 gap-3">
                     <Link 
                         to="/signup?portal=staff" 
-                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
+                        className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                           <Activity className="w-4 h-4 text-blue-500" />
                         </div>
                         <div className="space-y-0.5">
@@ -691,9 +691,9 @@ const LoginPage = () => {
                     </Link>
                     <Link 
                         to="/signup?portal=patient" 
-                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
+                        className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                           <User className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="space-y-0.5">

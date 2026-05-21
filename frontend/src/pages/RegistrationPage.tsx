@@ -324,7 +324,7 @@ const RegistrationPage: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-6">
+      <div className="space-y-6 registration-page">
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border border-primary/10 transition-all">
           <div className="flex items-center gap-3">
@@ -666,7 +666,7 @@ const RegistrationPage: React.FC = () => {
 
       {/* Clear Form Confirmation Dialog */}
       <Dialog open={isClearDialogOpen} onOpenChange={setIsClearDialogOpen}>
-        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border">
+        <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border registration-dialog">
           <div className="p-6 pt-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
                 <Trash2 className="w-8 h-8" />

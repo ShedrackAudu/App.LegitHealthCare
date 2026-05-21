@@ -267,7 +267,7 @@ const BrandingSettingsPage: React.FC = () => {
                                         <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest">Wordmark Logo</Label>
                                         <Badge variant="outline" className="text-[8px] uppercase tracking-tighter h-4 px-1 opacity-70">Preview Box</Badge>
                                     </div>
-                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-slate-900 shadow-inner relative h-32 group/box">
+                                    <div className="border-2 border-dashed rounded-xl p-3 flex flex-col items-center justify-center bg-slate-900 dark:bg-black shadow-inner relative h-32 group/box">
                                         {currentBranding?.logo_dark && !logoDark ? (
                                             <div className="relative group/img flex items-center justify-center h-full w-full">
                                                 <SafeImage src={`${(window as any).API_BASE_URL}${currentBranding.logo_dark}`} alt="Dark Logo" className="max-h-16 object-contain" />

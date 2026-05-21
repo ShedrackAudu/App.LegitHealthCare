@@ -5,7 +5,7 @@ export const CustomToaster = () => {
   return (
     <Toaster 
         position="top-right" 
-        containerStyle={{ top: 40, right: 40 }}
+        containerStyle={{ top: '1mm', right: 0, padding: 0 }}
         toastOptions={{
             duration: 5000,
         }}
@@ -13,8 +13,8 @@ export const CustomToaster = () => {
       {(t) => (
         <div
           className={`${
-            t.visible ? 'animate-in fade-in slide-in-from-right-8 duration-500' : 'animate-out fade-out slide-out-to-right-8 duration-500'
-          } max-w-sm w-full bg-background/60 backdrop-blur-2xl border-2 rounded-2xl pointer-events-auto flex overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:bg-background/80 ${
+            t.visible ? 'animate-in fade-in slide-in-from-right-full duration-500' : 'animate-out fade-out slide-out-to-right duration-500'
+          } relative max-w-sm w-full bg-background/60 backdrop-blur-2xl border-2 rounded-2xl pointer-events-auto flex overflow-hidden group transition-all duration-300 hover:scale-[1.02] hover:bg-background/80 ${
               t.type === 'success' ? 'border-emerald-500/20' : 
               t.type === 'error' ? 'border-rose-500/20' : 
               'border-border'

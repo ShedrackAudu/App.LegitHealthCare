@@ -34,6 +34,23 @@ export function ThemeProvider({
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
   useEffect(() => {
+    const storedTheme = localStorage.getItem(storageKey);
+    if (!storedTheme) {
+      fetch('/api/config/default-theme')
+        .then(res => {
+          if (!res.ok) throw new Error("API error");
+          return res.json();
+        })
+        .then(data => {
+          if (data.default_theme && (data.default_theme === 'light' || data.default_theme === 'dark' || data.default_theme === 'system')) {
+            setTheme(data.default_theme);
+          }
+        })
+        .catch(err => console.error("Failed to fetch default theme:", err));
+    }
+  }, [storageKey]);
+
+  useEffect(() => {
     const root = window.document.documentElement
 
     root.classList.remove("light", "dark")

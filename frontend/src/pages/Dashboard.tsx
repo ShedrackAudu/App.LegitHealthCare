@@ -377,7 +377,7 @@ const Dashboard: React.FC = () => {
 
   return (
     <MainLayout>
-      <div className="space-y-8 animate-in fade-in duration-700">
+      <div className="space-y-8 animate-in fade-in duration-700 dashboard-page">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
@@ -654,7 +654,7 @@ const Dashboard: React.FC = () => {
                                                 <Cell fill="#e11d48" /> {/* Rose for Females */}
                                             </Pie>
                                             <Tooltip 
-                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                                 itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                             />
                                             <Legend 
@@ -701,10 +701,10 @@ const Dashboard: React.FC = () => {
                                             <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
                                             <Tooltip 
                                                 cursor={{ fill: 'var(--primary)', opacity: 0.1 }}
-                                                contentStyle={{ borderRadius: '12px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
                                                 itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                             />
-                                            <Bar dataKey="value" radius={[6, 6, 0, 0]} maxBarSize={50}>
+                                            <Bar dataKey="value" radius={0} maxBarSize={50}>
                                                 <Cell fill="#d97706" /> {/* Amber */}
                                                 <Cell fill="#9333ea" /> {/* Purple */}
                                             </Bar>
@@ -757,7 +757,7 @@ const Dashboard: React.FC = () => {
 
         {/* Queue List Modal */}
         <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20">
+            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 dashboard-dialog">
                 <DialogHeader>
                     <div className="flex items-center gap-3 mb-2">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">

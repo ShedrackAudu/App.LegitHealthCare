@@ -267,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         </div>
 
         {/* Right Side: Options and Auth */}
-        <div className="flex items-center gap-0.5 sm:gap-4 shrink-0 transition-all duration-300">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 transition-all duration-300">
           {timeLeft && (
             <div className="hidden sm:flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
               <Clock className="h-4 w-4" />
@@ -276,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               </span>
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Section:</span>
             <Select 
               value={activeSection} 
@@ -295,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
               <SelectTrigger className="w-[60px] sm:w-[85px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
@@ -311,7 +311,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {deferredPrompt && (
               <Button
                 variant="outline"
@@ -410,7 +410,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg ml-0.5 sm:ml-1 bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
+              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
                 <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
