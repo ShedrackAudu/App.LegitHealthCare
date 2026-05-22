@@ -128,5 +128,16 @@ def ensure_schema(app):
                             conn.execute(text("ALTER TABLE director_reviews ADD COLUMN abdomen_others VARCHAR(255)"))
                         conn.commit()
 
+                # 7. Widen Special Tests Result columns
+                if 'special_tests_results' in inspector.get_table_names():
+                    with engine.connect() as conn:
+                        try:
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN ecg_result TYPE VARCHAR(255)"))
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN spirometry_result TYPE VARCHAR(255)"))
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN audiometry_result TYPE VARCHAR(255)"))
+                            conn.commit()
+                        except Exception as e:
+                            app.logger.debug(f"Could not alter special_tests_results columns (might be SQLite or already altered): {e}")
+
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

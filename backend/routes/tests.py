@@ -99,19 +99,19 @@ def save_test_result(test_type):
         if ecg_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'ECG'
             ).delete(synchronize_session=False)
         if spiro_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'Spirometry'
             ).delete(synchronize_session=False)
         if audio_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'Audiometry'
             ).delete(synchronize_session=False)
 
