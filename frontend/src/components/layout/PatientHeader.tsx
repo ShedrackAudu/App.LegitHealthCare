@@ -96,7 +96,7 @@ export const PatientHeader: React.FC = () => {
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
-      <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
+      <div className="flex h-full items-center justify-between px-4 sm:px-5 lg:px-6 max-w-[1600px] w-full mx-auto gap-4">
         
         {/* Left Side: Back Button, Page Title */}
         <div className="flex items-center gap-2 min-w-0">
