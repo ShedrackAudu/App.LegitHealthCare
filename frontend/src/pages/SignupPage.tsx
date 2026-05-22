@@ -679,7 +679,7 @@ const SignupPage: React.FC = () => {
                         <Badge className="bg-primary text-white font-black text-[10px]">{patientData?.section || 'DCP'}</Badge>
                       </div>
 
-                      <div className="p-3 sm:p-4 grid grid-cols-2 gap-x-4 gap-y-2.5 sm:gap-4 bg-muted/10 border-t border-primary/5">
+                      <div className="p-3 sm:p-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-4 bg-muted/10 border-t border-primary/5">
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <Building2 className="w-3 h-3" />
