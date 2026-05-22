@@ -484,7 +484,7 @@ const SignupPage: React.FC = () => {
                     </div>
                   </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 sm:gap-4 pt-1">
                       <div className="space-y-1">
                         <div className="flex justify-between items-center mb-1">
                           <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
@@ -735,7 +735,7 @@ const SignupPage: React.FC = () => {
                          </div>
                       </div>
 
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 sm:gap-4">
                          <div className="space-y-1">
                             <div className="flex justify-between items-center mb-1">
                               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
