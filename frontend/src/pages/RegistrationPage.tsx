@@ -326,7 +326,7 @@ const RegistrationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 registration-page">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border border-primary/10 transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">

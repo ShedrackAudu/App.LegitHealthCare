@@ -124,16 +124,16 @@ const LandingPage = () => {
             </div>
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
+              <a href="#about" className="hover:text-primary transition-colors">About</a>
               <Link to="/login">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-4 rounded-xl border-2 text-[10px] uppercase tracking-widest h-9">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-6 rounded-xl border-2">
                   Patient Portal
                 </Button>
               </Link>
-              <a href="#about" className="hover:text-primary transition-colors">About</a>
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
                 <Link to="/login">
-                  <Button variant="ghost" className="font-semibold px-4 rounded-xl">Sign In</Button>
+                  <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-6 rounded-xl border-2">Sign In</Button>
                 </Link>
                 <Link to="/signup?portal=staff">
                   <Button className="font-bold px-6 shadow-lg shadow-primary/20 rounded-xl">Get Started</Button>
@@ -166,7 +166,7 @@ const LandingPage = () => {
             </div>
             <div className="pt-6 border-t border-border flex flex-col gap-4">
               <Link to="/login" onClick={() => setMenuOpen(false)}>
-                <Button variant="outline" className="w-full text-lg h-12">Login</Button>
+                <Button variant="outline" className="w-full text-lg h-12 border-primary text-primary hover:bg-primary/10 border-2 font-bold rounded-xl shadow-sm">Login</Button>
               </Link>
               <Link to="/signup?portal=staff" onClick={() => setMenuOpen(false)}>
                 <Button className="w-full text-lg h-12 shadow-lg rounded-xl">Get Started</Button>
@@ -246,7 +246,7 @@ const LandingPage = () => {
                   </Button>
                 </Link>
                 <Link to="/login">
-                  <Button variant="outline" size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl border-2 border-border/50 bg-background/50 backdrop-blur-xl hover:bg-muted/50 hover:border-primary/50 transition-all">
+                  <Button variant="outline" size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl border-2 border-primary text-primary hover:bg-primary/10 bg-background/50 backdrop-blur-xl transition-all">
                     Login
                   </Button>
                 </Link>
@@ -397,6 +397,92 @@ const LandingPage = () => {
         </div>
       </section>
 
+      {/* About Section */}
+      <section id="about" className="py-24 relative overflow-hidden border-t border-b border-border/50">
+        {/* Subtle background decoration */}
+        <div className="absolute inset-0 bg-muted/10 -z-10" />
+        <div className="absolute top-1/2 left-0 w-80 h-80 bg-primary/5 rounded-full blur-[100px] -z-10" />
+        
+        <div className="container mx-auto px-8 md:px-12 lg:px-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left Column: Visual/Stats */}
+            <motion.div 
+              initial={{ opacity: 0, x: -35 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
+            >
+              <div className="relative group rounded-3xl overflow-hidden border-2 border-border/50 bg-card p-8 md:p-12 shadow-2xl">
+                <div className="absolute -top-10 -right-10 w-40 h-40 bg-primary/10 rounded-full blur-3xl" />
+                <h3 className="text-3xl font-black tracking-tight mb-6">Our Impact in Numbers</h3>
+                <div className="grid grid-cols-2 gap-6">
+                  <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                    <span className="text-4xl md:text-5xl font-black text-primary tracking-tight">99.9%</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Screening Accuracy</p>
+                  </div>
+                  <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                    <span className="text-4xl md:text-5xl font-black text-primary tracking-tight">15k+</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Evaluations Completed</p>
+                  </div>
+                  <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                    <span className="text-4xl md:text-5xl font-black text-primary tracking-tight">24/7</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Portal Availability</p>
+                  </div>
+                  <div className="space-y-2 p-6 rounded-2xl bg-primary/5 border border-primary/10">
+                    <span className="text-4xl md:text-5xl font-black text-primary tracking-tight">100%</span>
+                    <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">HIPAA & NDPA Compliant</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+
+            {/* Right Column: Narrative */}
+            <motion.div 
+              initial={{ opacity: 0, x: 35 }}
+              whileInView={{ opacity: 1, x: 0 }}
+              viewport={{ once: true, margin: "-100px" }}
+              transition={{ duration: 0.8 }}
+              className="space-y-8"
+            >
+              <div className="space-y-4">
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                  <Heart className="w-4 h-4 text-primary fill-primary/20" />
+                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">About Legit HealthCare</span>
+                </div>
+                <h2 className="text-4xl lg:text-6xl font-black tracking-tight leading-[1.05]">
+                  Pioneering the Future of <span className="text-primary">Clinical Excellence</span>
+                </h2>
+                <p className="text-lg text-muted-foreground font-medium leading-relaxed">
+                  At Legit HealthCare, we blend medical expertise with state-of-the-art software technology to redefine employee medical screenings. Our mission is to empower clinics, organizations, and patients with secure, real-time access to diagnostic insights.
+                </p>
+              </div>
+
+              <div className="space-y-6">
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+                    <Shield className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold">Uncompromising Security</h4>
+                    <p className="text-sm text-muted-foreground mt-1">We utilize enterprise-level encryption and secure two-factor authentication to guarantee patient confidentiality and clinical record integrity.</p>
+                  </div>
+                </div>
+                <div className="flex gap-4 items-start">
+                  <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
+                    <Activity className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="text-lg font-bold">Advanced Diagnostic Integrations</h4>
+                    <p className="text-sm text-muted-foreground mt-1">From automated spirometry, ECG mapping, to audiometry assessments, we make complex clinical diagnostics fast, seamless, and transparent.</p>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* NEW Patient Portal Highlight Section */}
       <section id="patient-portal" className="pt-16 pb-32 relative overflow-hidden">
          <div className="absolute inset-0 bg-primary/5 -z-10" />
@@ -448,7 +534,7 @@ const LandingPage = () => {
                            </Button>
                         </Link>
                         <Link to="/login?portal=patient">
-                           <Button variant="outline" size="lg" className="h-16 px-10 text-lg font-black border-2 hover:bg-primary/5 shadow-xl transition-transform active:scale-95 rounded-xl">
+                           <Button variant="outline" size="lg" className="h-16 px-10 text-lg font-black border-2 border-primary text-primary hover:bg-primary/10 shadow-xl transition-all active:scale-95 rounded-xl">
                               Log in to Portal
                            </Button>
                         </Link>

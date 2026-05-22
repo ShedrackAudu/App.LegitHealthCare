@@ -552,7 +552,7 @@ const DirectorPage: React.FC = () => {
     return (
         <MainLayout noScroll={!!patient}>
             <div className={`animate-in fade-in duration-500 ${patient ? 'flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0' : 'space-y-8 pb-20'}`}>
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all shrink-0">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-primary/10 rounded-2xl">
                             <ShieldCheck className="h-8 w-8 text-primary" />

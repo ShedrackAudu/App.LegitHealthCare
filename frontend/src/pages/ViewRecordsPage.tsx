@@ -96,7 +96,7 @@ const ViewRecordsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-3 bg-primary/10 rounded-2xl">
                             <Database className="text-primary h-8 w-8" />

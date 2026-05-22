@@ -250,7 +250,7 @@ const AppointmentsPage = () => {
       <div className="space-y-6">
         
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
             <div className="p-3 bg-primary/10 rounded-2xl">
                 <Calendar className="text-primary h-8 w-8" />

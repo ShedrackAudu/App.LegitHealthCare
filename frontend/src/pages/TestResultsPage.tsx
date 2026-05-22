@@ -314,7 +314,7 @@ const TestResultsPage: React.FC = () => {
                 {!patient ? (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Top Search Bar Style from Consultation */}
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
                                     <FlaskConical className="text-primary h-6 w-6 sm:h-8 sm:w-8" />

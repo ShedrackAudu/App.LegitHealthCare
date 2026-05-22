@@ -56,7 +56,7 @@ import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDial
 
 
 export default function MessagingPage() {
-  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound } = useAppContext();
+  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound, setActiveChatId } = useAppContext();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -132,6 +132,13 @@ export default function MessagingPage() {
   }, [activeChat, socket, user.id]);
 
   useEffect(() => {
+    setActiveChatId(activeChat?.id || null);
+    return () => {
+      setActiveChatId(null);
+    };
+  }, [activeChat, setActiveChatId]);
+
+  useEffect(() => {
     if (!socket) return;
 
     const onNewMessage = (msg: any) => {
@@ -146,7 +153,7 @@ export default function MessagingPage() {
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
       }
       
-      if (msg.sender_id !== user.id) {
+      if (isChatActive && msg.sender_id !== user.id) {
           playGlobalSound('message');
       }
       
