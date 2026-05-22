@@ -50,7 +50,6 @@ const NetworkStatusBanner = () => {
     };
   }, []);
 
-  if (state === 'hidden') return null;
 
   const isOffline = state === 'offline';
 
