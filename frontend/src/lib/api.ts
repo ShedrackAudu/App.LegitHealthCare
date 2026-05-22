@@ -1,5 +1,4 @@
 import axios from 'axios';
-import { toast } from 'react-hot-toast';
 import { isNetworkError, NETWORK_ERROR_MESSAGE, SERVER_UNREACHABLE_MESSAGE } from './networkError';
 
 // Get the API URL from environment variables (Vite uses VITE_ prefix)
@@ -20,25 +19,10 @@ if (token) {
 }
 
 // -------------------------------------------------------------------
-// Debounced network error toast — prevents flooding the user with
-// duplicate "no internet" toasts when multiple requests fail at once.
-// -------------------------------------------------------------------
-let lastNetworkToastTime = 0;
-const TOAST_DEBOUNCE_MS = 3000;
-
-function showNetworkToast(message: string) {
-  const now = Date.now();
-  if (now - lastNetworkToastTime > TOAST_DEBOUNCE_MS) {
-    lastNetworkToastTime = now;
-    toast.error(message, { id: 'network-error', duration: 5000 });
-  }
-}
-
-// -------------------------------------------------------------------
 // Global network-error interceptor (on the default axios instance)
 // Enriches the error so downstream catch blocks can detect offline/
 // server-unreachable situations without duplicating detection logic.
-// Also shows a debounced toast to immediately notify the user.
+// The NetworkStatusBanner component handles user-facing notifications.
 // -------------------------------------------------------------------
 axios.interceptors.response.use(
   (response) => response,
@@ -50,8 +34,6 @@ axios.interceptors.response.use(
       // Attach a friendly message for downstream catch blocks
       error._isNetworkError = true;
       error._networkMessage = msg;
-      // Show toast so the user knows immediately
-      showNetworkToast(msg);
     }
     return Promise.reject(error);
   }
@@ -73,7 +55,6 @@ api.interceptors.response.use(
         : SERVER_UNREACHABLE_MESSAGE;
       error._isNetworkError = true;
       error._networkMessage = msg;
-      showNetworkToast(msg);
     }
     if (error.response?.status === 401) {
       localStorage.removeItem('token');

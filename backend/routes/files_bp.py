@@ -61,8 +61,9 @@ def upload_file():
         )
         db.session.add(new_file)
         # Log action
+        action_name = f"Upload Patient File ({department})" if department in ['Spirometry', 'Audiometry', 'ECG'] else 'Upload Patient File'
         AuditLog.log_action(
-            action='Upload Patient File',
+            action=action_name,
             resource=f"Patient:{staff_id}",
             details={"message": f"Uploaded file '{filename}' for Patient {staff_id} (Department: {department}, Year: {year}).", "filename": filename, "department": department, "screening_year": year}
         )
@@ -138,8 +139,9 @@ def delete_file(file_id):
     
     db.session.delete(pf)
     # Log action
+    action_name = f"Delete Patient File ({pf.department})" if pf.department in ['Spirometry', 'Audiometry', 'ECG'] else 'Delete Patient File'
     AuditLog.log_action(
-        action='Delete Patient File',
+        action=action_name,
         resource=f"Patient:{pf.staff_id}",
         details={"message": f"Deleted file '{pf.filename}' for Patient {pf.staff_id} (Department: {pf.department}, Year: {pf.screening_year}).", "filename": pf.filename, "department": pf.department, "screening_year": pf.screening_year}
     )
