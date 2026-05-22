@@ -42,7 +42,7 @@ const BioItem = ({ label, value }: any) => (
     </div>
 );
 
-const AccordionSection = ({ title, description, children, defaultOpen = false }: any) => {
+const AccordionSection = ({ title, description, children, defaultOpen = true }: any) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <Card className="border-2 shadow-sm overflow-hidden transition-all duration-300">
