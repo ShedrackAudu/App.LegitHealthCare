@@ -2,6 +2,7 @@ from flask import Blueprint, request, jsonify
 from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
 from decorators import require_permission
+from flask_jwt_extended import get_jwt_identity, get_jwt
 
 queue_bp = Blueprint('queue_bp', __name__)
 
@@ -10,7 +11,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @queue_bp.route('/', methods=['GET'], strict_slashes=False)
-@require_permission('manage_queues')
+@require_permission(['manage_queues', 'lab_spirometry', 'lab_audiometry', 'lab_ecg', 'consultation'])
 def get_queue_counts():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -47,7 +48,7 @@ def get_queue_counts():
     return jsonify(result), 200
 
 @queue_bp.route('/<department>', methods=['GET'], strict_slashes=False)
-@require_permission('manage_queues')
+@require_permission(['manage_queues', 'lab_spirometry', 'lab_audiometry', 'lab_ecg', 'consultation'])
 def get_department_queue(department):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -65,6 +66,34 @@ def get_department_queue(department):
     target_dept = dept_map.get(department.lower())
     if not target_dept:
         return jsonify({"error": "Invalid department"}), 400
+
+    # Check granular permission based on the requested department
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
+    if portal == 'patient':
+        return jsonify({"error": "Access denied for patients"}), 403
+        
+    from models import StaffUser
+    user = StaffUser.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    is_authorized = False
+    if user.username == 'admin' or user.has_permission('manage_queues'):
+        is_authorized = True
+    elif department.lower() == 'spirometry' and user.has_permission('lab_spirometry'):
+        is_authorized = True
+    elif department.lower() == 'audiometry' and user.has_permission('lab_audiometry'):
+        is_authorized = True
+    elif department.lower() == 'ecg' and user.has_permission('lab_ecg'):
+        is_authorized = True
+    elif department.lower() == 'consultation' and user.has_permission('consultation'):
+        is_authorized = True
+        
+    if not is_authorized:
+        return jsonify({"error": f"Permission denied for {target_dept} queue"}), 403
 
     # Join with ScreeningYearBioData to ensure patient is in the screening matrix
     entries_with_bio = db.session.query(
@@ -103,7 +132,7 @@ def reset_queue():
     return jsonify({"message": "Patient queuing tracker has been reset to zero for all departments."}), 200
 
 @queue_bp.route('/assign-number', methods=['POST'])
-@require_permission('manage_queues')
+@require_permission(['manage_queues', 'lab_spirometry', 'lab_audiometry', 'lab_ecg', 'consultation'])
 def assign_queue_number():
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid context"}), 400
@@ -116,6 +145,34 @@ def assign_queue_number():
     
     if not all([staff_id, department, year]):
         return jsonify({"error": "Missing required fields"}), 400
+        
+    # Check permissions for this specific department
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
+    if portal == 'patient':
+        return jsonify({"error": "Access denied for patients"}), 403
+        
+    from models import StaffUser
+    user = StaffUser.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    is_authorized = False
+    if user.username == 'admin' or user.has_permission('manage_queues'):
+        is_authorized = True
+    elif department.lower() == 'spirometry' and user.has_permission('lab_spirometry'):
+        is_authorized = True
+    elif department.lower() == 'audiometry' and user.has_permission('lab_audiometry'):
+        is_authorized = True
+    elif department.lower() == 'ecg' and user.has_permission('lab_ecg'):
+        is_authorized = True
+    elif department.lower() == 'consultation' and user.has_permission('consultation'):
+        is_authorized = True
+        
+    if not is_authorized:
+        return jsonify({"error": f"Permission denied for {department} queue"}), 403
         
     entry = QueueEntry.query.filter_by(
         staff_id=staff_id,

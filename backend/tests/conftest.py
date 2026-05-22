@@ -7,14 +7,25 @@ from flask_jwt_extended import create_access_token
 def client():
     app.config['TESTING'] = True
     app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///:memory:'
+    app.config['SQLALCHEMY_BINDS'] = {
+        'dcp': 'sqlite:///:memory:',
+        'dct': 'sqlite:///:memory:',
+        'patients': 'sqlite:///:memory:'
+    }
     app.config['WTF_CSRF_ENABLED'] = False
     
     with app.test_client() as client:
         with app.app_context():
             db.create_all()
+            for bind_name in app.config.get('SQLALCHEMY_BINDS', {}):
+                engine = db.engines[bind_name]
+                db.metadata.create_all(bind=engine)
             yield client
             db.session.remove()
             db.drop_all()
+            for bind_name in app.config.get('SQLALCHEMY_BINDS', {}):
+                engine = db.engines[bind_name]
+                db.metadata.drop_all(bind=engine)
 
 @pytest.fixture
 def setup_user(client):
