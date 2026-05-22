@@ -255,10 +255,10 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         
         {/* Left Side: Back Button, Page Title */}
         <div className="flex items-center gap-2 min-w-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <div className="hidden sm:flex items-center gap-2 min-w-0 overflow-hidden">
             {brandingError && <Building2 className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
             <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
               {pageTitle}
