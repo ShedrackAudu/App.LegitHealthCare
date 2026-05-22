@@ -111,7 +111,7 @@ export const PatientHeader: React.FC = () => {
         </div>
 
         {/* Right Side: Install, Theme, Notifications, Profile */}
-        <div className="flex items-center gap-1 sm:gap-2 shrink-0 px-4">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 ml-auto transition-all duration-300">
           {deferredPrompt && (
             <Button
               variant="outline"
@@ -127,7 +127,7 @@ export const PatientHeader: React.FC = () => {
           <Button
             variant="outline"
             size="icon"
-            className="h-9 w-9 border-2 rounded-lg bg-card"
+            className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           >
             <Sun className={`h-[1.2rem] w-[1.2rem] transition-all ${
@@ -142,15 +142,15 @@ export const PatientHeader: React.FC = () => {
             }`} />
           </Button>
 
-          <Button variant="outline" size="icon" className="h-9 w-9 border-2 rounded-lg bg-card group">
-            <Bell className="h-4 w-4 group-hover:text-primary transition-colors" />
+          <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card group">
+            <Bell className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-9 w-auto px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-2 group">
-                <div className="p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <User className="h-4 w-4 text-primary" />
+              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
+                <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
+                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
                 {user && (
                     <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors hidden md:inline-block pr-1">
