@@ -118,24 +118,30 @@ def save_test_result(test_type):
     try:
         # Log action
         test_name = test_type.upper()
+        log_test_type = test_type
         if test_type == 'special':
-            special_types = []
-            if any(k in data for k in ['ecg_result', 'ecg_remark']):
-                special_types.append("ECG")
-            if any(k in data for k in ['spirometry_result', 'spirometry_remark', 'weight', 'height']):
-                special_types.append("Spirometry")
-            if any(k in data for k in ['audiometry_result', 'audiometry_remark']):
-                special_types.append("Audiometry")
-            
-            if special_types:
-                test_name = ", ".join(special_types)
+            current_test_type = data.get('current_test_type')
+            if current_test_type in ['ecg', 'spirometry', 'audiometry']:
+                test_name = current_test_type.upper()
+                log_test_type = current_test_type
             else:
-                test_name = "Special Tests"
+                special_types = []
+                if any(k in data for k in ['ecg_result', 'ecg_remark']):
+                    special_types.append("ECG")
+                if any(k in data for k in ['spirometry_result', 'spirometry_remark', 'weight', 'height']):
+                    special_types.append("Spirometry")
+                if any(k in data for k in ['audiometry_result', 'audiometry_remark']):
+                    special_types.append("Audiometry")
+                
+                if special_types:
+                    test_name = ", ".join(special_types)
+                else:
+                    test_name = "Special Tests"
 
         AuditLog.log_action(
             action=f"Save Test ({test_name})",
             resource=f"Patient:{staff_id}",
-            details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": test_type}
+            details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": log_test_type}
         )
         db.session.commit()
         

@@ -776,7 +776,8 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             await axios.post(`/api/tests/save-test/${type}`, {
                 ...data,
                 staff_id: patient.staff_id,
-                screening_year: activeYear
+                screening_year: activeYear,
+                current_test_type: testType
             }, {
                 headers: { 'X-Company-Context': activeSection }
             });
