@@ -143,8 +143,8 @@ const AuditLogPage: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-muted/10">
                     <TableRow className="hover:bg-transparent border-b-2 text-left">
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><Activity className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><User className="w-3 h-3 inline mr-1" /> Originator</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><Activity className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><Globe className="w-3 h-3 inline mr-1" /> Source IP</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><Calendar className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
@@ -163,11 +163,6 @@ const AuditLogPage: React.FC = () => {
                         }}
                         className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative"
                       >
-                        <TableCell className="py-2.5 text-left">
-                          <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
-                            {log.action}
-                          </Badge>
-                        </TableCell>
                         <TableCell className="py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] border border-primary/20">
@@ -180,6 +175,11 @@ const AuditLogPage: React.FC = () => {
                                 </span>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="py-2.5 text-left">
+                          <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
+                            {log.action}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-[11px] font-mono font-bold text-slate-400 py-2.5">
                           {log.resource}
