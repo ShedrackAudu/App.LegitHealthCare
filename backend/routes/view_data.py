@@ -98,9 +98,27 @@ def search_patients():
     
     search = f"%{query}%"
     strict = request.args.get('strict', 'false').lower() == 'true'
+    search_type = request.args.get('search_type', 'general').lower()
     
     # 1. Base Query with Filtering
-    if strict and year:
+    if search_type == 'pid':
+        if year:
+            base_query = BioData.query.join(
+                ScreeningYearBioData, 
+                BioData.staff_id == ScreeningYearBioData.staff_id
+            ).filter(
+                ScreeningYearBioData.screening_year == int(year)
+            ).filter(
+                ScreeningYearBioData.patient_id.ilike(search)
+            ).order_by(BioData.created_at.desc())
+        else:
+            base_query = BioData.query.join(
+                ScreeningYearBioData, 
+                BioData.staff_id == ScreeningYearBioData.staff_id
+            ).filter(
+                ScreeningYearBioData.patient_id.ilike(search)
+            ).order_by(BioData.created_at.desc())
+    elif strict and year:
         # Filter strictly for patients registered in the specific screening matrix
         base_query = BioData.query.join(
             ScreeningYearBioData, 

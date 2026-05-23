@@ -17,6 +17,7 @@ interface PatientSearchProps {
   buttonText?: string;
   year?: string | number;
   strict?: boolean;
+  showPidToggle?: boolean;
 }
 
 export const PatientSearch: React.FC<PatientSearchProps> = ({
@@ -30,9 +31,11 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   searching = false,
   buttonText = "Retrieve Record",
   year,
-  strict = false
+  strict = false,
+  showPidToggle = false
 }) => {
   const [searchId, setSearchId] = useState(initialValue);
+  const [searchByPid, setSearchByPid] = useState(false);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
 
@@ -49,7 +52,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       }
       const fetchResults = async () => {
         try {
-          const url = `/api/patients/search?q=${searchId}${year ? `&year=${year}` : ''}${strict ? '&strict=true' : ''}`;
+          const url = `/api/patients/search?q=${searchId}${year ? `&year=${year}` : ''}${strict ? '&strict=true' : ''}${searchByPid ? '&search_type=pid' : ''}`;
           const res = await axios.get(url, {
             headers: { 'X-Company-Context': activeSection }
           });
@@ -65,7 +68,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     } else {
       setSearchResults([]);
     }
-  }, [searchId, activeSection, isSelecting, year, strict]);
+  }, [searchId, activeSection, isSelecting, year, strict, searchByPid]);
 
   const colorClasses = {
     emerald: {
@@ -135,13 +138,33 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     }
   };
 
+  const computedPlaceholder = searchByPid ? "Search Patient ID (PID)..." : placeholder;
+
   return (
     <div className={`w-full max-w-2xl relative ${className}`}>
       <div className={`flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 transition-all relative ${currentTheme.border}`}>
+        {showPidToggle && (
+          <div className="flex items-center px-3 py-1.5 bg-background/60 dark:bg-background/20 rounded-lg border border-muted-foreground/10 shrink-0 ml-1 sm:ml-0 self-start sm:self-auto">
+            <label className="relative inline-flex items-center cursor-pointer select-none">
+              <input
+                type="checkbox"
+                checked={searchByPid}
+                onChange={(e) => {
+                  setSearchByPid(e.target.checked);
+                  setSearchId('');
+                  setSearchResults([]);
+                }}
+                className="sr-only peer"
+              />
+              <div className="w-8 h-4 bg-muted rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-muted-foreground/20 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+              <span className="ml-2 text-xs font-bold text-muted-foreground whitespace-nowrap">P.ID Search</span>
+            </label>
+          </div>
+        )}
         <div className="flex items-center gap-2 flex-1 px-2 h-11">
           <Search className="h-5 w-5 text-muted-foreground shrink-0" />
           <Input
-            placeholder={placeholder}
+            placeholder={computedPlaceholder}
             value={searchId}
             onChange={(e) => setSearchId(e.target.value)}
             onKeyDown={handleSearchKeyDown}

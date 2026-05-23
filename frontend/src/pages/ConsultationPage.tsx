@@ -479,6 +479,7 @@ const ConsultationPage: React.FC = () => {
               themeColor="emerald"
               year={activeYear}
               strict={true}
+              showPidToggle={true}
             />
           </div>
         </div>

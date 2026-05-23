@@ -24,12 +24,27 @@ def get_patient(staff_id):
     clean_staff_id = staff_id.strip()
     patient = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(clean_staff_id)).first()
     
+    year = request.args.get('year')
+    if not patient:
+        # Fallback check if staff_id is actually a patient_id (PID)
+        if year:
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                patient_id=clean_staff_id,
+                screening_year=int(year)
+            ).first()
+        else:
+            yearly_record = ScreeningYearBioData.query.filter_by(
+                patient_id=clean_staff_id
+            ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+            
+        if yearly_record:
+            patient = BioData.query.filter_by(staff_id=yearly_record.staff_id).first()
+            
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
         
     # NEW: Pull patient_id from the specific screening record if year is provided,
     # otherwise fall back to most recent (for generic lookup)
-    year = request.args.get('year')
     if year:
         yearly_record = ScreeningYearBioData.query.filter_by(
             staff_id=patient.staff_id, 

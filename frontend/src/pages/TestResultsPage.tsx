@@ -126,6 +126,7 @@ const TestResultsPage: React.FC = () => {
     const [searchId, setSearchId] = useState('');
     const [searching, setSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchByPid, setSearchByPid] = useState(false);
     const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
     const [loadingQueue, setLoadingQueue] = useState(false);
     const [queueEntries, setQueueEntries] = useState<any[]>([]);
@@ -164,7 +165,7 @@ const TestResultsPage: React.FC = () => {
             }
             const fetchResults = async () => {
                 try {
-                    const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true`, {
+                    const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true${searchByPid ? '&search_type=pid' : ''}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
                     setSearchResults(res.data.results || []);
@@ -177,7 +178,7 @@ const TestResultsPage: React.FC = () => {
         } else {
             setSearchResults([]);
         }
-    }, [searchId, activeSection, isSelecting]);
+    }, [searchId, activeSection, isSelecting, searchByPid]);
 
     const [queueData, setQueueData] = useState<any>({});
     const fetchQueue = async () => {
@@ -276,7 +277,7 @@ const TestResultsPage: React.FC = () => {
         setSearching(true);
         setSearchResults([]);
         try {
-            const response = await axios.get(`/patient/${searchId}`, {
+            const response = await axios.get(`/patient/${searchId}?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
@@ -382,10 +383,26 @@ const TestResultsPage: React.FC = () => {
                                 {/* Search Section Redesign */}
                                 <div className="flex-1 w-full lg:max-w-2xl relative">
                                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                                        <div className="flex items-center px-3 py-1.5 bg-background/60 dark:bg-background/20 rounded-lg border border-muted-foreground/10 shrink-0 ml-1 sm:ml-0 self-start sm:self-auto">
+                                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={searchByPid}
+                                                    onChange={(e) => {
+                                                        setSearchByPid(e.target.checked);
+                                                        setSearchId('');
+                                                        setSearchResults([]);
+                                                    }}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-8 h-4 bg-muted rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-muted-foreground/20 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                                                <span className="ml-2 text-xs font-bold text-muted-foreground whitespace-nowrap">P.ID Search</span>
+                                            </label>
+                                        </div>
                                         <div className="flex items-center gap-2 flex-1 px-2 h-11">
                                             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
                                             <Input
-                                                placeholder="Search Staff ID or Name..."
+                                                placeholder={searchByPid ? "Search Patient ID (PID)..." : "Search Staff ID or Name..."}
                                                 value={searchId}
                                                 onChange={(e) => setSearchId(e.target.value)}
                                                 onKeyDown={handleSearchKeyDown}

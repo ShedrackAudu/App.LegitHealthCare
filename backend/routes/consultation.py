@@ -20,10 +20,15 @@ def get_screening_patient(year, staff_id):
     # Must be search in the specific screening year bio data
     record = ScreeningYearBioData.query.filter_by(screening_year=year, staff_id=staff_id).first()
     if not record:
+        # Fallback check if staff_id is actually a patient_id (PID)
+        record = ScreeningYearBioData.query.filter_by(screening_year=year, patient_id=staff_id).first()
+        
+    if not record:
         return jsonify({"error": "Patient not registered for this screening year"}), 404
         
     data = {
         "staff_id": record.staff_id,
+        "patient_id": record.patient_id,
         "first_name": record.first_name,
         "last_name": record.last_name,
         "department": record.department,
@@ -32,8 +37,8 @@ def get_screening_patient(year, staff_id):
         "consultation": None
     }
     
-    # Check for existing consultation data
-    consultation = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    # Check for existing consultation data using resolved staff_id
+    consultation = ConsultationData.query.filter_by(staff_id=record.staff_id, screening_year=year).first()
     if consultation:
         data["consultation"] = {
             "luts": consultation.luts,

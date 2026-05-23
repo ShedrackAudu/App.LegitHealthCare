@@ -233,6 +233,7 @@ const PatientReportPage: React.FC = () => {
                         buttonText="Retrieve Report"
                         year={activeYear}
                         strict={true}
+                        showPidToggle={true}
                     />
                 </div>
             </div>{/* end no-print chrome */}

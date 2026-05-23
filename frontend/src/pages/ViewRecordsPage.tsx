@@ -122,6 +122,7 @@ const ViewRecordsPage: React.FC = () => {
                         placeholder="Search Staff ID or Name..."
                         year={activeYear}
                         strict={true}
+                        showPidToggle={true}
                     />
                 </div>
 
