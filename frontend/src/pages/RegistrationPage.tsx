@@ -326,25 +326,25 @@ const RegistrationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 registration-page">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
-                <ArrowLeft className="h-5 w-5 text-primary" />
+                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </Button>
             )}
-            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
               {isEditMode ? (
-                <Users className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+                <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               ) : (
-                <UserPlus className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+                <UserPlus className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               )}
             </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight">
+              <h1 className="text-base sm:text-2xl font-black tracking-tight">
                 {isEditMode ? 'Edit Patient Profile' : 'Patient Registration'}
               </h1>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
                 {isEditMode ? `Updating ${editStaffId}` : `Session: ${activeYear} • ${activeSection}`}
               </p>
             </div>

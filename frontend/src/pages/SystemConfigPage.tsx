@@ -462,16 +462,18 @@ const SystemConfigPage: React.FC = () => {
     return (
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
-                <div className="flex flex-col gap-3 border-b pb-6">
+                <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
                     <div className="flex items-center gap-3">
-                        <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                            <Settings2 className="h-6 w-6 sm:h-8 sm:w-8" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
+                            <Settings2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
-                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
+                        <div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
+                                Manage registration dropdowns and system settings
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
-                        Manage registration dropdowns and system settings
-                    </p>
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">

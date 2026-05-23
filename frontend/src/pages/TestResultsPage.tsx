@@ -340,14 +340,14 @@ const TestResultsPage: React.FC = () => {
                 {!patient ? (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Top Search Bar Style from Consultation */}
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all">
+                        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
-                                    <FlaskConical className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+                                <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                                    <FlaskConical className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
-                                    <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                                    <h1 className="text-base sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
+                                    <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                                     <TempAccessCountdown />
                                 </div>
                             </div>
@@ -944,7 +944,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
-                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
+                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-rose-500">*</span></Label>
                         <Input {...register(f, { required: true })} type="number" step="any" placeholder="0.00" required />
                     </div>
                 ))}

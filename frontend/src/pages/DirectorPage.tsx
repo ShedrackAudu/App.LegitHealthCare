@@ -287,7 +287,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-red-500">*</span></Label>
                                 {f.includes('REMARK') ? (
                                     <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                                 ) : (
@@ -552,16 +552,14 @@ const DirectorPage: React.FC = () => {
     return (
         <MainLayout noScroll={!!patient}>
             <div className={`animate-in fade-in duration-500 ${patient ? 'flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0' : 'space-y-8 pb-20'}`}>
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all shrink-0">
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <ShieldCheck className="h-8 w-8 text-primary" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                            <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-lg sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
-                            </div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>
                     

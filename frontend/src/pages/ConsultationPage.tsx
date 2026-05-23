@@ -435,16 +435,17 @@ const ConsultationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
-              <Stethoscope className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+              <Stethoscope className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
-          </div>          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
+          </div>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
             {/* Queue Status Card */}
             <Card
               className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"

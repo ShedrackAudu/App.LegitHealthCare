@@ -96,14 +96,14 @@ const ViewRecordsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <Database className="text-primary h-8 w-8" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                            <Database className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
-                            <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>
                     
