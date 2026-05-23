@@ -936,8 +936,8 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
     }, [initialData, reset]);
 
     const fields = [
-        'pcv', 'wbc', 'plt', 'lymp_percent', 'lymp_abs', 'gra_percent', 'gra_abs', 
-        'mid_percent', 'mid_abs', 'rbc', 'mcv', 'mch', 'mchc', 'rdw', 'pdw', 'hgb'
+        'wbc', 'lymp_abs', 'mid_abs', 'gra_abs', 'lymp_percent', 'mid_percent', 'gra_percent',
+        'rbc', 'hgb', 'pcv', 'mcv', 'mch', 'mchc', 'rdw', 'plt', 'pdw'
     ];
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
