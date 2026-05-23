@@ -402,7 +402,7 @@ const LoginPage = () => {
                       <Input 
                           type="password" 
                           placeholder="••••••••"
-                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                           value={forceResetData.newPassword}
                           onChange={(e) => setForceResetData({ ...forceResetData, newPassword: e.target.value })}
                           disabled={loading} 
@@ -420,7 +420,7 @@ const LoginPage = () => {
                       <Input 
                           type="password" 
                           placeholder="••••••••"
-                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                           value={forceResetData.confirmPassword}
                           onChange={(e) => setForceResetData({ ...forceResetData, confirmPassword: e.target.value })}
                           disabled={loading} 
@@ -452,7 +452,7 @@ const LoginPage = () => {
                           <Input 
                               id="identity" 
                               placeholder="Staff ID, Username, Email or Phone" 
-                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               {...register('identity')} 
                               disabled={loading} 
                           />
@@ -470,7 +470,7 @@ const LoginPage = () => {
                               id="password" 
                               type={showPassword ? "text" : "password"} 
                               placeholder="••••••••"
-                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               {...register('password')} 
                               disabled={loading} 
                           />
@@ -512,7 +512,7 @@ const LoginPage = () => {
                             value={totpCode}
                             onChange={e => setTotpCode(e.target.value)}
                             placeholder="000 000" 
-                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
+                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary"
                             maxLength={6}
                             disabled={loading} 
                         />
@@ -545,7 +545,7 @@ const LoginPage = () => {
                       <div className="relative group">
                         <Input 
                             placeholder="Staff ID, Username, Email or Phone" 
-                            className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                            className="pl-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             disabled={loading} 
@@ -586,7 +586,7 @@ const LoginPage = () => {
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 text-center block">One-Time Password</Label>
                       <Input 
                           placeholder="000 000" 
-                          className="h-20 text-center text-4xl tracking-[0.3em] font-black rounded-3xl border-4 focus:border-primary/50 bg-muted/20"
+                          className="h-20 text-center text-4xl tracking-[0.3em] font-black rounded-3xl border-4 focus:border-primary/50 focus-visible:ring-0 focus-visible:ring-offset-0 bg-muted/20"
                           value={otp}
                           onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                           maxLength={6}
@@ -618,7 +618,7 @@ const LoginPage = () => {
                           <Input 
                               type="password" 
                               placeholder="••••••••"
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               value={resetPassword}
                               onChange={(e) => setResetPassword(e.target.value)}
                               disabled={loading} 
@@ -636,7 +636,7 @@ const LoginPage = () => {
                           <Input 
                               type="password" 
                               placeholder="••••••••"
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               disabled={loading} 

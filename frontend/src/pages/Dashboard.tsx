@@ -27,7 +27,8 @@ import {
   Calendar,
   FileText,
   Bot,
-  Palette
+  Palette,
+  Trash2
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -46,6 +47,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
 import { Loader2 } from 'lucide-react';
 import { toast } from 'react-hot-toast';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const quickActions = [
   { 
@@ -215,6 +217,8 @@ const Dashboard: React.FC = () => {
   const [selectedDept, setSelectedDept] = React.useState<string | null>(null);
   const [isQueueModalOpen, setIsQueueModalOpen] = React.useState(false);
   const [loadingQueue, setLoadingQueue] = React.useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
+  const [deletePendingEntry, setDeletePendingEntry] = React.useState<{ dept: string; staffId: string } | null>(null);
 
   // PWA Install Prompt State (mobile dashboard banner)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -322,6 +326,30 @@ const Dashboard: React.FC = () => {
       toast.error("Failed to load patient queue");
     } finally {
       setLoadingQueue(false);
+    }
+  };
+
+  const handleDeleteQueueEntry = (dept: string, staffId: string) => {
+    setDeletePendingEntry({ dept, staffId });
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletePendingEntry) return;
+    const { dept, staffId } = deletePendingEntry;
+    try {
+      await axios.delete(`/api/queue/${dept.toLowerCase()}/${staffId}?year=${activeYear}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      toast.success("Patient removed from queue");
+      fetchQueueList(dept);
+      fetchQueueStats();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to remove patient from queue");
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeletePendingEntry(null);
     }
   };
 
@@ -757,47 +785,81 @@ const Dashboard: React.FC = () => {
 
         {/* Queue List Modal */}
         <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 dashboard-dialog">
-                <DialogHeader>
-                    <div className="flex items-center gap-3 mb-2">
+            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 dashboard-dialog p-4 sm:p-6">
+                <DialogHeader className="text-left">
+                    <div className="flex items-center gap-3 mb-2 text-left">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                             <ClipboardList className="w-6 h-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-xl font-black tracking-tight">{selectedDept} Queue</DialogTitle>
-                            <DialogDescription className="text-xs font-medium"> Patients currently waiting for assessment</DialogDescription>
+                            <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">{selectedDept} Queue</DialogTitle>
+                            <DialogDescription className="text-[11px] sm:text-xs font-medium"> Patients currently waiting for assessment</DialogDescription>
                         </div>
                     </div>
                 </DialogHeader>
                 
                 <div className="relative mt-2">
-                    <ScrollArea className="h-[400px] pr-4">
+                    <ScrollArea className="h-[400px] px-1">
                         {queueEntries.length > 0 ? (
                             <div className="space-y-3">
                                 {queueEntries.map((entry, idx) => (
-                                    <div key={entry.staff_id} className="flex items-center justify-between p-4 rounded-xl border bg-muted/5 hover:bg-muted/10 transition-colors group">
-                                        <div className="flex items-center gap-4">
-                                            <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
-                                                {entry.first_name?.[0]}{entry.last_name?.[0]}
+                                    <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">
+                                        {/* Left Block (Avatar + Info) */}
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <div className="relative shrink-0">
+                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                                                    {entry.first_name?.[0]}{entry.last_name?.[0]}
+                                                </div>
+                                                <Badge className="absolute -top-2 -left-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 border border-background h-5 min-w-[20px] flex items-center justify-center shadow-md">
+                                                    #{entry.queue_number || '--'}
+                                                </Badge>
                                             </div>
-                                            <div>
-                                                <p className="font-black text-sm tracking-tight">{entry.first_name} {entry.last_name}</p>
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ID: {entry.staff_id}</p>
+
+                                            <div className="min-w-0 flex-1 flex flex-col justify-center gap-0">
+                                                <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
+                                                
+                                                <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
+                                                    {/* ID & Time: stacked on mobile, row on desktop */}
+                                                    <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
+                                                        <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
+                                                        <span className="hidden sm:inline text-muted-foreground/60">•</span>
+                                                        <span className="font-medium flex items-center gap-1">
+                                                            <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                                            {getRelativeTime(entry.created_at)}
+                                                        </span>
+                                                    </div>
+
+                                                    {/* Mobile-only delete button beside stacked ID/time */}
+                                                    <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+                                                        {hasPermission('delete_from_queue') && (
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="ghost" 
+                                                                className="h-7 w-7 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                                onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
+                                                                title="Remove from queue"
+                                                            >
+                                                                <Trash2 className="w-3 h-3" />
+                                                            </Button>
+                                                        )}
+                                                    </div>
+                                                </div>
                                             </div>
                                         </div>
-                                        <div className="text-right space-y-2">
-                                            <div className="flex items-center gap-1.5 justify-end">
-                                               <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
-                                                    #{entry.queue_number || '--'}
-                                               </Badge>
-                                               <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20 h-auto">
-                                                    WAITING
-                                               </Badge>
-                                            </div>
-                                            <div className="flex items-center gap-1 text-muted-foreground justify-end">
-                                                <Clock className="w-3 h-3" />
-                                                <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
-                                            </div>
+
+                                        {/* Desktop-only delete button centered vertically inside the card */}
+                                        <div className="hidden sm:flex items-center gap-1.5 shrink-0">
+                                            {hasPermission('delete_from_queue') && (
+                                                <Button 
+                                                    size="sm" 
+                                                    variant="ghost" 
+                                                    className="h-8 w-8 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                    onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
+                                                    title="Remove from queue"
+                                                >
+                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                </Button>
+                                            )}
                                         </div>
                                     </div>
                                 ))}
@@ -824,6 +886,20 @@ const Dashboard: React.FC = () => {
             </DialogContent>
         </Dialog>
       </div>
+
+      <ActionConfirmModal 
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeletePendingEntry(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Remove from Queue"
+        description="Are you sure you want to remove this patient from the queue? This will only remove them from this department's queue."
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </MainLayout>
   );
 };

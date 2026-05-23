@@ -189,3 +189,51 @@ def assign_queue_number():
     AuditLog.log_action("Assign Queue Number", resource=f"QueueEntry:{entry.id}", details={"staff_id": staff_id, "department": department, "queue_number": new_number, "context": bind})
     
     return jsonify({"message": f"Queue number updated to {new_number} for {staff_id}"}), 200
+
+@queue_bp.route('/<department>/<staff_id>', methods=['DELETE'])
+@require_permission('delete_from_queue')
+def delete_patient_from_queue(department, staff_id):
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    year = request.args.get('year')
+    if not year: return jsonify({"error": "Year required"}), 400
+
+    # Normalize department name
+    dept_map = {
+        'consultation': 'Consultation',
+        'audiometry': 'Audiometry',
+        'spirometry': 'Spirometry',
+        'ecg': 'ECG'
+    }
+    target_dept = dept_map.get(department.lower())
+    if not target_dept:
+        return jsonify({"error": "Invalid department"}), 400
+
+    # Find the QueueEntry
+    entry = QueueEntry.query.filter(
+        func.trim(QueueEntry.staff_id) == func.trim(staff_id),
+        QueueEntry.screening_year == int(year),
+        QueueEntry.department == target_dept,
+        QueueEntry.status == 'Waiting'
+    ).first()
+
+    if not entry:
+        return jsonify({"error": "Patient not found in this queue"}), 404
+
+    db.session.delete(entry)
+    db.session.commit()
+
+    AuditLog.log_action(
+        "Remove Patient from Queue", 
+        resource=f"QueueEntry:{entry.id}", 
+        details={
+            "staff_id": staff_id, 
+            "department": target_dept, 
+            "year": year, 
+            "context": bind
+        }
+    )
+
+    return jsonify({"message": f"Patient {staff_id} successfully removed from {target_dept} queue"}), 200
+

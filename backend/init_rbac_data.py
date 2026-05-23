@@ -9,6 +9,7 @@ def init_rbac(app):
             ('consultation', 'Access to clinical consultation'),
             ('delete_patient', 'Permission to permanently remove a patient account'),
             ('delete_record', 'Permission to delete screening results from matrix'),
+            ('delete_from_queue', 'Permission to delete/remove a patient from department queue'),
             ('director_review', 'Access to director level review'),
             ('download_data', 'Export system data to Excel'),
             ('edit_patient', 'Permission to modify patient bio-data'),

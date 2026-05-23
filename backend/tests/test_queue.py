@@ -123,3 +123,50 @@ def test_department_queue_access(client, setup_user, setup_rbac_and_queues):
     # Cannot access ECG queue
     res = client.get('/api/queue/ecg?year=2026', headers=headers)
     assert res.status_code == 403
+
+def test_delete_patient_from_queue(client, setup_user, setup_rbac_and_queues):
+    # Setup delete_from_queue permission
+    perm_delete = Permission(name='delete_from_queue', description='Delete from queue')
+    db.session.add(perm_delete)
+    db.session.commit()
+    
+    role_delete = Role(name='QueueDeleter', description='Can delete from queue')
+    role_delete.permissions.append(perm_delete)
+    db.session.add(role_delete)
+    db.session.commit()
+    
+    token = create_access_token(identity=str(setup_user.id))
+    headers = {
+        'Authorization': f'Bearer {token}',
+        'X-Company-Context': 'dcp'
+    }
+    
+    # 1. Try to delete without permission (should get 403)
+    res = client.delete('/api/queue/spirometry/ST-001?year=2026', headers=headers)
+    assert res.status_code == 403
+    
+    # 2. Assign role to user
+    setup_user.roles.append(role_delete)
+    db.session.commit()
+    
+    # 3. Delete from Spirometry queue (should get 200)
+    res = client.delete('/api/queue/spirometry/ST-001?year=2026', headers=headers)
+    assert res.status_code == 200
+    
+    # Verify it is deleted from Spirometry queue
+    with app.test_request_context(headers={'X-Company-Context': 'dcp'}):
+        spiro_entry = QueueEntry.query.filter_by(
+            staff_id='ST-001',
+            department='Spirometry',
+            screening_year=2026
+        ).first()
+        assert spiro_entry is None
+        
+        # Verify it is NOT deleted from ECG queue (should still be on ECG queue)
+        ecg_entry = QueueEntry.query.filter_by(
+            staff_id='ST-001',
+            department='ECG',
+            screening_year=2026
+        ).first()
+        assert ecg_entry is not None
+

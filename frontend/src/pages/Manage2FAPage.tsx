@@ -167,13 +167,13 @@ const Manage2FAPage = () => {
                                             <div className="p-5 bg-card rounded-2xl border shadow-inner space-y-5 flex flex-col justify-center h-full min-h-[160px]">
                                                 <div className="space-y-2">
                                                     <p className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground text-center block opacity-60">Verification Code</p>
-                                                    <Input 
-                                                        value={code} 
-                                                        onChange={e => setCode(e.target.value)} 
-                                                        placeholder="000 000" 
-                                                        className="text-center font-black text-2xl tracking-[0.3em] h-12 rounded-xl border focus:border-primary transition-all shadow-sm"
-                                                        maxLength={6}
-                                                    />
+                                                <Input 
+                                                    value={code} 
+                                                    onChange={e => setCode(e.target.value)} 
+                                                    placeholder="000 000" 
+                                                    className="text-center font-black text-2xl tracking-[0.3em] h-12 rounded-xl border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all shadow-sm"
+                                                    maxLength={6}
+                                                />
                                                 </div>
                                                 <Button onClick={verifyAndEnable} className="w-full h-11 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
                                                    Enable Secure Access
