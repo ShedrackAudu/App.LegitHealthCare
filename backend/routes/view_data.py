@@ -385,15 +385,19 @@ def get_screening_records(year):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
     search_query = request.args.get('q', '').strip()
+    search_type = request.args.get('search_type', 'general').lower()
     
     query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     if search_query:
-        query = query.filter(
-            (ScreeningYearBioData.staff_id.ilike(f"%{search_query}%")) |
-            (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
-            (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
-        )
+        if search_type == 'pid':
+            query = query.filter(ScreeningYearBioData.patient_id.ilike(f"%{search_query}%"))
+        else:
+            query = query.filter(
+                (ScreeningYearBioData.staff_id.ilike(f"%{search_query}%")) |
+                (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
+                (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
+            )
     
     # Sort by created_at desc to show newest first
     query = query.order_by(ScreeningYearBioData.created_at.desc())

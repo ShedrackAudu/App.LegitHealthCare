@@ -121,12 +121,19 @@ const TestResultsPage: React.FC = () => {
             setSelectedTest(null);
             setPatient(null);
         }
+        const saved = localStorage.getItem(`searchByPid_${pathname}`);
+        setSearchByPid(saved === 'true');
+        setSearchId('');
+        setSearchResults([]);
     }, [paramTestType, pathname]);
     const [patient, setPatient] = useState<any>(null);
     const [searchId, setSearchId] = useState('');
     const [searching, setSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
-    const [searchByPid, setSearchByPid] = useState(false);
+    const [searchByPid, setSearchByPid] = useState(() => {
+        const saved = localStorage.getItem(`searchByPid_${pathname}`);
+        return saved === 'true';
+    });
     const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
     const [loadingQueue, setLoadingQueue] = useState(false);
     const [queueEntries, setQueueEntries] = useState<any[]>([]);
@@ -277,7 +284,7 @@ const TestResultsPage: React.FC = () => {
         setSearching(true);
         setSearchResults([]);
         try {
-            const response = await axios.get(`/patient/${searchId}?year=${activeYear}`, {
+            const response = await axios.get(`/patient/${searchId}?year=${activeYear}&strict=true&search_type=${searchByPid ? 'pid' : 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
@@ -389,7 +396,9 @@ const TestResultsPage: React.FC = () => {
                                                     type="checkbox"
                                                     checked={searchByPid}
                                                     onChange={(e) => {
-                                                        setSearchByPid(e.target.checked);
+                                                        const val = e.target.checked;
+                                                        setSearchByPid(val);
+                                                        localStorage.setItem(`searchByPid_${pathname}`, String(val));
                                                         setSearchId('');
                                                         setSearchResults([]);
                                                     }}

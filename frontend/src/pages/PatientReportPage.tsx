@@ -19,11 +19,11 @@ const PatientReportPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
 
-    const handleSearchById = async (id: string) => {
+    const handleSearchById = async (id: string, searchType?: 'pid' | 'general') => {
         if (!id) return;
         setSearching(true);
         try {
-            const pRes = await api.get(`/api/patients/${id}`, {
+            const pRes = await api.get(`/patient/${id}?year=${activeYear}&strict=true&search_type=${searchType || 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             if (pRes.data) handleSelectPatient(pRes.data);

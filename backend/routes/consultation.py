@@ -19,7 +19,8 @@ def get_screening_patient(year, staff_id):
     
     # Must be search in the specific screening year bio data
     record = ScreeningYearBioData.query.filter_by(screening_year=year, staff_id=staff_id).first()
-    if not record:
+    search_type = request.args.get('search_type', 'general').lower()
+    if not record and search_type == 'pid':
         # Fallback check if staff_id is actually a patient_id (PID)
         record = ScreeningYearBioData.query.filter_by(screening_year=year, patient_id=staff_id).first()
         

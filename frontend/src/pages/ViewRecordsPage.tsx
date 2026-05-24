@@ -39,10 +39,10 @@ const ViewRecordsPage: React.FC = () => {
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
 
-    const fetchRecords = async (page = 1, query = '') => {
+    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general') => {
         setLoading(true);
         try {
-            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}`;
+            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
             
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -109,13 +109,13 @@ const ViewRecordsPage: React.FC = () => {
                     
                     <PatientSearch
                         activeSection={activeSection}
-                        onSearch={(query) => {
+                        onSearch={(query, searchType) => {
                             setSearchTerm(query);
-                            fetchRecords(1, query);
+                            fetchRecords(1, query, searchType);
                         }}
                         onSelect={(p) => {
                             setSearchTerm(p.staff_id);
-                            fetchRecords(1, p.staff_id);
+                            fetchRecords(1, p.staff_id, 'general');
                         }}
                         searching={loading}
                         themeColor="primary"

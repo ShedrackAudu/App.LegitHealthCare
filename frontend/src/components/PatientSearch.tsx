@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Search, Loader2, ChevronRight } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
@@ -6,8 +7,8 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import axios from 'axios';
 
 interface PatientSearchProps {
-  onSelect: (patient: any) => void;
-  onSearch: (searchTerm: string) => void;
+  onSelect: (patient: any, searchType?: 'pid' | 'general') => void;
+  onSearch: (searchTerm: string, searchType?: 'pid' | 'general') => void;
   placeholder?: string;
   themeColor?: 'emerald' | 'primary';
   className?: string;
@@ -34,10 +35,19 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
   strict = false,
   showPidToggle = false
 }) => {
+  const { pathname } = useLocation();
   const [searchId, setSearchId] = useState(initialValue);
-  const [searchByPid, setSearchByPid] = useState(false);
+  const [searchByPid, setSearchByPid] = useState(() => {
+    const saved = localStorage.getItem(`searchByPid_${pathname}`);
+    return saved === 'true';
+  });
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isSelecting, setIsSelecting] = useState(false);
+
+  useEffect(() => {
+    const saved = localStorage.getItem(`searchByPid_${pathname}`);
+    setSearchByPid(saved === 'true');
+  }, [pathname]);
 
   useEffect(() => {
     setSearchId(initialValue);
@@ -99,7 +109,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     setIsSelecting(true);
     setSearchId('');
     setSearchResults([]);
-    onSelect(p);
+    onSelect(p, searchByPid ? 'pid' : 'general');
   };
 
   const [activeSearchIndex, setActiveSearchIndex] = useState(-1);
@@ -125,7 +135,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
             handleItemSelect(searchResults[activeSearchIndex]);
           } else {
             setSearchResults([]);
-            onSearch(searchId);
+            onSearch(searchId, searchByPid ? 'pid' : 'general');
           }
           break;
         case 'Escape':
@@ -134,7 +144,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
       }
     } else if (e.key === 'Enter') {
       setSearchResults([]);
-      onSearch(searchId);
+      onSearch(searchId, searchByPid ? 'pid' : 'general');
     }
   };
 
@@ -150,7 +160,9 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
                 type="checkbox"
                 checked={searchByPid}
                 onChange={(e) => {
-                  setSearchByPid(e.target.checked);
+                  const val = e.target.checked;
+                  setSearchByPid(val);
+                  localStorage.setItem(`searchByPid_${pathname}`, String(val));
                   setSearchId('');
                   setSearchResults([]);
                 }}
@@ -174,7 +186,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
         <Button 
           onClick={() => {
             setSearchResults([]);
-            onSearch(searchId);
+            onSearch(searchId, searchByPid ? 'pid' : 'general');
           }}
           disabled={searching || !searchId.trim()}
           className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}

@@ -364,12 +364,12 @@ const ConsultationPage: React.FC = () => {
   }, [breast_exam, setValue]);
 
 
-  const handleSearch = async (staffIdToSearch?: string) => {
+  const handleSearch = async (staffIdToSearch?: string, searchType?: 'pid' | 'general') => {
     const idToSearch = staffIdToSearch || searchId;
     if (!idToSearch) return;
     setSearching(true);
     try {
-      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}`, {
+      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}?search_type=${searchType || 'general'}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       const fullData = response.data;
@@ -473,7 +473,7 @@ const ConsultationPage: React.FC = () => {
               onSearch={handleSearch}
               onSelect={(p) => {
                 setPatient(p);
-                handleSearch(p.staff_id);
+                handleSearch(p.staff_id, 'general');
               }}
               searching={searching}
               themeColor="emerald"

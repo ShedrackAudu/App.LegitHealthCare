@@ -25,7 +25,8 @@ def get_patient(staff_id):
     patient = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(clean_staff_id)).first()
     
     year = request.args.get('year')
-    if not patient:
+    search_type = request.args.get('search_type', 'general').lower()
+    if not patient and search_type == 'pid':
         # Fallback check if staff_id is actually a patient_id (PID)
         if year:
             yearly_record = ScreeningYearBioData.query.filter_by(
@@ -54,6 +55,10 @@ def get_patient(staff_id):
         yearly_record = ScreeningYearBioData.query.filter_by(
             staff_id=patient.staff_id
         ).order_by(ScreeningYearBioData.screening_year.desc()).first()
+        
+    strict = request.args.get('strict', 'false').lower() == 'true'
+    if strict and year and not yearly_record:
+        return jsonify({"error": "Patient not registered for this screening year"}), 404
         
     patient_id = yearly_record.patient_id if yearly_record else None
     

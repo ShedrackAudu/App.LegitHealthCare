@@ -498,16 +498,16 @@ const DirectorPage: React.FC = () => {
     const [searching, setSearching] = useState(false);
     const [loading, setLoading] = useState(false);
     const selectPatient = (p: any) => {
-        handleSearchWithId(p.staff_id);
+        handleSearchWithId(p.staff_id, 'general');
     };
 
-    const handleSearchWithId = async (id: string) => {
+    const handleSearchWithId = async (id: string, searchType?: 'pid' | 'general') => {
         if (!id) return;
         setPatient(null);
         setHistory(null);
         setSearching(true);
         try {
-            const pRes = await axios.get(`/patient/${id}`, {
+            const pRes = await axios.get(`/patient/${id}?year=${activeYear}&strict=true&search_type=${searchType || 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(pRes.data);
