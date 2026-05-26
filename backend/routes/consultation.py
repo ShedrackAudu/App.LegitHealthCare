@@ -18,11 +18,13 @@ def get_screening_patient(year, staff_id):
     if not bind: return jsonify({"error": "Invalid section context"}), 400
     
     # Must be search in the specific screening year bio data
-    record = ScreeningYearBioData.query.filter_by(screening_year=year, staff_id=staff_id).first()
     search_type = request.args.get('search_type', 'general').lower()
-    if not record and search_type == 'pid':
-        # Fallback check if staff_id is actually a patient_id (PID)
+    if search_type == 'pid':
+        # Strictly search by patient_id (PID)
         record = ScreeningYearBioData.query.filter_by(screening_year=year, patient_id=staff_id).first()
+    else:
+        # Strictly search by staff_id
+        record = ScreeningYearBioData.query.filter_by(screening_year=year, staff_id=staff_id).first()
         
     if not record:
         return jsonify({"error": "Patient not registered for this screening year"}), 404

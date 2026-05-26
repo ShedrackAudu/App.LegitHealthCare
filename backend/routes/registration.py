@@ -22,12 +22,12 @@ def get_patient(staff_id):
         return jsonify({"error": "Invalid section context"}), 400
     
     clean_staff_id = staff_id.strip()
-    patient = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(clean_staff_id)).first()
-    
     year = request.args.get('year')
     search_type = request.args.get('search_type', 'general').lower()
-    if not patient and search_type == 'pid':
-        # Fallback check if staff_id is actually a patient_id (PID)
+    
+    patient = None
+    if search_type == 'pid':
+        # Strictly search by patient_id (PID)
         if year:
             yearly_record = ScreeningYearBioData.query.filter_by(
                 patient_id=clean_staff_id,
@@ -40,7 +40,10 @@ def get_patient(staff_id):
             
         if yearly_record:
             patient = BioData.query.filter_by(staff_id=yearly_record.staff_id).first()
-            
+    else:
+        # Strictly search by staff_id
+        patient = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(clean_staff_id)).first()
+        
     if not patient:
         return jsonify({"error": "Patient not found"}), 404
         
