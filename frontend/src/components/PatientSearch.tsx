@@ -152,6 +152,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           } else {
             setSearchResults([]);
             onSearch(searchId, searchByPid ? 'pid' : 'general');
+            setSearchId('');
           }
           break;
         case 'Escape':
@@ -161,6 +162,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
     } else if (e.key === 'Enter') {
       setSearchResults([]);
       onSearch(searchId, searchByPid ? 'pid' : 'general');
+      setSearchId('');
     }
   };
 
@@ -203,6 +205,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           onClick={() => {
             setSearchResults([]);
             onSearch(searchId, searchByPid ? 'pid' : 'general');
+            setSearchId('');
           }}
           disabled={searching || !searchId.trim()}
           className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}

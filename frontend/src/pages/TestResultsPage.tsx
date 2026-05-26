@@ -305,6 +305,7 @@ const TestResultsPage: React.FC = () => {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
+            setSearchId('');
         } catch (err) {
             alert("Patient not found");
         } finally {

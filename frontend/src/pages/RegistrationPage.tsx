@@ -362,6 +362,7 @@ const RegistrationPage: React.FC = () => {
         email: p.email || '',
       });
       setSearchResults([]);
+      setSearchId('');
       toast.success(`Patient ${p.first_name} found and records retrieved.`);
     } catch (err) {
       toast.error("Patient not found in the comprehensive database.");
@@ -654,52 +655,54 @@ const RegistrationPage: React.FC = () => {
               <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
                 {/* Passport Photo Uploader */}
                 <div className="flex flex-col items-center md:items-start justify-center space-y-2 border-b pb-4 md:border-b-0 md:pb-0 md:border-r md:pr-6 border-primary/10">
-                  <div 
-                    className="relative group w-20 h-20 rounded-2xl border-2 border-dashed border-primary/30 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
-                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
-                  >
-                    {passportPreview ? (
-                      <>
-                        <img 
-                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
-                          alt="Passport Preview" 
-                          className="w-full h-full object-cover"
-                        />
-                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                          <div className="flex items-center gap-1">
+                  <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
+                    <div 
+                      className="relative group w-20 h-20 rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
+                      onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                    >
+                      {passportPreview ? (
+                        <>
+                          <img 
+                            src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                            alt="Passport Preview" 
+                            className="w-full h-full object-cover"
+                          />
+                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                            <div className="flex items-center gap-1">
+                              <button
+                                type="button"
+                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                                onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
+                                title="Preview"
+                              >
+                                <Eye className="text-white h-3 w-3" />
+                              </button>
+                              <button
+                                type="button"
+                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                                onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                                title="Change photo"
+                              >
+                                <Camera className="text-white h-3 w-3" />
+                              </button>
+                            </div>
                             <button
                               type="button"
-                              className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                              onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
-                              title="Preview"
+                              className="p-1 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                              title="Remove photo"
                             >
-                              <Eye className="text-white h-3 w-3" />
-                            </button>
-                            <button
-                              type="button"
-                              className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                              onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
-                              title="Change photo"
-                            >
-                              <Camera className="text-white h-3 w-3" />
+                              <Trash2 className="text-white h-2.5 w-2.5" />
                             </button>
                           </div>
-                          <button
-                            type="button"
-                            className="p-1 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
-                            onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
-                            title="Remove photo"
-                          >
-                            <Trash2 className="text-white h-2.5 w-2.5" />
-                          </button>
+                        </>
+                      ) : (
+                        <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
+                          <ImagePlus className="h-4 w-4 mb-1" />
+                          <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
                         </div>
-                      </>
-                    ) : (
-                      <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
-                        <ImagePlus className="h-4 w-4 mb-1" />
-                        <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
                   {/* Hidden file input */}
                   <input 
