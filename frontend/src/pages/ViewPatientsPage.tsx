@@ -204,7 +204,24 @@ const ViewPatientsPage: React.FC = () => {
                                                             {p.staff_id}
                                                         </code>
                                                     </TableCell>
-                                                    <TableCell className="font-bold text-xs">{p.first_name}</TableCell>
+                                                    <TableCell className="font-bold text-xs">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full overflow-hidden border border-primary/20 bg-muted shrink-0 flex items-center justify-center">
+                                                                {p.passport_image ? (
+                                                                    <img 
+                                                                        src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                                                                        alt="Avatar" 
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-[10px] font-black text-primary/60 uppercase">
+                                                                        {p.first_name?.[0]}{p.last_name?.[0]}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span>{p.first_name}</span>
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground">{p.middle_name || '-'}</TableCell>
                                                     <TableCell className="font-bold text-xs">{p.last_name}</TableCell>
                                                     <TableCell>

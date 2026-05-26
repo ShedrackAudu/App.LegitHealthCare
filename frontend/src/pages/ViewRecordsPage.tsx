@@ -243,10 +243,8 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[70px]">K+</TableHead>
                                                     <TableHead className="min-w-[70px]">Na+</TableHead>
                                                     <TableHead className="min-w-[70px]">Cl-</TableHead>
-                                                    <TableHead className="min-w-[100px]">Urea</TableHead>
-                                                    <TableHead className="min-w-[100px]">Creatinine</TableHead>
                                                     <TableHead className="min-w-[70px]">HCO3</TableHead>
-                                                    <TableHead className="min-w-[100px]">Bicarbonate</TableHead>
+                                                    <TableHead className="min-w-[100px]">Calcium</TableHead>
                                                     <TableHead className="min-w-[150px] border-r">KFT Remark</TableHead>
                                                     
                                                     {/* Lipid */}
@@ -262,6 +260,8 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[80px]">ALP</TableHead>
                                                     <TableHead className="min-w-[80px]">T.BIL</TableHead>
                                                     <TableHead className="min-w-[80px]">C.BIL</TableHead>
+                                                    <TableHead className="min-w-[100px]">Urea</TableHead>
+                                                    <TableHead className="min-w-[100px]">Creatinine</TableHead>
                                                     <TableHead className="min-w-[150px] border-r">LFT Remark</TableHead>
                                                     
                                                     {/* Special */}
@@ -364,8 +364,6 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.potassium || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.sodium || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.chloride || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.urea || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.creatinine || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.hco3 || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.bicarbonate || '-'}</TableCell>
                                                         <TableCell className="bg-blue-50/30 text-[11px] truncate max-w-[150px] border-r" title={r.kft?.remark || ''}>{r.kft?.remark || '-'}</TableCell>
@@ -383,6 +381,8 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.alp || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.tb || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.cb || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30 font-bold">{r.lft?.urea || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30 font-bold">{r.lft?.creatinine || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5/30 text-[11px] truncate max-w-[150px] border-r" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
                                                         
                                                         {/* Special */}

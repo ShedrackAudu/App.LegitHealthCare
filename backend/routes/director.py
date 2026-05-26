@@ -101,7 +101,7 @@ def save_director_review():
         {
             'model': KFTResult,
             'fields': ['potassium', 'sodium', 'chloride', 'bicarbonate_ca', 'hco3', 
-                       'urea', 'creatinine', 'kft_remark']
+                       'kft_remark']
         },
         {
             'model': LipidResult,
@@ -109,7 +109,7 @@ def save_director_review():
         },
         {
             'model': LFTResult,
-            'fields': ['ast', 'alt', 'alp', 'tb', 'cb', 'lft_remark']
+            'fields': ['ast', 'alt', 'alp', 'tb', 'cb', 'urea', 'creatinine', 'lft_remark']
         },
         {
             'model': SpecialTestsResult,

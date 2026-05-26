@@ -68,7 +68,23 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           });
           // Handle both old (list) and new (paginated) formats for safety
           const results = res.data.results || (Array.isArray(res.data) ? res.data : []);
-          setSearchResults(results);
+          // Sort by relevance: exact > prefix > contains
+          const q = searchId.toLowerCase().trim();
+          const sorted = [...results].sort((a, b) => {
+            const scoreFields = (p: any) => {
+              const fields = [
+                (p.staff_id || '').toLowerCase(),
+                (p.first_name || '').toLowerCase(),
+                (p.last_name || '').toLowerCase(),
+                (p.patient_id || '').toLowerCase(),
+              ];
+              for (const f of fields) { if (f === q) return 0; }
+              for (const f of fields) { if (f.startsWith(q)) return 1; }
+              return 2;
+            };
+            return scoreFields(a) - scoreFields(b);
+          });
+          setSearchResults(sorted);
         } catch (err) {
           console.error("Patient search failed:", err);
         }
@@ -216,8 +232,16 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
                   >
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-3">
-                        <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${isActive ? activeAvatarBg : `${currentTheme.avatarBg} ${currentTheme.avatarText}`}`}>
-                          {p.first_name[0]}{p.last_name[0]}
+                        <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden font-black group-hover:scale-110 transition-transform ${isActive ? activeAvatarBg : `${currentTheme.avatarBg} ${currentTheme.avatarText}`}`}>
+                          {p.passport_image ? (
+                            <img 
+                              src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                              alt="Avatar" 
+                              className="w-full h-full object-cover" 
+                            />
+                          ) : (
+                            <>{p.first_name[0]}{p.last_name[0]}</>
+                          )}
                         </div>
                         <div className="text-left">
                           <p className={`font-bold capitalize ${isActive ? activeText : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>

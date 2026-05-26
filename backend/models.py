@@ -410,6 +410,7 @@ class BioData(db.Model):
     email = db.Column(db.String(100))
     race = db.Column(db.String(50))
     nationality = db.Column(db.String(100))
+    passport_image = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
 class ScreeningYearBioData(db.Model):
@@ -521,8 +522,6 @@ class KFTResult(db.Model):
     chloride = db.Column(db.String(20))
     bicarbonate_ca = db.Column(db.String(20))
     hco3 = db.Column(db.String(20))
-    urea = db.Column(db.String(20))
-    creatinine = db.Column(db.String(20))
     kft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
@@ -550,6 +549,8 @@ class LFTResult(db.Model):
     alp = db.Column(db.String(20))
     tb = db.Column(db.String(20))
     cb = db.Column(db.String(20))
+    urea = db.Column(db.String(20))
+    creatinine = db.Column(db.String(20))
     lft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)

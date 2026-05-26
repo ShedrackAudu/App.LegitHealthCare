@@ -6,7 +6,7 @@ import json
 from dotenv import load_dotenv
 
 from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies
-from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog, Role, Permission
 from extensions import mail, jwt, limiter, socketio
 from auth_utils import generate_otp, send_otp_email, is_password_strong
 from utils.ip import get_client_ip

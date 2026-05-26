@@ -25,7 +25,7 @@ def calculate_report_progress(staff_id, year, engine):
                     COALESCE(d.overall_lab_remark, c.overall_lab_remark) as overall_lab_remark, 
                     COALESCE(d.breast_exam, c.breast_exam) as breast_exam,
                     f.pcv, f.wbc, f.lymp_percent, f.gra_percent, f.mid_percent, f.plt, f.fbc_remark,
-                    k.potassium, k.sodium, k.chloride, k.hco3, k.urea, k.creatinine, k.kft_remark,
+                    k.potassium, k.sodium, k.chloride, k.hco3, lf.urea, lf.creatinine, k.kft_remark,
                     li.total_cholesterol, li.triglycerides, li.hdl, li.ldl, li.lp_remark,
                     lf.ast, lf.alt, lf.alp, lf.tb, lf.cb, lf.lft_remark,
                     s.ecg_result, s.spirometry_result, s.audiometry_result,
@@ -85,8 +85,8 @@ def calculate_report_progress(staff_id, year, engine):
             points += check_val(row[21], "Sodium", "KFT")
             points += check_val(row[22], "Chloride", "KFT")
             points += check_val(row[23], "Bicarbonate", "KFT")
-            points += check_val(row[24], "Urea", "KFT")
-            points += check_val(row[25], "Creatinine", "KFT")
+            points += check_val(row[24], "Urea", "LFT")
+            points += check_val(row[25], "Creatinine", "LFT")
             points += check_val(row[26], "KFT Remark", "KFT")
 
             # Lipid

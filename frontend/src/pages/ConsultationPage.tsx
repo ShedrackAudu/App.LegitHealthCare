@@ -504,8 +504,22 @@ const ConsultationPage: React.FC = () => {
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 mt-8">
             <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02]">
-              <CardContent className="p-4 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                {/* Passport Avatar */}
+                <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                  {patient.passport_image ? (
+                    <img 
+                      src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                      alt="Passport" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-8 w-8 text-primary/40" />
+                  )}
+                </div>
+
+                {/* Bio Grid */}
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
                   <div className="lg:col-span-2">
                     <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
@@ -513,7 +527,7 @@ const ConsultationPage: React.FC = () => {
                   <PatientInfo label="AGE" value={`${patient.age} Yrs`} />
                   <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <PatientInfo label="GENDER" value={patient.gender} />
-                  <div className="col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
+                  <div className="col-span-full lg:col-span-1 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
                     <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
                   </div>
                 </div>
@@ -565,7 +579,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
                         </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                       </div>
                     </div>
 

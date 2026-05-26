@@ -27,6 +27,10 @@ def get_screening_patient(year, staff_id):
     if not record:
         return jsonify({"error": "Patient not registered for this screening year"}), 404
         
+    from models import BioData
+    patient = BioData.query.filter_by(staff_id=record.staff_id).first()
+    passport_image = patient.passport_image if patient else None
+
     data = {
         "staff_id": record.staff_id,
         "patient_id": record.patient_id,
@@ -35,6 +39,7 @@ def get_screening_patient(year, staff_id):
         "department": record.department,
         "gender": record.gender,
         "age": record.age,
+        "passport_image": passport_image,
         "consultation": None
     }
     

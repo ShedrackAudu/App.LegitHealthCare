@@ -611,10 +611,10 @@ def export_screening_matrix():
                 "LYMP PCT": "", "LYMP ABS": "", "GRA PCT": "", "GRA ABS": "", 
                 "MID PCT": "", "MID ABS": "", "MCV": "", "MCH": "", "MCHC": "", 
                 "RDW": "", "PDW": "", "FBC Remark": "",
-                "Potassium": "", "Sodium": "", "Chloride": "", "Urea": "", 
-                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "",
+                "Potassium": "", "Sodium": "", "Chloride": "", 
+                "Calcium": "", "HCO3": "", "KFT Remark": "",
                 "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "",
-                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "",
+                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "Urea": "", "Creatinine": "", "LFT Remark": "",
                 "ECG": "", "ECG Remark": "", "Spirometry": "", "Spirometry Remark": "", 
                 "Audiometry": "", "Audiometry Remark": "", "Weight": "", "Height": "",
                 "Director Comm1": "", "Director Comm2": "", "Director Comm3": "", "Director Comm4": "", 
@@ -638,7 +638,7 @@ def export_screening_matrix():
                 
             k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if k:
-                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
+                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Calcium": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
             li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if li:
@@ -646,7 +646,7 @@ def export_screening_matrix():
                 
             lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if lf:
-                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark })
+                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "Urea": lf.urea, "Creatinine": lf.creatinine, "LFT Remark": lf.lft_remark })
                 
             s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if s:

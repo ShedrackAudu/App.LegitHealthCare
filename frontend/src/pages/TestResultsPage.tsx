@@ -175,7 +175,24 @@ const TestResultsPage: React.FC = () => {
                     const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true${searchByPid ? '&search_type=pid' : ''}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
-                    setSearchResults(res.data.results || []);
+                    const rawResults = res.data.results || [];
+                    // Sort by relevance: exact > prefix > contains
+                    const q = searchId.toLowerCase().trim();
+                    const sorted = [...rawResults].sort((a: any, b: any) => {
+                        const scoreFields = (p: any) => {
+                            const fields = [
+                                (p.staff_id || '').toLowerCase(),
+                                (p.first_name || '').toLowerCase(),
+                                (p.last_name || '').toLowerCase(),
+                                (p.patient_id || '').toLowerCase(),
+                            ];
+                            for (const f of fields) { if (f === q) return 0; }
+                            for (const f of fields) { if (f.startsWith(q)) return 1; }
+                            return 2;
+                        };
+                        return scoreFields(a) - scoreFields(b);
+                    });
+                    setSearchResults(sorted);
                 } catch (err) {
                     console.error(err);
                 }
@@ -442,8 +459,16 @@ const TestResultsPage: React.FC = () => {
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
-                                                                        {p.first_name[0]}{p.last_name[0]}
+                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
+                                                                        {p.passport_image ? (
+                                                                            <img 
+                                                                                src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                                                                                alt="Avatar" 
+                                                                                className="w-full h-full object-cover" 
+                                                                            />
+                                                                        ) : (
+                                                                            <>{p.first_name[0]}{p.last_name[0]}</>
+                                                                        )}
                                                                     </div>
                                                                     <div>
                                                                         <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
@@ -670,11 +695,11 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
         },
         kft: {
             title: "Kidney Function Test",
-            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "Urea", "Creatinine", "REMARK"]
+            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "REMARK"]
         },
         lft: {
             title: "Liver Function Test",
-            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "REMARK"]
+            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "Urea", "Creatinine", "REMARK"]
         },
         lipid: {
             title: "Lipid Profile",
@@ -1017,10 +1042,8 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto) <span className="text-rose-500">*</span></Label><Input {...register('hco3', { required: true })} type="number" step="any" className="font-bold text-primary" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CALCIUM - CA</Label><Input {...register('bicarbonate_ca')} type="number" step="any" placeholder="0.00" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
@@ -1091,6 +1114,8 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>

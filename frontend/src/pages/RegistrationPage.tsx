@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
@@ -15,8 +15,16 @@ import {
   ArrowLeft,
   X,
   Trash2,
-  ChevronRight
+  ChevronRight,
+  Camera,
+  Upload,
+  Eye,
+  Video,
+  ImagePlus,
+  SwitchCamera,
+  CircleDot
 } from 'lucide-react';
+import api from '@/lib/api';
 import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -58,6 +66,7 @@ const RegistrationPage: React.FC = () => {
     email: z.string().email('Invalid email').optional().or(z.literal('')),
     race: z.string().min(1, 'Race is required'),
     nationality: z.string().min(1, 'Nationality is required'),
+    passport_image: z.string().optional(),
   });
 
   type RegistrationValues = z.infer<typeof registrationSchema>;
@@ -70,6 +79,87 @@ const RegistrationPage: React.FC = () => {
   const [nationalities, setNationalities] = useState<string[]>([]);
   const [searchResults, setSearchResults] = useState<any[]>([]);
   const [isClearDialogOpen, setIsClearDialogOpen] = useState(false);
+  const [passportFile, setPassportFile] = useState<File | null>(null);
+  const [passportPreview, setPassportPreview] = useState<string>('');
+  const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
+  const [isCameraOpen, setIsCameraOpen] = useState(false);
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [cameraReady, setCameraReady] = useState(false);
+  const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const streamRef = useRef<MediaStream | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Stop camera stream helper
+  const stopCamera = useCallback(() => {
+    if (streamRef.current) {
+      streamRef.current.getTracks().forEach(track => track.stop());
+      streamRef.current = null;
+    }
+    setCameraReady(false);
+  }, []);
+
+  // Start camera stream
+  const startCamera = useCallback(async () => {
+    setCapturedImage(null);
+    setCameraReady(false);
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({
+        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: 'user' }
+      });
+      streamRef.current = stream;
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          videoRef.current?.play();
+          setCameraReady(true);
+        };
+      }
+    } catch (err) {
+      toast.error('Camera access denied or unavailable');
+      setIsCameraOpen(false);
+    }
+  }, []);
+
+  // Capture photo from video stream
+  const capturePhoto = useCallback(() => {
+    if (!videoRef.current || !canvasRef.current) return;
+    const video = videoRef.current;
+    const canvas = canvasRef.current;
+    const size = Math.min(video.videoWidth, video.videoHeight);
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+    // Center-crop to square
+    const sx = (video.videoWidth - size) / 2;
+    const sy = (video.videoHeight - size) / 2;
+    ctx.drawImage(video, sx, sy, size, size, 0, 0, size, size);
+    const dataUrl = canvas.toDataURL('image/jpeg', 0.92);
+    setCapturedImage(dataUrl);
+    stopCamera();
+  }, [stopCamera]);
+
+  // Use captured photo
+  const useCapturedPhoto = useCallback(() => {
+    if (!capturedImage) return;
+    // Convert data URL to File
+    fetch(capturedImage)
+      .then(res => res.blob())
+      .then(blob => {
+        const file = new File([blob], 'passport-capture.jpg', { type: 'image/jpeg' });
+        setPassportFile(file);
+        setPassportPreview(capturedImage);
+        setCapturedImage(null);
+        setIsCameraOpen(false);
+      });
+  }, [capturedImage]);
+
+  // Cleanup camera on unmount
+  useEffect(() => {
+    return () => { stopCamera(); };
+  }, [stopCamera]);
 
   const { register, handleSubmit, watch, setValue, control, reset, formState: { errors } } = useForm<RegistrationValues>({
     resolver: zodResolver(registrationSchema),
@@ -96,6 +186,13 @@ const RegistrationPage: React.FC = () => {
             const [y, m, d] = p.dob.split('-');
             p.dob = `${d}/${m}/${y}`;
           }
+
+          if (p.passport_image) {
+            setPassportPreview(p.passport_image);
+          } else {
+            setPassportPreview('');
+          }
+          setPassportFile(null);
 
           reset(p);
         } catch (err) {
@@ -158,10 +255,13 @@ const RegistrationPage: React.FC = () => {
       phone: '',
       email: '',
       race: '',
-      nationality: ''
+      nationality: '',
+      passport_image: ''
     });
     setSearchId('');
     setSearchResults([]);
+    setPassportPreview('');
+    setPassportFile(null);
   };
 
   useEffect(() => {
@@ -198,7 +298,24 @@ const RegistrationPage: React.FC = () => {
           const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}`, {
             headers: { 'X-Company-Context': activeSection }
           });
-          setSearchResults(res.data.results || []);
+          const rawResults = res.data.results || [];
+          // Sort by relevance: exact > prefix > contains
+          const q = searchId.toLowerCase().trim();
+          const sorted = [...rawResults].sort((a: any, b: any) => {
+            const scoreFields = (p: any) => {
+              const fields = [
+                (p.staff_id || '').toLowerCase(),
+                (p.first_name || '').toLowerCase(),
+                (p.last_name || '').toLowerCase(),
+                (p.patient_id || '').toLowerCase(),
+              ];
+              for (const f of fields) { if (f === q) return 0; }
+              for (const f of fields) { if (f.startsWith(q)) return 1; }
+              return 2;
+            };
+            return scoreFields(a) - scoreFields(b);
+          });
+          setSearchResults(sorted);
         } catch (err) {
           console.error(err);
         }
@@ -226,6 +343,13 @@ const RegistrationPage: React.FC = () => {
         p.dob = `${d}/${m}/${y}`;
       }
 
+      if (p.passport_image) {
+        setPassportPreview(p.passport_image);
+      } else {
+        setPassportPreview('');
+      }
+      setPassportFile(null);
+
       reset(p);
       setSearchResults([]);
       toast.success(`Patient ${p.first_name} found and records retrieved.`);
@@ -242,6 +366,12 @@ const RegistrationPage: React.FC = () => {
       const [y, m, d] = p.dob.split('-');
       p.dob = `${d}/${m}/${y}`;
     }
+    if (p.passport_image) {
+      setPassportPreview(p.passport_image);
+    } else {
+      setPassportPreview('');
+    }
+    setPassportFile(null);
     setIsSelecting(true);
     reset(p);
     setSearchId(''); // Clear the search field immediately
@@ -258,10 +388,31 @@ const RegistrationPage: React.FC = () => {
         formattedDob = `${y}-${m}-${d}`;
       }
 
+      let passportUrl = data.passport_image || '';
+      if (passportFile) {
+        toast.loading("Uploading passport image...", { id: "passportUpload" });
+        const formData = new FormData();
+        formData.append('file', passportFile);
+        const uploadRes = await api.post('/api/patients/upload-passport', formData, {
+          headers: { 
+            'Content-Type': 'multipart/form-data',
+            'X-Company-Context': activeSection
+          }
+        });
+        passportUrl = uploadRes.data.passport_image;
+        toast.dismiss("passportUpload");
+      } else if (!passportPreview) {
+        // If preview was cleared, make sure it is cleared in DB too
+        passportUrl = '';
+      } else {
+        passportUrl = passportPreview;
+      }
+
       if (isEditMode) {
         await axios.put(`/api/patients/${editStaffId}`, {
           ...data,
           dob: formattedDob,
+          passport_image: passportUrl,
           screening_year: activeYear
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -272,6 +423,7 @@ const RegistrationPage: React.FC = () => {
         await axios.post('/register-patient', {
           ...data,
           dob: formattedDob,
+          passport_image: passportUrl,
           screening_year: Number(activeYear)
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -387,8 +539,16 @@ const RegistrationPage: React.FC = () => {
                         >
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-3">
-                              <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
-                                {p.first_name[0]}{p.last_name[0]}
+                              <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
+                                {p.passport_image ? (
+                                  <img 
+                                    src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                                    alt="Avatar" 
+                                    className="w-full h-full object-cover" 
+                                  />
+                                ) : (
+                                  <>{p.first_name[0]}{p.last_name[0]}</>
+                                )}
                               </div>
                               <div>
                                 <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
@@ -471,8 +631,8 @@ const RegistrationPage: React.FC = () => {
           </CardHeader>
           <CardContent className="p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
-              {/* Row 1: IDs */}
-              <div className="grid grid-cols-2 gap-3 sm:gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6">
+              {/* Row 1: IDs & Passport Image */}
+              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
                 <div className="space-y-2">
                   <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
                   <Input
@@ -505,6 +665,72 @@ const RegistrationPage: React.FC = () => {
                     }}
                   />
                   {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
+                </div>
+
+                {/* Passport Photo Uploader */}
+                <div className="flex flex-col items-center md:items-end justify-center space-y-2 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6 border-primary/10">
+                  <div 
+                    className="relative group w-20 h-20 rounded-2xl border-2 border-dashed border-primary/30 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
+                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                  >
+                    {passportPreview ? (
+                      <>
+                        <img 
+                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                          alt="Passport Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
+                              title="Preview"
+                            >
+                              <Eye className="text-white h-3 w-3" />
+                            </button>
+                            <button
+                              type="button"
+                              className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                              title="Change photo"
+                            >
+                              <Camera className="text-white h-3 w-3" />
+                            </button>
+                          </div>
+                          <button
+                            type="button"
+                            className="p-1 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
+                            onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                            title="Remove photo"
+                          >
+                            <Trash2 className="text-white h-2.5 w-2.5" />
+                          </button>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
+                        <ImagePlus className="h-4 w-4 mb-1" />
+                        <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
+                      </div>
+                    )}
+                  </div>
+                  {/* Hidden file input */}
+                  <input 
+                    ref={fileInputRef}
+                    type="file" 
+                    accept="image/*" 
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setPassportFile(file);
+                        setPassportPreview(URL.createObjectURL(file));
+                      }
+                      if (e.target) e.target.value = '';
+                    }}
+                  />
                 </div>
               </div>
 
@@ -698,6 +924,209 @@ const RegistrationPage: React.FC = () => {
                 className="flex-1 font-black h-11 active:scale-95 transition-all px-8"
             >
               Yes, Clear Form
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Photo Source Chooser Dialog */}
+      <Dialog open={isSourceDialogOpen} onOpenChange={setIsSourceDialogOpen}>
+        <DialogContent className="sm:max-w-xs p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+          <div className="p-6 pb-2">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-black tracking-tight text-center">Choose Photo Source</DialogTitle>
+              <DialogDescription className="text-center text-sm text-muted-foreground">Select how you'd like to add a passport photo</DialogDescription>
+            </DialogHeader>
+          </div>
+          <div className="flex flex-col gap-2 px-6 pb-6">
+            <button
+              type="button"
+              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group text-left"
+              onClick={() => {
+                setIsSourceDialogOpen(false);
+                fileInputRef.current?.click();
+              }}
+            >
+              <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors">
+                <Upload className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">Upload File</p>
+                <p className="text-xs text-muted-foreground">Choose from your device</p>
+              </div>
+              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
+            <button
+              type="button"
+              className="flex items-center gap-4 p-4 rounded-xl border border-border hover:border-primary hover:bg-primary/5 transition-all group text-left"
+              onClick={() => {
+                setIsSourceDialogOpen(false);
+                setIsCameraOpen(true);
+              }}
+            >
+              <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
+                <Camera className="h-5 w-5" />
+              </div>
+              <div>
+                <p className="font-bold text-sm">Use Camera</p>
+                <p className="text-xs text-muted-foreground">Capture with webcam</p>
+              </div>
+              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Camera Capture Dialog */}
+      <Dialog open={isCameraOpen} onOpenChange={(open) => { if (!open) { stopCamera(); setCapturedImage(null); } setIsCameraOpen(open); }}>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
+          <div className="p-4 pb-2">
+            <DialogHeader>
+              <DialogTitle className="text-lg font-black tracking-tight text-center flex items-center justify-center gap-2">
+                <Video className="h-5 w-5 text-emerald-500" />
+                Camera Capture
+              </DialogTitle>
+              <DialogDescription className="text-center text-sm text-muted-foreground">Position your face in the frame and capture</DialogDescription>
+            </DialogHeader>
+          </div>
+
+          <div className="relative bg-black mx-4 rounded-xl overflow-hidden aspect-square">
+            {!capturedImage ? (
+              <>
+                <video
+                  ref={videoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover mirror"
+                  style={{ transform: 'scaleX(-1)' }}
+                  onLoadedMetadata={() => { videoRef.current?.play(); setCameraReady(true); }}
+                />
+                {!cameraReady && (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-3">
+                    <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+                    <span className="text-sm font-medium">Starting camera...</span>
+                  </div>
+                )}
+                {/* Face guide overlay */}
+                {cameraReady && (
+                  <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                    <div className="w-48 h-48 rounded-full border-2 border-dashed border-white/40" />
+                  </div>
+                )}
+                {/* Live indicator */}
+                {cameraReady && (
+                  <div className="absolute top-3 left-3 flex items-center gap-1.5 bg-black/50 backdrop-blur-sm rounded-full px-2.5 py-1">
+                    <div className="w-2 h-2 rounded-full bg-red-500 animate-pulse" />
+                    <span className="text-[10px] font-bold text-white uppercase tracking-wider">Live</span>
+                  </div>
+                )}
+              </>
+            ) : (
+              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+            )}
+          </div>
+
+          {/* Hidden canvas for capture */}
+          <canvas ref={canvasRef} className="hidden" />
+
+          <div className="flex items-center justify-center gap-3 p-4">
+            {!capturedImage ? (
+              <>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="font-bold"
+                  onClick={() => { stopCamera(); setCapturedImage(null); setIsCameraOpen(false); }}
+                >
+                  Cancel
+                </Button>
+                {!cameraReady && (
+                  <Button
+                    type="button"
+                    size="sm"
+                    className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                    onClick={startCamera}
+                  >
+                    <Video className="h-4 w-4" />
+                    Start Camera
+                  </Button>
+                )}
+                {cameraReady && (
+                  <Button
+                    type="button"
+                    size="lg"
+                    className="font-black bg-white text-black hover:bg-gray-100 rounded-full w-14 h-14 p-0 shadow-lg border-4 border-emerald-500 active:scale-90 transition-transform"
+                    onClick={capturePhoto}
+                    title="Capture Photo"
+                  >
+                    <CircleDot className="h-6 w-6" />
+                  </Button>
+                )}
+              </>
+            ) : (
+              <>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  className="font-bold gap-2"
+                  onClick={() => { setCapturedImage(null); startCamera(); }}
+                >
+                  <SwitchCamera className="h-4 w-4" />
+                  Retake
+                </Button>
+                <Button
+                  type="button"
+                  size="sm"
+                  className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
+                  onClick={useCapturedPhoto}
+                >
+                  <Save className="h-4 w-4" />
+                  Use Photo
+                </Button>
+              </>
+            )}
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Full Image Preview Dialog */}
+      <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+        <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-2xl bg-black/95">
+          <DialogHeader className="sr-only">
+            <DialogTitle>Passport Photo Preview</DialogTitle>
+            <DialogDescription>Full size preview of the passport photograph</DialogDescription>
+          </DialogHeader>
+          {passportPreview && (
+            <div className="relative flex items-center justify-center p-4">
+              <img
+                src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`}
+                alt="Passport Full Preview"
+                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+              />
+            </div>
+          )}
+          <div className="flex items-center justify-center gap-3 p-4 bg-black/50">
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="font-bold gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white"
+              onClick={() => { setIsPreviewOpen(false); setIsSourceDialogOpen(true); }}
+            >
+              <Camera className="h-4 w-4" />
+              Change Photo
+            </Button>
+            <Button
+              type="button"
+              variant="ghost"
+              size="sm"
+              className="font-bold text-white hover:bg-white/10 hover:text-white"
+              onClick={() => setIsPreviewOpen(false)}
+            >
+              Close
             </Button>
           </div>
         </DialogContent>

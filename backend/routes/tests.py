@@ -214,8 +214,8 @@ def get_test_result(test_type, staff_id):
 def download_template(test_type):
     cols = {
         'fbc': ['PatientID', 'PCV', 'WBC', 'PLT', 'LYMPH_PERCENT', 'LYMPH_ABS', 'GRA_PERCENT', 'GRA_ABS', 'MID_PERCENT', 'MID_ABS', 'RBC', 'MCV', 'MCH', 'MCHC', 'RDW', 'PDW', 'HGB', 'REMARK'],
-        'kft': ['PatientID', 'Potassium', 'Sodium', 'Chloride', 'Bicarbonate', 'Urea', 'Creatinine', 'REMARK'],
-        'lft': ['PatientID', 'AST', 'ALT', 'ALP', 'TB', 'CB', 'REMARK'],
+        'kft': ['PatientID', 'Potassium', 'Sodium', 'Chloride', 'Calcium', 'REMARK'],
+        'lft': ['PatientID', 'AST', 'ALT', 'ALP', 'TB', 'CB', 'Urea', 'Creatinine', 'REMARK'],
         'lipid': ['PatientID', 'TotalCholesterol', 'Triglycerides', 'REMARK']
     }
     
@@ -284,11 +284,11 @@ def bulk_upload(test_type):
             },
             'kft': {
                 'POTASSIUM': 'potassium', 'SODIUM': 'sodium', 'CHLORIDE': 'chloride', 
-                'BICARBONATE': 'bicarbonate_ca', 'UREA': 'urea', 'CREATININE': 'creatinine', 
-                'REMARK': 'kft_remark'
+                'BICARBONATE': 'bicarbonate_ca', 'CALCIUM': 'bicarbonate_ca', 'REMARK': 'kft_remark'
             },
             'lft': {
-                'AST': 'ast', 'ALT': 'alt', 'ALP': 'alp', 'TB': 'tb', 'CB': 'cb', 'REMARK': 'lft_remark'
+                'AST': 'ast', 'ALT': 'alt', 'ALP': 'alp', 'TB': 'tb', 'CB': 'cb', 
+                'UREA': 'urea', 'CREATININE': 'creatinine', 'REMARK': 'lft_remark'
             },
             'lipid': {
                 'TOTALCHOLESTEROL': 'total_cholesterol', 'TRIGLYCERIDES': 'triglycerides', 'REMARK': 'lp_remark'

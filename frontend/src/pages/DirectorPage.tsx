@@ -9,7 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  User
 } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
@@ -252,8 +253,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
             <Card className="border-2 shadow-xl bg-card">
-                <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
+                <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Passport Avatar */}
+                    <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                        {patient.passport_image ? (
+                            <img 
+                                src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                                alt="Passport" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <User className="h-8 w-8 text-primary/40" />
+                        )}
+                    </div>
+
+                    {/* Bio Grid */}
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
                         <BioItem label="STAFF ID" value={patient.staff_id} />
                         <div className="col-span-1 lg:col-span-2">
                             <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
@@ -298,14 +313,24 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Urea, and Creatinine">
+                <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Chloride, and Calcium">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'BICARBONATE_CA', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
-                            <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
-                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
-                            </div>
-                        ))}
+                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'BICARBONATE_CA', 'KFT_REMARK'].map(f => {
+                            const isOptional = ['BICARBONATE_CA', 'KFT_REMARK'].includes(f);
+                            const displayName = f === 'BICARBONATE_CA' ? 'CALCIUM CA' : f.replace('_', ' ');
+                            return (
+                                <div key={f} className="space-y-1">
+                                    <Label className="text-xs whitespace-nowrap truncate block">
+                                        {displayName} {!isOptional && <span className="text-red-500">*</span>}
+                                    </Label>
+                                    <Input 
+                                        {...register(f.toLowerCase(), isOptional ? {} : { required: true })} 
+                                        className="h-9 text-sm font-mono" 
+                                        required={!isOptional} 
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </AccordionSection>
 
@@ -320,9 +345,9 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Liver Function Test" description="AST, ALT, ALP, and Bilirubin">
+                <AccordionSection title="Liver Function Test" description="AST, ALT, ALP, Bilirubin, Urea, and Creatinine">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-                        {['AST', 'ALT', 'ALP', 'TB', 'CB', 'LFT_REMARK'].map(f => (
+                        {['AST', 'ALT', 'ALP', 'TB', 'CB', 'UREA', 'CREATININE', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
                                 <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
@@ -417,7 +442,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
-                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
                                 <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />

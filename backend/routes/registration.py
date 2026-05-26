@@ -75,8 +75,40 @@ def get_patient(staff_id):
         "phone": patient.phone,
         "email": patient.email,
         "race": patient.race,
-        "nationality": patient.nationality
+        "nationality": patient.nationality,
+        "passport_image": patient.passport_image
     }), 200
+
+@registration_bp.route('/api/patients/upload-passport', methods=['POST'])
+@require_permission('registration')
+def upload_passport():
+    if 'file' not in request.files:
+        return jsonify({"error": "No file part"}), 400
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "No selected file"}), 400
+    
+    allowed_extensions = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+    ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+    if ext not in allowed_extensions:
+        return jsonify({"error": "Invalid file type. Only images (PNG, JPG, JPEG, GIF, WEBP) are allowed."}), 400
+        
+    import os
+    import uuid
+    from flask import current_app
+    from werkzeug.utils import secure_filename
+    
+    filename = secure_filename(file.filename)
+    unique_filename = f"{uuid.uuid4().hex}_{filename}"
+    
+    upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'passports')
+    os.makedirs(upload_folder, exist_ok=True)
+    
+    file_path = os.path.join(upload_folder, unique_filename)
+    file.save(file_path)
+    
+    relative_url = f"/static/uploads/passports/{unique_filename}"
+    return jsonify({"passport_image": relative_url}), 200
 
 @registration_bp.route('/register-patient', methods=['POST'])
 @require_permission('registration')
@@ -132,6 +164,8 @@ def register_patient():
         patient.email = data.get('email')
         patient.race = data.get('race')
         patient.nationality = data.get('nationality')
+        if 'passport_image' in data:
+            patient.passport_image = data.get('passport_image')
 
         # 2. Link to Screening Year
         # Flush to ensure BioData is available for FK constraint in some DBs
