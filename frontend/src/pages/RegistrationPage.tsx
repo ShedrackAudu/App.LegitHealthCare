@@ -630,7 +630,11 @@ const RegistrationPage: React.FC = () => {
             </CardTitle>
           </CardHeader>
           <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+            <form onSubmit={handleSubmit(onSubmit, (errs) => {
+              console.error("Form validation errors:", errs);
+              const fields = Object.keys(errs).map(f => f.replace('_', ' ')).join(', ');
+              toast.error(`Please fill or correct the following fields: ${fields}`);
+            })} className="space-y-6">
               {/* Row 1: IDs & Passport Image */}
               <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
                 {/* Passport Photo Uploader */}
