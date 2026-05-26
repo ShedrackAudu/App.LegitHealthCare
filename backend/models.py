@@ -751,6 +751,15 @@ class AuditLog(db.Model):
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
+    def __init__(self, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        if user_id is not None:
+            try:
+                kwargs['user_id'] = int(user_id)
+            except (ValueError, TypeError):
+                kwargs['user_id'] = None
+        super().__init__(*args, **kwargs)
+
     @classmethod
     def log_action(cls, action, resource=None, details=None, user_id=None, ip_address=None, commit=False):
         """
