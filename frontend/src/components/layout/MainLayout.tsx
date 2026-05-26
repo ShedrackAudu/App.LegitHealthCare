@@ -54,7 +54,7 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
       <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 ${getColors()}`}>
         <div className="flex items-center gap-1.5 shrink-0 bg-black/15 px-2 py-0.5 rounded border border-white/10 z-10">
           {getIcon()}
-          <span className="uppercase tracking-widest text-[9px] font-black opacity-90">Announcement:</span>
+          <span className="uppercase tracking-widest text-[9px] font-black opacity-90">Alert:</span>
         </div>
         <div className="flex-1 overflow-hidden relative w-full flex items-center h-full">
           <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold">
