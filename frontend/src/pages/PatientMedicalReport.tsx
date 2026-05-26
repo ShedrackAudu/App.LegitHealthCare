@@ -307,13 +307,13 @@ const PatientMedicalReport: React.FC = () => {
                             </div>
                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
                                 <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
-                                    <Printer className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Print
+                                    <Printer className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
-                                    <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Download
+                                    <Download className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Download</span>
                                 </Button>
-                                <Button className="w-full md:w-auto rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
-                                    <Mail className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Email Report
+                                <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
+                                    <Mail className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
                                 </Button>
                             </div>
                         </div>

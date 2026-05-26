@@ -250,13 +250,13 @@ const PatientReportPage: React.FC = () => {
                         </div>
                         <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto">
                             <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 text-xs sm:text-sm" onClick={handlePrint}>
-                                <Printer className="mr-2 h-4 w-4" /> Print Report
+                                <Printer className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Print Report</span>
                             </Button>
                             <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-xs sm:text-sm" variant="outline" onClick={handleDownloadPDF}>
-                                <Download className="mr-2 h-4 w-4" /> Download PDF
+                                <Download className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Download PDF</span>
                             </Button>
-                            <Button className="w-full md:w-auto rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 bg-indigo-600 text-white hover:bg-indigo-700 text-xs sm:text-sm" onClick={handleEmailPDF}>
-                                <Mail className="mr-2 h-4 w-4" /> Email Patient
+                            <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 bg-indigo-600 text-white hover:bg-indigo-700 text-xs sm:text-sm" onClick={handleEmailPDF}>
+                                <Mail className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Email Patient</span>
                             </Button>
                         </div>
                     </div>
