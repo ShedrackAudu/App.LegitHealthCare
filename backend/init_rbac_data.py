@@ -9,6 +9,7 @@ def init_rbac(app):
             ('consultation', 'Access to clinical consultation'),
             ('delete_patient', 'Permission to permanently remove a patient account'),
             ('delete_record', 'Permission to delete screening results from matrix'),
+            ('delete_from_queue', 'Permission to delete/remove a patient from department queue'),
             ('director_review', 'Access to director level review'),
             ('download_data', 'Export system data to Excel'),
             ('edit_patient', 'Permission to modify patient bio-data'),
@@ -88,21 +89,6 @@ def init_rbac(app):
         
         admin_role.permissions = list(perm_objs.values())
         print("Synced all permissions to Admin")
-
-        # Inventory Manager role
-        inventory_manager_role = Role.query.filter_by(name='Inventory Manager').first()
-        if not inventory_manager_role:
-            inventory_manager_role = Role(name='Inventory Manager', description='Staff responsible for inventory and supplies.')
-            db.session.add(inventory_manager_role)
-            print("Created Role: Inventory Manager")
-        
-        inventory_manager_role.permissions = [
-            perm_objs['view_dashboard'],
-            perm_objs['view_inventory'],
-            perm_objs['manage_inventory'],
-            perm_objs['adjust_stock'],
-            perm_objs['messaging']
-        ]
 
         db.session.commit()
 

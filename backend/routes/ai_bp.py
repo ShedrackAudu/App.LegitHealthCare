@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult
+from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, AuditLog
 from openai import OpenAI
 from decorators import require_permission
 import json
@@ -78,6 +78,7 @@ def update_settings():
         settings.sample_comments = json.dumps(data.get('sample_comments', []))
         
         db.session.commit()
+        AuditLog.log_action("Update AI Settings", resource=f"AISettings:{settings.id}", details={"model_selection": settings.model_selection})
         return jsonify({"message": "AI settings updated successfully and persisted to .env"}), 200
     except Exception as e:
         db.session.rollback()
@@ -130,15 +131,15 @@ def generate_overview():
             "Consultation:chest_status": ("Chest Status", consultation.chest_status),
             "Consultation:psa": ("PSA", f"{consultation.psa} (Remark: {consultation.psa_remark})"),
             "Consultation:sugar": ("Blood Sugar", f"FBS: {consultation.fbs}, RBS: {consultation.rbs} (Remark: {consultation.sugar_remark})"),
-            "Consultation:urinalysis": ("Urinalysis", f"Result: {consultation.ua_result} (Remark: {consultation.ua_remark})"),
+            "Consultation:urinalysis": ("Urinalysis", f"Result: {consultation.ua_result} (Remark: {consultation.ua_remark}, Others: {consultation.ua_remark_others})"),
             "Consultation:dm_status": ("Diabetes Status", consultation.dm_status),
             "Consultation:htn_status": ("Hypertension Status", consultation.htn_status),
             "Consultation:bp": ("Blood Pressure", consultation.bp),
             "Consultation:pulse": ("Pulse Rate", consultation.pulse),
             "Consultation:spo2": ("SPO2", consultation.spo2),
             "Consultation:hs_status": ("Heart Sounds", consultation.hs_status),
-            "Consultation:breast": ("Breast Exam", f"{consultation.breast_exam} (Remark: {consultation.breast_remark})"),
-            "Consultation:abdomen": ("Abdomen", consultation.abdomen),
+            "Consultation:breast": ("Breast Exam", f"{consultation.breast_exam} (Remark: {consultation.breast_remark}, Others: {consultation.breast_others})"),
+            "Consultation:abdomen": ("Abdomen", f"{consultation.abdomen} (Others: {consultation.abdomen_others})"),
             "Consultation:hx_pe": ("H&P Assessment", consultation.assessment_hx_pe),
             "Consultation:other_assessments": ("Other Assessments", consultation.other_assessments),
             "Consultation:overall_lab": ("Overall Lab Remark", consultation.overall_lab_remark),
@@ -166,14 +167,14 @@ def generate_overview():
             kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if kft:
                 context_parts.append(f"--- KFT Results ---")
-                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}, Urea: {kft.urea}, Creatinine: {kft.creatinine}")
+                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}")
                 context_parts.append(f"Remark: {kft.kft_remark}")
 
         if "LFT" in selected_params:
             lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if lft:
                 context_parts.append(f"--- LFT Results ---")
-                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}")
+                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}, Urea: {lft.urea}, Creatinine: {lft.creatinine}")
                 context_parts.append(f"Remark: {lft.lft_remark}")
 
         if "Lipid Profile" in selected_params:

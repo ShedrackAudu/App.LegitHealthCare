@@ -81,7 +81,7 @@ const ReportVerificationPage: React.FC = () => {
                             animate={{ opacity: 1, y: 0 }}
                             transition={{ type: 'spring', damping: 25, stiffness: 200 }}
                         >
-                            <Card className="border-border/50 shadow-[0_32px_64px_-16px_rgba(0,0,0,0.1)] overflow-hidden bg-card/50 backdrop-blur-xl">
+                            <Card className="border-border/50 overflow-hidden bg-card/50 backdrop-blur-xl">
                                 {/* Integrated Brand Header */}
                                 <div className="px-5 pt-5 pb-3 flex items-center justify-between border-b border-border/10">
                                     {branding?.logo_light ? (

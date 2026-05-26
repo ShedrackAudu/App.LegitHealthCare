@@ -46,6 +46,20 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
+  const getFileUrl = useCallback((path: string) => {
+    if (!path) return '';
+    const token = localStorage.getItem('token');
+    if (!token) return path;
+    const baseUrl = path.startsWith('http://') || path.startsWith('https://') 
+      ? '' 
+      : ((window as any).API_BASE_URL || '');
+    const separator = path.includes('?') ? '&' : '?';
+    // Include company context so browser-initiated requests (iframe/img/a)
+    // can route to the correct tenant database without custom headers
+    const company = axios.defaults.headers.common['X-Company-Context'] || localStorage.getItem('activeSection') || '';
+    return `${baseUrl}${path}${separator}jwt=${token}&company=${company}`;
+  }, []);
+
   const fetchFiles = async () => {
     if (!staffId || !year) return;
     setLoading(true);
@@ -260,7 +274,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                   </div>
                   <div className={cn("flex items-center gap-0.5 shrink-0 ml-2", !compact && "lg:opacity-0 lg:group-hover:opacity-100 transition-opacity")}>
                     {allowDownload && (
-                     <a href={file.file_path} download={file.filename} onClick={(e) => e.stopPropagation()}>
+                     <a href={getFileUrl(file.file_path)} download={file.filename} onClick={(e) => e.stopPropagation()}>
                        <Button 
                          type="button"
                          size="icon" 
@@ -287,7 +301,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                       <Eye className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
                     </Button>
                     {compact && (
-                      <a href={file.file_path} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                      <a href={getFileUrl(file.file_path)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
                         <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-muted" title="Open in New Tab">
                           <ExternalLink className="h-2.5 w-2.5" />
                         </Button>
@@ -347,7 +361,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             </div>
             <div className="flex items-center gap-2">
             {allowDownload && (
-                 <a href={selectedFile?.file_path} download={selectedFile?.filename} className="w-full sm:w-auto">
+                 <a href={getFileUrl(selectedFile?.file_path)} download={selectedFile?.filename} className="w-full sm:w-auto">
                    <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 h-8 text-[9px] sm:text-[10px] font-black uppercase border-2 shadow-sm bg-background/50">
                      <Download className="h-3 w-3 text-primary" /> Download Report
                    </Button>
@@ -355,17 +369,17 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             )}
             </div>
           </DialogHeader>
-          <div className="flex-1 w-full bg-zinc-800 relative flex items-center justify-center overflow-auto">
+          <div className="flex-1 w-full bg-zinc-800 dark:bg-black relative flex items-center justify-center overflow-auto">
             {selectedFile && (
               selectedFile.filename.toLowerCase().endsWith('.pdf') ? (
                 <iframe 
-                  src={`${selectedFile.file_path}#toolbar=0&navpanes=0`} 
+                  src={`${getFileUrl(selectedFile.file_path)}#toolbar=0&navpanes=0`} 
                   className="w-full h-full border-none bg-white"
                   title="PDF Viewer"
                 />
               ) : (
                 <img 
-                  src={selectedFile.file_path} 
+                  src={getFileUrl(selectedFile.file_path)} 
                   alt="Preview" 
                   className="max-w-full max-h-full object-contain shadow-2xl"
                 />

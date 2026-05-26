@@ -102,11 +102,11 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                 <div className="relative group">
                     <div className="absolute -inset-1 bg-background rounded-full shadow-lg" />
                     <div className="relative h-20 w-20 sm:h-28 sm:w-28 rounded-full bg-secondary flex items-center justify-center border-4 border-background overflow-hidden shadow-2xl">
-                        {branding?.logo_light ? (
+                        {patient.passport_image ? (
                             <img 
-                                src={branding.logo_light} 
-                                alt="Clinic" 
-                                className="w-14 h-14 sm:w-18 sm:h-18 object-contain p-2" 
+                                src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                                alt={`${patient.first_name} ${patient.last_name}`} 
+                                className="w-full h-full object-cover" 
                             />
                         ) : (
                             <div className="text-2xl sm:text-3xl font-black text-primary uppercase">
@@ -116,7 +116,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                     </div>
                     {/* Active Status Dot */}
                     <div className="absolute bottom-1 right-1 sm:bottom-2 right-2 w-4 h-4 sm:w-5 sm:h-5 bg-background rounded-full p-0.5 shadow-lg">
-                        <div className="w-full h-full bg-primary rounded-full animate-pulse shadow-[0_0_10px_rgba(16,185,129,0.5)]" />
+                        <div className="w-full h-full bg-primary rounded-full animate-pulse" />
                     </div>
                 </div>
               </div>

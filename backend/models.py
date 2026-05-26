@@ -4,7 +4,7 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 import json
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, validates
 
 class RoutingSession(Session):
     def __init__(self, *args, **kwargs):
@@ -47,6 +47,10 @@ class RoutingSession(Session):
             # 2. Check for dynamic context (e.g., 'X-Company-Context' header)
             if request:
                 context = request.headers.get('X-Company-Context', '').lower()
+                # Fallback to query parameter for browser-initiated requests
+                # (iframe, img, a tags cannot send custom headers)
+                if not context:
+                    context = request.args.get('company', '').lower()
                 if context in _db.engines:
                     return _db.engines[context]
         except:
@@ -106,6 +110,15 @@ class StaffUser(db.Model):
             if role.name == 'Admin': return True
             for perm in role.permissions:
                 if perm.name == permission_name: return True
+        
+        # Check active temporary access codes
+        if hasattr(self, 'temp_codes') and self.temp_codes:
+            now = datetime.now()
+            for t in self.temp_codes:
+                if t.permission and t.permission.name == permission_name:
+                    if not t.is_revoked:
+                        if not t.expires_at or t.expires_at > now:
+                            return True
         return False
 
     def set_password(self, password):
@@ -132,10 +145,10 @@ class StaffUser(db.Model):
             "permissions": list(set([p.name for role in self.roles for p in role.permissions])),
             "temp_access": [
                 {
-                    "permission_name": t.permission.name,
+                    "permission_name": t.permission.name if t.permission else "Unknown",
                     "is_revoked": t.is_revoked,
                     "expires_at": t.expires_at.isoformat() if t.expires_at else None
-                } for t in self.temp_codes
+                } for t in self.temp_codes if t.permission
             ] if hasattr(self, 'temp_codes') else []
         }
 
@@ -249,7 +262,7 @@ class TempAccessCode(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', foreign_keys=[user_id], backref=db.backref('temp_codes', lazy=True))
-    permission = db.relationship('Permission', backref=db.backref('temp_codes', lazy=True))
+    permission = db.relationship('Permission', backref=db.backref('permission_temp_codes', lazy=True))
     generator = db.relationship('StaffUser', foreign_keys=[generated_by])
 
     def to_dict(self):
@@ -397,6 +410,7 @@ class BioData(db.Model):
     email = db.Column(db.String(100))
     race = db.Column(db.String(50))
     nationality = db.Column(db.String(100))
+    passport_image = db.Column(db.String(255), nullable=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
 class ScreeningYearBioData(db.Model):
@@ -452,6 +466,7 @@ class ConsultationData(db.Model):
     sugar_remark = db.Column(db.String(50)) # Normal, Abnormal...
     ua_result = db.Column(db.String(50)) # No Abnormality...
     ua_remark = db.Column(db.String(50))
+    ua_remark_others = db.Column(db.String(255))
     dm_status = db.Column(db.String(50)) # Yes-On Regular Meds, etc.
     htn_status = db.Column(db.String(50))
     bp = db.Column(db.String(20))
@@ -460,7 +475,9 @@ class ConsultationData(db.Model):
     hs_status = db.Column(db.String(20)) # Present, S3, S4
     breast_exam = db.Column(db.String(20))
     breast_remark = db.Column(db.String(50))
+    breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
+    abdomen_others = db.Column(db.String(255))
     assessment_hx_pe = db.Column(db.String(100)) # Satisfactory...
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
@@ -505,8 +522,6 @@ class KFTResult(db.Model):
     chloride = db.Column(db.String(20))
     bicarbonate_ca = db.Column(db.String(20))
     hco3 = db.Column(db.String(20))
-    urea = db.Column(db.String(20))
-    creatinine = db.Column(db.String(20))
     kft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
@@ -534,6 +549,8 @@ class LFTResult(db.Model):
     alp = db.Column(db.String(20))
     tb = db.Column(db.String(20))
     cb = db.Column(db.String(20))
+    urea = db.Column(db.String(20))
+    creatinine = db.Column(db.String(20))
     lft_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
@@ -543,13 +560,13 @@ class SpecialTestsResult(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
     screening_year = db.Column(db.Integer, nullable=False)
-    ecg_result = db.Column(db.String(50))
+    ecg_result = db.Column(db.String(255))
     ecg_remark = db.Column(db.Text)
-    spirometry_result = db.Column(db.String(50))
+    spirometry_result = db.Column(db.String(255))
     weight = db.Column(db.String(20))
     height = db.Column(db.String(20))
     spirometry_remark = db.Column(db.Text)
-    audiometry_result = db.Column(db.String(50))
+    audiometry_result = db.Column(db.String(255))
     audiometry_remark = db.Column(db.Text)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
@@ -570,7 +587,9 @@ class DirectorReview(db.Model):
     hs_status = db.Column(db.String(20))
     breast_exam = db.Column(db.String(20))
     breast_remark = db.Column(db.String(50))
+    breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
+    abdomen_others = db.Column(db.String(255))
     psa = db.Column(db.String(20))
     psa_remark = db.Column(db.Text)
     fbs = db.Column(db.String(20))
@@ -578,6 +597,7 @@ class DirectorReview(db.Model):
     fbs_rbs_remark = db.Column(db.String(50))
     ua_result = db.Column(db.String(50))
     ua_remark = db.Column(db.String(50))
+    ua_remark_others = db.Column(db.String(255))
     
     # Missing Clinical Fields from Consultation
     luts = db.Column(db.String(10))
@@ -730,6 +750,83 @@ class AuditLog(db.Model):
     timestamp = db.Column(db.DateTime, default=datetime.now)
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
+
+    def __init__(self, *args, **kwargs):
+        user_id = kwargs.get('user_id')
+        if user_id is not None:
+            try:
+                kwargs['user_id'] = int(user_id)
+            except (ValueError, TypeError):
+                kwargs['user_id'] = None
+        super().__init__(*args, **kwargs)
+
+    @validates('user_id')
+    def validate_user_id(self, key, value):
+        if value is not None:
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return None
+        return None
+
+    @classmethod
+    def log_action(cls, action, resource=None, details=None, user_id=None, ip_address=None, commit=False):
+        """
+        Creates and adds an audit log entry. Auto-detects user and IP if not provided.
+        """
+        try:
+            from flask_jwt_extended import get_jwt_identity, get_jwt
+            from utils.ip import get_client_ip
+            
+            if user_id is None:
+                try:
+                    user_id = get_jwt_identity()
+                except Exception:
+                    pass
+                if user_id is None:
+                    try:
+                        from flask import session
+                        user_id = session.get('user_id')
+                    except Exception:
+                        pass
+            
+            if ip_address is None:
+                try:
+                    ip_address = get_client_ip()
+                except Exception:
+                    pass
+
+            portal_type = 'staff'
+            try:
+                claims = get_jwt()
+                portal_type = claims.get('portal', 'staff')
+            except Exception:
+                pass
+
+            details_str = None
+            if details is not None:
+                if isinstance(details, (dict, list)):
+                    if isinstance(details, dict) and 'portal' not in details:
+                        details['portal'] = portal_type
+                    details_str = json.dumps(details)
+                else:
+                    details_str = str(details)
+            else:
+                details_str = json.dumps({"portal": portal_type})
+
+            log = cls(
+                user_id=user_id,
+                action=action,
+                resource=resource,
+                details=details_str,
+                ip_address=ip_address
+            )
+            db.session.add(log)
+            if commit:
+                db.session.commit()
+        except Exception as e:
+            import sys
+            sys.stderr.write(f"[AUDIT LOG ERROR] Failed to log action: {e}\n")
 
     def to_dict(self):
         details_data = {}

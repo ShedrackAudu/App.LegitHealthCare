@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -117,7 +118,9 @@ const LoginPage = () => {
       const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
       navigate(target); 
     } catch (err: any) {
-        if (err.response?.status === 403 && err.response?.data?.needs_verification) {
+        if (err._isNetworkError) {
+            setError(err._networkMessage);
+        } else if (err.response?.status === 403 && err.response?.data?.needs_verification) {
             const { user_id, email, portal: detectedPortal } = err.response.data;
             toast.success("Verification required. A new code has been sent to your email.");
             navigate('/signup', { 
@@ -131,7 +134,7 @@ const LoginPage = () => {
         } else if (err.response?.status === 403) {
             setError(err.response?.data?.error || "Your account is not verified.");
         } else {
-            setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+            setError(getErrorMessage(err, 'Invalid credentials. Please try again.'));
         }
     } finally {
       setLoading(false);
@@ -158,7 +161,7 @@ const LoginPage = () => {
       const target = response.data.user.roles?.includes('Patient') ? '/patient/dashboard' : '/dashboard';
       navigate(target);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || "Failed to update password");
+      toast.error(getErrorMessage(err, "Failed to update password"));
     } finally {
       setLoading(false);
     }
@@ -192,7 +195,7 @@ const LoginPage = () => {
         const target = detectedPortal === 'patient' ? '/patient/dashboard' : '/dashboard';
         navigate(target);
     } catch (err: any) {
-        setError(err.response?.data?.error || "Invalid 2FA code");
+        setError(getErrorMessage(err, "Invalid 2FA code"));
     } finally {
         setLoading(false);
     }
@@ -215,7 +218,7 @@ const LoginPage = () => {
         toast.success(resp.data.message);
         setForgotPasswordStep('verify');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Account not found");
+        setError(getErrorMessage(err, "Account not found"));
     } finally {
         setLoading(false);
     }
@@ -235,7 +238,7 @@ const LoginPage = () => {
         toast.success("OTP Verified Successfully");
         setForgotPasswordStep('reset');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Invalid OTP");
+        setError(getErrorMessage(err, "Invalid OTP"));
     } finally {
         setLoading(false);
     }
@@ -280,7 +283,7 @@ const LoginPage = () => {
         setResetPassword('');
         setConfirmPassword('');
     } catch (err: any) {
-        setError(err.response?.data?.error || "Failed to reset password");
+        setError(getErrorMessage(err, "Failed to reset password"));
     } finally {
         setLoading(false);
     }
@@ -311,14 +314,14 @@ const LoginPage = () => {
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.auth_logo}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  className="h-[62px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
             ) : branding?.logo_dark ? (
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  className="h-[41px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
               ) : (
@@ -399,7 +402,7 @@ const LoginPage = () => {
                       <Input 
                           type="password" 
                           placeholder="••••••••"
-                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                           value={forceResetData.newPassword}
                           onChange={(e) => setForceResetData({ ...forceResetData, newPassword: e.target.value })}
                           disabled={loading} 
@@ -417,7 +420,7 @@ const LoginPage = () => {
                       <Input 
                           type="password" 
                           placeholder="••••••••"
-                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                          className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                           value={forceResetData.confirmPassword}
                           onChange={(e) => setForceResetData({ ...forceResetData, confirmPassword: e.target.value })}
                           disabled={loading} 
@@ -449,7 +452,7 @@ const LoginPage = () => {
                           <Input 
                               id="identity" 
                               placeholder="Staff ID, Username, Email or Phone" 
-                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               {...register('identity')} 
                               disabled={loading} 
                           />
@@ -467,7 +470,7 @@ const LoginPage = () => {
                               id="password" 
                               type={showPassword ? "text" : "password"} 
                               placeholder="••••••••"
-                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 pr-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               {...register('password')} 
                               disabled={loading} 
                           />
@@ -509,7 +512,7 @@ const LoginPage = () => {
                             value={totpCode}
                             onChange={e => setTotpCode(e.target.value)}
                             placeholder="000 000" 
-                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20"
+                            className="h-14 text-center text-2xl tracking-[0.5em] font-black rounded-2xl border-2 bg-muted/20 focus-visible:ring-0 focus-visible:ring-offset-0 focus:border-primary"
                             maxLength={6}
                             disabled={loading} 
                         />
@@ -542,7 +545,7 @@ const LoginPage = () => {
                       <div className="relative group">
                         <Input 
                             placeholder="Staff ID, Username, Email or Phone" 
-                            className="pl-12 h-14 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                            className="pl-12 h-14 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                             value={identifier}
                             onChange={(e) => setIdentifier(e.target.value)}
                             disabled={loading} 
@@ -583,7 +586,7 @@ const LoginPage = () => {
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1 text-center block">One-Time Password</Label>
                       <Input 
                           placeholder="000 000" 
-                          className="h-20 text-center text-4xl tracking-[0.3em] font-black rounded-3xl border-4 focus:border-primary/50 bg-muted/20"
+                          className="h-20 text-center text-4xl tracking-[0.3em] font-black rounded-3xl border-4 focus:border-primary/50 focus-visible:ring-0 focus-visible:ring-offset-0 bg-muted/20"
                           value={otp}
                           onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                           maxLength={6}
@@ -615,7 +618,7 @@ const LoginPage = () => {
                           <Input 
                               type="password" 
                               placeholder="••••••••"
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               value={resetPassword}
                               onChange={(e) => setResetPassword(e.target.value)}
                               disabled={loading} 
@@ -633,7 +636,7 @@ const LoginPage = () => {
                           <Input 
                               type="password" 
                               placeholder="••••••••"
-                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary transition-all bg-muted/20"
+                              className="pl-12 h-12 rounded-2xl border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 transition-all bg-muted/20"
                               value={confirmPassword}
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               disabled={loading} 
@@ -676,9 +679,9 @@ const LoginPage = () => {
                 <div className="grid grid-cols-2 gap-3">
                     <Link 
                         to="/signup?portal=staff" 
-                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
+                        className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                           <Activity className="w-4 h-4 text-blue-500" />
                         </div>
                         <div className="space-y-0.5">
@@ -688,9 +691,9 @@ const LoginPage = () => {
                     </Link>
                     <Link 
                         to="/signup?portal=patient" 
-                        className="flex flex-col items-start text-left gap-1.5 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
+                        className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
                     >
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform">
+                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
                           <User className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="space-y-0.5">

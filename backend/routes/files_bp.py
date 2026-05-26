@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app, send_from_directory, Response
-from models import db, PatientFile, StaffUser, PatientPortalUser
+from models import db, PatientFile, StaffUser, PatientPortalUser, AuditLog
 from werkzeug.utils import secure_filename
 from decorators import require_permission
 from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
@@ -55,11 +55,18 @@ def upload_file():
             screening_year=int(year),
             department=department,
             filename=filename,
-            file_path=os.path.join('patient_files', str(staff_id), str(year), unique_filename),
+            file_path=os.path.join('patient_files', str(staff_id), str(year), unique_filename).replace('\\', '/'),
             file_size=os.path.getsize(file_path),
             uploaded_by=get_jwt_identity()
         )
         db.session.add(new_file)
+        # Log action
+        action_name = f"Upload Patient File ({department})" if department in ['Spirometry', 'Audiometry', 'ECG'] else 'Upload Patient File'
+        AuditLog.log_action(
+            action=action_name,
+            resource=f"Patient:{staff_id}",
+            details={"message": f"Uploaded file '{filename}' for Patient {staff_id} (Department: {department}, Year: {year}).", "filename": filename, "department": department, "screening_year": year}
+        )
         db.session.commit()
 
         return jsonify(new_file.to_dict()), 201
@@ -105,8 +112,10 @@ def view_file(file_id):
             return jsonify({"error": "Unauthorized: Clinical permission required to view patient files."}), 403
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
     # The file_path in DB is 'patient_files/staff_id/year/unique_filename'
-    directory = os.path.join(upload_folder, os.path.dirname(pf.file_path))
-    filename = os.path.basename(pf.file_path)
+    parts = pf.file_path.replace('\\', '/').split('/')
+    full_path = os.path.join(upload_folder, *parts)
+    directory = os.path.dirname(full_path)
+    filename = os.path.basename(full_path)
     
     response = send_from_directory(directory, filename)
     # Set headers based on file type
@@ -123,11 +132,19 @@ def delete_file(file_id):
     
     # Delete from filesystem
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
-    full_path = os.path.join(upload_folder, pf.file_path)
+    parts = pf.file_path.replace('\\', '/').split('/')
+    full_path = os.path.join(upload_folder, *parts)
     if os.path.exists(full_path):
         os.remove(full_path)
     
     db.session.delete(pf)
+    # Log action
+    action_name = f"Delete Patient File ({pf.department})" if pf.department in ['Spirometry', 'Audiometry', 'ECG'] else 'Delete Patient File'
+    AuditLog.log_action(
+        action=action_name,
+        resource=f"Patient:{pf.staff_id}",
+        details={"message": f"Deleted file '{pf.filename}' for Patient {pf.staff_id} (Department: {pf.department}, Year: {pf.screening_year}).", "filename": pf.filename, "department": pf.department, "screening_year": pf.screening_year}
+    )
     db.session.commit()
     
     return jsonify({"message": "File deleted successfully"}), 200

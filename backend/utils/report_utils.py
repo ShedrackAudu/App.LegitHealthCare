@@ -278,11 +278,11 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
          td('3.5-5.1'), td('mmol/L'), td(kft.get('remark'))],
         ['', td('Sodium'), td(kft.get('sodium')), td('135-145'), td('mmol/L'), ''],
         ['', td('Chloride'), td(kft.get('chloride')), td('98-107'), td('mmol/L'), ''],
-        ['', td('Urea'), td(kft.get('urea')), td('10-50'), td('mg/dL'), ''],
-        ['', td('Creatinine'), td(kft.get('creatinine')), td('0.6-1.2'), td('mg/dL'), ''],
+        ['', td('Urea'), td(lft.get('urea')), td('10-50'), td('mg/dL'), ''],
+        ['', td('Creatinine'), td(lft.get('creatinine')), td('0.6-1.2'), td('mg/dL'), ''],
         # Lipid
         [td('Lipid Profile', True), td('Total Cholesterol'), td(lipid.get('tcho')),
-         td('130-200'), td('mg/dL'), td(lipid.get('remark'))],
+         td('&lt;200'), td('mg/dL'), td(lipid.get('remark'))],
         ['', td('Triglycerides'), td(lipid.get('tg')), td('max 150'), td('mg/dL'), ''],
         ['', td('HDL-c'), td(lipid.get('hdl')), td('min 40'), td('mg/dL'), ''],
         ['', td('LDL-c'), td(lipid.get('ldl')), td('max 130'), td('mg/dL'), ''],
@@ -292,7 +292,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         ['', td('ALT'), td(lft.get('alt')), td('0-49'), td('U/L'), ''],
         ['', td('ALP'), td(lft.get('alp')), td('M:80-306 F:64-306'), td('U/L'), ''],
         ['', td('TB'), td(lft.get('tb')), td('0-1.2'), td('mg/dL'), ''],
-        ['', td('CB'), td(lft.get('cb')), td('0-0.14'), td('mg/dL'), ''],
+        ['', td('CB'), td(lft.get('cb')), td('0-0.4'), td('mg/dL'), ''],
     ]
     # UA & PSA
     lab_rows += [

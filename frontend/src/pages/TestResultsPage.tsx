@@ -22,7 +22,8 @@ import {
   Info,
   CheckCircle2,
   XCircle,
-  AlertCircle
+  AlertCircle,
+  Trash2
 } from 'lucide-react';
 import { 
   Dialog, 
@@ -51,6 +52,7 @@ import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { toast as hotToast } from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const TempAccessCountdown = () => {
     const { user } = useAppContext();
@@ -119,16 +121,48 @@ const TestResultsPage: React.FC = () => {
             setSelectedTest(null);
             setPatient(null);
         }
+        const saved = localStorage.getItem(`searchByPid_${pathname}`);
+        setSearchByPid(saved === 'true');
+        setSearchId('');
+        setSearchResults([]);
     }, [paramTestType, pathname]);
     const [patient, setPatient] = useState<any>(null);
     const [searchId, setSearchId] = useState('');
     const [searching, setSearching] = useState(false);
     const [searchResults, setSearchResults] = useState<any[]>([]);
+    const [searchByPid, setSearchByPid] = useState(() => {
+        const saved = localStorage.getItem(`searchByPid_${pathname}`);
+        return saved === 'true';
+    });
     const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
     const [loadingQueue, setLoadingQueue] = useState(false);
     const [queueEntries, setQueueEntries] = useState<any[]>([]);
     const [selectedQueueDept, setSelectedQueueDept] = useState<string>('');
     const [isSelecting, setIsSelecting] = useState(false);
+    const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+    const [deletePendingEntry, setDeletePendingEntry] = useState<{ dept: string; staffId: string } | null>(null);
+    const handleDeleteQueueEntry = async (dept: string, staffId: string) => {
+        setDeletePendingEntry({ dept, staffId });
+        setDeleteConfirmOpen(true);
+    };
+    const handleConfirmDelete = async () => {
+        if (!deletePendingEntry) return;
+        const { dept, staffId } = deletePendingEntry;
+        try {
+            await axios.delete(`/api/queue/${dept.toLowerCase()}/${staffId}?year=${activeYear}`, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            toast.success("Patient removed from queue");
+            fetchQueueList(dept);
+            fetchQueue();
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.error || "Failed to remove patient from queue");
+        } finally {
+            setDeleteConfirmOpen(false);
+            setDeletePendingEntry(null);
+        }
+    };
     useEffect(() => {
         if (searchId.length > 0) {
             if (isSelecting) {
@@ -138,10 +172,27 @@ const TestResultsPage: React.FC = () => {
             }
             const fetchResults = async () => {
                 try {
-                    const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true`, {
+                    const res = await axios.get(`/api/patients/search?q=${searchId}&year=${activeYear}&strict=true${searchByPid ? '&search_type=pid' : ''}`, {
                         headers: { 'X-Company-Context': activeSection }
                     });
-                    setSearchResults(res.data.results || []);
+                    const rawResults = res.data.results || [];
+                    // Sort by relevance: exact > prefix > contains
+                    const q = searchId.toLowerCase().trim();
+                    const sorted = [...rawResults].sort((a: any, b: any) => {
+                        const scoreFields = (p: any) => {
+                            const fields = [
+                                (p.staff_id || '').toLowerCase(),
+                                (p.first_name || '').toLowerCase(),
+                                (p.last_name || '').toLowerCase(),
+                                (p.patient_id || '').toLowerCase(),
+                            ];
+                            for (const f of fields) { if (f === q) return 0; }
+                            for (const f of fields) { if (f.startsWith(q)) return 1; }
+                            return 2;
+                        };
+                        return scoreFields(a) - scoreFields(b);
+                    });
+                    setSearchResults(sorted);
                 } catch (err) {
                     console.error(err);
                 }
@@ -151,7 +202,7 @@ const TestResultsPage: React.FC = () => {
         } else {
             setSearchResults([]);
         }
-    }, [searchId, activeSection, isSelecting]);
+    }, [searchId, activeSection, isSelecting, searchByPid]);
 
     const [queueData, setQueueData] = useState<any>({});
     const fetchQueue = async () => {
@@ -223,6 +274,7 @@ const TestResultsPage: React.FC = () => {
                     if (activeSearchIndex >= 0 && activeSearchIndex < searchResults.length) {
                         selectPatient(searchResults[activeSearchIndex]);
                     } else {
+                        setSearchResults([]);
                         handleSearch();
                     }
                     break;
@@ -231,6 +283,7 @@ const TestResultsPage: React.FC = () => {
                     break;
             }
         } else if (e.key === 'Enter') {
+            setSearchResults([]);
             handleSearch();
         }
     };
@@ -246,11 +299,13 @@ const TestResultsPage: React.FC = () => {
     const handleSearch = async () => {
         if (!searchId) return;
         setSearching(true);
+        setSearchResults([]);
         try {
-            const response = await axios.get(`/patient/${searchId}`, {
+            const response = await axios.get(`/patient/${searchId}?year=${activeYear}&strict=true&search_type=${searchByPid ? 'pid' : 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(response.data);
+            setSearchId('');
         } catch (err) {
             alert("Patient not found");
         } finally {
@@ -311,14 +366,14 @@ const TestResultsPage: React.FC = () => {
                 {!patient ? (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Top Search Bar Style from Consultation */}
-                        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+                        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
-                                    <FlaskConical className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+                                <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                                    <FlaskConical className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
-                                    <h1 className="text-lg sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
-                                    <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                                    <h1 className="text-base sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
+                                    <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                                     <TempAccessCountdown />
                                 </div>
                             </div>
@@ -326,7 +381,7 @@ const TestResultsPage: React.FC = () => {
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
                                 {(selectedTest === 'ecg' || selectedTest === 'spirometry' || selectedTest === 'audiometry') && (
                                     <Card 
-                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 hidden sm:block shadow-sm"
+                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
                                         onClick={() => fetchQueueList(selectedTest || '')}
                                     >
                                         <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
@@ -353,10 +408,28 @@ const TestResultsPage: React.FC = () => {
                                 {/* Search Section Redesign */}
                                 <div className="flex-1 w-full lg:max-w-2xl relative">
                                     <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                                        <div className="flex items-center px-3 py-1.5 bg-background/60 dark:bg-background/20 rounded-lg border border-muted-foreground/10 shrink-0 ml-1 sm:ml-0 self-start sm:self-auto">
+                                            <label className="relative inline-flex items-center cursor-pointer select-none">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={searchByPid}
+                                                    onChange={(e) => {
+                                                        const val = e.target.checked;
+                                                        setSearchByPid(val);
+                                                        localStorage.setItem(`searchByPid_${pathname}`, String(val));
+                                                        setSearchId('');
+                                                        setSearchResults([]);
+                                                    }}
+                                                    className="sr-only peer"
+                                                />
+                                                <div className="w-8 h-4 bg-muted rounded-full peer peer-focus:ring-2 peer-focus:ring-primary/20 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-muted-foreground/20 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                                                <span className="ml-2 text-xs font-bold text-muted-foreground whitespace-nowrap">P.ID Search</span>
+                                            </label>
+                                        </div>
                                         <div className="flex items-center gap-2 flex-1 px-2 h-11">
                                             <Search className="h-5 w-5 text-muted-foreground shrink-0" />
                                             <Input
-                                                placeholder="Search Staff ID or Name..."
+                                                placeholder={searchByPid ? "Search Patient ID (PID)..." : "Search Staff ID or Name..."}
                                                 value={searchId}
                                                 onChange={(e) => setSearchId(e.target.value)}
                                                 onKeyDown={handleSearchKeyDown}
@@ -387,13 +460,24 @@ const TestResultsPage: React.FC = () => {
                                                         >
                                                             <div className="flex items-center justify-between">
                                                                 <div className="flex items-center gap-3">
-                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
-                                                                        {p.first_name[0]}{p.last_name[0]}
+                                                                    <div className={`h-10 w-10 rounded-full flex items-center justify-center overflow-hidden font-black group-hover:scale-110 transition-transform ${activeSearchIndex === index ? 'bg-primary text-white' : 'bg-primary/10 text-primary'}`}>
+                                                                        {p.passport_image ? (
+                                                                            <img 
+                                                                                src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                                                                                alt="Avatar" 
+                                                                                className="w-full h-full object-cover" 
+                                                                            />
+                                                                        ) : (
+                                                                            <>{p.first_name[0]}{p.last_name[0]}</>
+                                                                        )}
                                                                     </div>
                                                                     <div>
                                                                         <p className={`font-bold capitalize ${activeSearchIndex === index ? 'text-primary' : 'text-foreground'}`}>{p.first_name} {p.last_name}</p>
                                                                         <p className="text-xs text-muted-foreground flex items-center gap-2">
                                                                             <span className="bg-muted px-1.5 py-0.5 rounded uppercase">{p.staff_id}</span>
+                                                                            {p.patient_id && (
+                                                                                <span className="bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-semibold">PID: {p.patient_id}</span>
+                                                                            )}
                                                                             • <span>{p.department}</span>
                                                                         </p>
                                                                     </div>
@@ -447,21 +531,21 @@ const TestResultsPage: React.FC = () => {
             </div>
 
             <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-                <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20">
-                    <DialogHeader>
-                        <div className="flex items-center gap-3 mb-2">
+                <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+                    <DialogHeader className="text-left">
+                        <div className="flex items-center gap-3 mb-2 text-left">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                                 <Users className="w-6 h-6" />
                             </div>
                             <div>
-                                <DialogTitle className="text-xl font-black tracking-tight uppercase tracking-tight">{selectedQueueDept} Queue</DialogTitle>
-                                <DialogDescription className="text-xs font-medium"> Patients waiting for diagnostic testing</DialogDescription>
+                                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight uppercase">{selectedQueueDept} Queue</DialogTitle>
+                                <DialogDescription className="text-[11px] sm:text-xs font-medium"> Patients waiting for diagnostic testing</DialogDescription>
                             </div>
                         </div>
                     </DialogHeader>
                     
                     <div className="relative mt-2">
-                        <ScrollArea className="h-[400px] pr-4">
+                        <ScrollArea className="h-[400px] px-1">
                             {loadingQueue ? (
                                 <div className="flex items-center justify-center h-full">
                                     <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
@@ -469,21 +553,67 @@ const TestResultsPage: React.FC = () => {
                             ) : queueEntries.length > 0 ? (
                                 <div className="space-y-3">
                                     {queueEntries.map((entry) => (
-                                        <div key={entry.staff_id} className="flex items-center justify-between p-4 rounded-xl border-2 bg-muted/5 hover:bg-muted/10 transition-colors group">
-                                            <div className="flex items-center gap-4">
-                                                <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 transition-transform group-hover:scale-110">
-                                                    {entry.first_name?.[0]}{entry.last_name?.[0]}
+                                        <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">
+                                            {/* Left Block (Avatar + Info) */}
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <div className="relative shrink-0">
+                                                    <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20">
+                                                        {entry.first_name?.[0]}{entry.last_name?.[0]}
+                                                    </div>
+                                                    <Badge className="absolute -top-2 -left-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 border border-background h-5 min-w-[20px] flex items-center justify-center shadow-md">
+                                                        #{entry.queue_number || '--'}
+                                                    </Badge>
                                                 </div>
-                                                <div>
-                                                    <p className="font-black text-sm tracking-tight">{entry.first_name} {entry.last_name}</p>
-                                                    <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ID: {entry.staff_id}</p>
+
+                                                <div className="min-w-0 flex-1 flex flex-col justify-center gap-0">
+                                                    <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
+                                                    
+                                                    <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
+                                                        {/* ID & Time: stacked on mobile, row on desktop */}
+                                                        <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
+                                                            <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
+                                                            <span className="hidden sm:inline text-muted-foreground/60">•</span>
+                                                            <span className="font-medium flex items-center gap-1">
+                                                                <Clock3 className="w-3 h-3 text-muted-foreground/60" />
+                                                                {getRelativeTime(entry.created_at)}
+                                                            </span>
+                                                        </div>
+
+                                                        {/* Mobile-only action buttons beside stacked ID/time */}
+                                                        <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+                                                            <Button 
+                                                                size="sm" 
+                                                                variant="ghost" 
+                                                                className="h-7 px-2.5 text-[9px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/95 rounded-lg group/btn shadow-md shadow-primary/10"
+                                                                onClick={() => {
+                                                                    selectPatient(entry);
+                                                                    setIsQueueModalOpen(false);
+                                                                }}
+                                                            >
+                                                                Proceed <ChevronRight className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                            </Button>
+                                                            {hasPermission('delete_from_queue') && (
+                                                                <Button 
+                                                                    size="sm" 
+                                                                    variant="ghost" 
+                                                                    className="h-7 w-7 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                                    onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
+                                                                    title="Remove from queue"
+                                                                >
+                                                                    <Trash2 className="w-3 h-3" />
+                                                                </Button>
+                                                            )}
+                                                        </div>
+                                                    </div>
                                                 </div>
                                             </div>
-                                            <div className="flex items-center gap-4">
+
+                                            {/* Desktop-only action buttons centered vertically inside the card */}
+                                            <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                                                 <Button 
                                                     size="sm" 
                                                     variant="ghost" 
-                                                    className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white border border-primary/20 rounded-lg group/btn"
+                                                    className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/95 rounded-lg group/btn shadow-md shadow-primary/10"
                                                     onClick={() => {
                                                         selectPatient(entry);
                                                         setIsQueueModalOpen(false);
@@ -491,20 +621,17 @@ const TestResultsPage: React.FC = () => {
                                                 >
                                                     Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                                                 </Button>
-                                                <div className="text-right space-y-2">
-                                                    <div className="flex items-center gap-1.5 justify-end">
-                                                        <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
-                                                            #{entry.queue_number || '--'}
-                                                        </Badge>
-                                                        <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-primary/20 h-auto">
-                                                            WAITING
-                                                        </Badge>
-                                                    </div>
-                                                    <div className="flex items-center gap-1 text-muted-foreground justify-end">
-                                                        <Clock3 className="w-3 h-3" />
-                                                        <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
-                                                    </div>
-                                                </div>
+                                                {hasPermission('delete_from_queue') && (
+                                                    <Button 
+                                                        size="sm" 
+                                                        variant="ghost" 
+                                                        className="h-8 w-8 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                        onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
+                                                        title="Remove from queue"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </Button>
+                                                )}
                                             </div>
                                         </div>
                                     ))}
@@ -530,6 +657,20 @@ const TestResultsPage: React.FC = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <ActionConfirmModal 
+                isOpen={deleteConfirmOpen}
+                onClose={() => {
+                    setDeleteConfirmOpen(false);
+                    setDeletePendingEntry(null);
+                }}
+                onConfirm={handleConfirmDelete}
+                title="Remove from Queue"
+                description="Are you sure you want to remove this patient from the queue? This will only remove them from this department's queue."
+                confirmText="Remove"
+                cancelText="Cancel"
+                variant="danger"
+            />
         </MainLayout>
     );
 };
@@ -555,11 +696,11 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
         },
         kft: {
             title: "Kidney Function Test",
-            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "Urea", "Creatinine", "REMARK"]
+            columns: ["PatientID", "Potassium", "Sodium", "Chloride", "Bicarbonate", "REMARK"]
         },
         lft: {
             title: "Liver Function Test",
-            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "REMARK"]
+            columns: ["PatientID", "AST", "ALT", "ALP", "TB", "CB", "Urea", "Creatinine", "REMARK"]
         },
         lipid: {
             title: "Lipid Profile",
@@ -770,7 +911,8 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             await axios.post(`/api/tests/save-test/${type}`, {
                 ...data,
                 staff_id: patient.staff_id,
-                screening_year: activeYear
+                screening_year: activeYear,
+                current_test_type: testType
             }, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -846,15 +988,15 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
     }, [initialData, reset]);
 
     const fields = [
-        'pcv', 'wbc', 'plt', 'lymp_percent', 'lymp_abs', 'gra_percent', 'gra_abs', 
-        'mid_percent', 'mid_abs', 'rbc', 'mcv', 'mch', 'mchc', 'rdw', 'pdw', 'hgb'
+        'wbc', 'lymp_abs', 'mid_abs', 'gra_abs', 'lymp_percent', 'mid_percent', 'gra_percent',
+        'rbc', 'hgb', 'pcv', 'mcv', 'mch', 'mchc', 'rdw', 'plt', 'pdw'
     ];
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {fields.map(f => (
                     <div key={f} className="space-y-2">
-                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_', ' ')} <span className="text-rose-500">*</span></Label>
+                        <Label className="whitespace-nowrap truncate block">{f.toUpperCase().replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-rose-500">*</span></Label>
                         <Input {...register(f, { required: true })} type="number" step="any" placeholder="0.00" required />
                     </div>
                 ))}
@@ -901,10 +1043,8 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">POTASSIUM - K <span className="text-rose-500">*</span></Label><Input {...register('potassium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">SODIUM - NA <span className="text-rose-500">*</span></Label><Input {...register('sodium', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CHLORIDE - CL <span className="text-rose-500">*</span></Label><Input {...register('chloride', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">BICARBONATE - CA <span className="text-rose-500">*</span></Label><Input {...register('bicarbonate_ca', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto)</Label><Input {...register('hco3')} type="number" step="any" className="font-bold text-primary" /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">HCO3 (Auto) <span className="text-rose-500">*</span></Label><Input {...register('hco3', { required: true })} type="number" step="any" className="font-bold text-primary" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CALCIUM - CA</Label><Input {...register('bicarbonate_ca')} type="number" step="any" placeholder="0.00" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
@@ -934,7 +1074,7 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
         const tv = parseFloat(tcho) || 0;
         const tgv = parseFloat(tg) || 0;
         const hdl = tv * 0.35;
-        const ldl = tv + (tgv / 5) + hdl; // Following literal user instruction: TCHO+TG/5,+HDL
+        const ldl = tv - ((tgv / 5) + hdl);
         setValue('hdl', hdl.toFixed(2));
         setValue('ldl', ldl.toFixed(2));
     }, [tcho, tg, setValue]);
@@ -975,6 +1115,8 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
                 <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
@@ -1060,7 +1202,8 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
             rbs: '',
             sugar_remark: '',
             ua_result: '',
-            ua_remark: ''
+            ua_remark: '',
+            ua_remark_others: ''
         }
     });
 
@@ -1175,7 +1318,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
                     <Activity className="h-4 w-4" /> Urine Analysis (U/A)
                 </h3>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
                         <Label>U/A Result <span className="text-rose-500">*</span></Label>
                         <Select onValueChange={(v) => setValue('ua_result', v)} value={watch('ua_result')}>
@@ -1201,6 +1344,10 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
                                 ))}
                             </SelectContent>
                         </Select>
+                    </div>
+                    <div className="space-y-2">
+                        <Label>U/A Remark Others</Label>
+                        <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-12 border-2 rounded-xl" />
                     </div>
                 </div>
             </div>

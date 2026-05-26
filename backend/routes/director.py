@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview
+from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview, AuditLog
 from datetime import datetime
 from decorators import require_permission
 
@@ -79,7 +79,7 @@ def save_director_review():
                        'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
                        'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
                        'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'fbs_rbs_remark',
-                       'ua_result', 'ua_remark'],
+                       'ua_result', 'ua_remark', 'ua_remark_others', 'breast_others', 'abdomen_others'],
             'mappings': {'sugar_remark': 'fbs_rbs_remark'}
         },
         {
@@ -88,7 +88,7 @@ def save_director_review():
                        'breast_exam', 'breast_remark', 'luts', 'chronic_cough', 
                        'chronic_chest_pain', 'chest_infection', 'heart_dx', 'palor', 
                        'jaundice', 'murmur', 'psa', 'psa_remark', 'fbs', 'rbs', 'sugar_remark', 
-                       'ua_result', 'ua_remark', 'dm_status', 'htn_status', 
+                       'ua_result', 'ua_remark', 'ua_remark_others', 'breast_others', 'abdomen_others', 'dm_status', 'htn_status', 
                        'assessment_hx_pe', 'other_assessments', 'overall_lab_remark', 
                        'other_remarks', 'overall_assessment']
         },
@@ -101,7 +101,7 @@ def save_director_review():
         {
             'model': KFTResult,
             'fields': ['potassium', 'sodium', 'chloride', 'bicarbonate_ca', 'hco3', 
-                       'urea', 'creatinine', 'kft_remark']
+                       'kft_remark']
         },
         {
             'model': LipidResult,
@@ -109,7 +109,7 @@ def save_director_review():
         },
         {
             'model': LFTResult,
-            'fields': ['ast', 'alt', 'alp', 'tb', 'cb', 'lft_remark']
+            'fields': ['ast', 'alt', 'alp', 'tb', 'cb', 'urea', 'creatinine', 'lft_remark']
         },
         {
             'model': SpecialTestsResult,
@@ -156,6 +156,12 @@ def save_director_review():
                 # But for simplicity in this sync, we just commit.
                 pass
 
+        # Log action
+        AuditLog.log_action(
+            action='Save Director Review',
+            resource=f"Patient:{staff_id}",
+            details={"message": f"Saved/Updated director review for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year}
+        )
         db.session.commit()
         
         # Trigger notification check

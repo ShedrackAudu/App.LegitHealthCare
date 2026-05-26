@@ -85,7 +85,7 @@ const AccessDeniedPage: React.FC = () => {
                     className="w-full max-w-sm"
                 >
                     <Card className="border shadow-2xl overflow-hidden bg-card/40 backdrop-blur-xl border-rose-500/10 rounded-xl transition-all">
-                        <div className="h-1 bg-rose-600 w-full shadow-[0_0_10px_rgba(225,29,72,0.3)]" />
+                        <div className="h-1 bg-rose-600 w-full" />
                         <CardHeader className="text-center pb-2 pt-6">
                             <div className="flex justify-center mb-3">
                                 <motion.div 

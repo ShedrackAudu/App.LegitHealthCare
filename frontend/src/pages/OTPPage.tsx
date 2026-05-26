@@ -87,7 +87,7 @@ const OTPPage = () => {
                   id="otp" 
                   placeholder="000000" 
                   maxLength={6}
-                  className="text-center text-3xl font-black h-16 border-2 focus:border-primary rounded-xl tracking-[1rem]"
+                  className="text-center text-3xl font-black h-16 border-2 focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl tracking-[1rem]"
                   value={otp}
                   onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, ''))}
                   disabled={loading}

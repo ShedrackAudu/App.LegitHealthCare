@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, UserContact
+from models import db, User, UserContact, AuditLog
 
 contacts_bp = Blueprint('contacts', __name__)
 
@@ -32,6 +32,7 @@ def save_contact():
     contact = UserContact(user_id=user_id, label=label, value=value, contact_type=contact_type)
     db.session.add(contact)
     db.session.commit()
+    AuditLog.log_action("Save Emergency Contact", resource=f"UserContact:{contact.id}", details={"label": label})
     
     return jsonify(contact.to_dict()), 201
 
@@ -49,4 +50,5 @@ def delete_contact(contact_id):
         
     db.session.delete(contact)
     db.session.commit()
+    AuditLog.log_action("Delete Emergency Contact", resource=f"UserContact:{contact_id}", details={"label": contact.label})
     return jsonify({"success": True})

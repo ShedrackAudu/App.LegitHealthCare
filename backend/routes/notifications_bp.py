@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, Notification
+from models import db, Notification, AuditLog
 
 notifications_bp = Blueprint('notifications', __name__)
 
@@ -36,6 +36,7 @@ def mark_read(notif_id):
         
     notif.is_read = True
     db.session.commit()
+    AuditLog.log_action("Mark Notification Read", resource=f"Notification:{notif_id}", details={"notif_id": notif_id})
     return jsonify({"message": "Marked read", "notification": notif.to_dict()})
 
 @notifications_bp.route('/read-all', methods=['PUT'])
@@ -46,6 +47,7 @@ def mark_all_read():
     
     Notification.query.filter_by(user_id=user_id, is_read=False).update({"is_read": True})
     db.session.commit()
+    AuditLog.log_action("Mark All Notifications Read", resource="Notification", details={})
     return jsonify({"message": "All marked read"})
 @notifications_bp.route('/delete-all', methods=['DELETE'])
 @jwt_required()
@@ -56,5 +58,6 @@ def delete_all_notifications():
         
     Notification.query.filter_by(user_id=user_id).delete()
     db.session.commit()
+    AuditLog.log_action("Delete All Notifications", resource="Notification", details={})
     
     return jsonify({"message": "All notifications permanently deleted"})

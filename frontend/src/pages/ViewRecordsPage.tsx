@@ -39,10 +39,10 @@ const ViewRecordsPage: React.FC = () => {
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
 
-    const fetchRecords = async (page = 1, query = '') => {
+    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general') => {
         setLoading(true);
         try {
-            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}`;
+            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
             
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -96,32 +96,33 @@ const ViewRecordsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <Database className="text-primary h-8 w-8" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                            <Database className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
-                            <h1 className="text-xl sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
-                            <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>
                     
                     <PatientSearch
                         activeSection={activeSection}
-                        onSearch={(query) => {
+                        onSearch={(query, searchType) => {
                             setSearchTerm(query);
-                            fetchRecords(1, query);
+                            fetchRecords(1, query, searchType);
                         }}
                         onSelect={(p) => {
                             setSearchTerm(p.staff_id);
-                            fetchRecords(1, p.staff_id);
+                            fetchRecords(1, p.staff_id, 'general');
                         }}
                         searching={loading}
                         themeColor="primary"
                         placeholder="Search Staff ID or Name..."
                         year={activeYear}
                         strict={true}
+                        showPidToggle={true}
                     />
                 </div>
 
@@ -158,7 +159,7 @@ const ViewRecordsPage: React.FC = () => {
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
                                                     <TableHead className="min-w-[1400px] bg-muted/90 border-r text-center" colSpan={14}>Patient Profile</TableHead>
-                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={30}>Consultation & Vitals</TableHead>
+                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={31}>Consultation & Vitals</TableHead>
                                                     <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
                                                     <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
@@ -200,6 +201,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[80px]">Murmur</TableHead>
                                                     <TableHead className="min-w-[100px]">HS Status</TableHead>
                                                     <TableHead className="min-w-[120px]">Abdomen Status</TableHead>
+                                                    <TableHead className="min-w-[140px]">Abdomen Others</TableHead>
                                                     <TableHead className="min-w-[100px]">PSA Level</TableHead>
                                                     <TableHead className="min-w-[120px]">PSA Remark</TableHead>
                                                     <TableHead className="min-w-[100px]">FBS</TableHead>
@@ -207,8 +209,10 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px]">Sugar Remark</TableHead>
                                                     <TableHead className="min-w-[100px]">U/A Result</TableHead>
                                                     <TableHead className="min-w-[120px]">U/A Remark</TableHead>
+                                                    <TableHead className="min-w-[140px]">U/A Remark Others</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Exam</TableHead>
                                                     <TableHead className="min-w-[120px]">Breast Remark</TableHead>
+                                                    <TableHead className="min-w-[140px]">Breast Others</TableHead>
                                                     <TableHead className="min-w-[100px]">Chest Status</TableHead>
                                                     <TableHead className="min-w-[120px] font-black">Assessment</TableHead>
                                                     <TableHead className="min-w-[150px] italic">Assess. Hx/PE</TableHead>
@@ -239,10 +243,8 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[70px]">K+</TableHead>
                                                     <TableHead className="min-w-[70px]">Na+</TableHead>
                                                     <TableHead className="min-w-[70px]">Cl-</TableHead>
-                                                    <TableHead className="min-w-[100px]">Urea</TableHead>
-                                                    <TableHead className="min-w-[100px]">Creatinine</TableHead>
                                                     <TableHead className="min-w-[70px]">HCO3</TableHead>
-                                                    <TableHead className="min-w-[100px]">Bicarbonate</TableHead>
+                                                    <TableHead className="min-w-[100px]">Calcium</TableHead>
                                                     <TableHead className="min-w-[150px] border-r">KFT Remark</TableHead>
                                                     
                                                     {/* Lipid */}
@@ -258,6 +260,8 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[80px]">ALP</TableHead>
                                                     <TableHead className="min-w-[80px]">T.BIL</TableHead>
                                                     <TableHead className="min-w-[80px]">C.BIL</TableHead>
+                                                    <TableHead className="min-w-[100px]">Urea</TableHead>
+                                                    <TableHead className="min-w-[100px]">Creatinine</TableHead>
                                                     <TableHead className="min-w-[150px] border-r">LFT Remark</TableHead>
                                                     
                                                     {/* Special */}
@@ -318,6 +322,7 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.murmur || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.hs || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.abdomen || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.abdomen_others || ''}>{r.consultation?.abdomen_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.psa || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.psa_remark || ''}>{r.consultation?.psa_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.fbs || '-'}</TableCell>
@@ -325,8 +330,10 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.sugar_remark || ''}>{r.consultation?.sugar_remark || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.consultation?.ua_result || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.ua_remark || ''}>{r.consultation?.ua_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.ua_remark_others || ''}>{r.consultation?.ua_remark_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.breast || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[120px]" title={r.consultation?.breast_remark || ''}>{r.consultation?.breast_remark || '-'}</TableCell>
+                                                        <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[140px]" title={r.consultation?.breast_others || ''}>{r.consultation?.breast_others || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px]">{r.consultation?.chest_status || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 font-bold text-[11px]">{r.director_review?.assessment || r.consultation?.assessment || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5 text-[11px] italic truncate max-w-[150px]" title={r.director_review?.hx_pe || r.consultation?.hx_pe || ''}>{r.director_review?.hx_pe || r.consultation?.hx_pe || '-'}</TableCell>
@@ -357,8 +364,6 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.potassium || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.sodium || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.chloride || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.urea || '-'}</TableCell>
-                                                        <TableCell className="text-[11px] bg-blue-50/30 font-bold">{r.kft?.creatinine || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.hco3 || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-blue-50/30">{r.kft?.bicarbonate || '-'}</TableCell>
                                                         <TableCell className="bg-blue-50/30 text-[11px] truncate max-w-[150px] border-r" title={r.kft?.remark || ''}>{r.kft?.remark || '-'}</TableCell>
@@ -376,6 +381,8 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.alp || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.tb || '-'}</TableCell>
                                                         <TableCell className="text-[11px] bg-primary/5/30">{r.lft?.cb || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30 font-bold">{r.lft?.urea || '-'}</TableCell>
+                                                        <TableCell className="text-[11px] bg-primary/5/30 font-bold">{r.lft?.creatinine || '-'}</TableCell>
                                                         <TableCell className="bg-primary/5/30 text-[11px] truncate max-w-[150px] border-r" title={r.lft?.remark || ''}>{r.lft?.remark || '-'}</TableCell>
                                                         
                                                         {/* Special */}

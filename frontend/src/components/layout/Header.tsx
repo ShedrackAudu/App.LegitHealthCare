@@ -61,7 +61,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
     activeSection, setActiveSection, 
     activeYear, setActiveYear,
     user, setUser,
-    branding, brandingError
+    branding, brandingError,
+    socket
   } = useAppContext();
   const { theme, setTheme, resolvedTheme } = useTheme();
   const navigate = useNavigate();
@@ -170,6 +171,21 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
     }
   }, [user]);
 
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleNotification = (notif: any) => {
+      setNotifications(prev => [notif, ...prev]);
+      setUnreadCount(prev => prev + 1);
+    };
+
+    socket.on('notification', handleNotification);
+
+    return () => {
+      socket.off('notification', handleNotification);
+    };
+  }, [socket]);
+
   const fetchNotifications = async () => {
       if (!user) return;
       try {
@@ -239,10 +255,10 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         
         {/* Left Side: Back Button, Page Title */}
         <div className="flex items-center gap-2 min-w-0">
-          <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
-          <div className="flex items-center gap-2 min-w-0 overflow-hidden">
+          <div className="hidden sm:flex items-center gap-2 min-w-0 overflow-hidden">
             {brandingError && <Building2 className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
             <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
               {pageTitle}
@@ -251,7 +267,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         </div>
 
         {/* Right Side: Options and Auth */}
-        <div className="flex items-center gap-0.5 sm:gap-4 shrink-0 transition-all duration-300">
+        <div className="flex items-center gap-1 sm:gap-2 shrink-0 transition-all duration-300">
           {timeLeft && (
             <div className="hidden sm:flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
               <Clock className="h-4 w-4" />
@@ -260,7 +276,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               </span>
             </div>
           )}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Section:</span>
             <Select 
               value={activeSection} 
@@ -279,7 +295,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-1.5">
+          <div className="flex items-center gap-1">
             <span className="text-xs font-medium text-muted-foreground hidden lg:inline">Year:</span>
             <Select value={activeYear} onValueChange={setActiveYear}>
               <SelectTrigger className="w-[60px] sm:w-[85px] h-7 sm:h-9 border-2 font-semibold bg-card px-1 sm:px-2 text-[10px] sm:text-sm">
@@ -295,7 +311,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </Select>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             {deferredPrompt && (
               <Button
                 variant="outline"
@@ -339,7 +355,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-80" sideOffset={8}>
               <DropdownMenuLabel className="flex items-center justify-between px-4 py-3">
-                <span className="text-xs font-black uppercase tracking-widest text-foreground">Administrative Alerts</span>
+                <span className="text-xs font-black uppercase tracking-widest text-foreground">System Notifications</span>
                 {notifications.length > 0 && (
                   <button 
                     onClick={(e) => { 
@@ -357,7 +373,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               <div className="max-h-[300px] overflow-y-auto">
                 {notifications.length === 0 ? (
                   <div className="p-10 text-center text-[10px] font-black uppercase tracking-widest text-muted-foreground/60">
-                    No active system alerts.
+                    No active notifications.
                   </div>
                 ) : (
                   notifications.map((n) => (
@@ -394,7 +410,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg ml-0.5 sm:ml-1 bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
+              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
                 <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>

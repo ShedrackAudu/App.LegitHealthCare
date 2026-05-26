@@ -96,17 +96,17 @@ const AuditLogPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-500">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                <History className="h-6 w-6 sm:h-8 sm:w-8" />
-              </div>
-              <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">System Audit Trails</h1>
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+              <History className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
-            <p className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
-              Monitor system activities, security events, and administrative overrides.
-            </p>
+            <div>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">System Audit Trails</h1>
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
+                Monitor system activities, security events, and administrative overrides.
+              </p>
+            </div>
           </div>
           
           <div className="relative w-full lg:w-80 group">
@@ -143,8 +143,8 @@ const AuditLogPage: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-muted/10">
                     <TableRow className="hover:bg-transparent border-b-2 text-left">
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><Activity className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><User className="w-3 h-3 inline mr-1" /> Originator</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><Activity className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><Globe className="w-3 h-3 inline mr-1" /> Source IP</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><Calendar className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
@@ -163,11 +163,6 @@ const AuditLogPage: React.FC = () => {
                         }}
                         className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative"
                       >
-                        <TableCell className="py-2.5 text-left">
-                          <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
-                            {log.action}
-                          </Badge>
-                        </TableCell>
                         <TableCell className="py-2.5">
                           <div className="flex items-center gap-2">
                             <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] border border-primary/20">
@@ -180,6 +175,11 @@ const AuditLogPage: React.FC = () => {
                                 </span>
                             </div>
                           </div>
+                        </TableCell>
+                        <TableCell className="py-2.5 text-left">
+                          <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
+                            {log.action}
+                          </Badge>
                         </TableCell>
                         <TableCell className="text-[11px] font-mono font-bold text-slate-400 py-2.5">
                           {log.resource}

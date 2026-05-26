@@ -47,6 +47,15 @@
   /* Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
+
+  /* Disable all default system-wide shadows */
+  --shadow: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-2xl: none;
+  --shadow-inner: none;
 }
 
 @layer base {
@@ -79,18 +88,18 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 173 80% 40%;
 
-    --radius: 0.5rem;
+    --radius: 0px;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 222.2 84% 4.9%;
+    --background: 0 0% 0%;
     --foreground: 210 40% 98%;
 
-    --card: 222.2 84% 4.9%;
+    --card: 0 0% 0%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222.2 84% 4.9%;
+    --popover: 0 0% 0%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 173 80% 40%;
@@ -117,12 +126,18 @@
     border-color: hsl(var(--border));
     font-family: var(--font-sans);
   }
+  html, body, #root {
+    height: 100%;
+    margin: 0;
+    padding: 0;
+  }
   body {
     background-color: hsl(var(--background));
     color: hsl(var(--foreground));
     font-family: var(--font-sans);
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    overflow-x: hidden;
   }
 
   input, button, select, textarea {
@@ -365,3 +380,52 @@
 .duration-500 { --tw-animate-duration: 500ms; }
 .duration-700 { --tw-animate-duration: 700ms; }
 .duration-1000 { --tw-animate-duration: 1000ms; }
+
+/* Remove all border-radius system wide (including their modals/dropdowns/portals) */
+*, ::before, ::after {
+  border-radius: 0px !important;
+}
+
+/* Force 100% black solid backgrounds system-wide in dark mode */
+.dark,
+.dark body,
+.dark #root,
+.dark header,
+.dark nav,
+.dark aside,
+.dark main,
+.dark footer,
+.dark dialog,
+.dark [class*="bg-background"],
+.dark [class*="bg-card"],
+.dark [class*="bg-popover"],
+.dark [class*="bg-zinc-950"],
+.dark [class*="bg-slate-950"],
+.dark [class*="bg-neutral-950"],
+.dark [class*="bg-gray-950"] {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  backdrop-filter: none !important;
+  --tw-backdrop-blur: none !important;
+}
+
+.dark [class*="bg-background/"],
+.dark [class*="bg-card/"],
+.dark [class*="bg-popover/"] {
+  background-color: #000000 !important;
+  background: #000000 !important;
+  backdrop-filter: none !important;
+}
+
+/* Force react-hot-toast containers/toasts flush to screen edge and remove margin */
+.react-hot-toast-container {
+  padding: 0 !important;
+  top: 1mm !important;
+  right: 0 !important;
+}
+
+.react-hot-toast-container > div {
+  margin: 0 !important;
+}
+
+

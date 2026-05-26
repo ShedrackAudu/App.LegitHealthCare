@@ -104,14 +104,14 @@ const ViewPatientsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Unified Search Header style matching Director Review */}
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <Users className="text-primary h-8 w-8" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                            <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
-                            <h1 className="text-2xl font-black tracking-tight">Patient Directory</h1>
-                            <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight">Patient Directory</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>
                     
@@ -204,7 +204,24 @@ const ViewPatientsPage: React.FC = () => {
                                                             {p.staff_id}
                                                         </code>
                                                     </TableCell>
-                                                    <TableCell className="font-bold text-xs">{p.first_name}</TableCell>
+                                                    <TableCell className="font-bold text-xs">
+                                                        <div className="flex items-center gap-2">
+                                                            <div className="w-6 h-6 rounded-full overflow-hidden border border-primary/20 bg-muted shrink-0 flex items-center justify-center">
+                                                                {p.passport_image ? (
+                                                                    <img 
+                                                                        src={p.passport_image.startsWith('http') || p.passport_image.startsWith('blob') || p.passport_image.startsWith('data') ? p.passport_image : `${(window as any).API_BASE_URL}${p.passport_image}`} 
+                                                                        alt="Avatar" 
+                                                                        className="w-full h-full object-cover"
+                                                                    />
+                                                                ) : (
+                                                                    <span className="text-[10px] font-black text-primary/60 uppercase">
+                                                                        {p.first_name?.[0]}{p.last_name?.[0]}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                            <span>{p.first_name}</span>
+                                                        </div>
+                                                    </TableCell>
                                                     <TableCell className="text-xs text-muted-foreground">{p.middle_name || '-'}</TableCell>
                                                     <TableCell className="font-bold text-xs">{p.last_name}</TableCell>
                                                     <TableCell>

@@ -250,14 +250,14 @@ const AppointmentsPage = () => {
       <div className="space-y-6">
         
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+        <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-primary/10 rounded-2xl">
-                <Calendar className="text-primary h-8 w-8" />
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                <Calendar className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
-                <h1 className="text-xl sm:text-2xl font-black tracking-tight">Appointments Booking</h1>
-                <p className="text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                <h1 className="text-base sm:text-2xl font-black tracking-tight">Appointments Booking</h1>
+                <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
           </div>
 

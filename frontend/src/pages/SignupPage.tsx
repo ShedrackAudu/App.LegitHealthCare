@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
@@ -137,7 +138,7 @@ const SignupPage: React.FC = () => {
       setOtpTimer(60);
       setCanResendOtp(false);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to resend');
+      toast.error(getErrorMessage(err, 'Failed to resend'));
     } finally {
       setResendingOtp(false);
     }
@@ -163,7 +164,7 @@ const SignupPage: React.FC = () => {
         navigate('/patient/dashboard');
       }, 2000);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Invalid OTP');
+      toast.error(getErrorMessage(err, 'Invalid OTP'));
     } finally {
       setVerifyLoading(false);
     }
@@ -188,7 +189,7 @@ const SignupPage: React.FC = () => {
         navigate('/login');
       }, 2000);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Invalid OTP');
+      toast.error(getErrorMessage(err, 'Invalid OTP'));
     } finally {
       setVerifyLoading(false);
     }
@@ -241,7 +242,7 @@ const SignupPage: React.FC = () => {
       setCanResendOtp(false);
       toast.success('Account created! Please check your email for the verification code.');
     } catch (err: any) {
-      setError(err.response?.data?.error || 'Something went wrong. Please try again.');
+      setError(getErrorMessage(err, 'Something went wrong. Please try again.'));
     } finally {
       setLoading(false);
     }
@@ -275,7 +276,7 @@ const SignupPage: React.FC = () => {
         setExistingUser(true);
         toast.error('Account already exists for this Staff ID.');
       } else {
-        toast.error(err.response?.data?.error || 'Staff ID not found or server error.');
+        toast.error(getErrorMessage(err, 'Staff ID not found or server error.'));
       }
     } finally {
       setSearchLoading(false);
@@ -314,14 +315,14 @@ const SignupPage: React.FC = () => {
       setPatientStep('verify');
       toast.success('Verification code sent to your email!');
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to claim account.');
+      toast.error(getErrorMessage(err, 'Failed to claim account.'));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20 registration-page">
       {/* Left Side: Branding & Visuals (Consistent with Login) */}
       <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 
@@ -341,14 +342,14 @@ const SignupPage: React.FC = () => {
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.auth_logo}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[62px] w-auto object-contain drop-shadow-[0_0_15px_rgba(255,255,255,0.4)] drop-shadow-[0_6px_10px_rgba(0,0,0,0.3)] transition-all hover:scale-105 duration-300" 
+                  className="h-[62px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
             ) : branding?.logo_dark ? (
                 <SafeImage 
                   src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
                   alt={branding?.clinic_name || "Logo"} 
-                  className="h-[41px] w-auto object-contain drop-shadow-[0_0_12px_rgba(255,255,255,0.3)] drop-shadow-[0_4px_8px_rgba(0,0,0,0.2)] transition-all hover:scale-105 duration-300" 
+                  className="h-[41px] w-auto object-contain transition-all hover:scale-105 duration-300" 
                   fallbackText={branding?.clinic_name}
                 />
               ) : (
@@ -483,7 +484,7 @@ const SignupPage: React.FC = () => {
                     </div>
                   </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 pt-1">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 sm:gap-4 pt-1">
                       <div className="space-y-1">
                         <div className="flex justify-between items-center mb-1">
                           <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>
@@ -678,8 +679,8 @@ const SignupPage: React.FC = () => {
                         <Badge className="bg-primary text-white font-black text-[10px]">{patientData?.section || 'DCP'}</Badge>
                       </div>
 
-                      <div className="p-4 grid grid-cols-2 gap-4 bg-muted/10 border-t border-primary/5">
-                        <div className="flex flex-col gap-1.5">
+                      <div className="p-3 sm:p-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-4 bg-muted/10 border-t border-primary/5">
+                        <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <Building2 className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Department</Label>
@@ -687,7 +688,7 @@ const SignupPage: React.FC = () => {
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.department || 'N/A'}</p>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <User className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Gender</Label>
@@ -695,7 +696,7 @@ const SignupPage: React.FC = () => {
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.gender || 'N/A'}</p>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <Calendar className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Date of Birth</Label>
@@ -703,7 +704,7 @@ const SignupPage: React.FC = () => {
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.dob || 'N/A'}</p>
                         </div>
 
-                        <div className="flex flex-col gap-1.5">
+                        <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
                               <ShieldCheck className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
@@ -734,7 +735,7 @@ const SignupPage: React.FC = () => {
                          </div>
                       </div>
 
-                      <div className="grid grid-cols-2 gap-4">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2 sm:gap-4">
                          <div className="space-y-1">
                             <div className="flex justify-between items-center mb-1">
                               <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Password</Label>

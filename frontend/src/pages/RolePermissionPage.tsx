@@ -222,19 +222,17 @@ const RolePermissionPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl text-primary">
-                <ShieldCheck className="h-6 w-6 sm:h-8 sm:w-8" />
-              </div>
-              <div>
-                <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground uppercase">System Access Control</h1>
-                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Manage roles, granular permissions, and security entrance keys.</p>
-              </div>
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+              <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8" />
+            </div>
+            <div>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground uppercase">System Access Control</h1>
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Manage roles, granular permissions, and security entrance keys.</p>
             </div>
           </div>
-          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-3 w-fit shrink-0 shadow-sm">
+          <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-start lg:w-fit shrink-0 shadow-sm">
             <ShieldCheck className="w-4 h-4 text-primary" />
             <span className="text-[9px] sm:text-[11px] font-black uppercase text-primary tracking-[0.15em] leading-none">Security Override Enabled</span>
           </div>

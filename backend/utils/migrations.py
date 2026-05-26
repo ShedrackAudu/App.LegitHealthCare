@@ -32,6 +32,19 @@ def ensure_schema(app):
                         app.logger.info(f"Successfully updated {name} schema.")
                     else:
                         app.logger.debug(f"Column already exists in {name} database.")
+                
+                # Check for passport_image in bio_data
+                if 'bio_data' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('bio_data')]
+                    if 'passport_image' not in columns:
+                        app.logger.info(f"Adding 'passport_image' column to {name} database bio_data table...")
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE bio_data ADD COLUMN passport_image VARCHAR(255)"))
+                            conn.commit()
+                        app.logger.info(f"Successfully updated {name} schema for bio_data.")
+                    else:
+                        app.logger.debug(f"passport_image column already exists in {name} bio_data table.")
+
                 # 2. Fix AuditLog Foreign Key (Conflict with Patient Portal in Postgres)
                 if 'audit_logs' in inspector.get_table_names():
                     fks = inspector.get_foreign_keys('audit_logs')
@@ -104,6 +117,52 @@ def ensure_schema(app):
                                     conn.commit()
                                 except Exception as e:
                                     app.logger.error(f"Failed to add '{col_name}' to appointments: {e}")
+
+                # 6. Add ua_remark_others, breast_others, abdomen_others to consultation_data and director_reviews
+                if 'consultation_data' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('consultation_data')]
+                    with engine.connect() as conn:
+                        if 'ua_remark_others' not in columns:
+                            conn.execute(text("ALTER TABLE consultation_data ADD COLUMN ua_remark_others VARCHAR(255)"))
+                        if 'breast_others' not in columns:
+                            conn.execute(text("ALTER TABLE consultation_data ADD COLUMN breast_others VARCHAR(255)"))
+                        if 'abdomen_others' not in columns:
+                            conn.execute(text("ALTER TABLE consultation_data ADD COLUMN abdomen_others VARCHAR(255)"))
+                        conn.commit()
+
+                if 'director_reviews' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('director_reviews')]
+                    with engine.connect() as conn:
+                        if 'ua_remark_others' not in columns:
+                            conn.execute(text("ALTER TABLE director_reviews ADD COLUMN ua_remark_others VARCHAR(255)"))
+                        if 'breast_others' not in columns:
+                            conn.execute(text("ALTER TABLE director_reviews ADD COLUMN breast_others VARCHAR(255)"))
+                        if 'abdomen_others' not in columns:
+                            conn.execute(text("ALTER TABLE director_reviews ADD COLUMN abdomen_others VARCHAR(255)"))
+                        conn.commit()
+
+                # 7. Widen Special Tests Result columns
+                if 'special_tests_results' in inspector.get_table_names():
+                    with engine.connect() as conn:
+                        try:
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN ecg_result TYPE VARCHAR(255)"))
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN spirometry_result TYPE VARCHAR(255)"))
+                            conn.execute(text("ALTER TABLE special_tests_results ALTER COLUMN audiometry_result TYPE VARCHAR(255)"))
+                            conn.commit()
+                        except Exception as e:
+                            app.logger.debug(f"Could not alter special_tests_results columns (might be SQLite or already altered): {e}")
+
+                # 8. Add urea and creatinine to lft_results if they do not exist
+                if 'lft_results' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('lft_results')]
+                    with engine.connect() as conn:
+                        if 'urea' not in columns:
+                            app.logger.info(f"Adding 'urea' column to lft_results table in {name} database...")
+                            conn.execute(text("ALTER TABLE lft_results ADD COLUMN urea VARCHAR(20)"))
+                        if 'creatinine' not in columns:
+                            app.logger.info(f"Adding 'creatinine' column to lft_results table in {name} database...")
+                            conn.execute(text("ALTER TABLE lft_results ADD COLUMN creatinine VARCHAR(20)"))
+                        conn.commit()
 
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

@@ -122,19 +122,17 @@ const DataManagementPage: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-          <div className="flex flex-col gap-3">
-            <div className="flex items-center gap-3">
-              <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
-                <Database className="w-6 h-6 sm:w-8 sm:h-8 text-primary" />
-              </div>
-              <h1 className="text-xl sm:text-3xl font-black tracking-tight leading-tight">
-                Data Management Hub
-              </h1>
+        <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
+          <div className="flex items-center gap-3">
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
+              <Database className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
-            <p className="text-muted-foreground font-medium italic text-xs sm:text-base pl-4 border-l-4 border-primary/10 ml-1 py-1">
+            <div>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight">Data Management Hub</h1>
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
                 Centralized hub for {activeSection} data operations • Session {activeYear}
-            </p>
+              </p>
+            </div>
           </div>
 
           <div className="flex bg-muted/50 p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1">
@@ -179,7 +177,7 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
                         <FileSpreadsheet className="w-6 h-6 text-primary" />
                     </div>
                     <div>
@@ -219,7 +217,7 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-slate-900 rounded-xl shadow-sm">
+                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
                         <Activity className="w-6 h-6 text-indigo-500" />
                     </div>
                     <div>
@@ -335,7 +333,7 @@ const DataManagementPage: React.FC = () => {
         )}
 
         <div className="mt-12 bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-inner">
-            <div className="p-6 bg-white dark:bg-slate-900 rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
+            <div className="p-6 bg-white dark:bg-card rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
                 <ShieldCheck className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">

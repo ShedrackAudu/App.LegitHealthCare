@@ -166,18 +166,18 @@ const AccessKeysPage = () => {
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex flex-col gap-3">
+                <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-2.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl border-2 border-primary/20 text-primary shrink-0">
-                            <Key className="w-6 h-6 sm:w-8 sm:h-8 font-black" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
+                            <Key className="h-5 w-5 sm:h-8 sm:w-8 font-black" />
                         </div>
-                        <h1 className="text-xl sm:text-3xl font-black tracking-tight text-primary uppercase leading-tight">Security Access Keys</h1>
+                        <div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight text-primary uppercase leading-tight">Security Access Keys</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
+                                Temporary authentication overrides for clinical and administrative staff.
+                            </p>
+                        </div>
                     </div>
-                    <p className="text-muted-foreground font-bold italic text-xs sm:text-sm pl-4 border-l-4 border-primary/10 ml-1 py-1">
-                        Temporary authentication overrides for clinical and administrative staff.
-                    </p>
-                </div>
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

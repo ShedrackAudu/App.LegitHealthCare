@@ -77,7 +77,7 @@ app.config['MAIL_PASSWORD'] = os.getenv('MAIL_PASSWORD')
 app.config['APP_URL'] = os.getenv('APP_URL', 'http://localhost:5173')
 app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', app.config['APP_URL'])
 app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(hours=4)
-app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies']
+app.config['JWT_TOKEN_LOCATION'] = ['headers', 'cookies', 'query_string']
 app.config['JWT_COOKIE_SECURE'] = os.getenv('FLASK_ENV') == 'production'
 app.config['JWT_COOKIE_CSRF_PROTECT'] = False # Set to True later for full CSRF protection
 app.config['JWT_ACCESS_COOKIE_PATH'] = '/'
@@ -202,6 +202,11 @@ def set_db_context():
     pass
 
 
+@app.route('/api/ping', methods=['GET'])
+def ping():
+    return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat()}), 200
+
+
 @app.route('/api/config/staff-signup-status', methods=['GET'])
 def signup_status():
     from models import SystemConfig
@@ -209,6 +214,28 @@ def signup_status():
     # Default to true if not set
     is_enabled = config.value.lower() == 'true' if config else True
     return jsonify({"staff_signup_enabled": is_enabled}), 200
+
+@app.route('/api/config/default-theme', methods=['GET'])
+def get_default_theme():
+    from models import SystemConfig
+    config = SystemConfig.query.get('default_theme')
+    # Default to 'light' if not set
+    theme = config.value if config else 'light'
+    return jsonify({"default_theme": theme}), 200
+
+@app.route('/api/config/ticker', methods=['GET'])
+def get_ticker_config():
+    from models import SystemConfig
+    msg_config = SystemConfig.query.get('ticker_message')
+    icon_config = SystemConfig.query.get('ticker_icon')
+    enabled_config = SystemConfig.query.get('ticker_enabled')
+    
+    return jsonify({
+        "message": msg_config.value if msg_config else "",
+        "icon": icon_config.value if icon_config else "info",
+        "enabled": (enabled_config.value.lower() == 'true') if enabled_config else False
+    }), 200
+
 
 @app.route('/signup', methods=['POST'])
 @limiter.limit("5 per hour")

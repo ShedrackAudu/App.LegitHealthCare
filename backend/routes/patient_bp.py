@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, PatientPortalUser
+from models import db, PatientPortalUser, AuditLog
 from auth_utils import generate_otp, is_password_strong
 import os
 from sqlalchemy import text
@@ -161,6 +161,7 @@ def claim_account():
     try:
         db.session.flush() # Try flushing to catch constraints early
         db.session.commit()
+        AuditLog.log_action("Claim Patient Account", resource=f"PatientPortalUser:{user.id}", details={"staff_id": staff_id, "email": email})
         
         # Sync with Clinical BioData (dcp, dct binds)
         contexts = ['dcp', 'dct']
@@ -243,6 +244,7 @@ def resend_otp():
     user.otp_code = otp
     user.otp_expiry = datetime.now() + timedelta(minutes=15)
     db.session.commit()
+    AuditLog.log_action("Resend Patient OTP", resource=f"PatientPortalUser:{user.id}", details={"email": email})
     
     try:
         from models import AppBranding
@@ -286,6 +288,7 @@ def verify_patient_otp():
         user.is_verified = True
         user.otp_code = None
         db.session.commit()
+        AuditLog.log_action("Verify Patient OTP / Complete Register", resource=f"PatientPortalUser:{user.id}", details={"email": email})
         return jsonify({
             "message": "Welcome! Your account has been successfully created.",
             "user": user.to_dict()
@@ -444,6 +447,7 @@ def update_patient_profile():
         if new_email: portal_user.email = new_email
         if new_phone: portal_user.phone = new_phone
         db.session.commit()
+        AuditLog.log_action("Update Patient Profile", resource=f"PatientPortalUser:{portal_user.id}", details={"email": new_email, "phone": new_phone})
     except Exception as e:
         db.session.rollback()
         error_msg = str(e).lower()
@@ -493,6 +497,7 @@ def reset_password_request():
     user.otp_code = otp
     user.otp_expiry = datetime.now() + timedelta(minutes=15)
     db.session.commit()
+    AuditLog.log_action("Request Patient Password Reset OTP", resource=f"PatientPortalUser:{user.id}", details={"email": email})
     
     try:
         from models import AppBranding
@@ -542,6 +547,7 @@ def reset_password_verify():
     user.set_password(new_password)
     user.otp_code = None # Clear OTP after use
     db.session.commit()
+    AuditLog.log_action("Verify Patient Password Reset", resource=f"PatientPortalUser:{user.id}", details={"email": email})
     
     return jsonify({"message": "Your password has been reset successfully. You can now log in.", "success": True}), 200
 

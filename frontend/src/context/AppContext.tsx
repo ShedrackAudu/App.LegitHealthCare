@@ -21,6 +21,8 @@ interface AppContextType {
   isMuted: boolean;
   setIsMuted: (muted: boolean) => void;
   playGlobalSound: (type?: 'message' | 'alert') => void;
+  activeChatId: string | null;
+  setActiveChatId: (id: string | null) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -51,6 +53,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
   const [isMuted, setIsMuted] = useState(() => localStorage.getItem('app_muted') === 'true');
+  const [activeChatId, setActiveChatId] = useState<string | null>(null);
+  const activeChatIdRef = React.useRef<string | null>(null);
+
+  useEffect(() => {
+    activeChatIdRef.current = activeChatId;
+  }, [activeChatId]);
 
   const MESSAGE_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3';
   const ALERT_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2353/2353-preview.mp3';
@@ -117,13 +125,33 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       
       setSocket(newSocket);
       
-      newSocket.on('message_notification', () => {
+      newSocket.on('message_notification', (msg: any) => {
           setUnreadMessagesCount(prev => prev + 1);
-          // Only play global sound if we're not on the messaging page 
-          // (Messaging page has its own logic for active chats)
-          if (!window.location.pathname.includes('/messaging')) {
+          
+          const isChatActive = window.location.pathname.includes('/messaging') && 
+            activeChatIdRef.current === (msg.group_id ? `group_${msg.group_id}` : `dm_${msg.sender_id}`);
+          
+          if (!isChatActive && msg.sender_id !== user.id) {
             playGlobalSound('message');
+            
+            const titleText = msg.group_id ? `Group: ${msg.sender_name}` : msg.sender_name;
+            toast(
+              <div className="flex flex-col gap-0.5">
+                <span className="font-bold text-foreground text-sm">{titleText}</span>
+                <span className="text-muted-foreground text-xs line-clamp-2">{msg.content}</span>
+              </div>,
+              { id: `message_${msg.id}` }
+            );
           }
+      });
+
+      newSocket.on('unread_update', () => {
+        axios.get('/api/messages/conversations').then(resp => {
+          const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
+          setUnreadMessagesCount(total);
+        }).catch(err => {
+          // Interceptor will handle 401
+        });
       });
 
       newSocket.on('user_update', (updatedUser) => {
@@ -288,7 +316,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       user, setUser,
       branding, brandingError, fetchBranding,
       socket, unreadMessagesCount, setUnreadMessagesCount,
-      isMuted, setIsMuted: handleSetIsMuted, playGlobalSound
+      isMuted, setIsMuted: handleSetIsMuted, playGlobalSound,
+      activeChatId, setActiveChatId
     }}>
       {children}
     </AppContext.Provider>

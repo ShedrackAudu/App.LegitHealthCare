@@ -330,27 +330,51 @@ def manage_config():
 def request_access():
     data = request.json
     user_id = data.get('user_id')
+    if user_id is not None:
+        user_id = int(user_id)
     path = data.get('path', 'Unknown')
     
+    # Strip trailing slash for consistent matching
+    clean_path = path.rstrip('/')
+    
     # Map paths to permissions
-    path_map = {
-        '/user-management': 'view_users',
-        '/roles-permissions': 'manage_roles',
-        '/audit-logs': 'view_audit_logs',
-        '/data-management': 'download_data',
-        '/system-branding': 'manage_branding',
-        '/ai-integration': 'manage_ai',
-        '/departments': 'manage_departments',
-        '/registration': 'registration',
-        '/consultation': 'consultation',
-        '/tests': 'lab_tests',
-        '/director': 'director_review',
-        '/view-patients': 'view_patients',
-        '/view-records': 'view_records',
-        '/patient-report': 'view_records',
-        '/messages': 'messaging'
-    }
-    perm_name = path_map.get(path, 'system_maintenance')
+    if clean_path.startswith('/tests/'):
+        test_sub = clean_path.split('/')[-1]
+        test_mapping = {
+            'fbc': 'lab_fbc',
+            'kft': 'lab_kft',
+            'lipid': 'lab_lipid',
+            'lft': 'lab_lft',
+            'ecg': 'lab_ecg',
+            'spirometry': 'lab_spirometry',
+            'audiometry': 'lab_audiometry',
+            'routine': 'lab_essential_diagnostics'
+        }
+        perm_name = test_mapping.get(test_sub, 'lab_tests')
+    else:
+        path_map = {
+            '/user-management': 'view_users',
+            '/roles-permissions': 'manage_roles',
+            '/security-analytics': 'manage_roles',
+            '/audit-logs': 'view_audit_logs',
+            '/data-management': 'download_data',
+            '/system-branding': 'manage_branding',
+            '/ai-integration': 'manage_ai',
+            '/system-config': 'manage_departments',
+            '/departments': 'manage_departments',
+            '/registration': 'registration',
+            '/consultation': 'consultation',
+            '/appointments': 'manage_appointments',
+            '/tests': 'lab_tests',
+            '/director': 'director_review',
+            '/view-patients': 'view_patients',
+            '/view-records': 'view_records',
+            '/patient-report': 'patient_reports',
+            '/messages': 'messaging',
+            '/inventory': 'view_inventory',
+            '/admin/access-keys': 'manage_access_keys'
+        }
+        perm_name = path_map.get(clean_path, 'system_maintenance')
 
     req = AccessRequest(
         user_id=user_id,
@@ -408,6 +432,9 @@ def verify_access_code():
     code_str = data.get('code')
     user_id = get_jwt_identity()
     
+    # Coerce user_id to integer for consistency
+    user_id_int = int(user_id) if user_id is not None else None
+    
     code_obj = TempAccessCode.query.filter_by(code=code_str, is_revoked=False).first()
     
     if not code_obj:
@@ -416,34 +443,32 @@ def verify_access_code():
     if code_obj.expires_at and code_obj.expires_at < datetime.now():
         return jsonify({"error": "Access code has expired"}), 403
         
-    if code_obj.user_id and str(code_obj.user_id) != str(user_id):
+    if code_obj.user_id and code_obj.user_id != user_id_int:
         return jsonify({"error": "This code is assigned to another user"}), 403
 
     # If it's single-use and already used, don't allow re-activation
     if not code_obj.is_multi_use and code_obj.times_used > 0:
         return jsonify({"error": "This single-use code has already been activated"}), 403
 
-    # Success - Grant Permission (By upgrading user to Admin for this prototype)
-    # NEW: Instead of granting Admin role, we just mark it as activated.
-    # The User.has_permission method now checks for active TempAccessCode.
-    user = User.query.get(user_id) # Ensure user object is loaded for to_dict()
+    user = User.query.get(user_id_int)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
     
     code_obj.times_used += 1
     if not code_obj.user_id:
-        code_obj.user_id = user_id
+        code_obj.user_id = user_id_int
         
     # We do NOT set is_revoked = True here, because the user needs the access until expires_at.
     # The 'times_used' check above prevents re-activation of single-use codes.
-
         
     db.session.commit() # Commit changes to code_obj before logging/emitting
     
     # Log the activity
     audit = AuditLog(
-        user_id=user_id,
+        user_id=user_id_int,
         action='Activate Access Code',
         resource=f"TempAccessCode:{code_obj.code}",
-        details=f"Activated temporary access to {code_obj.permission.name} for {code_obj.duration_minutes} minutes.",
+        details=f"Activated temporary access to {code_obj.permission.name if code_obj.permission else 'Unknown'} for {code_obj.duration_minutes} minutes.",
         ip_address=get_client_ip()
     )
     db.session.add(audit)
@@ -452,13 +477,13 @@ def verify_access_code():
     # Real-time notification to frontend
     try:
         from extensions import socketio
-        socketio.emit('user_update', user.to_dict(), room=f"user_{user_id}")
+        socketio.emit('user_update', user.to_dict(), room=f"user_{user_id_int}")
     except Exception as e:
         print(f"Socket emit failed: {e}")
         
     return jsonify({
         "message": "Access granted successfully!",
-        "redirect": code_obj.page_route if hasattr(code_obj, 'page_route') else None, # Assuming page_route might be on code_obj
+        "redirect": code_obj.page_route if hasattr(code_obj, 'page_route') else None,
         "user": user.to_dict()
     }), 200
 
@@ -579,17 +604,17 @@ def export_screening_matrix():
                 "Murmur": "", "Chest Status": "", "LUTS": "", "Chronic Cough": "", "Chest Pain": "", 
                 "Chest Infection": "", "Heart Dx": "", "DM Status": "", "HTN Status": "", "PSA": "", 
                 "PSA Remark": "", "FBS": "", "RBS": "", "Sugar Remark": "", "UA Result": "", 
-                "UA Remark": "", "Breast Exam": "", "Breast Remark": "", "Abdomen": "", 
+                "UA Remark": "", "UA Remark Others": "", "Breast Exam": "", "Breast Remark": "", "Abdomen": "", 
                 "Assessment HX PE": "", "Overall Lab Remark": "", "Other Assessments": "", "Other Remarks": "", 
                 "Overall Assessment": "", "Consulted By": "", "Consultation Date": "",
                 "PCV": "", "WBC": "", "HGB": "", "PLT": "", "RBC": "", 
                 "LYMP PCT": "", "LYMP ABS": "", "GRA PCT": "", "GRA ABS": "", 
                 "MID PCT": "", "MID ABS": "", "MCV": "", "MCH": "", "MCHC": "", 
                 "RDW": "", "PDW": "", "FBC Remark": "",
-                "Potassium": "", "Sodium": "", "Chloride": "", "Urea": "", 
-                "Creatinine": "", "Bicarbonate": "", "HCO3": "", "KFT Remark": "",
+                "Potassium": "", "Sodium": "", "Chloride": "", 
+                "Calcium": "", "HCO3": "", "KFT Remark": "",
                 "Total Cholesterol": "", "Triglycerides": "", "HDL": "", "LDL": "", "Lipid Remark": "",
-                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "LFT Remark": "",
+                "AST": "", "ALT": "", "ALP": "", "TB": "", "CB": "", "Urea": "", "Creatinine": "", "LFT Remark": "",
                 "ECG": "", "ECG Remark": "", "Spirometry": "", "Spirometry Remark": "", 
                 "Audiometry": "", "Audiometry Remark": "", "Weight": "", "Height": "",
                 "Director Comm1": "", "Director Comm2": "", "Director Comm3": "", "Director Comm4": "", 
@@ -603,7 +628,7 @@ def export_screening_matrix():
                 
             c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if c:
-                row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Abdomen": c.abdomen, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
+                row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "UA Remark Others": c.ua_remark_others, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Breast Others": c.breast_others, "Abdomen": c.abdomen, "Abdomen Others": c.abdomen_others, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
 
 
                 
@@ -613,7 +638,7 @@ def export_screening_matrix():
                 
             k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if k:
-                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Urea": k.urea, "Creatinine": k.creatinine, "Bicarbonate": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
+                row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Calcium": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
             li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if li:
@@ -621,7 +646,7 @@ def export_screening_matrix():
                 
             lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if lf:
-                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "LFT Remark": lf.lft_remark })
+                row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "Urea": lf.urea, "Creatinine": lf.creatinine, "LFT Remark": lf.lft_remark })
                 
             s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
             if s:
@@ -639,7 +664,8 @@ def export_screening_matrix():
                     "Breast Remark": dr.breast_remark, "Abdomen": dr.abdomen, "PSA": dr.psa, 
                     "PSA Remark": dr.psa_remark, "FBS": dr.fbs, "RBS": dr.rbs, 
                     "Sugar Remark": dr.fbs_rbs_remark, "UA Result": dr.ua_result, 
-                    "UA Remark": dr.ua_remark
+                    "UA Remark": dr.ua_remark, "UA Remark Others": dr.ua_remark_others,
+                    "Breast Others": dr.breast_others, "Abdomen Others": dr.abdomen_others
                 }
                 for k_key, v_val in overrides.items():
                     if v_val:

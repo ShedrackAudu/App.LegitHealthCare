@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, InventoryCategory, InventorySupplier, InventoryItem, InventoryTransaction, User
+from models import db, InventoryCategory, InventorySupplier, InventoryItem, InventoryTransaction, User, AuditLog
 from decorators import require_permission
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from datetime import datetime
@@ -27,6 +27,12 @@ def add_category():
     
     cat = InventoryCategory(name=name, description=data.get('description'))
     db.session.add(cat)
+    db.session.flush()
+    AuditLog.log_action(
+        action='Add Inventory Category',
+        resource=f"Category:{cat.id}",
+        details={"message": f"Added inventory category '{cat.name}'.", "category_id": cat.id, "name": cat.name}
+    )
     db.session.commit()
     return jsonify(cat.to_dict()), 201
 
@@ -42,6 +48,11 @@ def delete_category(cat_id):
         return jsonify({"error": "Cannot delete category as it is currently assigned to items"}), 400
         
     db.session.delete(cat)
+    AuditLog.log_action(
+        action='Delete Inventory Category',
+        resource=f"Category:{cat_id}",
+        details={"message": f"Deleted inventory category '{cat.name}'.", "category_id": cat_id, "name": cat.name}
+    )
     db.session.commit()
     return jsonify({"message": "Category deleted successfully"}), 200
 
@@ -55,6 +66,11 @@ def update_category(cat_id):
     data = request.json
     cat.name = data.get('name', cat.name)
     cat.description = data.get('description', cat.description)
+    AuditLog.log_action(
+        action='Update Inventory Category',
+        resource=f"Category:{cat_id}",
+        details={"message": f"Updated inventory category to name: '{cat.name}'.", "category_id": cat_id, "name": cat.name}
+    )
     db.session.commit()
     return jsonify(cat.to_dict()), 200
 
@@ -81,6 +97,12 @@ def add_supplier():
         address=data.get('address')
     )
     db.session.add(supplier)
+    db.session.flush()
+    AuditLog.log_action(
+        action='Add Inventory Supplier',
+        resource=f"Supplier:{supplier.id}",
+        details={"message": f"Added supplier '{supplier.name}'.", "supplier_id": supplier.id, "name": supplier.name}
+    )
     db.session.commit()
     return jsonify(supplier.to_dict()), 201
 
@@ -96,6 +118,11 @@ def delete_supplier(sup_id):
         return jsonify({"error": "Cannot delete supplier as it is currently assigned to items"}), 400
 
     db.session.delete(supplier)
+    AuditLog.log_action(
+        action='Delete Inventory Supplier',
+        resource=f"Supplier:{sup_id}",
+        details={"message": f"Deleted supplier '{supplier.name}'.", "supplier_id": sup_id, "name": supplier.name}
+    )
     db.session.commit()
     return jsonify({"message": "Supplier deleted successfully"}), 200
 
@@ -112,6 +139,11 @@ def update_supplier(sup_id):
     supplier.email = data.get('email', supplier.email)
     supplier.phone = data.get('phone', supplier.phone)
     supplier.address = data.get('address', supplier.address)
+    AuditLog.log_action(
+        action='Update Inventory Supplier',
+        resource=f"Supplier:{sup_id}",
+        details={"message": f"Updated supplier '{supplier.name}' details.", "supplier_id": sup_id, "name": supplier.name}
+    )
     db.session.commit()
     return jsonify(supplier.to_dict()), 200
 
@@ -165,6 +197,12 @@ def add_item():
         location=data.get('location')
     )
     db.session.add(item)
+    db.session.flush()
+    AuditLog.log_action(
+        action='Add Inventory Item',
+        resource=f"Item:{item.id}",
+        details={"message": f"Added inventory item '{item.name}' (SKU: {item.sku}) with stock level {item.stock_level}.", "item_id": item.id, "name": item.name, "sku": item.sku, "stock_level": item.stock_level}
+    )
     db.session.commit()
     
     # Log initial stock as transaction
@@ -219,6 +257,11 @@ def update_item(item_id):
         except ValueError:
             pass
             
+    AuditLog.log_action(
+        action='Update Inventory Item',
+        resource=f"Item:{item_id}",
+        details={"message": f"Updated inventory item '{item.name}' details.", "item_id": item_id, "name": item.name}
+    )
     db.session.commit()
     return jsonify(item.to_dict()), 200
 
@@ -234,6 +277,11 @@ def delete_item(item_id):
     InventoryTransaction.query.filter_by(item_id=item_id).delete()
     
     db.session.delete(item)
+    AuditLog.log_action(
+        action='Delete Inventory Item',
+        resource=f"Item:{item_id}",
+        details={"message": f"Deleted inventory item '{item.name}' (SKU: {item.sku}).", "item_id": item_id, "name": item.name, "sku": item.sku}
+    )
     db.session.commit()
     return jsonify({"message": "Item deleted successfully"}), 200
 
@@ -270,6 +318,11 @@ def adjust_stock(item_id):
         reason=reason
     )
     db.session.add(transaction)
+    AuditLog.log_action(
+        action='Adjust Inventory Stock',
+        resource=f"Item:{item_id}",
+        details={"message": f"Adjusted stock for item '{item.name}' ({transaction_type}): quantity {quantity}, new stock level {item.stock_level}. Reason: {reason}", "item_id": item_id, "name": item.name, "transaction_type": transaction_type, "quantity": quantity, "new_stock_level": item.stock_level, "reason": reason}
+    )
     db.session.commit()
     
     return jsonify({

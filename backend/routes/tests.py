@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
@@ -30,9 +30,19 @@ def save_test_result(test_type):
     if not user:
         return jsonify({"error": "User not found"}), 404
     
-    perm_name = PERM_MAP.get(test_type, 'lab_tests')
-    if not user.has_permission(perm_name) and user.username != 'admin':
-        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+    if test_type == 'special':
+        has_perm = (
+            user.has_permission('lab_tests') or 
+            user.has_permission('lab_ecg') or 
+            user.has_permission('lab_spirometry') or 
+            user.has_permission('lab_audiometry')
+        )
+        if not has_perm and user.username != 'admin':
+            return jsonify({"error": "Permission for special tests required"}), 403
+    else:
+        perm_name = PERM_MAP.get(test_type, 'lab_tests')
+        if not user.has_permission(perm_name) and user.username != 'admin':
+            return jsonify({"error": f"Permission '{perm_name}' required"}), 403
 
     data = request.json
     staff_id = data.get('staff_id')
@@ -89,23 +99,50 @@ def save_test_result(test_type):
         if ecg_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'ECG'
             ).delete(synchronize_session=False)
         if spiro_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'Spirometry'
             ).delete(synchronize_session=False)
         if audio_filled:
             db.session.query(QueueEntry).filter(
                 func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
-                QueueEntry.screening_year == screening_year, 
+                QueueEntry.screening_year == int(screening_year), 
                 QueueEntry.department == 'Audiometry'
             ).delete(synchronize_session=False)
 
     try:
+        # Log action
+        test_name = test_type.upper()
+        log_test_type = test_type
+        if test_type == 'special':
+            current_test_type = data.get('current_test_type')
+            if current_test_type in ['ecg', 'spirometry', 'audiometry']:
+                test_name = current_test_type.upper()
+                log_test_type = current_test_type
+            else:
+                special_types = []
+                if any(k in data for k in ['ecg_result', 'ecg_remark']):
+                    special_types.append("ECG")
+                if any(k in data for k in ['spirometry_result', 'spirometry_remark', 'weight', 'height']):
+                    special_types.append("Spirometry")
+                if any(k in data for k in ['audiometry_result', 'audiometry_remark']):
+                    special_types.append("Audiometry")
+                
+                if special_types:
+                    test_name = ", ".join(special_types)
+                else:
+                    test_name = "Special Tests"
+
+        AuditLog.log_action(
+            action=f"Save Test ({test_name})",
+            resource=f"Patient:{staff_id}",
+            details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": log_test_type}
+        )
         db.session.commit()
         
         # Trigger notification check
@@ -130,9 +167,19 @@ def get_test_result(test_type, staff_id):
     if not user:
         return jsonify({"error": "User not found"}), 404
         
-    perm_name = PERM_MAP.get(test_type, 'lab_tests')
-    if not user.has_permission(perm_name) and user.username != 'admin':
-        return jsonify({"error": f"Permission '{perm_name}' required"}), 403
+    if test_type == 'special':
+        has_perm = (
+            user.has_permission('lab_tests') or 
+            user.has_permission('lab_ecg') or 
+            user.has_permission('lab_spirometry') or 
+            user.has_permission('lab_audiometry')
+        )
+        if not has_perm and user.username != 'admin':
+            return jsonify({"error": "Permission for special tests required"}), 403
+    else:
+        perm_name = PERM_MAP.get(test_type, 'lab_tests')
+        if not user.has_permission(perm_name) and user.username != 'admin':
+            return jsonify({"error": f"Permission '{perm_name}' required"}), 403
 
     screening_year = request.args.get('year')
     if not screening_year:
@@ -167,8 +214,8 @@ def get_test_result(test_type, staff_id):
 def download_template(test_type):
     cols = {
         'fbc': ['PatientID', 'PCV', 'WBC', 'PLT', 'LYMPH_PERCENT', 'LYMPH_ABS', 'GRA_PERCENT', 'GRA_ABS', 'MID_PERCENT', 'MID_ABS', 'RBC', 'MCV', 'MCH', 'MCHC', 'RDW', 'PDW', 'HGB', 'REMARK'],
-        'kft': ['PatientID', 'Potassium', 'Sodium', 'Chloride', 'Bicarbonate', 'Urea', 'Creatinine', 'REMARK'],
-        'lft': ['PatientID', 'AST', 'ALT', 'ALP', 'TB', 'CB', 'REMARK'],
+        'kft': ['PatientID', 'Potassium', 'Sodium', 'Chloride', 'Calcium', 'REMARK'],
+        'lft': ['PatientID', 'AST', 'ALT', 'ALP', 'TB', 'CB', 'Urea', 'Creatinine', 'REMARK'],
         'lipid': ['PatientID', 'TotalCholesterol', 'Triglycerides', 'REMARK']
     }
     
@@ -237,11 +284,11 @@ def bulk_upload(test_type):
             },
             'kft': {
                 'POTASSIUM': 'potassium', 'SODIUM': 'sodium', 'CHLORIDE': 'chloride', 
-                'BICARBONATE': 'bicarbonate_ca', 'UREA': 'urea', 'CREATININE': 'creatinine', 
-                'REMARK': 'kft_remark'
+                'BICARBONATE': 'bicarbonate_ca', 'CALCIUM': 'bicarbonate_ca', 'REMARK': 'kft_remark'
             },
             'lft': {
-                'AST': 'ast', 'ALT': 'alt', 'ALP': 'alp', 'TB': 'tb', 'CB': 'cb', 'REMARK': 'lft_remark'
+                'AST': 'ast', 'ALT': 'alt', 'ALP': 'alp', 'TB': 'tb', 'CB': 'cb', 
+                'UREA': 'urea', 'CREATININE': 'creatinine', 'REMARK': 'lft_remark'
             },
             'lipid': {
                 'TOTALCHOLESTEROL': 'total_cholesterol', 'TRIGLYCERIDES': 'triglycerides', 'REMARK': 'lp_remark'
@@ -295,7 +342,7 @@ def bulk_upload(test_type):
                     tcho = float(record.total_cholesterol) if record.total_cholesterol else 0
                     tg = float(record.triglycerides) if record.triglycerides else 0
                     hdl = round(tcho * 0.35, 2)
-                    ldl = round(tcho + (tg / 5) + hdl, 2)
+                    ldl = round(tcho - ((tg / 5) + hdl), 2)
                     record.hdl = str(hdl)
                     record.ldl = str(ldl)
             except: pass
@@ -303,6 +350,12 @@ def bulk_upload(test_type):
             processed_staff_ids.append(staff_id)
             success_count += 1
 
+        # Log action
+        AuditLog.log_action(
+            action=f"Bulk Upload Test ({test_type.upper()})",
+            resource=f"Test:{test_type}",
+            details={"message": f"Bulk uploaded {success_count} {test_type.upper()} test results for screening year {screening_year}.", "screening_year": screening_year, "success_count": success_count, "skip_count": skip_count}
+        )
         db.session.commit()
 
         # Trigger notification check for all processed patients

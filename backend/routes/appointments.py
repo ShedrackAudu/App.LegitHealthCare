@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify
-from models import db, Appointment, ScreeningYearBioData
+from models import db, Appointment, ScreeningYearBioData, AuditLog
 from datetime import datetime
 import os
 from utils.email_utils import EmailService
@@ -200,6 +200,12 @@ def create_appointment():
             print(f"Appointment Email Error: {e}")
             # Don't fail the request if email fails, but log it
 
+    # Log action
+    AuditLog.log_action(
+        action='Book Appointment',
+        resource=f"Appointment:{staff_id}",
+        details={"message": f"Booked appointment for Patient {patient_name} ({staff_id}) on {appointment_date.strftime('%Y-%m-%d')} ({time_slot}) for {reason}.", "staff_id": staff_id, "patient_name": patient_name, "appointment_date": appointment_date.strftime('%Y-%m-%d'), "time_slot": time_slot, "reason": reason}
+    )
     db.session.commit()
     return jsonify({"message": "Appointment booked successfully", "appointment": appointment.to_dict()}), 201
 
@@ -230,6 +236,12 @@ def complete_appointment(appointment_id):
         return jsonify({"error": "Appointment not found"}), 404
         
     appointment.status = 'Completed'
+    # Log action
+    AuditLog.log_action(
+        action='Complete Appointment',
+        resource=f"Appointment:{appointment.staff_id}",
+        details={"message": f"Marked appointment for Patient {appointment.patient_name} ({appointment.staff_id}) on {appointment.appointment_date.strftime('%Y-%m-%d')} as Completed.", "appointment_id": appointment_id, "staff_id": appointment.staff_id}
+    )
     db.session.commit()
     return jsonify({"message": "Appointment marked as completed", "appointment": appointment.to_dict()}), 200
 
@@ -240,6 +252,12 @@ def delete_appointment(appointment_id):
     if not appointment:
         return jsonify({"error": "Appointment not found"}), 404
         
+    # Log action
+    AuditLog.log_action(
+        action='Delete Appointment',
+        resource=f"Appointment:{appointment.staff_id}",
+        details={"message": f"Deleted appointment for Patient {appointment.patient_name} ({appointment.staff_id}) on {appointment.appointment_date.strftime('%Y-%m-%d')}.", "appointment_id": appointment_id, "staff_id": appointment.staff_id}
+    )
     db.session.delete(appointment)
     db.session.commit()
     return jsonify({"message": "Appointment deleted successfully"}), 200

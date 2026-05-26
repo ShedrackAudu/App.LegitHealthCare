@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { getErrorMessage } from '@/lib/networkError';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
 import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -56,7 +57,7 @@ const PatientOTPPage = () => {
       setTimer(60);
       setCanResend(false);
     } catch (err: any) {
-      toast.error(err.response?.data?.error || 'Failed to resend OTP');
+      toast.error(getErrorMessage(err, 'Failed to resend OTP'));
     } finally {
       setResending(false);
     }
@@ -87,7 +88,7 @@ const PatientOTPPage = () => {
       
     } catch (err: any) {
       console.error('OTP Error:', err);
-      toast.error(err.response?.data?.error || 'Invalid or expired OTP');
+      toast.error(getErrorMessage(err, 'Invalid or expired OTP'));
     } finally {
       setLoading(false);
     }
@@ -139,7 +140,7 @@ const PatientOTPPage = () => {
                       type="text"
                       inputMode="numeric"
                       placeholder="000 000"
-                      className="h-14 text-center text-3xl font-black tracking-[0.5em] border focus:border-primary rounded-xl"
+                      className="h-14 text-center text-3xl font-black tracking-[0.5em] border focus:border-primary focus-visible:ring-0 focus-visible:ring-offset-0 rounded-xl"
                       value={otp}
                       onChange={(e) => setOtp(e.target.value.replace(/[^0-9]/g, '').slice(0, 6))}
                       maxLength={6}

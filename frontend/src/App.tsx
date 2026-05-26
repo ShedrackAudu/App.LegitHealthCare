@@ -40,6 +40,7 @@ import InventoryPage from './pages/InventoryPage';
 
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
+import NetworkStatusBanner from './components/common/NetworkStatusBanner';
 
 function RootApp() {
   console.log("App.tsx: Full Render (as RootApp)...");
@@ -47,6 +48,7 @@ function RootApp() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AppProvider>
         <Router>
+          <NetworkStatusBanner />
           <CustomToaster />
           <Routes>
             <Route path="/" element={<LandingPage />} />

@@ -118,11 +118,24 @@ def _trigger_report_ready_notification_sync(staff_id, screening_year, section):
 
 def trigger_registration_success_notification(patient_email, patient_first_name, screening_year):
     """
-    Sends the registration success email synchronously.
-    Accepts patient data directly from the caller.
+    Spawns a background thread to send the registration success email.
+    Ensures zero disruption to the main request flow (zero latency for patient save).
     """
-    print(f"[REG-NOTIFICATION] Starting synchronous delivery to {patient_email}")
-    return _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year)
+    print(f"[REG-NOTIFICATION] Spawning thread for background delivery to {patient_email}")
+    app = current_app._get_current_object()
+    
+    thread = threading.Thread(
+        target=_trigger_registration_success_async_wrapper, 
+        args=(app, patient_email, patient_first_name, screening_year)
+    )
+    thread.daemon = True
+    thread.start()
+    return True, "Background process started"
+
+def _trigger_registration_success_async_wrapper(app, patient_email, patient_first_name, screening_year):
+    """Wrapper to provide app context to the background thread."""
+    with app.app_context():
+        _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year)
 
 def _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year):
     """

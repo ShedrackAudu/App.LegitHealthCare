@@ -16,8 +16,10 @@ import {
   Activity,
   Heart,
   Thermometer,
-  Save
+  Save,
+  Trash2
 } from 'lucide-react';
+import { usePermissions } from '@/hooks/usePermissions';
 import { PatientSearch } from '@/components/PatientSearch';
 import { toast } from 'react-hot-toast';
 import {
@@ -50,6 +52,7 @@ import {
   DialogDescription
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
 const consultationSchema = z.object({
   // Clinical Fields
@@ -69,6 +72,9 @@ const consultationSchema = z.object({
   sugar_remark: z.string().min(1, 'FBS/RBS Remark is required'),
   ua_result: z.string().min(1, 'U/A Result is required'),
   ua_remark: z.string().min(1, 'U/A Remark is required'),
+  ua_remark_others: z.string().optional().or(z.literal('')),
+  breast_others: z.string().optional().or(z.literal('')),
+  abdomen_others: z.string().optional().or(z.literal('')),
   dm_status: z.string().min(1, 'DM Status is required'),
   htn_status: z.string().min(1, 'HTN Status is required'),
   bp: z.string().min(1, 'BP is required'),
@@ -79,7 +85,7 @@ const consultationSchema = z.object({
   breast_remark: z.string().min(1, 'Breast Remark is required'),
   abdomen: z.string().min(1, 'Abdomen is required'),
   assessment_hx_pe: z.string().min(1, 'Assessment HX/PE is required'),
-  other_assessments: z.string().min(1, 'Other Assessments is required'),
+  other_assessments: z.string().optional().or(z.literal('')),
   other_remarks: z.string().optional().or(z.literal('')),
   overall_assessment: z.string().optional().or(z.literal('')),
 });
@@ -184,6 +190,7 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
 
 const ConsultationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
+  const { hasPermission } = usePermissions();
   const [patient, setPatient] = useState<any>(null);
   const [searchId, setSearchId] = useState('');
   const [searching, setSearching] = useState(false);
@@ -192,6 +199,31 @@ const ConsultationPage: React.FC = () => {
   const [queueEntries, setQueueEntries] = useState<any[]>([]);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [loadingQueue, setLoadingQueue] = useState(false);
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [deletePendingStaffId, setDeletePendingStaffId] = useState<string | null>(null);
+
+  const handleDeleteQueueEntry = (staffId: string) => {
+    setDeletePendingStaffId(staffId);
+    setDeleteConfirmOpen(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (!deletePendingStaffId) return;
+    try {
+      await axios.delete(`/api/queue/consultation/${deletePendingStaffId}?year=${activeYear}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      toast.success("Patient removed from queue");
+      fetchQueueList();
+      fetchQueue();
+    } catch (err: any) {
+      console.error(err);
+      toast.error(err.response?.data?.error || "Failed to remove patient from queue");
+    } finally {
+      setDeleteConfirmOpen(false);
+      setDeletePendingStaffId(null);
+    }
+  };
 
   // REMOVED deprecated ad-hoc search effect logic as it's now in PatientSearch component
 
@@ -264,6 +296,9 @@ const ConsultationPage: React.FC = () => {
       sugar_remark: '',
       ua_result: '',
       ua_remark: '',
+      ua_remark_others: '',
+      breast_others: '',
+      abdomen_others: '',
       dm_status: '',
       htn_status: '',
       hs_status: '',
@@ -329,12 +364,12 @@ const ConsultationPage: React.FC = () => {
   }, [breast_exam, setValue]);
 
 
-  const handleSearch = async (staffIdToSearch?: string) => {
+  const handleSearch = async (staffIdToSearch?: string, searchType?: 'pid' | 'general') => {
     const idToSearch = staffIdToSearch || searchId;
     if (!idToSearch) return;
     setSearching(true);
     try {
-      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}`, {
+      const response = await axios.get(`/screening/${activeYear}/patient/${idToSearch}?search_type=${searchType || 'general'}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       const fullData = response.data;
@@ -345,7 +380,7 @@ const ConsultationPage: React.FC = () => {
         heart_dx: 'No', palor: 'No', jaundice: 'No', murmur: 'No',
         chest_status: '', psa: '', psa_remark: '',
         fbs: '', rbs: '', sugar_remark: '',
-        ua_result: '', ua_remark: '', dm_status: '',
+        ua_result: '', ua_remark: '', ua_remark_others: '', breast_others: '', abdomen_others: '', dm_status: '',
         htn_status: '', hs_status: '', bp: '', pulse: '', spo2: '',
         breast_exam: '', breast_remark: '', abdomen: '',
         assessment_hx_pe: '', other_assessments: '',
@@ -400,19 +435,20 @@ const ConsultationPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6">
         {/* Top Header & Search Area */}
-        <div className="flex flex-col xl:flex-row justify-between items-start xl:items-center gap-6 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10">
+        <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
-            <div className="p-2 sm:p-3 bg-primary/10 rounded-2xl">
-              <Stethoscope className="text-primary h-6 w-6 sm:h-8 sm:w-8" />
+            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+              <Stethoscope className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
-              <h1 className="text-lg sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
-              <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+              <h1 className="text-base sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
+              <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
             </div>
-          </div>          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
+          </div>
+          <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
             {/* Queue Status Card */}
             <Card
-              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 hidden sm:block shadow-sm"
+              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
               onClick={fetchQueueList}
             >
               <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
@@ -425,7 +461,7 @@ const ConsultationPage: React.FC = () => {
                     <h3 className="text-lg font-black tracking-tighter leading-none">{queueCount}</h3>
                   </div>
                 </div>
-                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-10 transition-opacity">
                   VIEW <ChevronRight className="h-3 w-3" />
                 </div>
               </CardContent>
@@ -437,12 +473,13 @@ const ConsultationPage: React.FC = () => {
               onSearch={handleSearch}
               onSelect={(p) => {
                 setPatient(p);
-                handleSearch(p.staff_id);
+                handleSearch(p.staff_id, 'general');
               }}
               searching={searching}
               themeColor="emerald"
               year={activeYear}
               strict={true}
+              showPidToggle={true}
             />
           </div>
         </div>
@@ -467,8 +504,22 @@ const ConsultationPage: React.FC = () => {
         ) : (
           <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6 mt-8">
             <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02]">
-              <CardContent className="p-4 md:p-6">
-                <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                {/* Passport Avatar */}
+                <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                  {patient.passport_image ? (
+                    <img 
+                      src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                      alt="Passport" 
+                      className="w-full h-full object-cover"
+                    />
+                  ) : (
+                    <User className="h-8 w-8 text-primary/40" />
+                  )}
+                </div>
+
+                {/* Bio Grid */}
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
                   <div className="lg:col-span-2">
                     <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
@@ -476,7 +527,7 @@ const ConsultationPage: React.FC = () => {
                   <PatientInfo label="AGE" value={`${patient.age} Yrs`} />
                   <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <PatientInfo label="GENDER" value={patient.gender} />
-                  <div className="col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
+                  <div className="col-span-full lg:col-span-1 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
                     <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
                   </div>
                 </div>
@@ -497,20 +548,38 @@ const ConsultationPage: React.FC = () => {
                 <CardContent className="p-8">
                   <form onSubmit={handleSubmit(onSubmit)} className="space-y-10">
                     <div className="space-y-4">
-                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History & Screening</h3>
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Medical History</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
+                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
+                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
                         <RadioField name="luts" control={control} label="LUTS" />
                         <RadioField name="chronic_cough" control={control} label="Chronic Cough" />
                         <RadioField name="chronic_chest_pain" control={control} label="Chronic Chest Pain" />
                         <RadioField name="chest_infection" control={control} label="Chest Infection" />
                         <RadioField name="heart_dx" control={control} label="Heart DX" />
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">General Examinations</h3>
+                      <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
                         <RadioField name="palor" control={control} label="Palor" />
                         <RadioField name="jaundice" control={control} label="Jaundice" />
                         <RadioField name="murmur" control={control} label="Murmur" />
                         <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">Breast Others</Label>
+                          <Input {...register('breast_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">Abdomen Others</Label>
+                          <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
+                        <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
+                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                       </div>
                     </div>
 
@@ -518,7 +587,7 @@ const ConsultationPage: React.FC = () => {
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Vital Signs & Core Metrics</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P (mm/Hg) <span className="text-red-500">*</span></Label>
                             <Input {...register('bp')} className="h-12" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
@@ -527,7 +596,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('pulse')} className="h-12" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 % <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 (%) <span className="text-red-500">*</span></Label>
                           <Input {...register('spo2')} className="h-12" />
                         </div>
                       </div>
@@ -536,9 +605,6 @@ const ConsultationPage: React.FC = () => {
                     <div className="space-y-4">
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Systematic Findings & Lab Data</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <SelectField name="dm_status" control={control} label="Diabetes Mellitus - DM" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
-                        <SelectField name="htn_status" control={control} label="Hypertension - HTN" options={['No', 'Yes - Not on Medication', 'Yes - Not on Regular Medication', 'Yes - On Regular Medication']} />
-                        <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="psa" control={control} label="Prostate-Specific Antigen - PSA" options={['Negative', 'Not Applicable', 'Positive']} />
                         <SelectField name="psa_remark" control={control} label="PSA Remark" options={['Normal', 'Abnormal', 'Not Applicable']} />
                         <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} />
@@ -546,13 +612,16 @@ const ConsultationPage: React.FC = () => {
                         <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                         <SelectField name="ua_result" control={control} label="Sugar & Protein - U/A" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                         <SelectField name="ua_remark" control={control} label="U/A Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                        <div className="space-y-1.5 lg:col-span-1">
+                          <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">U/A Remark Others</Label>
+                          <Input {...register('ua_remark_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
+                        </div>
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <div className="space-y-2">
-                        <Label className="font-bold">Other Assessments <span className="text-red-500">*</span></Label>
+                        <Label className="font-bold">Other Assessments</Label>
                         <textarea {...register('other_assessments')} className="w-full min-h-[100px] border-2 rounded-xl p-3 text-sm focus:ring-2 ring-primary/20 bg-muted/5 outline-none" placeholder="Provide additional assessment details..." />
                       </div>
                       <div className="space-y-2">
@@ -581,21 +650,21 @@ const ConsultationPage: React.FC = () => {
       </div>
 
       <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20">
-          <DialogHeader>
-            <div className="flex items-center gap-3 mb-2">
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
                 <Users className="w-6 h-6" />
               </div>
               <div>
-                <DialogTitle className="text-xl font-black tracking-tight">Consultation Queue</DialogTitle>
-                <DialogDescription className="text-xs font-medium">Patients waiting for clinical assessment</DialogDescription>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Consultation Queue</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">Patients waiting for clinical assessment</DialogDescription>
               </div>
             </div>
           </DialogHeader>
 
           <div className="relative mt-2">
-            <ScrollArea className="h-[400px] pr-4">
+            <ScrollArea className="h-[400px] px-1">
               {loadingQueue ? (
                 <div className="flex items-center justify-center h-full">
                   <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
@@ -603,21 +672,67 @@ const ConsultationPage: React.FC = () => {
               ) : queueEntries.length > 0 ? (
                 <div className="space-y-3">
                   {queueEntries.map((entry) => (
-                    <div key={entry.id} className="flex items-center justify-between p-4 rounded-xl border-2 bg-muted/5 hover:bg-muted/10 transition-colors group">
-                      <div className="flex items-center gap-4">
-                        <div className="w-10 h-10 rounded-full bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 transition-transform group-hover:scale-110">
-                          {entry.first_name?.[0]}{entry.last_name?.[0]}
+                    <div key={entry.id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">
+                      {/* Left Block (Avatar + Info) */}
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <div className="relative shrink-0">
+                          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                            {entry.first_name?.[0]}{entry.last_name?.[0]}
+                          </div>
+                          <Badge className="absolute -top-2 -left-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 border border-background h-5 min-w-[20px] flex items-center justify-center shadow-md">
+                            #{entry.queue_number || '--'}
+                          </Badge>
                         </div>
-                        <div>
-                          <p className="font-black text-sm tracking-tight">{entry.first_name} {entry.last_name}</p>
-                          <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">ID: {entry.staff_id}</p>
+
+                        <div className="min-w-0 flex-1 flex flex-col justify-center gap-0">
+                          <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
+                          
+                          <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
+                            {/* ID & Time: stacked on mobile, row on desktop */}
+                            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
+                              <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
+                              <span className="hidden sm:inline text-muted-foreground/60">•</span>
+                              <span className="font-medium flex items-center gap-1">
+                                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                {getRelativeTime(entry.created_at)}
+                              </span>
+                            </div>
+
+                            {/* Mobile-only action buttons beside stacked ID/time */}
+                            <div className="flex sm:hidden items-center gap-1.5 shrink-0">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-7 px-2.5 text-[9px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/95 rounded-lg group/btn shadow-md shadow-primary/10"
+                                onClick={() => {
+                                  handleSearch(entry.staff_id);
+                                  setIsQueueModalOpen(false);
+                                }}
+                              >
+                                Proceed <ChevronRight className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                              </Button>
+                              {hasPermission('delete_from_queue') && (
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  className="h-7 w-7 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                  onClick={() => handleDeleteQueueEntry(entry.staff_id)}
+                                  title="Remove from queue"
+                                >
+                                  <Trash2 className="w-3 h-3" />
+                                </Button>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-4">
+
+                      {/* Desktop-only action buttons centered vertically inside the card */}
+                      <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                         <Button
                           size="sm"
                           variant="ghost"
-                          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest hover:bg-primary hover:text-white border border-emerald-600/20 rounded-lg group/btn"
+                          className="h-8 px-3 text-[10px] font-black uppercase tracking-widest bg-primary text-white hover:bg-primary/95 rounded-lg group/btn shadow-md shadow-primary/10"
                           onClick={() => {
                             handleSearch(entry.staff_id);
                             setIsQueueModalOpen(false);
@@ -625,20 +740,17 @@ const ConsultationPage: React.FC = () => {
                         >
                           Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                         </Button>
-                        <div className="text-right space-y-2">
-                          <div className="flex items-center gap-1.5 justify-end">
-                            <Badge className="rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-2 py-0.5 h-auto">
-                              #{entry.queue_number || '--'}
-                            </Badge>
-                            <Badge variant="outline" className="text-[8px] font-black tracking-tighter text-primary border-emerald-600/20 h-auto">
-                              WAITING
-                            </Badge>
-                          </div>
-                          <div className="flex items-center gap-1 text-muted-foreground justify-end">
-                            <Clock className="w-3 h-3" />
-                            <span className="text-[10px] font-bold">{getRelativeTime(entry.created_at)}</span>
-                          </div>
-                        </div>
+                        {hasPermission('delete_from_queue') && (
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-8 w-8 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                            onClick={() => handleDeleteQueueEntry(entry.staff_id)}
+                            title="Remove from queue"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}
@@ -664,6 +776,20 @@ const ConsultationPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+
+      <ActionConfirmModal 
+        isOpen={deleteConfirmOpen}
+        onClose={() => {
+          setDeleteConfirmOpen(false);
+          setDeletePendingStaffId(null);
+        }}
+        onConfirm={handleConfirmDelete}
+        title="Remove from Queue"
+        description="Are you sure you want to remove this patient from the queue? This will only remove them from this department's queue."
+        confirmText="Remove"
+        cancelText="Cancel"
+        variant="danger"
+      />
     </MainLayout>
   );
 };

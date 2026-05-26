@@ -449,9 +449,9 @@ const PatientMedicalReport: React.FC = () => {
                                     <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
                                     <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
                                     <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                                    <tr><td></td><td>Urea</td><td>{reportData.results.kft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
+                                    <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
                                     <tr>
-                                        <td></td><td>Cretinine</td><td>{reportData.results.kft?.creatinine || '-'}</td>
+                                        <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
                                         <td>Male: 0.7-1.4<br />Female: 0.6-1.2</td><td>mmol/L<br />mmol/L</td>
                                     </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
@@ -459,7 +459,7 @@ const PatientMedicalReport: React.FC = () => {
                                     {/* Lipid */}
                                     <tr className="category-row">
                                         <td>Lipid Profile</td>
-                                        <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>150-220</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
+                                        <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>&lt;200</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
                                     </tr>
                                     <tr>
                                         <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
@@ -483,7 +483,7 @@ const PatientMedicalReport: React.FC = () => {
                                         <td>Male: 80-306<br />Female: 64-306</td><td>U/L<br />U/L</td>
                                     </tr>
                                     <tr><td></td><td>TB</td><td>{reportData.results.lft?.tb || '-'}</td><td>0-1.2</td><td>mg/dL</td></tr>
-                                    <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-.14</td><td>mg/dL</td></tr>
+                                    <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-0.4</td><td>mg/dL</td></tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* UA & PSA */}
@@ -599,7 +599,7 @@ const PatientMedicalReport: React.FC = () => {
                             <div className="vitals-grid">
                                 <div className="vital-col">
                                     <span><span className="vital-label text-slate-500">Blood Pressure:</span> {reportData.results.consultation?.bp || '-'}</span>
-                                    <span><span className="vital-label text-slate-500">Unit:</span> mm/hg</span>
+                                    <span><span className="vital-label text-slate-500">Unit:</span> mm/Hg</span>
                                 </div>
                                 <div className="vital-col" style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px' }}>
                                     <span><span className="vital-label text-slate-500">Pulse Rate:</span> {reportData.results.consultation?.pulse || '-'}</span>

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, User, ChatMessage, ChatGroup, ChatGroupMember
+from models import db, User, ChatMessage, ChatGroup, ChatGroupMember, AuditLog
 from datetime import datetime, timedelta
 from decorators import require_permission
 import json
@@ -153,6 +153,7 @@ def create_group():
             db.session.add(member)
             
     db.session.commit()
+    AuditLog.log_action("Create Chat Group", resource=f"ChatGroup:{group.id}", details={"name": name, "members": member_ids})
     return jsonify(group.to_dict()), 201
 
 @messaging_bp.route('/conversations/<conv_id>', methods=['DELETE'])
@@ -177,6 +178,7 @@ def delete_conversation(conv_id):
         ChatMessage.query.filter_by(group_id=group_id).delete(synchronize_session=False)
         
     db.session.commit()
+    AuditLog.log_action("Clear Conversation History", resource=f"Conversation:{conv_id}", details={"conv_id": conv_id})
     return jsonify({"message": "Conversation history cleared successfully"})
 
 @messaging_bp.route('/groups/<int:group_id>', methods=['DELETE'])
@@ -205,6 +207,7 @@ def delete_group(group_id):
         db.session.delete(group)
         
     db.session.commit()
+    AuditLog.log_action("Delete Chat Group", resource=f"ChatGroup:{group_id}", details={"group_id": group_id})
     return jsonify({"message": "Group chat permanently deleted"})
 
 @messaging_bp.route('/heartbeat', methods=['POST'])
@@ -255,6 +258,7 @@ def add_group_members(group_id):
             added_count += 1
             
     db.session.commit()
+    AuditLog.log_action("Add Group Members", resource=f"ChatGroup:{group_id}", details={"members_added": new_member_ids})
     return jsonify({"message": f"Added {added_count} members to the group"}), 200
 
 @messaging_bp.route('/groups/<int:group_id>/members/<int:remove_user_id>', methods=['DELETE'])
@@ -278,6 +282,7 @@ def remove_group_member(group_id, remove_user_id):
     if membership:
         db.session.delete(membership)
         db.session.commit()
+        AuditLog.log_action("Remove Group Member", resource=f"ChatGroup:{group_id}", details={"removed_user_id": remove_user_id})
         return jsonify({"message": "Member removed successfully"}), 200
         
     return jsonify({"error": "Member not found"}), 404
@@ -307,5 +312,6 @@ def delete_single_message(message_id):
     message.is_deleted = True
     message.deleted_at = datetime.now()
     db.session.commit()
+    AuditLog.log_action("Delete Message", resource=f"ChatMessage:{message_id}", details={"message_id": message_id})
     
     return jsonify({"message": "Message deleted successfully"}), 200

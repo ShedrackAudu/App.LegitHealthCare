@@ -56,7 +56,7 @@ import { UserProfileDialog, ProfileInfoItem } from '@/components/UserProfileDial
 
 
 export default function MessagingPage() {
-  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound } = useAppContext();
+  const { user, socket, setUnreadMessagesCount, isMuted, setIsMuted, playGlobalSound, setActiveChatId } = useAppContext();
   const [conversations, setConversations] = useState<any[]>([]);
   const [activeChat, setActiveChat] = useState<any>(null);
   const [messages, setMessages] = useState<any[]>([]);
@@ -97,7 +97,6 @@ export default function MessagingPage() {
 
   useEffect(() => {
     fetchConversations();
-    setUnreadMessagesCount(0); // Reset global unread when opening the page
   }, []);
 
   const viewProfile = async (userId: number) => {
@@ -133,23 +132,57 @@ export default function MessagingPage() {
   }, [activeChat, socket, user.id]);
 
   useEffect(() => {
+    setActiveChatId(activeChat?.id || null);
+    return () => {
+      setActiveChatId(null);
+    };
+  }, [activeChat, setActiveChatId]);
+
+  useEffect(() => {
     if (!socket) return;
 
     const onNewMessage = (msg: any) => {
       console.log('Socket: Received new_message', msg);
-      if (activeChat && (
+      const isChatActive = activeChat && (
         (msg.group_id && `group_${msg.group_id}` === activeChat.id) ||
         (!msg.group_id && (`dm_${msg.sender_id}` === activeChat.id || `dm_${msg.receiver_id}` === activeChat.id))
-      )) {
+      );
+
+      if (isChatActive) {
         setMessages(prev => [...prev, msg]);
         socket.emit('mark_read', { user_id: user.id, chat_id: activeChat.id });
       }
       
-      if (msg.sender_id !== user.id) {
+      if (isChatActive && msg.sender_id !== user.id) {
           playGlobalSound('message');
       }
       
-      // Update sidebar regardless of whether it was the active chat
+      // Update sidebar conversations list locally to avoid race condition
+      setConversations(prev => {
+        const convId = msg.group_id ? `group_${msg.group_id}` : (msg.sender_id === user.id ? `dm_${msg.receiver_id}` : `dm_${msg.sender_id}`);
+        const existingIdx = prev.findIndex(c => c.id === convId);
+        if (existingIdx > -1) {
+          const updated = [...prev];
+          const conv = updated[existingIdx];
+          
+          updated[existingIdx] = {
+            ...conv,
+            last_message: msg,
+            unread_count: isChatActive ? 0 : (conv.unread_count || 0) + (msg.sender_id !== user.id ? 1 : 0)
+          };
+          
+          // Move to top
+          const [moved] = updated.splice(existingIdx, 1);
+          return [moved, ...updated];
+        } else {
+          // If conversation doesn't exist, fetch to load it
+          fetchConversations();
+          return prev;
+        }
+      });
+    };
+
+    const onUnreadUpdate = () => {
       fetchConversations();
     };
 
@@ -195,6 +228,7 @@ export default function MessagingPage() {
     };
 
     socket.on('new_message', onNewMessage);
+    socket.on('unread_update', onUnreadUpdate);
     socket.on('typing_status', onTypingStatus);
     socket.on('messages_read', onMessagesRead);
     socket.on('message_reacted', onMessageReacted);
@@ -203,6 +237,7 @@ export default function MessagingPage() {
 
     return () => {
       socket.off('new_message', onNewMessage);
+      socket.off('unread_update', onUnreadUpdate);
       socket.off('typing_status', onTypingStatus);
       socket.off('messages_read', onMessagesRead);
       socket.off('message_reacted', onMessageReacted);
@@ -219,6 +254,9 @@ export default function MessagingPage() {
     try {
       const resp = await axios.get('/api/messages/conversations');
       setConversations(resp.data);
+      // Synchronize global unread messages count
+      const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
+      setUnreadMessagesCount(total);
     } catch (err) {
     }
   };
@@ -1229,7 +1267,7 @@ export default function MessagingPage() {
       {/* Group Member Management Dialog */}
       <Dialog open={isManagingMembers} onOpenChange={setIsManagingMembers}>
         <DialogContent className="sm:max-w-[480px] p-0 overflow-hidden rounded-2xl border-none shadow-2xl">
-          <DialogHeader className="p-6 bg-zinc-900 text-white">
+          <DialogHeader className="p-6 bg-zinc-900 dark:bg-background text-white">
             <div className="flex items-center justify-between">
               <div>
                 <DialogTitle className="text-2xl font-black">Group Settings</DialogTitle>

@@ -9,7 +9,8 @@ import {
   ChevronDown,
   ChevronUp,
   ShieldCheck,
-  Sparkles
+  Sparkles,
+  User
 } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
@@ -42,7 +43,7 @@ const BioItem = ({ label, value }: any) => (
     </div>
 );
 
-const AccordionSection = ({ title, description, children, defaultOpen = false }: any) => {
+const AccordionSection = ({ title, description, children, defaultOpen = true }: any) => {
     const [isOpen, setIsOpen] = useState(defaultOpen);
     return (
         <Card className="border-2 shadow-sm overflow-hidden transition-all duration-300">
@@ -204,13 +205,13 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 }
             }
 
-            // LDL: TCHO + TRIGLYCERIDES(TG)/5 + HDL
+            // LDL: TCHO - (TRIGLYCERIDES(TG)/5 + HDL)
             if (name === 'total_cholesterol' || name === 'triglycerides' || name === 'hdl') {
                 const tcho = parseFloat(value.total_cholesterol);
                 const tg = parseFloat(value.triglycerides);
                 const hdl = parseFloat(value.hdl);
                 if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hdl)) {
-                    const ldl = tcho + (tg / 5) + hdl;
+                    const ldl = tcho - ((tg / 5) + hdl);
                     setValue('ldl', ldl.toFixed(2));
                 }
             }
@@ -252,8 +253,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
             <Card className="border-2 shadow-xl bg-card">
-                <CardContent className="p-4 md:p-6">
-                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4">
+                <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Passport Avatar */}
+                    <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                        {patient.passport_image ? (
+                            <img 
+                                src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                                alt="Passport" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <User className="h-8 w-8 text-primary/40" />
+                        )}
+                    </div>
+
+                    {/* Bio Grid */}
+                    <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
                         <BioItem label="STAFF ID" value={patient.staff_id} />
                         <div className="col-span-1 lg:col-span-2">
                             <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
@@ -287,7 +302,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-red-500">*</span></Label>
                                 {f.includes('REMARK') ? (
                                     <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
                                 ) : (
@@ -298,14 +313,24 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Urea, and Creatinine">
+                <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Chloride, and Calcium">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'BICARBONATE_CA', 'HCO3', 'UREA', 'CREATININE', 'KFT_REMARK'].map(f => (
-                            <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
-                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
-                            </div>
-                        ))}
+                        {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'BICARBONATE_CA', 'KFT_REMARK'].map(f => {
+                            const isOptional = ['BICARBONATE_CA', 'KFT_REMARK'].includes(f);
+                            const displayName = f === 'BICARBONATE_CA' ? 'CALCIUM CA' : f.replace('_', ' ');
+                            return (
+                                <div key={f} className="space-y-1">
+                                    <Label className="text-xs whitespace-nowrap truncate block">
+                                        {displayName} {!isOptional && <span className="text-red-500">*</span>}
+                                    </Label>
+                                    <Input 
+                                        {...register(f.toLowerCase(), isOptional ? {} : { required: true })} 
+                                        className="h-9 text-sm font-mono" 
+                                        required={!isOptional} 
+                                    />
+                                </div>
+                            );
+                        })}
                     </div>
                 </AccordionSection>
 
@@ -320,9 +345,9 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     </div>
                 </AccordionSection>
 
-                <AccordionSection title="Liver Function Test" description="AST, ALT, ALP, and Bilirubin">
+                <AccordionSection title="Liver Function Test" description="AST, ALT, ALP, Bilirubin, Urea, and Creatinine">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
-                        {['AST', 'ALT', 'ALP', 'TB', 'CB', 'LFT_REMARK'].map(f => (
+                        {['AST', 'ALT', 'ALP', 'TB', 'CB', 'UREA', 'CREATININE', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
                                 <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
                                 <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
@@ -379,7 +404,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Normal', 'Abnormal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Remark" options={['Normal', 'Not Applicable']} />
+                        <div className="space-y-1">
+                            <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Breast Others</Label>
+                            <Input {...register('breast_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                        </div>
                         <SelectField name="abdomen" control={control} label="Abdomen" options={['Abnormal', 'Normal']} />
+                        <div className="space-y-1">
+                            <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">Abdomen Others</Label>
+                            <Input {...register('abdomen_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                        </div>
                     </div>
                 </AccordionSection>
 
@@ -392,9 +425,9 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="md:col-span-1">
                                 <SelectField name="htn_status" control={control} label="HTN" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2% <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
+                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
@@ -405,7 +438,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
-                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Poorly Controlled HTN', 'Satisfactory']} />
+                             <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
+                                <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
+                             </div>
+                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
                                 <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
@@ -486,16 +523,16 @@ const DirectorPage: React.FC = () => {
     const [searching, setSearching] = useState(false);
     const [loading, setLoading] = useState(false);
     const selectPatient = (p: any) => {
-        handleSearchWithId(p.staff_id);
+        handleSearchWithId(p.staff_id, 'general');
     };
 
-    const handleSearchWithId = async (id: string) => {
+    const handleSearchWithId = async (id: string, searchType?: 'pid' | 'general') => {
         if (!id) return;
         setPatient(null);
         setHistory(null);
         setSearching(true);
         try {
-            const pRes = await axios.get(`/patient/${id}`, {
+            const pRes = await axios.get(`/patient/${id}?year=${activeYear}&strict=true&search_type=${searchType || 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setPatient(pRes.data);
@@ -538,18 +575,16 @@ const DirectorPage: React.FC = () => {
     };
 
     return (
-        <MainLayout>
-            <div className="space-y-8 animate-in fade-in duration-500 pb-20">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
+        <MainLayout noScroll={!!patient}>
+            <div className={`animate-in fade-in duration-500 ${patient ? 'flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0' : 'space-y-8 pb-20'}`}>
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all shrink-0">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-primary/10 rounded-2xl">
-                            <ShieldCheck className="h-8 w-8 text-primary" />
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                            <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
                         </div>
                         <div>
-                            <h1 className="text-lg sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
-                            </div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
                         </div>
                     </div>
                     
@@ -562,6 +597,7 @@ const DirectorPage: React.FC = () => {
                         placeholder="Search Staff ID or Name..."
                         year={activeYear}
                         strict={true}
+                        showPidToggle={true}
                     />
                 </div>
 
@@ -583,14 +619,16 @@ const DirectorPage: React.FC = () => {
                         </div>
                     </Card>
                 ) : (
-                    <ReviewContent 
-                        patient={patient} 
-                        history={history} 
-                        loading={loading} 
-                        onSubmit={handleSaveAll} 
-                        activeYear={activeYear}
-                        activeSection={activeSection}
-                    />
+                    <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
+                        <ReviewContent 
+                            patient={patient} 
+                            history={history} 
+                            loading={loading} 
+                            onSubmit={handleSaveAll} 
+                            activeYear={activeYear}
+                            activeSection={activeSection}
+                        />
+                    </div>
                 )}
             </div>
         </MainLayout>

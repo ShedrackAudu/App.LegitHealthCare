@@ -19,11 +19,11 @@ const PatientReportPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
 
-    const handleSearchById = async (id: string) => {
+    const handleSearchById = async (id: string, searchType?: 'pid' | 'general') => {
         if (!id) return;
         setSearching(true);
         try {
-            const pRes = await api.get(`/api/patients/${id}`, {
+            const pRes = await api.get(`/patient/${id}?year=${activeYear}&strict=true&search_type=${searchType || 'general'}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             if (pRes.data) handleSelectPatient(pRes.data);
@@ -213,16 +213,14 @@ const PatientReportPage: React.FC = () => {
         <MainLayout>
             {/* All UI chrome — hidden on print */}
             <div className="space-y-3 animate-in fade-in duration-500 pb-4 no-print">
-                <div className="flex flex-col lg:flex-row justify-between items-start lg:items-center gap-4 bg-card p-6 rounded-2xl border-2 shadow-xl border-red-500/10 transition-all">
+                <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
-                        <div className="p-3 bg-red-500/10 rounded-2xl">
-                            <FileText className="text-red-500 h-8 w-8" />
+                        <div className="p-1.5 sm:p-3 bg-red-500/10 rounded-xl sm:rounded-2xl">
+                            <FileText className="text-red-500 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
-                            <h1 className="text-lg sm:text-2xl font-black tracking-tight text-foreground leading-tight">Patient Medical Report</h1>
-                            <div className="flex items-center gap-2 mt-1">
-                                <p className="text-[10px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {fmtSec(activeSection)}</p>
-                            </div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">Patient Medical Report</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {fmtSec(activeSection)}</p>
                         </div>
                     </div>
                     <PatientSearch
@@ -235,6 +233,7 @@ const PatientReportPage: React.FC = () => {
                         buttonText="Retrieve Report"
                         year={activeYear}
                         strict={true}
+                        showPidToggle={true}
                     />
                 </div>
             </div>{/* end no-print chrome */}
@@ -268,7 +267,7 @@ const PatientReportPage: React.FC = () => {
                             <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
                         </div>
                     ) : reportData ? (
-                        <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-zinc-950/50 rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
+                        <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-background rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
                             {/* PAGE 1 */}
                             <div className="a4-page">
                                 {/* Branding Header Area */}
@@ -355,9 +354,9 @@ const PatientReportPage: React.FC = () => {
                                         <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
                                         <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
                                         <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                                        <tr><td></td><td>Urea</td><td>{reportData.results.kft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
+                                        <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
                                         <tr>
-                                            <td></td><td>Cretinine</td><td>{reportData.results.kft?.creatinine || '-'}</td>
+                                            <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
                                             <td>Male: 0.7-1.4<br />Female: 0.6-1.2</td><td>mmol/L<br />mmol/L</td>
                                         </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
@@ -365,7 +364,7 @@ const PatientReportPage: React.FC = () => {
                                         {/* Lipid */}
                                         <tr className="category-row">
                                             <td>Lipid Profile</td>
-                                            <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>150-220</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
+                                            <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>&lt;200</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
                                         </tr>
                                         <tr>
                                             <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
@@ -389,7 +388,7 @@ const PatientReportPage: React.FC = () => {
                                             <td>Male: 80-306<br />Female: 64-306</td><td>U/L<br />U/L</td>
                                         </tr>
                                         <tr><td></td><td>TB</td><td>{reportData.results.lft?.tb || '-'}</td><td>0-1.2</td><td>mg/dL</td></tr>
-                                        <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-.14</td><td>mg/dL</td></tr>
+                                        <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-0.4</td><td>mg/dL</td></tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* UA & PSA */}
@@ -506,7 +505,7 @@ const PatientReportPage: React.FC = () => {
                                 <div className="vitals-grid">
                                     <div className="vital-col">
                                         <span><span className="vital-label text-slate-500">Blood Pressure:</span> {reportData.results.consultation?.bp || '-'}</span>
-                                        <span><span className="vital-label text-slate-500">Unit:</span> mm/hg</span>
+                                        <span><span className="vital-label text-slate-500">Unit:</span> mm/Hg</span>
                                     </div>
                                     <div className="vital-col" style={{ borderLeft: '1px solid #ccc', paddingLeft: '10px' }}>
                                         <span><span className="vital-label text-slate-500">Pulse Rate:</span> {reportData.results.consultation?.pulse || '-'}</span>

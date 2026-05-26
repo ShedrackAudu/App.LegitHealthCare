@@ -98,10 +98,29 @@ def search_patients():
     
     search = f"%{query}%"
     strict = request.args.get('strict', 'false').lower() == 'true'
+    search_type = request.args.get('search_type', 'general').lower()
+    query_lower = query.lower().strip()
     
-    # 1. Base Query with Filtering
-    if strict and year:
-        # Filter strictly for patients registered in the specific screening matrix
+    # 1. Base Query with Filtering (cap at 100 to keep sorting efficient)
+    MAX_RESULTS = 100
+    if search_type == 'pid':
+        if year:
+            base_query = BioData.query.join(
+                ScreeningYearBioData, 
+                BioData.staff_id == ScreeningYearBioData.staff_id
+            ).filter(
+                ScreeningYearBioData.screening_year == int(year)
+            ).filter(
+                ScreeningYearBioData.patient_id.ilike(search)
+            )
+        else:
+            base_query = BioData.query.join(
+                ScreeningYearBioData, 
+                BioData.staff_id == ScreeningYearBioData.staff_id
+            ).filter(
+                ScreeningYearBioData.patient_id.ilike(search)
+            )
+    elif strict and year:
         base_query = BioData.query.join(
             ScreeningYearBioData, 
             BioData.staff_id == ScreeningYearBioData.staff_id
@@ -115,7 +134,7 @@ def search_patients():
             (BioData.department.ilike(search)) |
             (BioData.phone.ilike(search)) |
             (BioData.email.ilike(search))
-        ).order_by(BioData.created_at.desc())
+        )
     else:
         base_query = BioData.query.filter(
             (BioData.staff_id.ilike(search)) |
@@ -125,14 +144,35 @@ def search_patients():
             (BioData.department.ilike(search)) |
             (BioData.phone.ilike(search)) |
             (BioData.email.ilike(search))
-        ).order_by(BioData.created_at.desc())
+        )
 
-    # 2. Paginate
-    pagination = base_query.paginate(page=page, per_page=per_page, error_out=False)
-    
-    final_results = []
-    for p in pagination.items:
-        # Get yearly patient ID
+    all_matches = base_query.limit(MAX_RESULTS).all()
+
+    # 2. Compute relevance score for each match
+    # Score tiers: 0 = exact match, 1 = starts-with, 2 = contains (lower is better)
+    def relevance_score(p, p_id=None):
+        fields = [
+            (p.staff_id or '').lower(),
+            (p.first_name or '').lower(),
+            (p.last_name or '').lower(),
+        ]
+        if p_id:
+            fields.append(str(p_id).lower())
+
+        # Check for exact match on any key field
+        for f in fields:
+            if f == query_lower:
+                return 0
+        # Check for prefix (starts-with) match on any key field
+        for f in fields:
+            if f.startswith(query_lower):
+                return 1
+        # Otherwise it's a partial (contains) match
+        return 2
+
+    # 3. Build scored results
+    scored_results = []
+    for p in all_matches:
         if year:
             yearly_record = ScreeningYearBioData.query.filter_by(
                 staff_id=p.staff_id, 
@@ -144,23 +184,35 @@ def search_patients():
             ).order_by(ScreeningYearBioData.screening_year.desc()).first()
             
         p_id = yearly_record.patient_id if yearly_record else None
+        score = relevance_score(p, p_id)
 
-        final_results.append({
+        scored_results.append((score, {
             "staff_id": p.staff_id, "patient_id": p_id, "first_name": p.first_name, 
             "middle_name": p.middle_name, "last_name": p.last_name, "department": p.department, 
             "gender": p.gender, "dob": p.dob.isoformat() if p.dob else None, 
             "age": p.age, "phone": p.phone, "email": p.email,
             "race": p.race, "nationality": p.nationality,
+            "passport_image": p.passport_image,
             "section": (request.headers.get('X-Company-Context') or 'DCP').upper()
-        })
+        }))
+
+    # 4. Sort by relevance (exact > prefix > contains)
+    scored_results.sort(key=lambda x: x[0])
+
+    # 5. Manual pagination
+    total = len(scored_results)
+    total_pages = max(1, (total + per_page - 1) // per_page)
+    start = (page - 1) * per_page
+    end = start + per_page
+    page_results = [r[1] for r in scored_results[start:end]]
 
     return jsonify({
-        "results": final_results,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page,
-        "has_next": pagination.has_next,
-        "has_prev": pagination.has_prev
+        "results": page_results,
+        "total": total,
+        "pages": total_pages,
+        "current_page": page,
+        "has_next": page < total_pages,
+        "has_prev": page > 1
     }), 200
 
 def get_bind():
@@ -194,6 +246,7 @@ def get_all_patients():
             "email": p.email,
             "race": p.race,
             "nationality": p.nationality,
+            "passport_image": p.passport_image,
             "section": bind.upper()
         } for p in pagination.items],
         "total": pagination.total,
@@ -326,6 +379,8 @@ def handle_patient(staff_id):
         patient.email = data.get('email', patient.email)
         patient.race = data.get('race', patient.race)
         patient.nationality = data.get('nationality', patient.nationality)
+        if 'passport_image' in data:
+            patient.passport_image = data.get('passport_image')
         
         # Sync to ScreeningYearBioData for directory consistency
         try:
@@ -367,15 +422,19 @@ def get_screening_records(year):
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 25, type=int)
     search_query = request.args.get('q', '').strip()
+    search_type = request.args.get('search_type', 'general').lower()
     
     query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     if search_query:
-        query = query.filter(
-            (ScreeningYearBioData.staff_id.ilike(f"%{search_query}%")) |
-            (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
-            (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
-        )
+        if search_type == 'pid':
+            query = query.filter(ScreeningYearBioData.patient_id.ilike(f"%{search_query}%"))
+        else:
+            query = query.filter(
+                (ScreeningYearBioData.staff_id.ilike(f"%{search_query}%")) |
+                (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
+                (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
+            )
     
     # Sort by created_at desc to show newest first
     query = query.order_by(ScreeningYearBioData.created_at.desc())
@@ -429,10 +488,10 @@ def get_screening_records(year):
             "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
             "jaundice": c.jaundice, "murmur": c.murmur, "chest_status": c.chest_status,
             "psa": c.psa, "psa_remark": c.psa_remark, "fbs": c.fbs, "rbs": c.rbs, 
-            "sugar_remark": c.sugar_remark, "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "sugar_remark": c.sugar_remark, "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "dm": c.dm_status, "htn": c.htn_status, "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2,
-            "hs": c.hs_status, "breast": c.breast_exam, "breast_remark": c.breast_remark,
-            "abdomen": c.abdomen, "hx_pe": c.assessment_hx_pe, "other_assessments": c.other_assessments,
+            "hs": c.hs_status, "breast": c.breast_exam, "breast_remark": c.breast_remark, "breast_others": c.breast_others,
+            "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "hx_pe": c.assessment_hx_pe, "other_assessments": c.other_assessments,
             "lab_remark": c.overall_lab_remark, "remarks": c.other_remarks, "assessment": c.overall_assessment
         }
         if f: record["fbc"] = {
@@ -444,7 +503,7 @@ def get_screening_records(year):
         }
         if k: record["kft"] = {
             "potassium": k.potassium, "sodium": k.sodium, "chloride": k.chloride, 
-            "urea": k.urea, "creatinine": k.creatinine, "bicarbonate": k.bicarbonate_ca, 
+            "bicarbonate": k.bicarbonate_ca, 
             "hco3": k.hco3, "remark": k.kft_remark, "other_remarks": k.other_remarks
         }
         if li: record["lipid"] = {
@@ -453,6 +512,7 @@ def get_screening_records(year):
         }
         if lf: record["lft"] = {
             "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
+            "urea": lf.urea, "creatinine": lf.creatinine,
             "remark": lf.lft_remark, "other_remarks": lf.other_remarks
         }
         if s: record["special"] = {
@@ -592,6 +652,7 @@ def get_patient_report(staff_id, year):
         "gender": patient.gender,
         "nationality": patient.nationality,
         "department": patient.department,
+        "passport_image": patient.passport_image,
         "screening_year": year
     }
     
@@ -610,11 +671,11 @@ def get_patient_report(staff_id, year):
     if c:
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
-            "chest": c.chest_status, "abdomen": c.abdomen, "assessment": c.overall_assessment,
+            "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
-            "ua_result": c.ua_result, "ua_remark": c.ua_remark,
+            "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others
         }
     
     f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -627,7 +688,7 @@ def get_patient_report(staff_id, year):
     k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if k:
         results["kft"] = {
-            "potassium": k.potassium, "sodium": k.sodium, "urea": k.urea, "creatinine": k.creatinine, "hco3": k.hco3,
+            "potassium": k.potassium, "sodium": k.sodium, "hco3": k.hco3,
             "chloride": k.chloride, "remark": k.kft_remark
         }
     
@@ -642,6 +703,7 @@ def get_patient_report(staff_id, year):
     if lf:
         results["lft"] = {
             "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
+            "urea": lf.urea, "creatinine": lf.creatinine,
             "remark": lf.lft_remark
         }
     
