@@ -8,15 +8,15 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
   const getIcon = () => {
     switch (icon) {
       case 'warning':
-        return <AlertTriangle className="h-4 w-4 text-amber-500 animate-pulse shrink-0" />;
+        return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 animate-pulse shrink-0" />;
       case 'alert':
-        return <ShieldAlert className="h-4 w-4 text-rose-500 animate-bounce shrink-0" />;
+        return <ShieldAlert className="h-3.5 w-3.5 text-rose-500 animate-bounce shrink-0" />;
       case 'success':
-        return <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0" />;
+        return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />;
       case 'pin':
-        return <Pin className="h-4 w-4 text-blue-500 shrink-0" />;
+        return <Pin className="h-3.5 w-3.5 text-blue-500 shrink-0" />;
       default:
-        return <Info className="h-4 w-4 text-primary animate-pulse shrink-0" />;
+        return <Info className="h-3.5 w-3.5 text-primary animate-pulse shrink-0" />;
     }
   };
 
@@ -51,13 +51,13 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
           animation-play-state: paused;
         }
       `}</style>
-      <div className={`w-full py-2 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden backdrop-blur-md transition-all duration-300 ${getColors()}`}>
-        <div className="flex items-center gap-2 shrink-0 bg-background/50 px-2 py-0.5 rounded border border-muted-foreground/10 z-10 backdrop-blur-sm">
+      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden backdrop-blur-md transition-all duration-300 ${getColors()}`}>
+        <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-1.5 py-0 rounded border border-muted-foreground/10 z-10 backdrop-blur-sm">
           {getIcon()}
           <span className="uppercase tracking-widest text-[9px] font-black opacity-80">Announcement:</span>
         </div>
-        <div className="flex-1 overflow-hidden relative w-full">
-          <div className="inline-block whitespace-nowrap animate-marquee cursor-default">
+        <div className="flex-1 overflow-hidden relative w-full flex items-center h-full">
+          <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px]">
             {message}
           </div>
         </div>
