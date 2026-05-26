@@ -79,13 +79,39 @@ def update_branding():
             file = request.files[file_key]
             if file and file.filename != '' and allowed_file(file.filename):
                 filename = secure_filename(file.filename)
-                # To prevent conflicts across companies, prepend the context if possible.
-                # However, since they are distinct systems, a uuid or timestamp might be safer.
                 import uuid
+                ext = filename.rsplit('.', 1)[1].lower() if '.' in filename else ''
                 unique_filename = f"{uuid.uuid4().hex}_{filename}"
-                file_path = os.path.join(upload_folder, unique_filename)
-                file.save(file_path)
-                return f"/api/branding/uploads/{unique_filename}"
+                
+                # If SVG or ICO, save directly
+                if ext in ['svg', 'ico']:
+                    file_path = os.path.join(upload_folder, unique_filename)
+                    file.save(file_path)
+                    return f"/api/branding/uploads/{unique_filename}"
+                
+                # Otherwise, optimize and convert to WebP
+                try:
+                    from PIL import Image
+                    img = Image.open(file)
+                    
+                    if img.mode not in ('RGB', 'RGBA'):
+                        img = img.convert('RGBA')
+                    
+                    # Proportional resize if dimensions exceed 1920px
+                    max_size = 1920
+                    if img.width > max_size or img.height > max_size:
+                        img.thumbnail((max_size, max_size), Image.Resampling.LANCZOS)
+                    
+                    webp_filename = f"{uuid.uuid4().hex}_{filename.rsplit('.', 1)[0]}.webp"
+                    file_path = os.path.join(upload_folder, webp_filename)
+                    img.save(file_path, 'WEBP', quality=85)
+                    return f"/api/branding/uploads/{webp_filename}"
+                except Exception as e:
+                    current_app.logger.error(f"Image optimization failed: {e}")
+                    # Fallback to direct save
+                    file_path = os.path.join(upload_folder, unique_filename)
+                    file.save(file_path)
+                    return f"/api/branding/uploads/{unique_filename}"
         return None
 
     # Handle file uploads
@@ -145,6 +171,7 @@ def uploaded_file(filename):
         return _cors_headers(response)
     upload_folder = os.path.join(current_app.root_path, 'static', 'uploads')
     response = send_from_directory(upload_folder, filename)
+    response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
     return _cors_headers(response)
 
 @branding_bp.route('/clear', methods=['POST'])

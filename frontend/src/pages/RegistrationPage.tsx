@@ -632,43 +632,9 @@ const RegistrationPage: React.FC = () => {
           <CardContent className="p-6">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
               {/* Row 1: IDs & Passport Image */}
-              <div className="grid grid-cols-1 md:grid-cols-[1fr_1fr_auto] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
-                  <Input
-                    {...register('staff_id', { required: true })}
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
-                    placeholder="e.g. 123456"
-                    inputMode="numeric"
-                    required
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      e.target.value = val;
-                      register('staff_id').onChange(e);
-                    }}
-                    disabled={isEditMode}
-                  />
-                  {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
-                  <Input 
-                    {...register('patient_id', { required: !isEditMode })} 
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
-                    placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
-                    inputMode="numeric"
-                    required={!isEditMode}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                      e.target.value = val;
-                      register('patient_id').onChange(e);
-                    }}
-                  />
-                  {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
-                </div>
-
+              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
                 {/* Passport Photo Uploader */}
-                <div className="flex flex-col items-center md:items-end justify-center space-y-2 border-t pt-4 md:border-t-0 md:pt-0 md:border-l md:pl-6 border-primary/10">
+                <div className="flex flex-col items-center md:items-start justify-center space-y-2 border-b pb-4 md:border-b-0 md:pb-0 md:border-r md:pr-6 border-primary/10">
                   <div 
                     className="relative group w-20 h-20 rounded-2xl border-2 border-dashed border-primary/30 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
                     onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
@@ -731,6 +697,40 @@ const RegistrationPage: React.FC = () => {
                       if (e.target) e.target.value = '';
                     }}
                   />
+                </div>
+
+                <div className="space-y-2">
+                  <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
+                  <Input
+                    {...register('staff_id', { required: true })}
+                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
+                    placeholder="e.g. 123456"
+                    inputMode="numeric"
+                    required
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '');
+                      e.target.value = val;
+                      register('staff_id').onChange(e);
+                    }}
+                    disabled={isEditMode}
+                  />
+                  {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
+                  <Input 
+                    {...register('patient_id', { required: !isEditMode })} 
+                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
+                    placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
+                    inputMode="numeric"
+                    required={!isEditMode}
+                    onChange={(e) => {
+                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                      e.target.value = val;
+                      register('patient_id').onChange(e);
+                    }}
+                  />
+                  {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
                 </div>
               </div>
 
