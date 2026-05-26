@@ -8,30 +8,30 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
   const getIcon = () => {
     switch (icon) {
       case 'warning':
-        return <AlertTriangle className="h-3.5 w-3.5 text-amber-500 animate-pulse shrink-0" />;
+        return <AlertTriangle className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
       case 'alert':
-        return <ShieldAlert className="h-3.5 w-3.5 text-rose-500 animate-bounce shrink-0" />;
+        return <ShieldAlert className="h-3.5 w-3.5 text-white animate-bounce shrink-0" />;
       case 'success':
-        return <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0" />;
+        return <CheckCircle2 className="h-3.5 w-3.5 text-white shrink-0" />;
       case 'pin':
-        return <Pin className="h-3.5 w-3.5 text-blue-500 shrink-0" />;
+        return <Pin className="h-3.5 w-3.5 text-white shrink-0" />;
       default:
-        return <Info className="h-3.5 w-3.5 text-primary animate-pulse shrink-0" />;
+        return <Info className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
     }
   };
 
   const getColors = () => {
     switch (icon) {
       case 'warning':
-        return 'bg-amber-500/10 border-amber-500/20 text-amber-900 dark:text-amber-200';
+        return 'bg-amber-600 border-amber-700 text-white';
       case 'alert':
-        return 'bg-rose-500/10 border-rose-500/20 text-rose-900 dark:text-rose-200';
+        return 'bg-rose-600 border-rose-700 text-white';
       case 'success':
-        return 'bg-emerald-500/10 border-emerald-500/20 text-emerald-900 dark:text-emerald-200';
+        return 'bg-emerald-600 border-emerald-700 text-white';
       case 'pin':
-        return 'bg-blue-500/10 border-blue-500/20 text-blue-900 dark:text-blue-200';
+        return 'bg-blue-600 border-blue-700 text-white';
       default:
-        return 'bg-primary/10 border-primary/20 text-primary-900 dark:text-primary-200';
+        return 'bg-primary border-primary/90 text-primary-foreground';
     }
   };
 
@@ -51,13 +51,13 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
           animation-play-state: paused;
         }
       `}</style>
-      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden backdrop-blur-md transition-all duration-300 ${getColors()}`}>
-        <div className="flex items-center gap-1.5 shrink-0 bg-background/50 px-1.5 py-0 rounded border border-muted-foreground/10 z-10 backdrop-blur-sm">
+      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 ${getColors()}`}>
+        <div className="flex items-center gap-1.5 shrink-0 bg-black/15 px-2 py-0.5 rounded border border-white/10 z-10">
           {getIcon()}
-          <span className="uppercase tracking-widest text-[9px] font-black opacity-80">Announcement:</span>
+          <span className="uppercase tracking-widest text-[9px] font-black opacity-90">Announcement:</span>
         </div>
         <div className="flex-1 overflow-hidden relative w-full flex items-center h-full">
-          <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px]">
+          <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold">
             {message}
           </div>
         </div>
