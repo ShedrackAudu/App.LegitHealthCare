@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck, Stethoscope, RotateCcw } from 'lucide-react';
+import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck, Stethoscope, RotateCcw, Megaphone } from 'lucide-react';
 import { useAppContext } from '@/context/AppContext';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
@@ -170,6 +170,12 @@ const SystemConfigPage: React.FC = () => {
         doctor_post: ''
     });
 
+    // Ticker Settings State
+    const [tickerMessage, setTickerMessage] = useState('');
+    const [tickerIcon, setTickerIcon] = useState<'warning' | 'info' | 'alert' | 'success' | 'pin'>('info');
+    const [tickerEnabled, setTickerEnabled] = useState(false);
+    const [tickerSaving, setTickerSaving] = useState(false);
+
     const fetchData = useCallback(async () => {
         setLoading(true);
         try {
@@ -236,10 +242,43 @@ const SystemConfigPage: React.FC = () => {
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
             }
+            if (response.data.ticker_message !== undefined) {
+                setTickerMessage(response.data.ticker_message);
+            }
+            if (response.data.ticker_icon !== undefined) {
+                setTickerIcon(response.data.ticker_icon as any);
+            }
+            if (response.data.ticker_enabled !== undefined) {
+                setTickerEnabled(response.data.ticker_enabled === 'true');
+            }
         } catch (err) {
             console.error("Failed to load system configuration");
         }
     }, [activeSection, user]);
+
+    const handleSaveTicker = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setTickerSaving(true);
+        try {
+            await axios.post('/api/admin/config', {
+                ticker_message: tickerMessage,
+                ticker_icon: tickerIcon,
+                ticker_enabled: tickerEnabled.toString()
+            }, {
+                headers: {
+                    'X-Company-Context': activeSection,
+                    'X-User-ID': user?.id?.toString()
+                }
+            });
+            toast.success("Announcement ticker updated successfully!");
+            // Dispatch update event to layout
+            window.dispatchEvent(new Event('tickerUpdate'));
+        } catch (err) {
+            toast.error("Failed to save announcement ticker configuration.");
+        } finally {
+            setTickerSaving(false);
+        }
+    };
 
     useEffect(() => {
         fetchData();
@@ -910,6 +949,85 @@ const SystemConfigPage: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
+                                </CardContent>
+                            </Card>
+
+                            {/* Announcement Ticker Configuration */}
+                            <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group mt-6">
+                                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
+                                <CardHeader className="border-b bg-muted/5 p-6">
+                                    <div className="flex items-center gap-4">
+                                        <div className="p-3 bg-primary/10 rounded-2xl">
+                                            <Megaphone className="h-6 w-6 text-primary" />
+                                        </div>
+                                        <div>
+                                            <CardTitle className="text-xl text-primary font-black">System Announcement Ticker</CardTitle>
+                                            <CardDescription>Broadcast system-wide messages to all staff members via a marquee banner.</CardDescription>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-8">
+                                    <form onSubmit={handleSaveTicker} className="space-y-6">
+                                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02] mb-4">
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-lg text-foreground">Enable Announcement Ticker</h4>
+                                                <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                    Turn the system-wide announcement banner on or off. When enabled, it will appear at the top of all pages in the staff portal.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-4 bg-background p-2.5 pr-4 rounded-xl border-2 shadow-sm border-muted">
+                                                <div className={`w-3 h-3 rounded-full ${tickerEnabled ? 'bg-primary animate-pulse' : 'bg-muted'}`} />
+                                                <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
+                                                    {tickerEnabled ? 'Enabled' : 'Disabled'}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setTickerEnabled(!tickerEnabled)}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tickerEnabled ? 'bg-primary' : 'bg-muted'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow-lg ring-0 transition duration-200 ease-in-out ${tickerEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Announcement Message</Label>
+                                            <textarea
+                                                value={tickerMessage}
+                                                onChange={(e) => setTickerMessage(e.target.value)}
+                                                placeholder="Type your system-wide announcement message here..."
+                                                rows={3}
+                                                className="flex min-h-[80px] w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            />
+                                        </div>
+
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Icon Indicator</Label>
+                                            <select
+                                                value={tickerIcon}
+                                                onChange={(e) => setTickerIcon(e.target.value as any)}
+                                                className="h-11 w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary border-primary/20"
+                                            >
+                                                <option value="info">Information ℹ️</option>
+                                                <option value="warning">Warning ⚠️</option>
+                                                <option value="alert">Alert 🚨</option>
+                                                <option value="success">Success ✅</option>
+                                                <option value="pin">Important Pin 📌</option>
+                                            </select>
+                                        </div>
+
+                                        <div className="flex justify-end pt-4">
+                                            <Button
+                                                type="submit"
+                                                disabled={tickerSaving}
+                                                size="lg"
+                                                className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
+                                            >
+                                                {tickerSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                                {tickerSaving ? 'Saving...' : 'Save Announcement'}
+                                            </Button>
+                                        </div>
+                                    </form>
                                 </CardContent>
                             </Card>
                         </div>

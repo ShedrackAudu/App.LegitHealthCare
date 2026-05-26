@@ -223,6 +223,20 @@ def get_default_theme():
     theme = config.value if config else 'light'
     return jsonify({"default_theme": theme}), 200
 
+@app.route('/api/config/ticker', methods=['GET'])
+def get_ticker_config():
+    from models import SystemConfig
+    msg_config = SystemConfig.query.get('ticker_message')
+    icon_config = SystemConfig.query.get('ticker_icon')
+    enabled_config = SystemConfig.query.get('ticker_enabled')
+    
+    return jsonify({
+        "message": msg_config.value if msg_config else "",
+        "icon": icon_config.value if icon_config else "info",
+        "enabled": (enabled_config.value.lower() == 'true') if enabled_config else False
+    }), 200
+
+
 @app.route('/signup', methods=['POST'])
 @limiter.limit("5 per hour")
 def signup():
