@@ -4,7 +4,7 @@ from datetime import datetime
 from flask_bcrypt import Bcrypt
 import json
 
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, validates
 
 class RoutingSession(Session):
     def __init__(self, *args, **kwargs):
@@ -759,6 +759,15 @@ class AuditLog(db.Model):
             except (ValueError, TypeError):
                 kwargs['user_id'] = None
         super().__init__(*args, **kwargs)
+
+    @validates('user_id')
+    def validate_user_id(self, key, value):
+        if value is not None:
+            try:
+                return int(value)
+            except (ValueError, TypeError):
+                return None
+        return None
 
     @classmethod
     def log_action(cls, action, resource=None, details=None, user_id=None, ip_address=None, commit=False):
