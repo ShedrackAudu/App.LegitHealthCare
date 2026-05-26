@@ -56,17 +56,17 @@ const RegistrationPage: React.FC = () => {
     staff_id: z.string().min(1, 'Staff ID is required'),
     patient_id: isEditMode ? z.string().optional() : z.string().min(1, 'Patient ID is required'),
     first_name: z.string().min(1, 'First Name is required'),
-    middle_name: z.string().optional(),
+    middle_name: z.string().nullable().optional(),
     last_name: z.string().min(1, 'Last Name is required'),
     department: z.string().min(1, 'Department is required'),
     gender: z.string().min(1, 'Gender is required'),
     dob: z.string().min(1, 'Date of Birth is required'),
     age: z.number(),
     phone: z.string().min(1, 'Phone is required'),
-    email: z.string().email('Invalid email').optional().or(z.literal('')),
+    email: z.union([z.string().email('Invalid email'), z.literal(''), z.null(), z.undefined()]),
     race: z.string().min(1, 'Race is required'),
     nationality: z.string().min(1, 'Nationality is required'),
-    passport_image: z.string().optional(),
+    passport_image: z.string().nullable().optional(),
   });
 
   type RegistrationValues = z.infer<typeof registrationSchema>;
@@ -194,7 +194,12 @@ const RegistrationPage: React.FC = () => {
           }
           setPassportFile(null);
 
-          reset(p);
+          reset({
+            ...p,
+            passport_image: p.passport_image || '',
+            middle_name: p.middle_name || '',
+            email: p.email || '',
+          });
         } catch (err) {
           toast.error("Failed to load patient data for editing");
           navigate('/view-patients');
@@ -350,7 +355,12 @@ const RegistrationPage: React.FC = () => {
       }
       setPassportFile(null);
 
-      reset(p);
+      reset({
+        ...p,
+        passport_image: p.passport_image || '',
+        middle_name: p.middle_name || '',
+        email: p.email || '',
+      });
       setSearchResults([]);
       toast.success(`Patient ${p.first_name} found and records retrieved.`);
     } catch (err) {
@@ -373,7 +383,12 @@ const RegistrationPage: React.FC = () => {
     }
     setPassportFile(null);
     setIsSelecting(true);
-    reset(p);
+    reset({
+      ...p,
+      passport_image: p.passport_image || '',
+      middle_name: p.middle_name || '',
+      email: p.email || '',
+    });
     setSearchId(''); // Clear the search field immediately
     setSearchResults([]);
     toast.success(`Patient ${p.first_name} ${p.last_name} selected.`);
