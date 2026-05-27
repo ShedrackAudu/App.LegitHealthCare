@@ -6,7 +6,9 @@ import {
   Trash2, 
   Loader2,
   Plus,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight
 } from 'lucide-react';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -139,7 +141,7 @@ const ViewPatientsPage: React.FC = () => {
                                 Total: {totalItems} Patients
                             </Badge>
                         </div>
-                        <Button variant="outline" size="sm" className="font-bold gap-2" onClick={() => navigate('/registration')}>
+                        <Button variant="outline" size="sm" className="hidden sm:flex font-bold gap-2" onClick={() => navigate('/registration')}>
                             <Plus className="h-4 w-4" /> Add Patient
                         </Button>
                     </div>
@@ -294,7 +296,7 @@ const ViewPatientsPage: React.FC = () => {
                                 onClick={() => fetchPatients(searchQuery, page - 1)}
                                 className="font-bold border-2"
                             >
-                                Prev
+                                <ChevronLeft className="mr-2 h-4 w-4" /> Prev
                             </Button>
                             <Button 
                                 variant="outline" 
@@ -303,7 +305,7 @@ const ViewPatientsPage: React.FC = () => {
                                 onClick={() => fetchPatients(searchQuery, page + 1)}
                                 className="font-bold border-2"
                             >
-                                Next
+                                Next <ChevronRight className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
                     </div>
