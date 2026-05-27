@@ -268,7 +268,8 @@ const PatientReportPage: React.FC = () => {
                             <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
                         </div>
                     ) : reportData ? (
-                        <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-background rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
+                        <>
+                            <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-background rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
                             {/* PAGE 1 */}
                             <div className="a4-page">
                                 {/* Branding Header Area */}
@@ -598,6 +599,7 @@ const PatientReportPage: React.FC = () => {
                                 />
                             </Card>
                         </div>
+                        </>
                     ) : (
                         <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6 no-print">
                             <div className="text-center space-y-3">
