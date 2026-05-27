@@ -76,6 +76,9 @@ export function ThemeProvider({
     meta.setAttribute('name', 'theme-color')
     meta.setAttribute('content', themeColor)
     document.head.appendChild(meta)
+
+    // Set cookie for backend manifest sync
+    document.cookie = `theme=${current}; path=/; max-age=31536000; SameSite=Lax`
   }, [theme])
 
   const value = {

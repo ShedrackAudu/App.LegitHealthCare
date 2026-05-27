@@ -45,7 +45,7 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
         .animate-marquee {
           display: inline-block;
           padding-left: 100%;
-          animation: marquee 25s linear infinite;
+          animation: marquee 35s linear infinite;
         }
         .animate-marquee:hover {
           animation-play-state: paused;

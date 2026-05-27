@@ -285,6 +285,10 @@ def get_pwa_manifest():
             }
         ]
 
+    theme = request.cookies.get('theme', 'dark')
+    theme_color = "#000000" if theme == "dark" else "#ffffff"
+    background_color = "#000000" if theme == "dark" else "#ffffff"
+
     manifest = {
         "name": clinic_name,
         "short_name": clinic_name[:12],
@@ -292,8 +296,8 @@ def get_pwa_manifest():
         "start_url": start_url,
         "scope": scope,
         "display": "standalone",
-        "background_color": "#ffffff",
-        "theme_color": "#0d9488",
+        "background_color": background_color,
+        "theme_color": theme_color,
         "orientation": "portrait",
         "icons": icons_list
     }
