@@ -93,6 +93,14 @@ const UserManagementPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
+  const [editUserInfo, setEditUserInfo] = useState({
+    first_name: '',
+    last_name: '',
+    username: '',
+    email: '',
+    phone: ''
+  });
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,6 +252,15 @@ const UserManagementPage: React.FC = () => {
       setIsResetModalOpen(true);
     } else if (action === 'deactivate') {
       setConfirmDeactivation({ open: true, user: u });
+    } else if (action === 'edit_info') {
+      setEditUserInfo({
+        first_name: u.first_name,
+        last_name: u.last_name,
+        username: u.username,
+        email: u.email,
+        phone: u.phone
+      });
+      setIsEditInfoModalOpen(true);
     }
   };
 
@@ -269,6 +286,26 @@ const UserManagementPage: React.FC = () => {
     } catch (err) {
       console.error("Update failed:", err);
       toast.error("Failed to update roles");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveInfo = async () => {
+    if (!selectedUser) return;
+    if (!editUserInfo.first_name || !editUserInfo.last_name || !editUserInfo.username || !editUserInfo.email) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    setSaving(true);
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      await axios.put(`/api/admin/users/${selectedUser.id}`, editUserInfo, { headers });
+      toast.success("User account information updated successfully");
+      setIsEditInfoModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update account information");
     } finally {
       setSaving(false);
     }
@@ -607,6 +644,85 @@ const UserManagementPage: React.FC = () => {
             >
               {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
               Apply New Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditInfoModalOpen} onOpenChange={setIsEditInfoModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <UserCog className="h-5 w-5 text-primary" />
+              Edit Account Information
+            </DialogTitle>
+            <DialogDescription>
+              Update the account profile information for <strong>@{selectedUser?.username}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-first-name">First Name</Label>
+                <Input
+                  id="edit-first-name"
+                  placeholder="John"
+                  value={editUserInfo.first_name}
+                  onChange={(e) => setEditUserInfo({ ...editUserInfo, first_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-last-name">Last Name</Label>
+                <Input
+                  id="edit-last-name"
+                  placeholder="Doe"
+                  value={editUserInfo.last_name}
+                  onChange={(e) => setEditUserInfo({ ...editUserInfo, last_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-username">Username</Label>
+              <Input
+                id="edit-username"
+                placeholder="jdoe"
+                value={editUserInfo.username}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, username: e.target.value })}
+                disabled={selectedUser?.username === 'admin'}
+              />
+              {selectedUser?.username === 'admin' && (
+                <p className="text-[10px] text-rose-500 font-bold italic">The default system administrator username cannot be renamed.</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email Address</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                placeholder="john.doe@legit-healthcare.com"
+                value={editUserInfo.email}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                placeholder="+234..."
+                value={editUserInfo.phone}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, phone: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditInfoModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSaveInfo}
+              className="font-bold"
+              disabled={saving}
+            >
+              {saving ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <CheckCircle2 className="h-4 w-4 mr-2" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -1170,6 +1286,10 @@ const UserTable: React.FC<{
                     <DropdownMenuItem onClick={() => handleAction('roles', user)} className="cursor-pointer gap-2">
                       <ShieldCheck className="h-4 w-4" />
                       Edit Roles
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAction('edit_info', user)} className="cursor-pointer gap-2">
+                      <UserCog className="h-4 w-4" />
+                      Edit Info
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction('reset', user)} className="cursor-pointer gap-2">
                       <Key className="h-4 w-4" />

@@ -985,6 +985,103 @@ def delete_user(target_user_id):
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
 
+@admin_bp.route('/api/admin/users/<string:target_user_id>', methods=['PUT'])
+@require_permission('manage_roles')
+def update_user_info(target_user_id):
+    admin_id = get_jwt_identity()
+    
+    if target_user_id.startswith('p'):
+        real_id = int(target_user_id[1:])
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+        data = request.json
+        email = data.get('email')
+        phone = data.get('phone')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        username = data.get('username')
+        
+        if not first_name or not last_name or not username or not email:
+            return jsonify({"error": "First name, last name, username, and email are required."}), 400
+            
+        if username != target_user.username:
+            if PatientPortalUser.query.filter(func.lower(PatientPortalUser.username) == username.lower()).first():
+                return jsonify({"error": "Username already exists in patient portal registry."}), 400
+        
+        if email != target_user.email:
+            if PatientPortalUser.query.filter(func.lower(PatientPortalUser.email) == email.lower()).first():
+                return jsonify({"error": "Email already exists in patient portal registry."}), 400
+                
+        target_user.first_name = first_name
+        target_user.last_name = last_name
+        target_user.username = username
+        target_user.email = email
+        target_user.phone = phone
+        
+        db.session.commit()
+        
+        log = AuditLog(
+            user_id=admin_id,
+            action="UPDATE_PATIENT_INFO",
+            resource=f"Patient:{target_user.username}",
+            details=json.dumps({"user_id": target_user_id, "username": target_user.username}),
+            ip_address=get_client_ip()
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify(target_user.to_dict())
+
+    target_user = User.query.get_or_404(int(target_user_id))
+    
+    data = request.json
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    username = data.get('username')
+    email = data.get('email')
+    phone = data.get('phone')
+    
+    if not first_name or not last_name or not username or not email:
+        return jsonify({"error": "First name, last name, username, and email are required."}), 400
+        
+    if username != target_user.username:
+        # Prevent renaming the system admin username to something else if it's protected
+        if target_user.username == 'admin':
+            return jsonify({"error": "Protection Error: The default system administrator username cannot be renamed."}), 403
+            
+        if User.query.filter(func.lower(User.username) == username.lower()).first():
+            return jsonify({"error": "Username already exists."}), 400
+            
+    if email != target_user.email:
+        if User.query.filter(func.lower(User.email) == email.lower()).first():
+            return jsonify({"error": "Email already exists."}), 400
+            
+    old_username = target_user.username
+    target_user.first_name = first_name
+    target_user.last_name = last_name
+    target_user.username = username
+    target_user.email = email
+    target_user.phone = phone
+    
+    db.session.commit()
+    
+    log = AuditLog(
+        user_id=admin_id,
+        action="UPDATE_USER_INFO",
+        resource=f"User:{target_user.username}",
+        details=json.dumps({"user_id": target_user_id, "old_username": old_username, "new_username": username}),
+        ip_address=get_client_ip()
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    try:
+        from extensions import socketio
+        socketio.emit('user_update', target_user.to_dict(), room=f"user_{target_user.id}")
+    except Exception as e:
+        print(f"Socket emit for user info update failed: {e}")
+        
+    return jsonify(target_user.to_dict())
+
 @admin_bp.route('/api/admin/users/<string:target_user_id>/reset-password', methods=['POST'])
 @require_permission('manage_roles')
 def admin_reset_password(target_user_id):
