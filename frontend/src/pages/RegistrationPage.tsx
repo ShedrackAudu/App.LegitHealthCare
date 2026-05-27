@@ -1235,14 +1235,14 @@ const RegistrationPage: React.FC = () => {
 
 const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
   <Card className="border transition-all overflow-hidden relative">
-    <CardContent className="py-1.5 px-2.5 flex flex-col justify-between h-full min-h-[58px]">
+    <CardContent className="py-2 px-2.5 flex flex-col justify-center gap-1 h-full min-h-[52px]">
       <div className="flex items-center gap-1.5">
         <Icon className={`h-3 w-3 ${color} shrink-0`} />
         <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate">{title}</p>
       </div>
-      <div className="mt-0.5 flex items-end justify-between gap-1">
-        <h3 className="text-xs sm:text-base font-black leading-none whitespace-nowrap">{value}</h3>
-        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis opacity-85 leading-none shrink-0">{sub}</p>}
+      <div className="flex flex-col gap-0.5 mt-0.5">
+        <h3 className="text-xs sm:text-sm font-black leading-tight whitespace-nowrap">{value}</h3>
+        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground leading-none opacity-85">{sub}</p>}
       </div>
     </CardContent>
   </Card>
