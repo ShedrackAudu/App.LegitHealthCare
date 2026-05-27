@@ -565,7 +565,7 @@ export default function MessagingPage() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-w-0 w-full">
           {searchQuery.length >= 2 ? (
             <div className="p-2 space-y-1">
               <p className="text-[10px] font-bold text-muted-foreground uppercase px-3 py-1">Search Results</p>
