@@ -516,32 +516,32 @@ const SystemConfigPage: React.FC = () => {
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">
-                    <TabsList className="flex flex-wrap w-full h-auto min-h-[64px] p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
-                        <TabsTrigger value="departments" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                    <TabsList className="grid grid-cols-2 md:flex md:flex-wrap w-full h-auto p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden gap-1.5">
+                        <TabsTrigger value="departments" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Building2 className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
-                        <TabsTrigger value="races" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="races" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Users className="h-4 w-4" />
                             Races / Cont.
                         </TabsTrigger>
-                        <TabsTrigger value="nationalities" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="nationalities" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Globe className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="flex-1 min-w-[150px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="email" className="w-full md:flex-1 md:min-w-[150px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Mail className="h-4 w-4" />
                             Email & Contacts
                         </TabsTrigger>
-                        <TabsTrigger value="doctor" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="doctor" className="w-full md:flex-1 md:min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Stethoscope className="h-4 w-4" />
                             Doctor
                         </TabsTrigger>
-                        <TabsTrigger value="settings" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="settings" className="w-full md:flex-1 md:min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <Settings2 className="h-4 w-4" />
                             Settings
                         </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                        <TabsTrigger value="maintenance" className="col-span-2 md:col-span-1 w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
                             <RotateCcw className="h-4 w-4" />
                             Maintenance
                         </TabsTrigger>
