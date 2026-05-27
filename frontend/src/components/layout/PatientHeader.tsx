@@ -1,5 +1,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { Sun, Moon, LogOut, User, Bell, Download } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Sun01Icon,
+  Moon01Icon,
+  Logout01Icon,
+  UserIcon,
+  Notification01Icon,
+  Download01Icon
+} from '@hugeicons/core-free-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
 import { useTheme } from '@/components/theme-provider';
@@ -120,7 +128,7 @@ export const PatientHeader: React.FC = () => {
               className="hidden sm:flex h-9 w-auto rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95 px-3"
               title="Install App"
             >
-              <Download className="h-3.5 w-3.5" />
+              <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
               Install App
             </Button>
           )}
@@ -130,12 +138,12 @@ export const PatientHeader: React.FC = () => {
             className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card"
             onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
           >
-            <Sun className={`h-[1.2rem] w-[1.2rem] transition-all ${
+            <HugeiconsIcon icon={Sun01Icon} className={`h-[1.2rem] w-[1.2rem] transition-all ${
               resolvedTheme === "dark" 
                 ? "-rotate-90 scale-0 opacity-0" 
                 : "rotate-0 scale-100 opacity-100"
             }`} />
-            <Moon className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
+            <HugeiconsIcon icon={Moon01Icon} className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
               resolvedTheme === "dark" 
                 ? "rotate-0 scale-100 opacity-100" 
                 : "rotate-90 scale-0 opacity-0"
@@ -143,14 +151,14 @@ export const PatientHeader: React.FC = () => {
           </Button>
 
           <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card group">
-            <Bell className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
+            <HugeiconsIcon icon={Notification01Icon} className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
                 <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                  <HugeiconsIcon icon={UserIcon} className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
                 {user && (
                     <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors hidden md:inline-block pr-1">
@@ -163,14 +171,14 @@ export const PatientHeader: React.FC = () => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/patient/account')}>
-                <User className="mr-2 h-4 w-4" /> Manage Account
+                <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-2 h-4 w-4" /> Log out
+                <HugeiconsIcon icon={Logout01Icon} className="mr-2 h-4 w-4" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { WifiOff, Wifi } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Wifi01Icon, WifiOff01Icon } from '@hugeicons/core-free-icons';
 
 type BannerState = 'hidden' | 'offline' | 'back-online';
 
@@ -76,12 +77,12 @@ const NetworkStatusBanner = () => {
       >
         {isOffline ? (
           <>
-            <WifiOff className="h-4 w-4 shrink-0 animate-pulse" />
+            <HugeiconsIcon icon={WifiOff01Icon} className="h-4 w-4 shrink-0 animate-pulse" />
             <span>You are offline. Check your internet connection.</span>
           </>
         ) : (
           <>
-            <Wifi className="h-4 w-4 shrink-0" />
+            <HugeiconsIcon icon={Wifi01Icon} className="h-4 w-4 shrink-0" />
             <span>You're back online!</span>
           </>
         )}

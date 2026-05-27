@@ -2,21 +2,28 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import axios from 'axios';
-import { AlertTriangle, Info, ShieldAlert, Pin, CheckCircle2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Alert01Icon,
+  InformationCircleIcon,
+  Shield01Icon,
+  PinIcon,
+  CheckmarkCircle01Icon
+} from '@hugeicons/core-free-icons';
 
 const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, icon }) => {
   const getIcon = () => {
     switch (icon) {
       case 'warning':
-        return <AlertTriangle className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
+        return <HugeiconsIcon icon={Alert01Icon} className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
       case 'alert':
-        return <ShieldAlert className="h-3.5 w-3.5 text-white animate-bounce shrink-0" />;
+        return <HugeiconsIcon icon={Shield01Icon} className="h-3.5 w-3.5 text-white animate-bounce shrink-0" />;
       case 'success':
-        return <CheckCircle2 className="h-3.5 w-3.5 text-white shrink-0" />;
+        return <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-3.5 w-3.5 text-white shrink-0" />;
       case 'pin':
-        return <Pin className="h-3.5 w-3.5 text-white shrink-0" />;
+        return <HugeiconsIcon icon={PinIcon} className="h-3.5 w-3.5 text-white shrink-0" />;
       default:
-        return <Info className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
+        return <HugeiconsIcon icon={InformationCircleIcon} className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
     }
   };
 

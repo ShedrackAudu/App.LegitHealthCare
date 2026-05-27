@@ -1,5 +1,16 @@
 import React, { useState, useEffect } from 'react';
-import { Sun, Moon, LogOut, User, Bell, Trash2, Check, Building2, Clock } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Sun01Icon,
+  Moon01Icon,
+  Logout01Icon,
+  UserIcon,
+  Notification01Icon,
+  Delete02Icon,
+  Tick01Icon,
+  Building02Icon,
+  Clock01Icon
+} from '@hugeicons/core-free-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
@@ -259,7 +270,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
           <div className="hidden sm:flex items-center gap-2 min-w-0 overflow-hidden">
-            {brandingError && <Building2 className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
+            {brandingError && <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
             <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
               {pageTitle}
             </h1>
@@ -270,7 +281,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
         <div className="flex items-center gap-1 sm:gap-2 shrink-0 transition-all duration-300">
           {timeLeft && (
             <div className="hidden sm:flex items-center gap-2 h-9 px-3 border-2 rounded-lg bg-amber-500/5 border-amber-500/20 text-amber-600 font-bold shadow-sm animate-pulse shrink-0 transition-all">
-              <Clock className="h-4 w-4" />
+              <HugeiconsIcon icon={Clock01Icon} className="h-4 w-4" />
               <span className="text-[10px] uppercase tracking-wider">
                 Expiring in: {timeLeft}
               </span>
@@ -331,12 +342,12 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             >
               <label className="sr-only">Toggle theme</label>
-              <Sun className={`h-[1.2rem] w-[1.2rem] transition-all ${
+              <HugeiconsIcon icon={Sun01Icon} className={`h-[1.2rem] w-[1.2rem] transition-all ${
                 resolvedTheme === "dark" 
                   ? "-rotate-90 scale-0 opacity-0" 
                   : "rotate-0 scale-100 opacity-100"
               }`} />
-              <Moon className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
+              <HugeiconsIcon icon={Moon01Icon} className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
                 resolvedTheme === "dark" 
                   ? "rotate-0 scale-100 opacity-100" 
                   : "rotate-90 scale-0 opacity-0"
@@ -347,7 +358,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg flex bg-card group relative">
-                <Bell className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
+                <HugeiconsIcon icon={Notification01Icon} className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
                 {unreadCount > 0 && (
                   <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-rose-500 border border-background"></span>
                 )}
@@ -365,7 +376,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                     className="flex items-center gap-1.5 text-[11px] font-bold text-rose-500 hover:text-rose-600 transition-colors group/clear"
                   >
                     Delete All
-                    <Trash2 className="h-3 w-3 group-hover/clear:rotate-12 transition-transform" />
+                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3 group-hover/clear:rotate-12 transition-transform" />
                   </button>
                 )}
               </DropdownMenuLabel>
@@ -393,7 +404,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                             className="p-1 rounded-md hover:bg-primary/10 text-primary opacity-0 group-hover/item:opacity-100 transition-all"
                             title="Mark as Read"
                           >
-                            <Check className="h-3.5 w-3.5" />
+                            <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5" />
                           </button>
                         )}
                       </div>
@@ -412,7 +423,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             <DropdownMenuTrigger asChild>
               <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
                 <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
-                  <User className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
+                  <HugeiconsIcon icon={UserIcon} className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>
                 {user && (
                   <span className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors hidden md:inline-block pr-1 text-nowrap">
@@ -425,14 +436,14 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account')}>
-                <User className="mr-2 h-4 w-4" /> Manage Account
+                <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer"
                 onClick={handleLogout}
               >
-                <LogOut className="mr-2 h-4 w-4" /> Log out
+                <HugeiconsIcon icon={Logout01Icon} className="mr-2 h-4 w-4" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
