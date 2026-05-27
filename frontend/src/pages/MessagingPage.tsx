@@ -562,7 +562,7 @@ export default function MessagingPage() {
                   className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
                   onClick={openNewGroup}
               >
-                <Plus className="h-4 w-4" /> New Group
+                <Plus className="h-4 w-4" /> Group
               </Button>
             </div>
           </div>
