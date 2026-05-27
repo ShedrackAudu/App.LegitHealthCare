@@ -732,7 +732,7 @@ const RegistrationPage: React.FC = () => {
                   }}
                 />
                 <p className="text-xs text-muted-foreground text-center">
-                  Upload a clear passport photo or take one using your camera. Required for registration.
+                  Upload a clear passport photo or take one using your camera.
                 </p>
               </CardContent>
             </Card>
