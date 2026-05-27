@@ -628,13 +628,13 @@ export default function MessagingPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline gap-1">
-                      <div className="font-bold text-sm truncate">
+                    <div className="flex justify-between items-baseline gap-2 min-w-0">
+                      <div className="font-bold text-sm truncate min-w-0">
                         {conv.type === 'direct' ? `${conv.other_user.first_name} ${conv.other_user.last_name}` : conv.group.name}
                       </div>
                       {conv.last_message && (
                         <div className={cn(
-                            "text-[10px] whitespace-nowrap opacity-70",
+                            "text-[10px] whitespace-nowrap opacity-70 shrink-0",
                             activeChat?.id === conv.id ? "text-primary-foreground" : "text-muted-foreground"
                         )}>
                           {format(new Date(conv.last_message.created_at), 'HH:mm')}
