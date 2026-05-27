@@ -66,6 +66,9 @@ services:
       mountPath: /opt/render/project/src/backend/static/uploads
       sizeGB: 1
     envVars:
+      - key: TZ
+        value: Africa/Lagos
+
       # REQUIRED: Set to the backend's own public URL (no trailing slash)
       # Example: https://legit-healthcare-api.onrender.com
       - key: APP_URL

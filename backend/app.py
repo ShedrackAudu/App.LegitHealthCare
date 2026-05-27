@@ -1,7 +1,14 @@
+import os
+import time
+
+# Set default timezone to WAT (Africa/Lagos)
+os.environ['TZ'] = 'Africa/Lagos'
+if hasattr(time, 'tzset'):
+    time.tzset()
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime, timedelta
-import os
 import json
 from dotenv import load_dotenv
 
