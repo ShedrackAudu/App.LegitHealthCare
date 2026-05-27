@@ -269,7 +269,6 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
                     {/* Bio Grid */}
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
-                        <BioItem label="DEPARTMENT" value={patient.department} />
                         <div className="col-span-1 lg:col-span-2">
                             <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
                         </div>
@@ -277,6 +276,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} />
                         <BioItem label="AGE" value={`${patient.age} Yrs`} />
                         <BioItem label="GENDER" value={patient.gender || 'N/A'} />
+                        <BioItem label="DEPARTMENT" value={patient.department} />
                         <div className="flex items-center justify-between col-span-full lg:col-span-2 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-muted mt-1 lg:mt-0">
                             <BioItem label="CONSULTED BY" value={history?.consultation?.consulted_by_name || 'N/A'} />
                             {history?.review?.first_submitted_at && (
