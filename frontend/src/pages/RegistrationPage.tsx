@@ -622,7 +622,7 @@ const RegistrationPage: React.FC = () => {
           />
           <StatCard
             title="Gender Mix"
-            value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}%/F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0%/F: 0%'}
+            value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}% | F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0% | F: 0%'}
             sub={`${stats?.males || 0} M / ${stats?.females || 0} F`}
             icon={Users}
             color="text-indigo-600"
