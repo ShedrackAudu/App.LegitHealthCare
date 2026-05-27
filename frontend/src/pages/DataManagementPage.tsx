@@ -123,7 +123,7 @@ const DataManagementPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
               <Database className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
@@ -135,28 +135,28 @@ const DataManagementPage: React.FC = () => {
             </div>
           </div>
 
-          <div className="flex bg-muted/50 p-1.5 rounded-2xl border-2 shadow-sm w-full md:w-auto gap-1">
+          <div className="grid grid-cols-2 bg-muted/50 p-1.5 rounded-2xl border-2 shadow-sm w-full md:flex md:w-auto gap-1">
             <button
               onClick={() => setActiveTab('export')}
-              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'export' 
                 ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
               <Download className="w-4 h-4" />
-              Data Export
+              Export
             </button>
             <button
               onClick={() => setActiveTab('import')}
-              className={`flex-1 px-4 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
+              className={`flex-1 px-2 sm:px-6 py-2.5 rounded-xl font-black text-xs sm:text-sm transition-all flex items-center justify-center gap-2 ${
                 activeTab === 'import' 
                 ? 'bg-primary shadow-lg shadow-primary/20 text-white' 
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
               <Upload className="w-4 h-4" />
-              Bulk Import
+              Import
             </button>
           </div>
         </div>

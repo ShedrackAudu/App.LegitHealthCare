@@ -87,7 +87,7 @@ const ManageDepartmentsPage: React.FC = () => {
         <MainLayout>
             <div className="max-w-4xl mx-auto space-y-6">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
                             <Building2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>

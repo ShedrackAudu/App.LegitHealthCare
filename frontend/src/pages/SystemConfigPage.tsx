@@ -502,7 +502,7 @@ const SystemConfigPage: React.FC = () => {
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
                             <Settings2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
@@ -516,32 +516,32 @@ const SystemConfigPage: React.FC = () => {
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">
-                    <TabsList className="grid grid-cols-2 md:flex md:flex-wrap w-full h-auto p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden gap-1.5">
-                        <TabsTrigger value="departments" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                    <TabsList className="grid grid-cols-2 md:flex md:flex-wrap gap-1 w-full h-auto p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
+                        <TabsTrigger value="departments" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Building2 className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
-                        <TabsTrigger value="races" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="races" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Users className="h-4 w-4" />
                             Races / Cont.
                         </TabsTrigger>
-                        <TabsTrigger value="nationalities" className="w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="nationalities" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Globe className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="w-full md:flex-1 md:min-w-[150px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="email" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Mail className="h-4 w-4" />
                             Email & Contacts
                         </TabsTrigger>
-                        <TabsTrigger value="doctor" className="w-full md:flex-1 md:min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="doctor" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Stethoscope className="h-4 w-4" />
                             Doctor
                         </TabsTrigger>
-                        <TabsTrigger value="settings" className="w-full md:flex-1 md:min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="settings" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <Settings2 className="h-4 w-4" />
                             Settings
                         </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="col-span-2 md:col-span-1 w-full md:flex-1 md:min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight justify-center">
+                        <TabsTrigger value="maintenance" className="col-span-2 md:col-span-1 w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
                             <RotateCcw className="h-4 w-4" />
                             Maintenance
                         </TabsTrigger>
@@ -884,7 +884,7 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
                                             <Settings2 className="h-6 w-6 text-primary" />
                                         </div>
@@ -894,8 +894,8 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8 space-y-6">
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                <CardContent className="p-4 sm:p-6 md:p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Staff Portal Registration</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -931,7 +931,7 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -968,7 +968,7 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group mt-6">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
                                             <Megaphone className="h-6 w-6 text-primary" />
                                         </div>
@@ -978,9 +978,9 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8">
+                                <CardContent className="p-4 sm:p-6 md:p-8">
                                     <form onSubmit={handleSaveTicker} className="space-y-6">
-                                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02] mb-4">
+                                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02] mb-4">
                                             <div className="space-y-1">
                                                 <h4 className="font-bold text-lg text-foreground">Enable Announcement Ticker</h4>
                                                 <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1050,7 +1050,7 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-destructive/10 rounded-2xl">
                                             <RotateCcw className="h-6 w-6 text-destructive" />
                                         </div>
@@ -1060,8 +1060,8 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8 space-y-6">
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                <CardContent className="p-4 sm:p-6 md:p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Reset Daily Patient Queues</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1081,11 +1081,11 @@ const SystemConfigPage: React.FC = () => {
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
                                             {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
-                                            Reset Queue Counts to 0
+                                            Reset
                                         </Button>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Clear System Audit Logs</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1105,11 +1105,11 @@ const SystemConfigPage: React.FC = () => {
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
                                             {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
-                                            Clear Audit Trail
+                                            Clear
                                         </Button>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Clear Patient Directory Data</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1129,7 +1129,7 @@ const SystemConfigPage: React.FC = () => {
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
                                             {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
-                                            Clear Patient Directory
+                                            Clear
                                         </Button>
                                     </div>
                                 </CardContent>
