@@ -1242,7 +1242,7 @@ const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
       </div>
       <div className="flex flex-col gap-0.5 mt-0.5">
         <h3 className="text-xs sm:text-sm font-black leading-tight whitespace-nowrap">{value}</h3>
-        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground leading-none opacity-85">{sub}</p>}
+        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground leading-none opacity-85 text-right w-full">{sub}</p>}
       </div>
     </CardContent>
   </Card>
