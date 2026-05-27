@@ -622,7 +622,7 @@ const RegistrationPage: React.FC = () => {
           />
           <StatCard
             title="Gender Mix"
-            value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}% | F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0% | F: 0%'}
+            value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}%/F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0%/F: 0%'}
             sub={`${stats?.males || 0} M / ${stats?.females || 0} F`}
             icon={Users}
             color="text-indigo-600"
@@ -1240,8 +1240,8 @@ const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
         <Icon className={`h-3 w-3 ${color} shrink-0`} />
         <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate">{title}</p>
       </div>
-      <div className="mt-0.5 flex items-end justify-between gap-1">
-        <h3 className="text-sm sm:text-base font-black leading-none break-words max-w-[70%]">{value}</h3>
+      <div className="mt-0.5 flex items-end justify-between gap-1 overflow-hidden">
+        <h3 className="text-sm sm:text-base font-black leading-none whitespace-nowrap">{value}</h3>
         {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis opacity-85 leading-none shrink-0">{sub}</p>}
       </div>
     </CardContent>
