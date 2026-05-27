@@ -37,9 +37,9 @@ import axios from 'axios';
 
 // Helper Components
 const BioItem = ({ label, value }: any) => (
-    <div className="space-y-0.5">
-        <p className="text-[9px] md:text-[10px] uppercase tracking-widest font-black text-muted-foreground leading-none">{label}</p>
-        <p className="text-sm md:text-base font-bold text-foreground leading-tight truncate">{value}</p>
+    <div className="space-y-0.5 sm:space-y-1">
+        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 leading-none">{label}</p>
+        <p className="font-black text-base sm:text-lg text-primary tracking-tight truncate leading-tight">{value}</p>
     </div>
 );
 
@@ -252,7 +252,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
     return (
         <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-            <Card className="border-2 shadow-xl bg-card">
+            <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02] overflow-hidden">
                 <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
                     {/* Passport Avatar */}
                     <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
