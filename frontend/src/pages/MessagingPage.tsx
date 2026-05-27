@@ -409,6 +409,18 @@ export default function MessagingPage() {
     }
   };
 
+  const changeMemberRole = async (targetUserId: number, role: 'Admin' | 'Member') => {
+    if (!activeChat) return;
+    const gid = activeChat.id.split('_')[1];
+    try {
+      await axios.put(`/api/messages/groups/${gid}/members/${targetUserId}/role`, { role });
+      toast.success(`Role updated to ${role}`);
+      fetchGroupMembers(gid);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update member role");
+    }
+  };
+
   const deleteMessage = async (msgId: number) => {
     try {
       await axios.delete(`/api/messages/messages/${msgId}`);
@@ -525,7 +537,7 @@ export default function MessagingPage() {
       
       {/* Conversations Sidebar */}
       <div className={cn(
-        "w-full md:w-80 md:min-w-80 md:max-w-80 shrink-0 border-r flex flex-col bg-muted/10",
+        "w-full md:w-80 md:min-w-80 md:max-w-80 shrink-0 border-r flex flex-col bg-muted/10 relative",
         activeChat ? "hidden md:flex" : "flex"
       )}>
         <div className="p-4 border-b space-y-4">
@@ -673,6 +685,15 @@ export default function MessagingPage() {
             </div>
           )}
         </ScrollArea>
+        {/* Floating New Chat Button */}
+        <Button
+          size="icon"
+          onClick={openNewChat}
+          className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 bg-primary text-primary-foreground z-20 hover:bg-primary/90 animate-in zoom-in"
+          title="New Chat"
+        >
+          <Plus className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Active Chat Area */}
@@ -1323,14 +1344,28 @@ export default function MessagingPage() {
                                 {m.role}
                             </Badge>
                             {groupRole === 'Admin' && m.id !== user.id && (
+                              <div className="flex items-center gap-1">
+                                {m.role !== 'Admin' && (
+                                  <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8 text-muted-foreground hover:text-amber-500 opacity-0 group-hover/member:opacity-100 transition-all rounded-full"
+                                      onClick={() => changeMemberRole(m.id, 'Admin')}
+                                      title="Make Admin"
+                                  >
+                                      <ShieldCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button 
                                     variant="ghost" 
                                     size="icon" 
                                     className="h-8 w-8 text-muted-foreground hover:text-rose-500 opacity-0 group-hover/member:opacity-100 transition-all rounded-full"
                                     onClick={() => removeGroupMember(m.id)}
+                                    title="Remove Member"
                                 >
                                     <Trash2 className="h-4 w-4" />
                                 </Button>
+                              </div>
                             )}
                         </div>
                       </div>
