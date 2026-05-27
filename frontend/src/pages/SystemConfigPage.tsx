@@ -902,20 +902,32 @@ const SystemConfigPage: React.FC = () => {
                                                 When disabled, new staff members will not be able to create accounts. This is useful during system-wide maintenance or locked recruitment periods.
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
-                                            <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${staffSignupEnabled ? 'text-primary' : 'text-rose-500'}`}>
                                                 {staffSignupEnabled ? 'Enabled' : 'Disabled'}
                                             </span>
-                                            <Button 
-                                                onClick={handleToggleSignup}
+                                            <button
+                                                type="button"
                                                 disabled={maintenanceSaving}
-                                                variant={staffSignupEnabled ? "outline" : "default"}
-                                                size="sm"
-                                                className="font-bold"
+                                                onClick={handleToggleSignup}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    staffSignupEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
                                             >
-                                                {maintenanceSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : (staffSignupEnabled ? 'Disable Signup' : 'Enable Signup')}
-                                            </Button>
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        staffSignupEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            staffSignupEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
 
