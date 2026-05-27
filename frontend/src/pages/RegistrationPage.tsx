@@ -22,7 +22,8 @@ import {
   Video,
   ImagePlus,
   SwitchCamera,
-  CircleDot
+  CircleDot,
+  User
 } from 'lucide-react';
 import api from '@/lib/api';
 import { SearchableCombobox } from "@/components/ui/searchable-combobox";
@@ -656,8 +657,8 @@ const RegistrationPage: React.FC = () => {
           toast.error(`Please fill or correct the following fields: ${fields}`);
         })} className="space-y-6">
           <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
-            {/* Left Side: Passport Photo Card */}
-            <Card className="border lg:col-span-1">
+            {/* Left Side: Passport Photo Card (Desktop Only) */}
+            <Card className="border hidden lg:block lg:col-span-1">
               <CardHeader className="bg-primary/5 border-b py-4">
                 <CardTitle className="text-base font-bold flex items-center gap-2">
                   <Camera className="h-4.5 w-4.5 text-primary" />
@@ -745,6 +746,54 @@ const RegistrationPage: React.FC = () => {
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-6 space-y-6">
+                {/* Mobile-only Portrait/Avatar Photo Uploader */}
+                <div className="lg:hidden flex flex-col items-center justify-center pb-6 border-b border-dashed mb-4">
+                  <div 
+                    className="relative group w-24 h-24 rounded-full border border-dashed border-primary/30 bg-primary/5 hover:border-primary transition-all duration-300 shadow-sm flex items-center justify-center cursor-pointer"
+                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                  >
+                    {passportPreview ? (
+                      <>
+                        <img 
+                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                          alt="Passport Preview" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                            onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                            title="Change photo"
+                          >
+                            <Camera className="text-white h-4 w-4" />
+                          </button>
+                        </div>
+                        {/* Remove Photo button */}
+                        <button
+                          type="button"
+                          className="absolute -top-1 -right-1 p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-md transition-all z-10"
+                          onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                          title="Remove photo"
+                        >
+                          <Trash2 className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
+                        <User className="h-7 w-7 mb-0.5 opacity-70" />
+                        <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
+                        
+                        {/* Camera badge */}
+                        <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1 rounded-full shadow-md border border-background">
+                          <Camera className="h-3 w-3" />
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-2 font-semibold">Tap to add passport photo</span>
+                </div>
+
                 {/* Row 1: IDs (Staff & Patient ID) */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
                   <div className="space-y-2">
