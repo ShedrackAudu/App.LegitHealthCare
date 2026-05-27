@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
+from zoneinfo import ZoneInfo
 from decorators import require_permission
 from flask_jwt_extended import get_jwt_identity, get_jwt
 
@@ -114,7 +115,7 @@ def get_department_queue(department):
             "staff_id": e.staff_id,
             "first_name": bio.first_name,
             "last_name": bio.last_name,
-            "created_at": e.created_at.isoformat(),
+            "created_at": e.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
             "queue_number": e.queue_number
         })
 

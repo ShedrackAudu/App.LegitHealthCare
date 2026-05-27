@@ -11,6 +11,7 @@ import uuid
 
 from sqlalchemy import func
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from decorators import require_permission
 from utils.ip import get_client_ip
 from utils.progress_utils import calculate_report_progress
@@ -829,7 +830,7 @@ def get_dashboard_stats():
             "patient_id": r.patient_id,
             "first_name": r.first_name,
             "last_name": r.last_name,
-            "created_at": r.created_at.isoformat() if r.created_at else None
+            "created_at": r.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat() if r.created_at else None
         } for r in recent],
         "registration_stats": {
             "total_comprehensive": total_comprehensive,
