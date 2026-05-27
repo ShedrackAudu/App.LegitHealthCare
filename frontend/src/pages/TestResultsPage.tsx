@@ -15,6 +15,7 @@ import {
   ArrowLeft,
   Search,
   Users,
+  User,
   Clock3,
   Download,
   UploadCloud,
@@ -939,8 +940,22 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         <div className="space-y-6">
             {/* BioData Header */}
             <Card className="border-2 border-primary/20 shadow-md bg-primary/5 overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
+                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Passport Avatar */}
+                    <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                        {patient.passport_image ? (
+                            <img 
+                                src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                                alt="Passport" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <User className="h-8 w-8 text-primary/40" />
+                        )}
+                    </div>
+
+                    <div className="flex-1 grid grid-cols-2 lg:grid-cols-6 gap-4 w-full">
+                        <BioItem label="Patient ID" value={patient.patient_id || 'N/A'} className="font-bold text-emerald-600" />
                         <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
                         <BioItem label="First Name" value={patient.first_name} />
                         <BioItem label="Last Name" value={patient.last_name} />

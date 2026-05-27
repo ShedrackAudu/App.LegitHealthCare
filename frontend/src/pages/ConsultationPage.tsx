@@ -519,7 +519,8 @@ const ConsultationPage: React.FC = () => {
                 </div>
 
                 {/* Bio Grid */}
-                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                  <PatientInfo label="PATIENT ID" value={patient.patient_id || 'N/A'} />
                   <PatientInfo label="STAFF ID" value={patient.staff_id} />
                   <div className="lg:col-span-2">
                     <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />

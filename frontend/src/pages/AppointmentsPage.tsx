@@ -288,11 +288,12 @@ const AppointmentsPage = () => {
                                 </div>
                                 <div>
                                     <CardTitle className="text-xl font-black leading-none">{patient.first_name} {patient.last_name}</CardTitle>
-                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">{patient.staff_id}</CardDescription>
+                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">PID: {patient.patient_id || 'N/A'} • Staff ID: {patient.staff_id}</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-3">
+                            <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} icon={User} />
                             <BioItem label="DEPARTMENT" value={patient.department} icon={Building2} />
                             <BioItem label="GENDER" value={patient.gender} icon={User} />
                             <BioItem label="DATE OF BIRTH" value={patient.dob} icon={Calendar} />
