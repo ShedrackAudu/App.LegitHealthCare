@@ -689,7 +689,7 @@ export default function MessagingPage() {
         <Button
           size="icon"
           onClick={openNewChat}
-          className="absolute bottom-6 right-6 h-12 w-12 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 bg-primary text-primary-foreground z-20 hover:bg-primary/90 animate-in zoom-in"
+          className="absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 bg-primary text-primary-foreground z-20 hover:bg-primary/90 animate-in zoom-in md:hidden"
           title="New Chat"
         >
           <Plus className="h-6 w-6" />
@@ -1131,7 +1131,7 @@ export default function MessagingPage() {
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
             <div className="relative">
               <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center blur-2xl absolute inset-0 -z-10 animate-pulse" />
-              <div className="w-24 h-24 bg-card rounded-3xl border-2 flex items-center justify-center shadow-xl transform rotate-12 transition-transform hover:rotate-0 duration-500">
+              <div className="w-24 h-24 bg-card rounded-3xl border-2 flex items-center justify-center shadow-xl">
                 <Bot className="h-10 w-10 text-primary" />
               </div>
             </div>
