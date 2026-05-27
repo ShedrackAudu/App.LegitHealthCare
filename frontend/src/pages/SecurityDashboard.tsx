@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { 
-  ShieldAlert, 
-  Activity, 
-  Lock, 
-  Fingerprint, 
-  TrendingUp,
-  AlertTriangle,
-  Database
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Shield01Icon,
+  Activity01Icon,
+  LockIcon,
+  AnalyticsUpIcon,
+  Alert01Icon,
+  Database02Icon
+} from '@hugeicons/core-free-icons';
 import { 
   XAxis, 
   YAxis, 
@@ -67,7 +67,7 @@ export default function SecurityDashboard() {
     return (
       <MainLayout title="Security Command Center">
         <div className="flex flex-col items-center justify-center min-h-[50vh] space-y-4 bg-muted/20 rounded-2xl border-2 border-dashed border-border/50">
-          <AlertTriangle className="h-10 w-10 text-amber-500" />
+          <HugeiconsIcon icon={Alert01Icon} className="h-10 w-10 text-amber-500" />
           <div className="text-center">
             <h2 className="text-lg font-black tracking-tight">Security Engine Offline</h2>
             <p className="text-xs text-muted-foreground font-medium">Telemetry link interrupted or data unavailable.</p>
@@ -84,10 +84,10 @@ export default function SecurityDashboard() {
   }
 
   const criticalEvents = [
-    { label: 'Login Failures', value: data.failed_logins_24h, icon: ShieldAlert, color: 'text-rose-500', bg: 'bg-rose-500/10' },
-    { label: 'Event Logs', value: data.total_logs, icon: Database, color: 'text-teal-500', bg: 'bg-teal-500/10' },
-    { label: 'Security Policies', value: '4 Active', icon: Lock, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
-    { label: 'System Integrity', value: 'Protected', icon: Activity, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
+    { label: 'Login Failures', value: data.failed_logins_24h, icon: Shield01Icon, color: 'text-rose-500', bg: 'bg-rose-500/10' },
+    { label: 'Event Logs', value: data.total_logs, icon: Database02Icon, color: 'text-teal-500', bg: 'bg-teal-500/10' },
+    { label: 'Security Policies', value: '4 Active', icon: LockIcon, color: 'text-indigo-500', bg: 'bg-indigo-500/10' },
+    { label: 'System Integrity', value: 'Protected', icon: Activity01Icon, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
   ];
 
   return (
@@ -100,7 +100,7 @@ export default function SecurityDashboard() {
             <div key={idx} className="relative overflow-hidden bg-card border border-border/50 rounded-lg p-4 shadow-sm group hover:border-primary/30 transition-all duration-300">
               <div className="flex items-center gap-4 relative z-10">
                  <div className={cn("p-2.5 rounded-lg transition-transform group-hover:scale-110", item.bg, item.color)}>
-                    <item.icon className="h-5 w-5" />
+                    <HugeiconsIcon icon={item.icon} className="h-5 w-5" />
                  </div>
                  <div>
                     <p className="text-[9px] font-black text-muted-foreground uppercase tracking-[0.22em]">{item.label}</p>
@@ -108,7 +108,7 @@ export default function SecurityDashboard() {
                  </div>
               </div>
               <div className="absolute -right-2 -bottom-2 opacity-[0.03] group-hover:opacity-[0.07] transition-opacity">
-                <item.icon className="h-16 w-16" />
+                <HugeiconsIcon icon={item.icon} className="h-16 w-16" />
               </div>
             </div>
           ))}
@@ -207,7 +207,7 @@ export default function SecurityDashboard() {
                   </PieChart>
                 </ResponsiveContainer>
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <ShieldAlert className="h-6 w-6 text-muted-foreground opacity-20" />
+                  <HugeiconsIcon icon={Shield01Icon} className="h-6 w-6 text-muted-foreground opacity-20" />
                 </div>
               </div>
               <div className="w-full space-y-2 mt-4">
@@ -230,7 +230,7 @@ export default function SecurityDashboard() {
           <Card className="border border-border/50 shadow-lg rounded-xl bg-card overflow-hidden">
             <CardHeader className="p-6">
               <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                <TrendingUp className="h-4 w-4 text-teal-600" />
+                <HugeiconsIcon icon={AnalyticsUpIcon} className="h-4 w-4 text-teal-600" />
                 Integrity Distribution
               </CardTitle>
             </CardHeader>
@@ -254,7 +254,7 @@ export default function SecurityDashboard() {
              
              <div className="relative z-10 p-6 flex items-center gap-6 h-full">
                 <div className="h-20 w-20 rounded-xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30 group-hover:bg-rose-500/30 transition-colors">
-                   <ShieldAlert className="h-10 w-10 text-rose-500" />
+                   <HugeiconsIcon icon={Shield01Icon} className="h-10 w-10 text-rose-500" />
                 </div>
                 <div className="flex-1">
                    <p className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-[0.3em]">Threat Alert</p>
@@ -267,7 +267,7 @@ export default function SecurityDashboard() {
                 </div>
                 <div className="hidden sm:block">
                   <button className="p-3 rounded-lg bg-secondary/80 dark:bg-white/10 border border-border/50 hover:bg-secondary/100 transition-colors">
-                    <Activity className="h-5 w-5 text-muted-foreground" />
+                    <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 text-muted-foreground" />
                   </button>
                 </div>
              </div>
