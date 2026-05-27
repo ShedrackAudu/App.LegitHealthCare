@@ -938,9 +938,8 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 
     return (
         <div className="space-y-6">
-            {/* BioData Header */}
-            <Card className="border-2 border-primary/20 shadow-md bg-primary/5 overflow-hidden">
-                <CardContent className="p-6 flex flex-col sm:flex-row items-center gap-6">
+            <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02] overflow-hidden">
+                <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
                     {/* Passport Avatar */}
                     <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
                         {patient.passport_image ? (
@@ -956,13 +955,13 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 
                     <div className="flex-1 grid grid-cols-2 lg:grid-cols-7 gap-4 w-full">
                         <div className="lg:col-span-2">
-                            <BioItem label="Name" value={`${patient.first_name} ${patient.last_name}`} />
+                            <BioItem label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
                         </div>
-                        <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
-                        <BioItem label="Patient ID" value={patient.patient_id || 'N/A'} className="font-bold text-emerald-600" />
-                        <BioItem label="Age" value={patient.age} />
-                        <BioItem label="Gender" value={patient.gender || 'N/A'} />
-                        <BioItem label="Department" value={patient.department} />
+                        <BioItem label="STAFF ID" value={patient.staff_id} />
+                        <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} />
+                        <BioItem label="AGE" value={`${patient.age} Yrs`} />
+                        <BioItem label="GENDER" value={patient.gender || 'N/A'} />
+                        <BioItem label="DEPARTMENT" value={patient.department} />
                     </div>
                 </CardContent>
             </Card>
@@ -988,9 +987,9 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 };
 
 const BioItem = ({ label, value, className }: any) => (
-    <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">{label}</p>
-        <p className={`text-base truncate ${className}`}>{value}</p>
+    <div className="space-y-0.5 sm:space-y-1">
+        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 leading-none">{label}</p>
+        <p className={`font-black text-base sm:text-lg text-primary tracking-tight truncate leading-tight ${className || ''}`}>{value}</p>
     </div>
 );
 
