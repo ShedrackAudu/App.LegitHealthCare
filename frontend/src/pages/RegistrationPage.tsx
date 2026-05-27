@@ -605,7 +605,7 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <StatCard
             title="Total Registered"
             value={stats?.year_total?.toLocaleString() || '0'}
@@ -617,7 +617,7 @@ const RegistrationPage: React.FC = () => {
             title="Registered Today"
             value={stats?.today?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
-            icon={Activity}
+            icon={Users}
             color="text-primary"
           />
           <StatCard
@@ -631,7 +631,7 @@ const RegistrationPage: React.FC = () => {
             title="Age Context"
             value={stats?.age_40_above?.toLocaleString() || '0'}
             sub="40 Years & Above"
-            icon={Activity}
+            icon={Users}
             color="text-amber-600"
           />
           <StatCard
@@ -669,7 +669,7 @@ const RegistrationPage: React.FC = () => {
                 {/* Passport Photo Uploader */}
                 <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
                   <div 
-                    className="relative group w-32 h-32 rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
+                    className="relative group w-32 h-[148px] rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
                     onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
                   >
                     {passportPreview ? (
@@ -749,7 +749,7 @@ const RegistrationPage: React.FC = () => {
                 {/* Mobile-only Portrait/Avatar Photo Uploader */}
                 <div className="lg:hidden flex flex-col items-center justify-center pb-6 border-b border-dashed mb-4">
                   <div 
-                    className="relative group w-24 h-24 rounded-full border border-dashed border-primary/30 bg-primary/5 hover:border-primary transition-all duration-300 shadow-sm flex items-center justify-center cursor-pointer"
+                    className="relative group w-24 h-[110px] rounded-full border border-dashed border-primary/30 bg-primary/5 hover:border-primary transition-all duration-300 shadow-sm flex items-center justify-center cursor-pointer"
                     onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
                   >
                     {passportPreview ? (
@@ -1234,17 +1234,15 @@ const RegistrationPage: React.FC = () => {
 };
 
 const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border transition-all overflow-hidden">
-    <CardContent className="p-2 sm:p-4 flex items-center gap-2 sm:gap-4 h-full">
-      <div className={`p-2 sm:p-3 rounded-xl bg-muted/50 ${color} shrink-0`}>
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+  <Card className="border transition-all overflow-hidden relative">
+    <CardContent className="p-2.5 flex flex-col justify-between h-full min-h-[72px]">
+      <div className="flex items-center gap-1.5">
+        <Icon className={`h-3.5 w-3.5 ${color} shrink-0`} />
+        <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate">{title}</p>
       </div>
-      <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider truncate">{title}</p>
-        <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-          <h3 className="text-sm sm:text-2xl font-black truncate">{value}</h3>
-          {sub && <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground truncate opacity-80">{sub}</span>}
-        </div>
+      <div className="mt-1 flex items-baseline justify-between gap-1">
+        <h3 className="text-base sm:text-lg font-black leading-none">{value}</h3>
+        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground whitespace-nowrap overflow-hidden text-ellipsis opacity-85 leading-none">{sub}</p>}
       </div>
     </CardContent>
   </Card>
