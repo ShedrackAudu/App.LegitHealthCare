@@ -269,11 +269,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
                     {/* Bio Grid */}
                     <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-9 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
-                        <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} />
-                        <BioItem label="STAFF ID" value={patient.staff_id} />
                         <div className="col-span-1 lg:col-span-2">
                             <BioItem label="FULL NAME" value={`${patient.first_name} ${patient.last_name}`} />
                         </div>
+                        <BioItem label="STAFF ID" value={patient.staff_id} />
+                        <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} />
                         <BioItem label="AGE" value={`${patient.age} Yrs`} />
                         <BioItem label="DEPARTMENT" value={patient.department} />
                         <BioItem label="GENDER" value={patient.gender || 'N/A'} />

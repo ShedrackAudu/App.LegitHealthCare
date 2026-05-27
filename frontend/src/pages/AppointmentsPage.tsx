@@ -288,7 +288,7 @@ const AppointmentsPage = () => {
                                 </div>
                                 <div>
                                     <CardTitle className="text-xl font-black leading-none">{patient.first_name} {patient.last_name}</CardTitle>
-                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">PID: {patient.patient_id || 'N/A'} • Staff ID: {patient.staff_id}</CardDescription>
+                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">Staff ID: {patient.staff_id} • PID: {patient.patient_id || 'N/A'}</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>

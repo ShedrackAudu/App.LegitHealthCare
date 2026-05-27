@@ -955,10 +955,10 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                     </div>
 
                     <div className="flex-1 grid grid-cols-2 lg:grid-cols-6 gap-4 w-full">
-                        <BioItem label="Patient ID" value={patient.patient_id || 'N/A'} className="font-bold text-emerald-600" />
-                        <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
                         <BioItem label="First Name" value={patient.first_name} />
                         <BioItem label="Last Name" value={patient.last_name} />
+                        <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
+                        <BioItem label="Patient ID" value={patient.patient_id || 'N/A'} className="font-bold text-emerald-600" />
                         <BioItem label="Age" value={patient.age} />
                         <BioItem label="Department" value={patient.department} />
                     </div>
