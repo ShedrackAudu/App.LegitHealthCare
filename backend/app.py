@@ -692,6 +692,12 @@ with app.app_context():
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")
 
+    try:
+        from utils.scheduler import init_scheduler
+        init_scheduler(app)
+    except Exception as e:
+        app.logger.error(f"Error starting scheduler: {e}")
+
 if __name__ == '__main__':
     is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'
     socketio.run(app, debug=is_debug, port=5000, host='0.0.0.0', allow_unsafe_werkzeug=True)

@@ -164,5 +164,15 @@ def ensure_schema(app):
                             conn.execute(text("ALTER TABLE lft_results ADD COLUMN creatinine VARCHAR(20)"))
                         conn.commit()
 
+                # 9. Add last_reminder_sent to patient_users (for weekly verification reminders)
+                if 'patient_users' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('patient_users')]
+                    if 'last_reminder_sent' not in columns:
+                        app.logger.info(f"Adding 'last_reminder_sent' column to patient_users table in {name} database...")
+                        with engine.connect() as conn:
+                            conn.execute(text("ALTER TABLE patient_users ADD COLUMN last_reminder_sent TIMESTAMP"))
+                            conn.commit()
+                        app.logger.info(f"Successfully updated {name} schema for patient_users.")
+
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

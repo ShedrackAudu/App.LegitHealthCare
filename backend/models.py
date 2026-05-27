@@ -175,6 +175,7 @@ class PatientPortalUser(db.Model):
     otp_expiry = db.Column(db.DateTime, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
     must_reset_password = db.Column(db.Boolean, default=False)
+    last_reminder_sent = db.Column(db.DateTime, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)

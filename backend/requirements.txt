@@ -1,6 +1,7 @@
 alembic
 annotated-types
 anyio
+APScheduler
 bcrypt
 bidict
 blinker
