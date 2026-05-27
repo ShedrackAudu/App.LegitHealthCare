@@ -10,6 +10,7 @@ import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { toPng } from 'html-to-image';
+import { FileAttachmentSection } from '@/components/FileAttachmentSection';
 import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
@@ -584,6 +585,18 @@ const PatientReportPage: React.FC = () => {
                                     <div className="report-page-number">Page 2 of 2</div>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Technical Attachments / Uploaded Patient Files Section */}
+                        <div className="mt-8 no-print w-full max-w-[21cm] mx-auto">
+                            <Card className="p-6 border-2 shadow-xl rounded-3xl bg-card">
+                                <FileAttachmentSection 
+                                    staffId={selectedPatient.staff_id} 
+                                    year={activeYear} 
+                                    allowUpload={false} 
+                                    allowDownload={true} 
+                                />
+                            </Card>
                         </div>
                     ) : (
                         <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6 no-print">
