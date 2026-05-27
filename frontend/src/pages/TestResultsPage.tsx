@@ -954,13 +954,14 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                         )}
                     </div>
 
-                    <div className="flex-1 grid grid-cols-2 lg:grid-cols-6 gap-4 w-full">
+                    <div className="flex-1 grid grid-cols-2 lg:grid-cols-7 gap-4 w-full">
                         <div className="lg:col-span-2">
                             <BioItem label="Name" value={`${patient.first_name} ${patient.last_name}`} />
                         </div>
                         <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
                         <BioItem label="Patient ID" value={patient.patient_id || 'N/A'} className="font-bold text-emerald-600" />
                         <BioItem label="Age" value={patient.age} />
+                        <BioItem label="Gender" value={patient.gender || 'N/A'} />
                         <BioItem label="Department" value={patient.department} />
                     </div>
                 </CardContent>
