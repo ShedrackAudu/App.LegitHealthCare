@@ -643,8 +643,8 @@ const RegistrationPage: React.FC = () => {
           />
           <StatCard
             title="Daily Target"
-            value="80%"
-            sub="Progress indicator"
+            value={stats ? `${Math.round(((stats.today || 0) / 80) * 100)}%` : '0%'}
+            sub={`${stats?.today || 0} / 80 Patients`}
             icon={Activity}
             color="text-primary"
           />
