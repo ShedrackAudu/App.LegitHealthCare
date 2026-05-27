@@ -56,9 +56,9 @@ const NetworkStatusBanner = () => {
   return (
     <div
       className={`
-        fixed top-0 left-0 right-0 z-[9999]
-        transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-        ${state === 'hidden' ? '-translate-y-full' : 'translate-y-0'}
+        sticky top-0 left-0 right-0 z-[9999] w-full shrink-0 overflow-hidden
+        transition-all duration-300 ease-in-out
+        ${state === 'hidden' ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100'}
       `}
       role="alert"
       aria-live="assertive"

@@ -98,7 +98,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode; title?: string; n
   const hasTicker = ticker && ticker.enabled && ticker.message.trim();
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
+    <div className="flex flex-col h-full w-full bg-background transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
       {hasTicker && (
         <TickerBanner message={ticker.message} icon={ticker.icon} />
       )}

@@ -4,7 +4,7 @@ import { PatientSidebar } from './PatientSidebar';
 
 export const PatientLayout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
-    <div className="h-screen bg-background flex transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
+    <div className="h-full bg-background flex transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
       <PatientSidebar />
       <div className="flex flex-col flex-1 overflow-hidden print:overflow-visible">
         <PatientHeader />
