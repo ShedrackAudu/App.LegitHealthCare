@@ -35,7 +35,7 @@ const ViewPatientsPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [perPage] = useState(10);
+    const [perPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
     
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
@@ -294,7 +294,7 @@ const ViewPatientsPage: React.FC = () => {
                                 onClick={() => fetchPatients(searchQuery, page - 1)}
                                 className="font-bold border-2"
                             >
-                                Previous
+                                Prev
                             </Button>
                             <Button 
                                 variant="outline" 

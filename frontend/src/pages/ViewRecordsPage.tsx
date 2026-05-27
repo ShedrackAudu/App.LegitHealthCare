@@ -432,7 +432,7 @@ const ViewRecordsPage: React.FC = () => {
                                 <div className="p-4 bg-muted/20 border-t flex items-center justify-between no-print">
                                     <div className="flex items-center gap-4">
                                         <p className="text-sm font-bold text-muted-foreground">
-                                            Total Results: <span className="text-foreground">{recordsData.total}</span>
+                                            Total: <span className="text-foreground">{recordsData.total}</span>
                                         </p>
                                         <div className="h-4 w-px bg-border" />
                                         <p className="text-sm font-bold text-muted-foreground">
@@ -448,7 +448,7 @@ const ViewRecordsPage: React.FC = () => {
                                             disabled={currentPage === 1 || loading}
                                             onClick={() => handlePageChange(currentPage - 1)}
                                         >
-                                            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+                                            <ChevronLeft className="mr-2 h-4 w-4" /> Prev
                                         </Button>
                                         <Button 
                                             variant="outline" 
