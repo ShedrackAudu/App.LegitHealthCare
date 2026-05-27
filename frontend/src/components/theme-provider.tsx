@@ -66,6 +66,16 @@ export function ThemeProvider({
 
     root.classList.add(current)
     setResolvedTheme(current)
+
+    // Update PWA theme-color meta tag dynamically to match current theme
+    const themeColor = current === 'dark' ? '#000000' : '#ffffff'
+    const existingMetas = document.querySelectorAll('meta[name="theme-color"]')
+    existingMetas.forEach(meta => meta.remove())
+
+    const meta = document.createElement('meta')
+    meta.setAttribute('name', 'theme-color')
+    meta.setAttribute('content', themeColor)
+    document.head.appendChild(meta)
   }, [theme])
 
   const value = {
