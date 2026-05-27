@@ -86,6 +86,7 @@ const RegistrationPage: React.FC = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -101,12 +102,16 @@ const RegistrationPage: React.FC = () => {
   }, []);
 
   // Start camera stream
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode: 'user' | 'environment' = 'user') => {
     setCapturedImage(null);
     setCameraReady(false);
     try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: 'user' }
+        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: mode }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -121,6 +126,13 @@ const RegistrationPage: React.FC = () => {
       setIsCameraOpen(false);
     }
   }, []);
+
+  // Toggle front and back camera
+  const toggleCamera = useCallback(() => {
+    const nextMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+  }, [facingMode, startCamera]);
 
   // Capture photo from video stream
   const capturePhoto = useCallback(() => {
@@ -999,8 +1011,7 @@ const RegistrationPage: React.FC = () => {
         </DialogContent>
       </Dialog>
 
-      {/* Camera Capture Dialog */}
-      <Dialog open={isCameraOpen} onOpenChange={(open) => { if (!open) { stopCamera(); setCapturedImage(null); } setIsCameraOpen(open); }}>
+      <Dialog open={isCameraOpen} onOpenChange={(open) => { if (!open) { stopCamera(); setCapturedImage(null); setFacingMode('user'); } setIsCameraOpen(open); }}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
           <div className="p-4 pb-2">
             <DialogHeader>
@@ -1020,10 +1031,21 @@ const RegistrationPage: React.FC = () => {
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover mirror"
-                  style={{ transform: 'scaleX(-1)' }}
+                  className="w-full h-full object-cover"
+                  style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
                   onLoadedMetadata={() => { videoRef.current?.play(); setCameraReady(true); }}
                 />
+                {/* Switch Camera Button (Front/Back) */}
+                {cameraReady && (
+                  <button
+                    type="button"
+                    onClick={toggleCamera}
+                    className="absolute top-3 right-3 flex items-center justify-center bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-2 text-white border border-white/20 transition-all active:scale-95 z-10"
+                    title="Switch Camera"
+                  >
+                    <SwitchCamera className="h-5 w-5 text-white" />
+                  </button>
+                )}
                 {!cameraReady && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-3">
                     <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
@@ -1045,7 +1067,7 @@ const RegistrationPage: React.FC = () => {
                 )}
               </>
             ) : (
-              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
             )}
           </div>
 
@@ -1055,21 +1077,12 @@ const RegistrationPage: React.FC = () => {
           <div className="flex items-center justify-center gap-3 p-4">
             {!capturedImage ? (
               <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="font-bold"
-                  onClick={() => { stopCamera(); setCapturedImage(null); setIsCameraOpen(false); }}
-                >
-                  Cancel
-                </Button>
                 {!cameraReady && (
                   <Button
                     type="button"
                     size="sm"
                     className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                    onClick={startCamera}
+                    onClick={() => startCamera(facingMode)}
                   >
                     <Video className="h-4 w-4" />
                     Start Camera
@@ -1094,7 +1107,7 @@ const RegistrationPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="font-bold gap-2"
-                  onClick={() => { setCapturedImage(null); startCamera(); }}
+                  onClick={() => { setCapturedImage(null); startCamera(facingMode); }}
                 >
                   <SwitchCamera className="h-4 w-4" />
                   Retake
