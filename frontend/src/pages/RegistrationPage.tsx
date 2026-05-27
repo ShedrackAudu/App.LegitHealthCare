@@ -650,278 +650,292 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Form Section */}
-        <Card className="border">
-          <CardHeader className="bg-primary/5 border-b py-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              Bio-Data Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit, (errs) => {
-              console.error("Form validation errors:", errs);
-              const fields = Object.keys(errs).map(f => f.replace('_', ' ')).join(', ');
-              toast.error(`Please fill or correct the following fields: ${fields}`);
-            })} className="space-y-6">
-              {/* Row 1: IDs & Passport Image */}
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
+        <form onSubmit={handleSubmit(onSubmit, (errs) => {
+          console.error("Form validation errors:", errs);
+          const fields = Object.keys(errs).map(f => f.replace('_', ' ')).join(', ');
+          toast.error(`Please fill or correct the following fields: ${fields}`);
+        })} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            {/* Left Side: Passport Photo Card */}
+            <Card className="border lg:col-span-1">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <Camera className="h-4.5 w-4.5 text-primary" />
+                  Passport Photo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
                 {/* Passport Photo Uploader */}
-                <div className="flex flex-col items-center md:items-start justify-center space-y-2 border-b pb-4 md:border-b-0 md:pb-0 md:border-r md:pr-6 border-primary/10">
-                  <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
-                    <div 
-                      className="relative group w-20 h-20 rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
-                      onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
-                    >
-                      {passportPreview ? (
-                        <>
-                          <img 
-                            src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
-                            alt="Passport Preview" 
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                                onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
-                                title="Preview"
-                              >
-                                <Eye className="text-white h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                                onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
-                                title="Change photo"
-                              >
-                                <Camera className="text-white h-3 w-3" />
-                              </button>
-                            </div>
+                <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
+                  <div 
+                    className="relative group w-32 h-32 rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
+                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                  >
+                    {passportPreview ? (
+                      <>
+                        <img 
+                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                          alt="Passport Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              className="p-1 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
-                              onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
-                              title="Remove photo"
+                              className="p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
+                              title="Preview"
                             >
-                              <Trash2 className="text-white h-2.5 w-2.5" />
+                              <Eye className="text-white h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                              title="Change photo"
+                            >
+                              <Camera className="text-white h-4 w-4" />
                             </button>
                           </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
-                          <ImagePlus className="h-4 w-4 mb-1" />
-                          <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
+                            onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                            title="Remove photo"
+                          >
+                            <Trash2 className="text-white h-3.5 w-3.5" />
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-4 text-muted-foreground group-hover:text-primary transition-colors">
+                        <ImagePlus className="h-8 w-8 mb-2" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Add Photo</span>
+                      </div>
+                    )}
                   </div>
-                  {/* Hidden file input */}
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setPassportFile(file);
-                        setPassportPreview(URL.createObjectURL(file));
-                      }
-                      if (e.target) e.target.value = '';
-                    }}
-                  />
                 </div>
+                {/* Hidden file input */}
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPassportFile(file);
+                      setPassportPreview(URL.createObjectURL(file));
+                    }
+                    if (e.target) e.target.value = '';
+                  }}
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Upload a clear passport photo or take one using your camera. Required for registration.
+                </p>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
-                  <Input
-                    {...register('staff_id', { required: true })}
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
-                    placeholder="e.g. 123456"
-                    inputMode="numeric"
-                    required
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      e.target.value = val;
-                      register('staff_id').onChange(e);
-                    }}
-                    disabled={isEditMode}
-                  />
-                  {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
-                  <Input 
-                    {...register('patient_id', { required: !isEditMode })} 
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
-                    placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
-                    inputMode="numeric"
-                    required={!isEditMode}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                      e.target.value = val;
-                      register('patient_id').onChange(e);
-                    }}
-                  />
-                  {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
-                </div>
-              </div>
-
-              {/* Main Form Fields: 4 per row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>First Name <span className="text-rose-500">*</span></Label>
-                  <Input {...register('first_name', { required: true })} placeholder="First Name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Middle Name</Label>
-                  <Input {...register('middle_name')} placeholder="Middle Name" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Last Name <span className="text-rose-500">*</span></Label>
-                  <Input {...register('last_name', { required: true })} placeholder="Last Name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Department <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="department"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={departments}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Department..."
-                      />
-                    )}
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label>Gender <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="gender"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={["Female", "Male"]}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Gender..."
-                      />
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date of Birth <span className="text-rose-500">*</span></Label>
-                  <div className="relative group">
+            {/* Right Side: Bio-Data Information Card */}
+            <Card className="border lg:col-span-3">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <ClipboardList className="h-5 w-5 text-primary" />
+                  Bio-Data Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                {/* Row 1: IDs (Staff & Patient ID) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
+                  <div className="space-y-2">
+                    <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
                     <Input
-                      type="text"
-                      {...register('dob', { required: true })}
-                      placeholder="DD/MM/YYYY"
-                      className="pr-12"
+                      {...register('staff_id', { required: true })}
+                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
+                      placeholder="e.g. 123456"
+                      inputMode="numeric"
                       required
                       onChange={(e) => {
-                        let val = e.target.value.replace(/\D/g, '');
-                        if (val.length > 8) val = val.slice(0, 8);
-                        if (val.length > 4) {
-                          val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
-                        } else if (val.length > 2) {
-                          val = `${val.slice(0, 2)}/${val.slice(2)}`;
-                        }
+                        const val = e.target.value.replace(/\D/g, '');
                         e.target.value = val;
-                        register('dob').onChange(e);
+                        register('staff_id').onChange(e);
+                      }}
+                      disabled={isEditMode}
+                    />
+                    {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
+                    <Input 
+                      {...register('patient_id', { required: !isEditMode })} 
+                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
+                      placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
+                      inputMode="numeric"
+                      required={!isEditMode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                        e.target.value = val;
+                        register('patient_id').onChange(e);
                       }}
                     />
-                    <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
-                      <Calendar className="h-5 w-5 text-primary" />
+                    {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
+                  </div>
+                </div>
+
+                {/* Main Form Fields: 4 per row */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name <span className="text-rose-500">*</span></Label>
+                    <Input {...register('first_name', { required: true })} placeholder="First Name" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Middle Name</Label>
+                    <Input {...register('middle_name')} placeholder="Middle Name" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name <span className="text-rose-500">*</span></Label>
+                    <Input {...register('last_name', { required: true })} placeholder="Last Name" required />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Department <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="department"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={departments}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Department..."
+                        />
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Gender <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="gender"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={["Female", "Male"]}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Gender..."
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date of Birth <span className="text-rose-500">*</span></Label>
+                    <div className="relative group">
+                      <Input
+                        type="text"
+                        {...register('dob', { required: true })}
+                        placeholder="DD/MM/YYYY"
+                        className="pr-12"
+                        required
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (val.length > 8) val = val.slice(0, 8);
+                          if (val.length > 4) {
+                            val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
+                          } else if (val.length > 2) {
+                            val = `${val.slice(0, 2)}/${val.slice(2)}`;
+                          }
+                          e.target.value = val;
+                          register('dob').onChange(e);
+                        }}
+                      />
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
+                        <Calendar className="h-5 w-5 text-primary" />
+                      </div>
+                      <input
+                        type="date"
+                        className="absolute right-0 top-0 bottom-0 w-12 opacity-0 cursor-pointer z-50"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) {
+                            const [y, m, d] = val.split('-');
+                            setValue('dob', `${d}/${m}/${y}`, { shouldValidate: true });
+                          }
+                        }}
+                      />
                     </div>
-                    <input
-                      type="date"
-                      className="absolute right-0 top-0 bottom-0 w-12 opacity-0 cursor-pointer z-50"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val) {
-                          const [y, m, d] = val.split('-');
-                          setValue('dob', `${d}/${m}/${y}`, { shouldValidate: true });
-                        }
-                      }}
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Age</Label>
+                    <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone No. <span className="text-rose-500">*</span></Label>
+                    <Input {...register('phone', { required: true })} placeholder="+234..." required />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Email Address</Label>
+                    <Input type="email" {...register('email')} placeholder="email@example.com" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Race <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="race"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={races}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Race..."
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nationality <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="nationality"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={nationalities}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Nationality..."
+                        />
+                      )}
                     />
                   </div>
                 </div>
-                <div className="space-y-2">
-                  <Label>Age</Label>
-                  <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone No. <span className="text-rose-500">*</span></Label>
-                  <Input {...register('phone', { required: true })} placeholder="+234..." required />
-                </div>
 
-                <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input type="email" {...register('email')} placeholder="email@example.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Race <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="race"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={races}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Race..."
-                      />
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Nationality <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="nationality"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={nationalities}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Nationality..."
-                      />
-                    )}
-                  />
-                </div>
-
-              </div>
-
-              <div className="pt-4 border-t flex flex-wrap justify-end gap-3">
-                {!isEditMode && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
-                    onClick={() => setIsClearDialogOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-5 w-5" /> Clear Form
-                  </Button>
-                )}
-                {isEditMode && (
-                  <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
-                    <X className="mr-2 h-5 w-5" /> Cancel
-                  </Button>
-                )}
-                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
-                    <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                <div className="pt-4 border-t flex flex-wrap justify-end gap-3">
+                  {!isEditMode && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
+                      onClick={() => setIsClearDialogOpen(true)}
+                    >
+                      <Trash2 className="mr-2 h-5 w-5" /> Clear Form
+                    </Button>
                   )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  {isEditMode && (
+                    <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
+                      <X className="mr-2 h-5 w-5" /> Cancel
+                    </Button>
+                  )}
+                  <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
+                    {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
+                      <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </form>
       </div>
 
       {/* Clear Form Confirmation Dialog */}
