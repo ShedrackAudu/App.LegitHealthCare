@@ -44,7 +44,10 @@ import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+};
 
 const RegistrationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
@@ -438,11 +441,19 @@ const RegistrationPage: React.FC = () => {
         passportUrl = passportPreview;
       }
 
+      const transformedData = {
+        ...data,
+        first_name: toTitleCase(data.first_name),
+        middle_name: data.middle_name ? toTitleCase(data.middle_name) : '',
+        last_name: toTitleCase(data.last_name),
+        email: data.email ? data.email.toLowerCase().trim() : '',
+        dob: formattedDob,
+        passport_image: passportUrl
+      };
+
       if (isEditMode) {
         await api.put(`/api/patients/${editStaffId}`, {
-          ...data,
-          dob: formattedDob,
-          passport_image: passportUrl,
+          ...transformedData,
           screening_year: activeYear
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -451,9 +462,7 @@ const RegistrationPage: React.FC = () => {
         navigate('/view-patients');
       } else {
         await api.post('/register-patient', {
-          ...data,
-          dob: formattedDob,
-          passport_image: passportUrl,
+          ...transformedData,
           screening_year: Number(activeYear)
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -836,15 +845,41 @@ const RegistrationPage: React.FC = () => {
                 <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="space-y-2">
                     <Label>First Name <span className="text-rose-500">*</span></Label>
-                    <Input {...register('first_name', { required: true })} placeholder="First Name" required />
+                    <Input 
+                      {...register('first_name', { required: true })} 
+                      placeholder="First Name" 
+                      required 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('first_name', formatted, { shouldValidate: true });
+                        register('first_name').onBlur(e);
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Middle Name</Label>
-                    <Input {...register('middle_name')} placeholder="Middle Name" />
+                    <Input 
+                      {...register('middle_name')} 
+                      placeholder="Middle Name" 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('middle_name', formatted, { shouldValidate: true });
+                        register('middle_name').onBlur(e);
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Last Name <span className="text-rose-500">*</span></Label>
-                    <Input {...register('last_name', { required: true })} placeholder="Last Name" required />
+                    <Input 
+                      {...register('last_name', { required: true })} 
+                      placeholder="Last Name" 
+                      required 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('last_name', formatted, { shouldValidate: true });
+                        register('last_name').onBlur(e);
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Department <span className="text-rose-500">*</span></Label>
@@ -920,12 +955,38 @@ const RegistrationPage: React.FC = () => {
                   </div>
                   <div className="space-y-2">
                     <Label>Phone No. <span className="text-rose-500">*</span></Label>
-                    <Input {...register('phone', { required: true })} placeholder="+234..." required />
+                    <Input 
+                      {...register('phone', { required: true })} 
+                      placeholder="+234..." 
+                      required 
+                      maxLength={14}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val.length > 14) {
+                          val = val.slice(0, 14);
+                        }
+                        e.target.value = val;
+                        register('phone').onChange(e);
+                      }}
+                    />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Email Address</Label>
-                    <Input type="email" {...register('email')} placeholder="email@example.com" />
+                    <Input 
+                      type="email" 
+                      {...register('email')} 
+                      placeholder="email@example.com" 
+                      onChange={(e) => {
+                        e.target.value = e.target.value.toLowerCase();
+                        register('email').onChange(e);
+                      }}
+                      onBlur={(e) => {
+                        const formatted = e.target.value.toLowerCase().trim();
+                        setValue('email', formatted, { shouldValidate: true });
+                        register('email').onBlur(e);
+                      }}
+                    />
                   </div>
                   <div className="space-y-2">
                     <Label>Race <span className="text-rose-500">*</span></Label>
@@ -978,7 +1039,7 @@ const RegistrationPage: React.FC = () => {
                   )}
                   <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
                     {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
-                      <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'FloppyDiskIcon Registration'}</>
+                      <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Register Patient'}</>
                     )}
                   </Button>
                 </div>

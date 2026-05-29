@@ -624,7 +624,7 @@ const Dashboard: React.FC = () => {
         {/* Recent Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 border">
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
                         <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 text-primary" />
                         System Statistics
@@ -744,7 +744,7 @@ const Dashboard: React.FC = () => {
             </Card>
 
             <Card className="border">
-                <CardHeader>
+                <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
                         <HugeiconsIcon icon={UserIcon} className="h-5 w-5 text-primary" />
                         Recent Registrations
