@@ -533,8 +533,8 @@ export default function MessagingPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="flex h-[calc(100vh-135px)] bg-card rounded-2xl border-2 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+    <MainLayout noScroll={true}>
+      <div className="flex h-full w-full bg-card rounded-2xl border-2 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-500">
       
       {/* Conversations Sidebar */}
       <div className={cn(
@@ -744,28 +744,41 @@ export default function MessagingPage() {
                   <DropdownMenuTrigger asChild>
                     <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile/Settings</DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={UserIcon} className="h-4 w-4 text-muted-foreground" />
+                      <span>View Profile/Settings</span>
+                    </DropdownMenuItem>
                     {activeChat.type === 'group' && (
-                      <DropdownMenuItem onClick={() => { setIsManagingMembers(true); setIsAddingToGroup(false); }}>
-                        Manage Group Members
+                      <DropdownMenuItem onClick={() => { setIsManagingMembers(true); setIsAddingToGroup(false); }} className="flex items-center gap-2 cursor-pointer">
+                        <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4 text-muted-foreground" />
+                        <span>Manage Group Members</span>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem>Search Chat</DropdownMenuItem>
-                    <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                    <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
-                      <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" />
-                      {activeChat.type === 'group' ? 'Clear Group History' : 'Delete Conversation'}
+                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={Search01Icon} className="h-4 w-4 text-muted-foreground" />
+                      <span>Search Chat</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsMuted(!isMuted)} className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={isMuted ? VolumeHighIcon : VolumeMute01Icon} className="h-4 w-4 text-muted-foreground" />
+                      <span>{isMuted ? 'Unmute Notifications' : 'Mute Notifications'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-rose-500 font-bold flex items-center gap-2 cursor-pointer" onClick={() => setIsDeleteModalOpen(true)}>
+                      <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
+                      <span>{activeChat.type === 'group' ? 'Clear Group History' : 'Delete Conversation'}</span>
                     </DropdownMenuItem>
 
                     {activeChat.type === 'group' && groupRole === 'Admin' && (
-                      <DropdownMenuItem className="text-rose-600 font-black" onClick={() => setIsDeleteGroupModalOpen(true)}>
-                        <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4 mr-2" />
-                        Delete Entire Group
+                      <DropdownMenuItem className="text-rose-600 font-black flex items-center gap-2 cursor-pointer" onClick={() => setIsDeleteGroupModalOpen(true)}>
+                        <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4" />
+                        <span>Delete Entire Group</span>
                       </DropdownMenuItem>
                     )}
                     
-                    <DropdownMenuItem className="text-zinc-500 opacity-50">Block User</DropdownMenuItem>
+                    <DropdownMenuItem className="text-zinc-500 opacity-50 flex items-center gap-2 cursor-not-allowed">
+                      <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
+                      <span>Block User</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
