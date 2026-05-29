@@ -300,7 +300,7 @@ const PatientReportPage: React.FC = () => {
             {/* Report pages — visible on screen and during print */}
             {selectedPatient && (
                 <div className="space-y-1.5 animate-in slide-in-from-bottom-8 duration-500">
-                    <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-20 z-10 backdrop-blur-md no-print gap-4">
+                    <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-4 rounded-2xl border-2 shadow-lg sticky top-0 z-50 backdrop-blur-md no-print gap-4">
                         <div className="flex items-center gap-4 w-full md:w-auto">
                             <Button variant="outline" className="w-full md:w-auto rounded-xl border-2 font-bold"
                                 onClick={() => { setSelectedPatient(null); setReportData(null); }}>
@@ -706,7 +706,7 @@ const PatientReportPage: React.FC = () => {
                         {/* Bulk Download Card */}
                         <Card className="border-2 border-slate-200 dark:border-slate-800 bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
                             <div className="space-y-4">
-                                <div className="flex items-center gap-3">
+                                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
                                     <div className="p-3 bg-indigo-500/10 rounded-2xl">
                                         <HugeiconsIcon icon={Download01Icon} className="text-indigo-600 h-6 w-6" />
                                     </div>
