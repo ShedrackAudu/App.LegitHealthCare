@@ -1,6 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
+import zipfile
+import io
 from models import (
     db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
@@ -585,59 +587,7 @@ def delete_screening_record(id):
     db.session.commit()
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
-@view_data_bp.route('/patient-report/<string:staff_id>/<int:year>', methods=['GET'])
-@jwt_required()
-def get_patient_report(staff_id, year):
-    # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
-    user_id_str = get_jwt_identity()
-    if not user_id_str:
-        return jsonify({"error": "Authentication required"}), 401
-
-    from models import StaffUser, PatientPortalUser
-    
-    is_authorized = False
-    
-    try:
-        user_id = int(user_id_str)
-    except ValueError:
-        user_id = -1
-        
-    # 1. Check if Staff with permission
-    requester_staff = StaffUser.query.get(user_id)
-    if requester_staff:
-        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
-            is_authorized = True
-            
-    # 2. Check if Patient requesting self
-    if not is_authorized:
-        requester_patient = PatientPortalUser.query.get(user_id)
-        if requester_patient and requester_patient.is_verified:
-            if requester_patient.username.lower() == staff_id.lower():
-                is_authorized = True
-                
-    if not is_authorized:
-        return jsonify({"error": "Access denied. You do not have permission to view this clinical record."}), 403
-
-    bind = get_bind()
-    if not bind: return jsonify({"error": "Invalid context"}), 400
-    
-    from sqlalchemy import func
-    clean_id = staff_id.strip()
-    
-    # Case-insensitive patient lookup
-    patient = BioData.query.filter(func.lower(BioData.staff_id) == clean_id.lower()).first()
-    if not patient:
-        return jsonify({"error": "Patient profile not found in this section"}), 404
-        
-    # Case-insensitive yearly record lookup
-    yearly = ScreeningYearBioData.query.filter(
-        func.lower(ScreeningYearBioData.staff_id) == clean_id.lower(),
-        ScreeningYearBioData.screening_year == year
-    ).first()
-    
-    if not yearly:
-        return jsonify({"error": "Clinical data not found for the selected year"}), 404
-    
+def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     # Initialize basic info
     bio_info = {
         "staff_id": patient.staff_id,
@@ -746,7 +696,7 @@ def get_patient_report(staff_id, year):
     branding = AppBranding.query.first()
     branding_data = branding.to_dict() if branding else {}
     
-    return jsonify({
+    return {
         "bio": bio_info,
         "results": results,
         "verification_url": f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify/{verification.verification_code}",
@@ -757,7 +707,175 @@ def get_patient_report(staff_id, year):
             "gen_date_time": datetime.now().isoformat()
         },
         "branding": branding_data
-    }), 200
+    }
+
+@view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
+@jwt_required()
+def bulk_download_reports():
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Authentication required"}), 401
+
+    from models import StaffUser
+    
+    is_authorized = False
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        user_id = -1
+        
+    requester_staff = StaffUser.query.get(user_id)
+    if requester_staff:
+        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+            is_authorized = True
+            
+    if not is_authorized:
+        return jsonify({"error": "Access denied. You do not have permission to perform bulk downloads."}), 403
+
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+
+    range_str = request.args.get('range', '').strip()
+    if not range_str:
+        return jsonify({"error": "Range parameter is required (e.g. 1-100)"}), 400
+
+    year_param = request.args.get('year')
+    year = int(year_param) if year_param else datetime.now().year
+
+    # Parse range (e.g. 1-100)
+    try:
+        if '-' in range_str:
+            start_parts, end_parts = range_str.split('-', 1)
+            start_id = int(start_parts.strip())
+            end_id = int(end_parts.strip())
+        else:
+            start_id = int(range_str)
+            end_id = start_id
+    except ValueError:
+        return jsonify({"error": "Invalid range format. Use numbers or start-end range (e.g., 1-100)"}), 400
+
+    if start_id > end_id:
+        start_id, end_id = end_id, start_id
+
+    # Fetch all ScreeningYearBioData for this year
+    yearly_records = ScreeningYearBioData.query.filter_by(screening_year=year).all()
+
+    matching_records = []
+    engine = db.engines[bind]
+
+    for yr in yearly_records:
+        pid_str = yr.patient_id
+        try:
+            # Strip non-numeric chars if any (though usually numeric)
+            pid_int = int(''.join(filter(str.isdigit, pid_str)))
+        except ValueError:
+            continue
+
+        if start_id <= pid_int <= end_id:
+            # Check condition 2: Does not have email address
+            bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
+            email = bio.email if bio else None
+            if not email or not email.strip():
+                # Check condition 1: Report is 100% complete
+                percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
+                if percentage == 100:
+                    matching_records.append((yr, bio))
+
+    if not matching_records:
+        return jsonify({"error": "No completed reports matching the conditions found in the specified range."}), 404
+
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        from utils.report_utils import generate_patient_report_pdf
+        for yr, bio in matching_records:
+            report_data = _get_report_data_dict(yr.staff_id, year, bind, bio, yr)
+            pdf_bytes = generate_patient_report_pdf(report_data)
+            
+            # Construct a clean filename
+            first_name = (bio.first_name or '').strip().replace(' ', '_')
+            last_name = (bio.last_name or '').strip().replace(' ', '_')
+            filename = f"LHCSL_{year}_{bind.upper()}_PID{yr.patient_id}_{first_name}_{last_name}.pdf"
+            zip_file.writestr(filename, pdf_bytes)
+
+    zip_buffer.seek(0)
+    
+    # Audit Log
+    try:
+        audit = AuditLog(
+            user_id=user_id,
+            action='Bulk Download Reports',
+            resource=f"Range:{range_str}:Year:{year}",
+            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, no email) in range {range_str} for year {year}.",
+            ip_address=get_client_ip()
+        )
+        db.session.add(audit)
+        db.session.commit()
+    except Exception:
+        pass
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"Bulk_Reports_{bind.upper()}_{year}_{range_str}.zip"
+    )
+
+@view_data_bp.route('/patient-report/<string:staff_id>/<int:year>', methods=['GET'])
+@jwt_required()
+def get_patient_report(staff_id, year):
+    # Authorization Check: Allow if Staff with permission OR Patient requesting their own ID
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Authentication required"}), 401
+
+    from models import StaffUser, PatientPortalUser
+    
+    is_authorized = False
+    
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        user_id = -1
+        
+    # 1. Check if Staff with permission
+    requester_staff = StaffUser.query.get(user_id)
+    if requester_staff:
+        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+            is_authorized = True
+            
+    # 2. Check if Patient requesting self
+    if not is_authorized:
+        requester_patient = PatientPortalUser.query.get(user_id)
+        if requester_patient and requester_patient.is_verified:
+            if requester_patient.username.lower() == staff_id.lower():
+                is_authorized = True
+                
+    if not is_authorized:
+        return jsonify({"error": "Access denied. You do not have permission to view this clinical record."}), 403
+
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+    
+    from sqlalchemy import func
+    clean_id = staff_id.strip()
+    
+    # Case-insensitive patient lookup
+    patient = BioData.query.filter(func.lower(BioData.staff_id) == clean_id.lower()).first()
+    if not patient:
+        return jsonify({"error": "Patient profile not found in this section"}), 404
+        
+    # Case-insensitive yearly record lookup
+    yearly = ScreeningYearBioData.query.filter(
+        func.lower(ScreeningYearBioData.staff_id) == clean_id.lower(),
+        ScreeningYearBioData.screening_year == year
+    ).first()
+    
+    if not yearly:
+        return jsonify({"error": "Clinical data not found for the selected year"}), 404
+    
+    report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+    return jsonify(report_data), 200
 
 @view_data_bp.route('/public/verify/<token>', methods=['GET'])
 def verify_report(token):

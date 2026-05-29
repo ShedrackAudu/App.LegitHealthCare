@@ -12,6 +12,8 @@ import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { useAppContext } from '@/context/AppContext';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -27,6 +29,53 @@ const PatientReportPage: React.FC = () => {
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
+    const [rangeInput, setRangeInput] = useState('');
+    const [bulkLoading, setBulkLoading] = useState(false);
+
+    const handleBulkDownload = async () => {
+        if (!rangeInput.trim()) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
+            return;
+        }
+        setBulkLoading(true);
+        toast.loading('Scanning and generating bulk reports. This may take a moment...', { id: 'bulkDownload' });
+        try {
+            const response = await api.get(`/api/patient-report/bulk-download`, {
+                params: {
+                    range: rangeInput,
+                    year: activeYear,
+                    company: activeSection
+                },
+                responseType: 'blob'
+            });
+            
+            const blob = new Blob([response.data], { type: 'application/zip' });
+            const url = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeInput.replace(/\s+/g, '')}.zip`;
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+            window.URL.revokeObjectURL(url);
+            toast.success('Bulk reports downloaded successfully', { id: 'bulkDownload' });
+        } catch (err: any) {
+            console.error('Bulk download error:', err);
+            if (err.response?.data instanceof Blob) {
+                const text = await err.response.data.text();
+                try {
+                    const json = JSON.parse(text);
+                    toast.error(json.error || 'Failed to download reports', { id: 'bulkDownload' });
+                } catch {
+                    toast.error('Failed to download reports. No matching reports found.', { id: 'bulkDownload' });
+                }
+            } else {
+                toast.error(err.response?.data?.error || 'Failed to download reports', { id: 'bulkDownload' });
+            }
+        } finally {
+            setBulkLoading(false);
+        }
+    };
 
     const handleSearchById = async (id: string, searchType?: 'pid' | 'general') => {
         if (!id) return;
@@ -631,26 +680,83 @@ const PatientReportPage: React.FC = () => {
             )}
 
             {!selectedPatient && (
-                <div className="p-4 sm:p-6 no-print">
-                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[24rem] bg-muted/5 mt-8 p-6">
-                        <div className="text-center space-y-3">
-                            <div className="w-16 h-16 sm:w-24 sm:h-24 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
-                                <HugeiconsIcon icon={File01Icon} className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
-                            </div>
-                            <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground/70">
-                                Search a patient to view report
-                            </h2>
-                            <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
-                                Use the search bar above to retrieve clinical results
-                            </p>
-                            <div className="flex flex-col items-center gap-2 pt-4">
-                                <div className="h-px w-12 bg-muted-foreground/20" />
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-                                    Secure Medical Records System
+                <div className="p-4 sm:p-6 no-print space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
+                        {/* Search Instructions Card */}
+                        <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 p-6 rounded-3xl">
+                            <div className="text-center space-y-3">
+                                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
+                                    <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-muted-foreground/30" />
+                                </div>
+                                <h2 className="text-xl font-black tracking-tight text-foreground/70">
+                                    Search a patient to view report
+                                </h2>
+                                <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
+                                    Use the search bar above to retrieve clinical results
                                 </p>
+                                <div className="flex flex-col items-center gap-2 pt-4">
+                                    <div className="h-px w-12 bg-muted-foreground/20" />
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                        Secure Medical Records System
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </Card>
+                        </Card>
+
+                        {/* Bulk Download Card */}
+                        <Card className="border-2 border-slate-200 dark:border-slate-800 bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <div className="space-y-4">
+                                <div className="flex items-center gap-3">
+                                    <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                        <HugeiconsIcon icon={Download01Icon} className="text-indigo-600 h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Downloader</h2>
+                                        <p className="text-xs text-muted-foreground">Download clinical PDFs for hardcopy printing</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                    <p className="font-bold text-foreground">Downloads reports meeting these criteria:</p>
+                                    <ul className="list-disc list-inside space-y-1 pl-1">
+                                        <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
+                                        <li>No email address is attached to the patient profile</li>
+                                    </ul>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                    <Input
+                                        id="pid-range"
+                                        placeholder="e.g. 1-100 or 25"
+                                        value={rangeInput}
+                                        onChange={(e) => setRangeInput(e.target.value)}
+                                        className="rounded-xl border-2 border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500/50"
+                                        disabled={bulkLoading}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and download as a ZIP file.</p>
+                                </div>
+                            </div>
+
+                            <Button 
+                                onClick={handleBulkDownload}
+                                disabled={bulkLoading}
+                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                            >
+                                {bulkLoading ? (
+                                    <>
+                                        <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin" />
+                                        Processing...
+                                    </>
+                                ) : (
+                                    <>
+                                        <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />
+                                        Bulk Download (ZIP)
+                                    </>
+                                )}
+                            </Button>
+                        </Card>
+                    </div>
                 </div>
             )}
         </MainLayout>
