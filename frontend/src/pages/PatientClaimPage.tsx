@@ -1,7 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { getErrorMessage } from '@/lib/networkError';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { User, Mail, Phone, Lock, Hash, Calendar, Building, MapPin, Check, AlertCircle, ShieldCheck } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  UserIcon, 
+  Mail01Icon, 
+  CallIcon, 
+  LockIcon, 
+  Hash, 
+  Calendar03Icon, 
+  Building02Icon,
+  ArrowRight01Icon
+} from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -148,25 +158,25 @@ const PatientClaimPage = () => {
                     <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Department</Label>
                         <p className="font-bold text-foreground text-sm flex items-center gap-2">
-                           <Building className="w-3.5 h-3.5 text-primary" /> {formData.department || 'N/A'}
+                           <HugeiconsIcon icon={Building02Icon} className="w-3.5 h-3.5 text-primary" /> {formData.department || 'N/A'}
                         </p>
                     </div>
                     <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Gender</Label>
                         <p className="font-bold text-foreground text-sm flex items-center gap-2">
-                           <User className="w-3.5 h-3.5 text-primary" /> {formData.gender || 'N/A'}
+                           <HugeiconsIcon icon={UserIcon} className="w-3.5 h-3.5 text-primary" /> {formData.gender || 'N/A'}
                         </p>
                     </div>
                     <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Date of Birth</Label>
                         <p className="font-bold text-foreground text-sm flex items-center gap-2">
-                           <Calendar className="w-3.5 h-3.5 text-primary" /> {formData.dob || 'N/A'}
+                           <HugeiconsIcon icon={Calendar03Icon} className="w-3.5 h-3.5 text-primary" /> {formData.dob || 'N/A'}
                         </p>
                     </div>
                     <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Staff ID</Label>
                         <p className="font-bold text-foreground text-sm flex items-center gap-2">
-                           <Hash className="w-3.5 h-3.5 text-primary" /> {formData.staff_id}
+                           <HugeiconsIcon icon={Hash} className="w-3.5 h-3.5 text-primary" /> {formData.staff_id}
                         </p>
                     </div>
                 </div>
@@ -178,7 +188,7 @@ const PatientClaimPage = () => {
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Phone Number</Label>
                       <div className="relative">
-                        <Phone className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <HugeiconsIcon icon={CallIcon} className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                             name="phone" 
                             value={formData.phone} 
@@ -193,7 +203,7 @@ const PatientClaimPage = () => {
                     <div className="space-y-2">
                       <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground ml-1">Email Address</Label>
                       <div className="relative">
-                        <Mail className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <HugeiconsIcon icon={Mail01Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                         <Input 
                             name="email" 
                             type="email" 
@@ -214,7 +224,7 @@ const PatientClaimPage = () => {
               <Card className="border shadow-lg bg-primary/5 backdrop-blur-xl rounded-2xl overflow-hidden border-primary/20">
                 <CardHeader className="p-6 pb-2">
                   <CardTitle className="text-lg flex items-center gap-2 font-black">
-                    <Lock className="w-5 h-5 text-primary" /> Security
+                    <HugeiconsIcon icon={LockIcon} className="w-5 h-5 text-primary" /> Security
                   </CardTitle>
                   <CardDescription className="text-xs font-medium">Set account access password.</CardDescription>
                 </CardHeader>
@@ -266,7 +276,7 @@ const PatientClaimPage = () => {
                 className="w-full h-14 text-lg font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all"
                 disabled={loading}
               >
-                {loading ? 'Processing...' : 'Complete Registration'} <ArrowRight className="ml-2 w-5 h-5" />
+                {loading ? 'Processing...' : 'Complete Registration'} <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 w-5 h-5" />
               </Button>
               
               <div className="p-4 border border-dashed rounded-xl bg-muted/50 text-center">
@@ -281,9 +291,5 @@ const PatientClaimPage = () => {
     </div>
   );
 };
-
-const ArrowRight = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg>
-)
 
 export default PatientClaimPage;

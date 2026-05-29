@@ -3,28 +3,29 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as z from 'zod';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Users,
-  Search,
-  UserPlus,
+  UserGroupIcon,
+  Search01Icon,
+  UserAdd01Icon,
   Save,
-  Loader2,
-  Calendar,
-  Activity,
-  ClipboardList,
-  ArrowLeft,
-  X,
-  Trash2,
-  ChevronRight,
-  Camera,
-  Upload,
-  Eye,
-  Video,
-  ImagePlus,
-  SwitchCamera,
-  CircleDot,
-  User
-} from 'lucide-react';
+  Loading03Icon,
+  Calendar03Icon,
+  Activity01Icon,
+  ClipboardIcon,
+  ArrowLeft01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  ArrowRight01Icon,
+  Camera01Icon,
+  Upload01Icon,
+  EyeIcon,
+  VideoIcon,
+  ImageAdd01Icon,
+  CameraRotatedIcon,
+  CircleIcon,
+  UserIcon
+} from '@hugeicons/core-free-icons';
 import api from '@/lib/api';
 import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -511,14 +512,14 @@ const RegistrationPage: React.FC = () => {
           <div className="flex items-center gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </Button>
             )}
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
               {isEditMode ? (
-                <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               ) : (
-                <UserPlus className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                <HugeiconsIcon icon={UserAdd01Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               )}
             </div>
             <div>
@@ -535,7 +536,7 @@ const RegistrationPage: React.FC = () => {
             <div className="w-full lg:max-w-xl relative">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border focus-within:border-primary/50 transition-all relative">
                 <div className="flex items-center gap-2 flex-1 px-2 h-11">
-                  <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-muted-foreground shrink-0" />
                   <Input
                     className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
                     placeholder="Search Staff ID or Name..."
@@ -549,7 +550,7 @@ const RegistrationPage: React.FC = () => {
                   disabled={searching || !searchId.trim()}
                   className="bg-primary hover:bg-primary/90 px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                 >
-                  {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
+                  {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
                 </Button>
 
                 {/* Search Results Card */}
@@ -591,7 +592,7 @@ const RegistrationPage: React.FC = () => {
                               </div>
                             </div>
                             <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
-                              Select <ChevronRight className="ml-1 h-3 w-3" />
+                              Select <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1 h-3 w-3" />
                             </Button>
                           </div>
                         </li>
@@ -610,42 +611,42 @@ const RegistrationPage: React.FC = () => {
             title="Total Registered"
             value={stats?.year_total?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-blue-600"
           />
           <StatCard
             title="Registered Today"
             value={stats?.today?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-primary"
           />
           <StatCard
             title="Gender Mix"
             value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}% | F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0% | F: 0%'}
             sub={`${stats?.males || 0} M / ${stats?.females || 0} F`}
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-indigo-600"
           />
           <StatCard
             title="Age Context"
             value={stats?.age_40_above?.toLocaleString() || '0'}
             sub="40 Years & Above"
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-amber-600"
           />
           <StatCard
             title="Youth Context"
             value={stats?.age_below_40?.toLocaleString() || '0'}
             sub="Below 40 Years"
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-rose-600"
           />
           <StatCard
             title="Daily Target"
             value={stats ? `${Math.round(((stats.today || 0) / 80) * 100)}%` : '0%'}
             sub={`${stats?.today || 0} / 80 Patients`}
-            icon={Activity}
+            icon={Activity01Icon}
             color="text-primary"
           />
         </div>
@@ -661,7 +662,7 @@ const RegistrationPage: React.FC = () => {
             <Card className="border hidden lg:block lg:col-span-1">
               <CardHeader className="bg-primary/5 border-b py-4">
                 <CardTitle className="text-base font-bold flex items-center gap-2">
-                  <Camera className="h-4.5 w-4.5 text-primary" />
+                  <HugeiconsIcon icon={Camera01Icon} className="h-4.5 w-4.5 text-primary" />
                   Passport Photo
                 </CardTitle>
               </CardHeader>
@@ -687,7 +688,7 @@ const RegistrationPage: React.FC = () => {
                               onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
                               title="Preview"
                             >
-                              <Eye className="text-white h-4 w-4" />
+                              <HugeiconsIcon icon={EyeIcon} className="text-white h-4 w-4" />
                             </button>
                             <button
                               type="button"
@@ -695,7 +696,7 @@ const RegistrationPage: React.FC = () => {
                               onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
                               title="Change photo"
                             >
-                              <Camera className="text-white h-4 w-4" />
+                              <HugeiconsIcon icon={Camera01Icon} className="text-white h-4 w-4" />
                             </button>
                           </div>
                           <button
@@ -704,13 +705,13 @@ const RegistrationPage: React.FC = () => {
                             onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
                             title="Remove photo"
                           >
-                            <Trash2 className="text-white h-3.5 w-3.5" />
+                            <HugeiconsIcon icon={Delete02Icon} className="text-white h-3.5 w-3.5" />
                           </button>
                         </div>
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center p-4 text-muted-foreground group-hover:text-primary transition-colors">
-                        <ImagePlus className="h-8 w-8 mb-2" />
+                        <HugeiconsIcon icon={ImageAdd01Icon} className="h-8 w-8 mb-2" />
                         <span className="text-[10px] font-black uppercase tracking-wider">Add Photo</span>
                       </div>
                     )}
@@ -741,7 +742,7 @@ const RegistrationPage: React.FC = () => {
             <Card className="border lg:col-span-3">
               <CardHeader className="bg-primary/5 border-b py-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                  <ClipboardList className="h-5 w-5 text-primary" />
+                  <HugeiconsIcon icon={ClipboardIcon} className="h-5 w-5 text-primary" />
                   Bio-Data Information
                 </CardTitle>
               </CardHeader>
@@ -766,7 +767,7 @@ const RegistrationPage: React.FC = () => {
                             onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
                             title="Change photo"
                           >
-                            <Camera className="text-white h-4 w-4" />
+                            <HugeiconsIcon icon={Camera01Icon} className="text-white h-4 w-4" />
                           </button>
                         </div>
                         {/* Remove Photo button */}
@@ -776,17 +777,17 @@ const RegistrationPage: React.FC = () => {
                           onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
                           title="Remove photo"
                         >
-                          <Trash2 className="h-3 w-3" />
+                          <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                         </button>
                       </>
                     ) : (
                       <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
-                        <User className="h-7 w-7 mb-0.5 opacity-70" />
+                        <HugeiconsIcon icon={UserIcon} className="h-7 w-7 mb-0.5 opacity-70" />
                         <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
                         
                         {/* Camera badge */}
                         <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1 rounded-full shadow-md border border-background">
-                          <Camera className="h-3 w-3" />
+                          <HugeiconsIcon icon={Camera01Icon} className="h-3 w-3" />
                         </div>
                       </div>
                     )}
@@ -898,7 +899,7 @@ const RegistrationPage: React.FC = () => {
                         }}
                       />
                       <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
-                        <Calendar className="h-5 w-5 text-primary" />
+                        <HugeiconsIcon icon={Calendar03Icon} className="h-5 w-5 text-primary" />
                       </div>
                       <input
                         type="date"
@@ -967,17 +968,17 @@ const RegistrationPage: React.FC = () => {
                       className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
                       onClick={() => setIsClearDialogOpen(true)}
                     >
-                      <Trash2 className="mr-2 h-5 w-5" /> Clear Form
+                      <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" /> Clear Form
                     </Button>
                   )}
                   {isEditMode && (
                     <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
-                      <X className="mr-2 h-5 w-5" /> Cancel
+                      <HugeiconsIcon icon={Cancel01Icon} className="mr-2 h-5 w-5" /> Cancel
                     </Button>
                   )}
                   <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
-                    {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
-                      <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
+                      <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
                     )}
                   </Button>
                 </div>
@@ -992,7 +993,7 @@ const RegistrationPage: React.FC = () => {
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border registration-dialog">
           <div className="p-6 pt-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
-                <Trash2 className="w-8 h-8" />
+                <HugeiconsIcon icon={Delete02Icon} className="w-8 h-8" />
             </div>
             
             <DialogHeader className="space-y-2 flex flex-col items-center text-center sm:text-center">
@@ -1045,13 +1046,13 @@ const RegistrationPage: React.FC = () => {
               }}
             >
               <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors">
-                <Upload className="h-5 w-5" />
+                <HugeiconsIcon icon={Upload01Icon} className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-bold text-sm">Upload File</p>
                 <p className="text-xs text-muted-foreground">Choose from your device</p>
               </div>
-              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
             <button
               type="button"
@@ -1062,13 +1063,13 @@ const RegistrationPage: React.FC = () => {
               }}
             >
               <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
-                <Camera className="h-5 w-5" />
+                <HugeiconsIcon icon={Camera01Icon} className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-bold text-sm">Use Camera</p>
                 <p className="text-xs text-muted-foreground">Capture with webcam</p>
               </div>
-              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
           </div>
         </DialogContent>
@@ -1079,7 +1080,7 @@ const RegistrationPage: React.FC = () => {
           <div className="p-4 pb-2">
             <DialogHeader>
               <DialogTitle className="text-lg font-black tracking-tight text-center flex items-center justify-center gap-2">
-                <Video className="h-5 w-5 text-emerald-500" />
+                <HugeiconsIcon icon={VideoIcon} className="h-5 w-5 text-emerald-500" />
                 Camera Capture
               </DialogTitle>
               <DialogDescription className="text-center text-sm text-muted-foreground">Position your face in the frame and capture</DialogDescription>
@@ -1106,12 +1107,12 @@ const RegistrationPage: React.FC = () => {
                     className="absolute top-3 right-3 flex items-center justify-center bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-2 text-white border border-white/20 transition-all active:scale-95 z-10"
                     title="Switch Camera"
                   >
-                    <SwitchCamera className="h-5 w-5 text-white" />
+                    <HugeiconsIcon icon={CameraRotatedIcon} className="h-5 w-5 text-white" />
                   </button>
                 )}
                 {!cameraReady && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-emerald-400" />
                     <span className="text-sm font-medium">Starting camera...</span>
                   </div>
                 )}
@@ -1147,7 +1148,7 @@ const RegistrationPage: React.FC = () => {
                     className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                     onClick={() => startCamera(facingMode)}
                   >
-                    <Video className="h-4 w-4" />
+                    <HugeiconsIcon icon={VideoIcon} className="h-4 w-4" />
                     Start Camera
                   </Button>
                 )}
@@ -1159,7 +1160,7 @@ const RegistrationPage: React.FC = () => {
                     onClick={capturePhoto}
                     title="Capture Photo"
                   >
-                    <CircleDot className="h-6 w-6" />
+                    <HugeiconsIcon icon={CircleIcon} className="h-6 w-6" />
                   </Button>
                 )}
               </>
@@ -1172,7 +1173,7 @@ const RegistrationPage: React.FC = () => {
                   className="font-bold gap-2"
                   onClick={() => { setCapturedImage(null); startCamera(facingMode); }}
                 >
-                  <SwitchCamera className="h-4 w-4" />
+                  <HugeiconsIcon icon={CameraRotatedIcon} className="h-4 w-4" />
                   Retake
                 </Button>
                 <Button
@@ -1181,7 +1182,7 @@ const RegistrationPage: React.FC = () => {
                   className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                   onClick={useCapturedPhoto}
                 >
-                  <Save className="h-4 w-4" />
+                  <HugeiconsIcon icon={Save} className="h-4 w-4" />
                   Use Photo
                 </Button>
               </>
@@ -1214,7 +1215,7 @@ const RegistrationPage: React.FC = () => {
               className="font-bold gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white"
               onClick={() => { setIsPreviewOpen(false); setIsSourceDialogOpen(true); }}
             >
-              <Camera className="h-4 w-4" />
+              <HugeiconsIcon icon={Camera01Icon} className="h-4 w-4" />
               Change Photo
             </Button>
             <Button
@@ -1237,7 +1238,7 @@ const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
   <Card className="border transition-all overflow-hidden relative">
     <CardContent className="py-2 px-2.5 flex flex-col justify-center gap-1 h-full min-h-[52px]">
       <div className="flex items-center gap-1.5">
-        <Icon className={`h-3 w-3 ${color} shrink-0`} />
+        <HugeiconsIcon icon={Icon} className={`h-3 w-3 ${color} shrink-0`} />
         <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate">{title}</p>
       </div>
       <div className="flex flex-col gap-0.5 mt-0.5">

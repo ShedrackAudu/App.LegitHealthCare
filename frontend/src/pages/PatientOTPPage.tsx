@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { getErrorMessage } from '@/lib/networkError';
 import { useLocation, useNavigate, Link } from 'react-router-dom';
-import { Mail, ArrowLeft, CheckCircle2 } from 'lucide-react';
+import { Mail01Icon, ArrowLeft01Icon, CheckmarkCircle02Icon } from '@hugeicons/core-free-icons';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
@@ -115,7 +116,7 @@ const PatientOTPPage = () => {
                 />
               ) : (
                 <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary">
-                    <Mail className="w-8 h-8" />
+                    <HugeiconsIcon icon={Mail01Icon} className="w-8 h-8" />
                 </div>
               )}
             </Link>
@@ -163,7 +164,7 @@ const PatientOTPPage = () => {
                   className="flex flex-col items-center py-6 space-y-4"
                 >
                   <div className="w-20 h-20 bg-primary rounded-full flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                    <CheckCircle2 className="w-12 h-12" />
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-12 h-12" />
                   </div>
                   <div className="text-center">
                     <h3 className="text-xl font-bold text-primary">Verification Successful!</h3>
@@ -190,7 +191,7 @@ const PatientOTPPage = () => {
                 className="w-full gap-2 text-muted-foreground hover:text-foreground h-10"
                 onClick={() => navigate(-1)}
               >
-                <ArrowLeft className="w-4 h-4" /> Back
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4 h-4" /> Back
               </Button>
             </CardFooter>
           )}

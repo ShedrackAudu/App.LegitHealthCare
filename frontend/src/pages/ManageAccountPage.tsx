@@ -4,20 +4,13 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-    User, 
-    Lock, 
+    UserIcon, 
+    LockIcon, 
     ShieldAlert, 
-    ShieldCheck, 
-    CheckCircle2, 
-    X, 
-    Plus, 
-    Trash2, 
-    Mail as MailIcon, 
-    Phone as PhoneIcon, 
-    Globe, 
-    MessageCircle 
-} from 'lucide-react';
+    ShieldCheck 
+} from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -150,7 +143,7 @@ const ManageAccountPage = () => {
         <MainLayout>
             <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
                 <div className="flex items-center gap-3 mb-6">
-                    <User className="h-8 w-8 text-primary" />
+                    <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold tracking-tight">Manage Account</h1>
                 </div>
 
@@ -160,7 +153,7 @@ const ManageAccountPage = () => {
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                        <User className="w-5 h-5" />
+                                        <HugeiconsIcon icon={UserIcon} className="w-5 h-5" />
                                     </div>
                                     <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Personal Information</CardTitle>
                                 </div>
@@ -204,7 +197,7 @@ const ManageAccountPage = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                                            <Lock className="w-5 h-5" />
+                                            <HugeiconsIcon icon={LockIcon} className="w-5 h-5" />
                                         </div>
                                         <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Change Password</CardTitle>
                                     </div>
@@ -245,7 +238,7 @@ const ManageAccountPage = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-xl ${user?.is_2fa_enabled ? 'bg-primary/10 text-primary' : 'bg-rose-500/10 text-rose-600'}`}>
-                                            {user?.is_2fa_enabled ? <ShieldCheck className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                                            {user?.is_2fa_enabled ? <HugeiconsIcon icon={ShieldCheck} className="w-5 h-5" /> : <HugeiconsIcon icon={ShieldAlert} className="w-5 h-5" />}
                                         </div>
                                         <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Two-Factor Auth</CardTitle>
                                     </div>

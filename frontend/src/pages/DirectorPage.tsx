@@ -1,17 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useForm, Controller } from 'react-hook-form';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Activity, 
+  Activity01Icon, 
   Save, 
-  Loader2, 
-  Clock, 
-  ChevronDown,
-  ChevronUp,
+  Loading03Icon, 
+  Clock01Icon, 
+  ArrowDown01Icon,
+  ArrowUp01Icon,
   ShieldCheck,
-  Sparkles,
-  User
-} from 'lucide-react';
+  SparklesIcon,
+  UserIcon
+} from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
     Select,
@@ -53,7 +54,7 @@ const AccordionSection = ({ title, description, children, defaultOpen = true }: 
             >
                 <div className="flex items-center gap-4">
                     <Button variant="ghost" size="sm" className="h-10 w-10 p-0 rounded-xl bg-background border shadow-sm">
-                        {isOpen ? <ChevronUp className="h-6 w-6" /> : <ChevronDown className="h-6 w-6" />}
+                        {isOpen ? <HugeiconsIcon icon={ArrowUp01Icon} className="h-6 w-6" /> : <HugeiconsIcon icon={ArrowDown01Icon} className="h-6 w-6" />}
                     </Button>
                     <div>
                         <h3 className="text-lg font-bold tracking-tight">{title}</h3>
@@ -106,7 +107,7 @@ const ComboField = React.forwardRef(({ label, options, required = true, ...props
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <button type="button" className="p-1 hover:bg-muted rounded-md transition-colors">
-                    <ChevronDown className="h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110" />
+                    <HugeiconsIcon icon={ArrowDown01Icon} className="h-4 w-4 text-muted-foreground transition-transform group-hover:scale-110" />
                   </button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
@@ -263,7 +264,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <User className="h-8 w-8 text-primary/40" />
+                            <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary/40" />
                         )}
                     </div>
 
@@ -281,7 +282,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <BioItem label="CONSULTED BY" value={history?.consultation?.consulted_by_name || 'N/A'} />
                             {history?.review?.first_submitted_at && (
                                 <div className="flex items-center gap-1.5 bg-primary/10 px-2.5 py-1 rounded-md border border-primary/20 shrink-0 ml-2">
-                                    <Clock className="h-3 w-3 text-primary" />
+                                    <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3 text-primary" />
                                     <div>
                                         <p className="text-[7px] uppercase font-black text-primary opacity-70 leading-none">Reported</p>
                                         <p className="text-[9px] font-bold text-primary">{new Date(history.review.first_submitted_at).toLocaleDateString()}</p>
@@ -497,17 +498,17 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         disabled={generatingAI || loading}
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-blue-500/20 h-12 rounded-xl border-0 w-full sm:w-auto order-2 sm:order-1"
                     >
-                        {generatingAI ? <Loader2 className="h-5 w-5 animate-spin mr-2" /> : (
+                        {generatingAI ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin mr-2" /> : (
                             <div className="flex items-center justify-center whitespace-nowrap">
-                                <Sparkles className="mr-2 h-5 w-5 shrink-0" /> AI Overview
+                                <HugeiconsIcon icon={SparklesIcon} className="mr-2 h-5 w-5 shrink-0" /> AI Overview
                             </div>
                         )}
                     </Button>
                     
                     <Button type="submit" size="lg" className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={loading || generatingAI}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : (
+                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : (
                             <div className="flex items-center justify-center whitespace-nowrap">
-                                <Save className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
+                                <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
                             </div>
                         )}
                     </Button>
@@ -581,7 +582,7 @@ const DirectorPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                            <ShieldCheck className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
+                            <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight">Director Review Panel</h1>
@@ -606,7 +607,7 @@ const DirectorPage: React.FC = () => {
                     <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6">
                         <div className="text-center space-y-3">
                             <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
-                                <Activity className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                                <HugeiconsIcon icon={Activity01Icon} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
                             </div>
                             <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
                                 Search for a patient to begin clinical review.

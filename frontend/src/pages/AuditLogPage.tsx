@@ -4,7 +4,21 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { History, Search, ChevronLeft, ChevronRight, Loader2, Calendar, User, Activity, Globe, Terminal, Info, ExternalLink, Shield } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  History, 
+  Search01Icon, 
+  ArrowLeft01Icon, 
+  ArrowRight01Icon, 
+  Loading03Icon, 
+  Calendar01Icon, 
+  UserIcon, 
+  ActivityIcon, 
+  GlobeIcon, 
+  TerminalIcon, 
+  ArrowUpRight01Icon, 
+  ShieldIcon 
+} from '@hugeicons/core-free-icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import axios from 'axios';
@@ -99,7 +113,7 @@ const AuditLogPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-              <History className="h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={History} className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">System Audit Trails</h1>
@@ -110,7 +124,7 @@ const AuditLogPage: React.FC = () => {
           </div>
           
           <div className="relative w-full lg:w-80 group">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
             <Input 
               placeholder="Search by action or user..." 
               value={searchTerm}
@@ -124,7 +138,7 @@ const AuditLogPage: React.FC = () => {
           <CardHeader className="bg-muted/5 border-b py-4">
             <div className="flex items-center justify-between">
                 <CardTitle className="text-sm font-black uppercase tracking-widest text-muted-foreground/80 flex items-center gap-2">
-                    <Activity className="w-4 h-4" />
+                    <HugeiconsIcon icon={ActivityIcon} className="w-4 h-4" />
                     Security Event Log
                 </CardTitle>
                 <Badge variant="outline" className="font-bold text-[10px] bg-primary/5 text-primary border-primary/20">
@@ -135,7 +149,7 @@ const AuditLogPage: React.FC = () => {
           <CardContent className="px-8 pb-6">
             {loading ? (
               <div className="h-96 flex flex-col items-center justify-center gap-4">
-                <Loader2 className="w-10 h-10 animate-spin text-primary" />
+                <HugeiconsIcon icon={Loading03Icon} className="w-10 h-10 animate-spin text-primary" />
                 <p className="text-muted-foreground font-black text-xs uppercase tracking-widest animate-pulse">Retrieving encrypted logs...</p>
               </div>
             ) : (
@@ -143,11 +157,11 @@ const AuditLogPage: React.FC = () => {
                 <Table>
                   <TableHeader className="bg-muted/10">
                     <TableRow className="hover:bg-transparent border-b-2 text-left">
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><User className="w-3 h-3 inline mr-1" /> Originator</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><Activity className="w-3 h-3 inline mr-1" /> Action</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><HugeiconsIcon icon={ActivityIcon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><Globe className="w-3 h-3 inline mr-1" /> Source IP</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><Calendar className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source IP</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -209,7 +223,7 @@ const AuditLogPage: React.FC = () => {
                 disabled={page === 1 || loading}
                 className="h-8 rounded-lg font-black text-[10px] uppercase gap-1"
               >
-                <ChevronLeft className="w-3 h-3" /> Prev
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Prev
               </Button>
               <Button 
                 variant="outline" 
@@ -218,7 +232,7 @@ const AuditLogPage: React.FC = () => {
                 disabled={page === totalPages || loading}
                 className="h-8 rounded-lg font-black text-[10px] uppercase gap-1"
               >
-                Next <ChevronRight className="w-3 h-3" />
+                Next <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3" />
               </Button>
             </div>
           </div>
@@ -231,7 +245,7 @@ const AuditLogPage: React.FC = () => {
                         <div className="bg-muted/30 p-8 border-b">
                             <div className="flex items-center justify-between mb-6">
                                 <Badge variant="outline" className={`font-black text-[10px] px-3 py-1 rounded-full border shadow-sm ${getActionColor(selectedLog.action)}`}>
-                                    <Activity className="w-3 h-3 mr-1.5" />
+                                    <HugeiconsIcon icon={ActivityIcon} className="w-3 h-3 mr-1.5" />
                                     {selectedLog.action}
                                 </Badge>
                                 <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
@@ -248,19 +262,19 @@ const AuditLogPage: React.FC = () => {
                                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                            <User className="w-3 h-3" /> Originator
+                                            <HugeiconsIcon icon={UserIcon} className="w-3 h-3" /> Originator
                                         </p>
                                         <p className="text-sm font-bold">{selectedLog.user_name || 'System Auto'}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                            <Globe className="w-3 h-3" /> Source IP
+                                            <HugeiconsIcon icon={GlobeIcon} className="w-3 h-3" /> Source IP
                                         </p>
                                         <p className="text-sm font-bold font-mono">{selectedLog.ip_address || '127.0.0.1'}</p>
                                     </div>
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                            <Calendar className="w-3 h-3" /> Registered At
+                                            <HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3" /> Registered At
                                         </p>
                                         <p className="text-sm font-bold">{format(new Date(selectedLog.timestamp), 'MMM dd, yyyy HH:mm:ss')}</p>
                                     </div>
@@ -268,18 +282,18 @@ const AuditLogPage: React.FC = () => {
 
                                 <div className="space-y-3">
                                     <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                        <ExternalLink className="w-3 h-3" /> Target Resource
+                                        <HugeiconsIcon icon={ArrowUpRight01Icon} className="w-3 h-3" /> Target Resource
                                     </p>
                                     <div className="p-4 rounded-2xl bg-primary/[0.03] border-2 border-primary/5 flex items-center justify-between group">
                                         <span className="font-bold text-primary font-mono text-xs">{selectedLog.resource}</span>
-                                        <Shield className="w-4 h-4 text-primary opacity-20 group-hover:opacity-100 transition-opacity" />
+                                        <HugeiconsIcon icon={ShieldIcon} className="w-4 h-4 text-primary opacity-20 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </div>
 
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                            <Terminal className="w-3 h-3" /> Extended Metadata
+                                            <HugeiconsIcon icon={TerminalIcon} className="w-3 h-3" /> Extended Metadata
                                         </p>
                                         <Badge variant="outline" className="text-[8px] border-primary/20 bg-primary/5 text-primary font-black">
                                             ENCRYPTED PAYLOAD

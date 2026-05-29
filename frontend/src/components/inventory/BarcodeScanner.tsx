@@ -1,7 +1,8 @@
 import React, { useEffect, useRef } from 'react';
 import { Html5QrcodeScanner, Html5QrcodeSupportedFormats } from 'html5-qrcode';
 import { Button } from '@/components/ui/button';
-import { X } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Cancel01Icon } from '@hugeicons/core-free-icons';
 
 interface BarcodeScannerProps {
   onScan: (decodedText: string) => void;
@@ -64,7 +65,7 @@ const BarcodeScanner: React.FC<BarcodeScannerProps> = ({ onScan, onClose }) => {
         <div className="p-4 border-b flex justify-between items-center bg-muted/30">
           <h3 className="font-semibold">Scan Barcode / QR Code</h3>
           <Button variant="ghost" size="icon" onClick={onClose} className="rounded-full">
-            <X className="h-5 w-5" />
+            <HugeiconsIcon icon={Cancel01Icon} className="h-5 w-5" />
           </Button>
         </div>
         <div className="p-6">

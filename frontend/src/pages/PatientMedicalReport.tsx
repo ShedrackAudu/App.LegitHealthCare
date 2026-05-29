@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
     FileText,
-    Download,
-    Mail,
-    Loader2,
-    X,
-    Printer,
-    Calendar,
-    ChevronRight,
-    ShieldCheck,
-    AlertCircle
-} from 'lucide-react';
+    Download01Icon,
+    Mail01Icon,
+    Loading03Icon,
+    PrinterIcon,
+    Calendar03Icon,
+    ArrowRight01Icon,
+    ShieldCheck
+} from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -258,7 +257,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                                            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            <HugeiconsIcon icon={FileText} className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
                                     </div>
@@ -271,7 +270,7 @@ const PatientMedicalReport: React.FC = () => {
                                     <div className="w-full sm:w-44">
                                         <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
                                             <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
-                                                <Calendar className="mr-2 h-3.5 w-3.5 text-primary" />
+                                                <HugeiconsIcon icon={Calendar03Icon} className="mr-2 h-3.5 w-3.5 text-primary" />
                                                 <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl font-bold">
@@ -290,7 +289,7 @@ const PatientMedicalReport: React.FC = () => {
                                         onClick={handleGenerateReport}
                                         disabled={!selectedYear || loading || fetchingYears}
                                     >
-                                        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="mr-2 h-3.5 w-3.5" />}
+                                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-3.5 w-3.5 animate-spin" /> : <HugeiconsIcon icon={ArrowRight01Icon} className="mr-2 h-3.5 w-3.5" />}
                                         Retrieve Report
                                     </Button>
                                 </div>
@@ -302,18 +301,18 @@ const PatientMedicalReport: React.FC = () => {
                     {reportData && !loading && (
                         <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-3 md:p-3 rounded-xl border border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-md gap-3 md:gap-0">
                             <div className="flex items-center gap-3 px-2 md:px-4">
-                                <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
+                                <HugeiconsIcon icon={ShieldCheck} className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
                                 <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
-                                    <Printer className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
+                                    <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
-                                    <Download className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Download</span>
+                                    <HugeiconsIcon icon={Download01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Download</span>
                                 </Button>
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
-                                    <Mail className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
+                                    <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
                                 </Button>
                             </div>
                         </div>
@@ -322,10 +321,10 @@ const PatientMedicalReport: React.FC = () => {
                     {!reportData && !loading && (
                         <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
                             {fetchingYears ? (
-                                <Loader2 className="h-10 w-10 animate-spin text-primary/30 mb-2" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/30 mb-2" />
                             ) : (
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    <HugeiconsIcon icon={FileText} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                 </div>
                             )}
                             <div className="space-y-2">
@@ -350,9 +349,9 @@ const PatientMedicalReport: React.FC = () => {
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-20 md:py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
                             <div className="relative mb-6">
-                                <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
+                                    <HugeiconsIcon icon={FileText} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
                                 </div>
                             </div>
                             <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>

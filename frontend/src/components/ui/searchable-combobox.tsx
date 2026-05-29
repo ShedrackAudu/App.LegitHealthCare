@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Check, ChevronDown } from "lucide-react";
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckmarkCircle02Icon, ChevronDown } from '@hugeicons/core-free-icons';
 import { cn } from "@/lib/utils";
 
 export function SearchableCombobox({
@@ -110,7 +111,8 @@ export function SearchableCombobox({
           onKeyDown={handleKeyDown}
           autoComplete="off"
         />
-        <ChevronDown 
+        <HugeiconsIcon 
+            icon={ChevronDown} 
             className="h-4 w-4 opacity-50 cursor-pointer hover:opacity-100 transition-opacity ml-2 shrink-0" 
             onClick={() => { setOpen(!open); if(!open) setSearch(""); }}
         />
@@ -136,7 +138,7 @@ export function SearchableCombobox({
                     onMouseEnter={() => setActiveIndex(index)}
                 >
                     <span className="flex-1 truncate">{opt}</span>
-                    {value === opt && <Check className="h-5 w-5 text-primary shrink-0" />}
+                    {value === opt && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-5 w-5 text-primary shrink-0" />}
                 </div>
                 ))
             )}

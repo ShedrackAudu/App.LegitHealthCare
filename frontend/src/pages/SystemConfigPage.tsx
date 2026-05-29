@@ -5,7 +5,25 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck, Stethoscope, RotateCcw, Megaphone } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Delete02Icon,
+  Hospital02Icon,
+  GlobeIcon,
+  UserGroupIcon,
+  PlusSignIcon,
+  Loading03Icon,
+  Settings02Icon,
+  Mail01Icon,
+  Save,
+  Server,
+  EyeIcon,
+  EyeOff,
+  ShieldCheck,
+  StethoscopeIcon,
+  ReloadIcon,
+  MegaphoneIcon
+} from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
@@ -39,7 +57,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
         <Card className="col-span-1 border-2 shadow-lg h-fit overflow-hidden border-primary/10">
             <CardHeader className="bg-primary/5 border-b pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-primary" />
+                    <HugeiconsIcon icon={PlusSignIcon} className="h-5 w-5 text-primary" />
                     Add New
                 </CardTitle>
                 <CardDescription>{description}</CardDescription>
@@ -61,7 +79,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         className="w-full h-11 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
                         disabled={adding || !newItemName.trim()}
                     >
-                        {adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="mr-2 h-5 w-5" /> Add {title.slice(0, -1)}</>}
+                        {adding ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" /> Add {title.slice(0, -1)}</>}
                     </Button>
                 </div>
             </CardContent>
@@ -71,7 +89,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             <CardHeader className="bg-muted/30 border-b pb-4 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
-                        <Icon className="h-5 w-5 text-primary" />
+                        <HugeiconsIcon icon={Icon} className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                         <CardTitle className="text-lg">Existing {title}</CardTitle>
@@ -85,11 +103,11 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             <CardContent className="p-0">
                 {loading ? (
                     <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                     </div>
                 ) : items.length === 0 ? (
                     <div className="h-64 flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-4">
-                        <Icon className="h-16 w-16" />
+                        <HugeiconsIcon icon={Icon} className="h-16 w-16" />
                         <p className="text-xl font-bold">No items found</p>
                     </div>
                 ) : (
@@ -103,7 +121,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
                                     onClick={() => onDeleteRequest(type, item.id, item.name)}
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                 </Button>
                             </div>
                         ))}
@@ -504,7 +522,7 @@ const SystemConfigPage: React.FC = () => {
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <Settings2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={Settings02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
@@ -518,31 +536,31 @@ const SystemConfigPage: React.FC = () => {
                 <Tabs defaultValue="departments" className="w-full space-y-6">
                     <TabsList className="grid grid-cols-2 md:flex md:flex-wrap gap-1 w-full h-auto p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
                         <TabsTrigger value="departments" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Building2 className="h-4 w-4" />
+                            <HugeiconsIcon icon={Hospital02Icon} className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
                         <TabsTrigger value="races" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Users className="h-4 w-4" />
+                            <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
                             Races / Cont.
                         </TabsTrigger>
                         <TabsTrigger value="nationalities" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Globe className="h-4 w-4" />
+                            <HugeiconsIcon icon={GlobeIcon} className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
                         <TabsTrigger value="email" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Mail className="h-4 w-4" />
+                            <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />
                             Email & Contacts
                         </TabsTrigger>
                         <TabsTrigger value="doctor" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Stethoscope className="h-4 w-4" />
+                            <HugeiconsIcon icon={StethoscopeIcon} className="h-4 w-4" />
                             Doctor
                         </TabsTrigger>
                         <TabsTrigger value="settings" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Settings2 className="h-4 w-4" />
+                            <HugeiconsIcon icon={Settings02Icon} className="h-4 w-4" />
                             Settings
                         </TabsTrigger>
                         <TabsTrigger value="maintenance" className="col-span-2 md:col-span-1 w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <RotateCcw className="h-4 w-4" />
+                            <HugeiconsIcon icon={ReloadIcon} className="h-4 w-4" />
                             Maintenance
                         </TabsTrigger>
                     </TabsList>
@@ -553,7 +571,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure department options for patient registration."
                             items={departments}
                             type="departments"
-                            icon={Building2}
+                            icon={Hospital02Icon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -569,7 +587,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure race/continent options for patient registration."
                             items={races}
                             type="races"
-                            icon={Users}
+                            icon={UserGroupIcon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -585,7 +603,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure nationality options for patient registration."
                             items={nationalities}
                             type="nationalities"
-                            icon={Globe}
+                            icon={GlobeIcon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -598,7 +616,7 @@ const SystemConfigPage: React.FC = () => {
                     <TabsContent value="email">
                         {emailLoading ? (
                             <div className="h-64 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -607,7 +625,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <Server className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={Server} className="h-5 w-5 text-primary" />
                                                     SMTP Server Settings
                                                 </CardTitle>
                                                 <CardDescription>Configure how the system connects to your email provider.</CardDescription>
@@ -674,7 +692,7 @@ const SystemConfigPage: React.FC = () => {
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
                                                         >
-                                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                            {showPassword ? <HugeiconsIcon icon={EyeOff} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -684,7 +702,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <Mail className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={Mail01Icon} className="h-5 w-5 text-primary" />
                                                     Patient Portal Contacts
                                                 </CardTitle>
                                                 <CardDescription>Configure contact details displayed on the Patient Portal 'Contact Us' page.</CardDescription>
@@ -726,7 +744,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <ShieldCheck className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 text-primary" />
                                                     Clinical Administration
                                                 </CardTitle>
                                                 <CardDescription>Configure administrative roles and clinical oversight.</CardDescription>
@@ -752,7 +770,7 @@ const SystemConfigPage: React.FC = () => {
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {emailSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                                {emailSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
                                                 {emailSaving ? 'Saving...' : 'Save Configuration'}
                                             </Button>
                                         </div>
@@ -763,7 +781,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg h-fit border-primary/10">
                                         <CardHeader className="bg-primary/5 border-b pb-4">
                                             <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
-                                                <Mail className="h-4 w-4" />
+                                                <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />
                                                 Test Connection
                                             </CardTitle>
                                         </CardHeader>
@@ -784,7 +802,7 @@ const SystemConfigPage: React.FC = () => {
                                                 onClick={handleTestEmail}
                                                 disabled={testing}
                                             >
-                                                {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+                                                {testing ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={Mail01Icon} className="mr-2 h-4 w-4" />}
                                                 {testing ? 'Sending...' : 'Send Test Email'}
                                             </Button>
                                         </CardContent>
@@ -792,7 +810,7 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="bg-amber-500/10 border-2 border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
                                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600">
-                                            <Server className="h-5 w-5" />
+                                            <HugeiconsIcon icon={Server} className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-amber-900 text-[10px] uppercase tracking-wider text-amber-600">Security Note</h4>
@@ -810,7 +828,7 @@ const SystemConfigPage: React.FC = () => {
                     <TabsContent value="doctor">
                         {brandingLoading ? (
                             <div className="h-64 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                             </div>
                         ) : (
                             <form onSubmit={handleSaveBranding} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -818,7 +836,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                         <CardHeader className="bg-primary/5 border-b pb-4">
                                             <CardTitle className="text-lg flex items-center gap-2">
-                                                <Stethoscope className="h-5 w-5 text-primary" />
+                                                <HugeiconsIcon icon={StethoscopeIcon} className="h-5 w-5 text-primary" />
                                                 Clinical Signature
                                             </CardTitle>
                                             <CardDescription>Configure the doctor's name and post for report signatures.</CardDescription>
@@ -848,7 +866,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg overflow-hidden border-blue-500/10">
                                         <CardHeader className="bg-blue-500/5 border-b pb-4">
                                             <CardTitle className="text-lg flex items-center gap-2">
-                                                <Eye className="h-5 w-5 text-blue-500" />
+                                                <HugeiconsIcon icon={EyeIcon} className="h-5 w-5 text-blue-500" />
                                                 Live Preview
                                             </CardTitle>
                                             <CardDescription>How the signature will appear on patient reports.</CardDescription>
@@ -871,7 +889,7 @@ const SystemConfigPage: React.FC = () => {
                                         size="lg"
                                         className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                     >
-                                        {brandingSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                        {brandingSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
                                         {brandingSaving ? 'Saving...' : 'Update Clinical Identity'}
                                     </Button>
                                 </div>
@@ -886,7 +904,7 @@ const SystemConfigPage: React.FC = () => {
                                 <CardHeader className="border-b bg-muted/5 p-6">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <Settings2 className="h-6 w-6 text-primary" />
+                                            <HugeiconsIcon icon={Settings02Icon} className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-primary font-black">System Settings</CardTitle>
@@ -918,7 +936,7 @@ const SystemConfigPage: React.FC = () => {
                                                     <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
                                                         staffSignupEnabled ? "translate-x-5" : "translate-x-1"
                                                     }`}>
-                                                        <Loader2 className="h-3 w-3 animate-spin text-primary" />
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
                                                     </span>
                                                 ) : (
                                                     <span
@@ -970,7 +988,7 @@ const SystemConfigPage: React.FC = () => {
                                 <CardHeader className="border-b bg-muted/5 p-6">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <Megaphone className="h-6 w-6 text-primary" />
+                                            <HugeiconsIcon icon={MegaphoneIcon} className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-primary font-black">System Announcement Ticker</CardTitle>
@@ -1035,7 +1053,7 @@ const SystemConfigPage: React.FC = () => {
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {tickerSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
+                                                {tickerSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
                                                 {tickerSaving ? 'Saving...' : 'Save Announcement'}
                                             </Button>
                                         </div>
@@ -1052,7 +1070,7 @@ const SystemConfigPage: React.FC = () => {
                                 <CardHeader className="border-b bg-muted/5 p-6">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-destructive/10 rounded-2xl">
-                                            <RotateCcw className="h-6 w-6 text-destructive" />
+                                            <HugeiconsIcon icon={ReloadIcon} className="h-6 w-6 text-destructive" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
@@ -1080,7 +1098,7 @@ const SystemConfigPage: React.FC = () => {
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={ReloadIcon} className="mr-2 h-5 w-5" />}
                                             Reset
                                         </Button>
                                     </div>
@@ -1104,7 +1122,7 @@ const SystemConfigPage: React.FC = () => {
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
                                             Clear
                                         </Button>
                                     </div>
@@ -1128,7 +1146,7 @@ const SystemConfigPage: React.FC = () => {
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
+                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
                                             Clear
                                         </Button>
                                     </div>

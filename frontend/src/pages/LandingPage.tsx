@@ -2,37 +2,38 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { ModeToggle } from '@/components/mode-toggle';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Shield, 
-  Activity, 
-  MessageSquare, 
-  Bell, 
-  ArrowRight, 
-  CheckCircle2, 
+  Shield01Icon, 
+  Activity01Icon, 
+  Comment01Icon, 
+  Notification01Icon, 
+  ArrowRight01Icon, 
+  CheckmarkCircle02Icon, 
   Heart, 
-  Facebook, 
-  Twitter, 
-  Instagram, 
-  Linkedin, 
-  Youtube, 
-  Globe, 
-  LinkIcon,
-  MessageCircle,
-  Music2,
-  Menu,
-  X,
-  Mail,
-  Phone,
-  MapPin,
-  FileText,
-  LineChart,
-  Calendar,
-  Sparkles,
-  Stethoscope,
-  Microscope,
-  Database,
-  ArrowUp
-} from 'lucide-react';
+  FacebookIcon, 
+  TwitterIcon, 
+  InstagramIcon, 
+  LinkedinIcon, 
+  YoutubeIcon, 
+  GlobeIcon, 
+  Link01Icon, 
+  Message01Icon, 
+  TiktokIcon, 
+  Menu01Icon, 
+  Cancel01Icon, 
+  Mail01Icon, 
+  CallIcon, 
+  Location01Icon, 
+  Note01Icon, 
+  Analytics01Icon, 
+  Calendar03Icon, 
+  SparklesIcon, 
+  StethoscopeIcon, 
+  MicroscopeIcon, 
+  Database02Icon, 
+  ArrowUp01Icon 
+} from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { SafeImage } from '@/components/common/SafeImage';
@@ -77,15 +78,15 @@ const LandingPage = () => {
 
   const getSocialIcon = (label: string) => {
     const l = label.toLowerCase();
-    if (l.includes('facebook')) return Facebook;
-    if (l.includes('twitter') || l.includes('x')) return Twitter;
-    if (l.includes('instagram')) return Instagram;
-    if (l.includes('linkedin')) return Linkedin;
-    if (l.includes('youtube')) return Youtube;
-    if (l.includes('globe') || l.includes('web')) return Globe;
-    if (l.includes('whatsapp')) return MessageCircle;
-    if (l.includes('tiktok')) return Music2;
-    return LinkIcon;
+    if (l.includes('facebook')) return (props: any) => <HugeiconsIcon icon={FacebookIcon} {...props} />;
+    if (l.includes('twitter') || l.includes('x')) return (props: any) => <HugeiconsIcon icon={TwitterIcon} {...props} />;
+    if (l.includes('instagram')) return (props: any) => <HugeiconsIcon icon={InstagramIcon} {...props} />;
+    if (l.includes('linkedin')) return (props: any) => <HugeiconsIcon icon={LinkedinIcon} {...props} />;
+    if (l.includes('youtube')) return (props: any) => <HugeiconsIcon icon={YoutubeIcon} {...props} />;
+    if (l.includes('globe') || l.includes('web')) return (props: any) => <HugeiconsIcon icon={GlobeIcon} {...props} />;
+    if (l.includes('whatsapp')) return (props: any) => <HugeiconsIcon icon={Message01Icon} {...props} />;
+    if (l.includes('tiktok')) return (props: any) => <HugeiconsIcon icon={TiktokIcon} {...props} />;
+    return (props: any) => <HugeiconsIcon icon={Link01Icon} {...props} />;
   };
 
   return (
@@ -105,7 +106,7 @@ const LandingPage = () => {
                   <SafeImage src={getImageUrl(branding.logo_dark, '')} alt={branding?.clinic_name || "Logo"} className="h-10 transition-all" fallbackText={branding?.clinic_name} />
                 ) : (
                   <div className="flex items-center">
-                    <Activity className="h-8 w-8 text-primary mr-2" />
+                    <HugeiconsIcon icon={Activity01Icon} className="h-8 w-8 text-primary mr-2" />
                     <span className="text-2xl font-bold text-primary tracking-tight">{branding?.clinic_name || "Legit HealthCare"}</span>
                   </div>
                 )}
@@ -118,7 +119,7 @@ const LandingPage = () => {
                 ) : branding?.logo_dark ? (
                   <SafeImage src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-10 transition-all" />
                 ) : (
-                  <Activity className="h-8 w-8 text-primary" />
+                  <HugeiconsIcon icon={Activity01Icon} className="h-8 w-8 text-primary" />
                 )}
               </div>
             </div>
@@ -148,7 +149,7 @@ const LandingPage = () => {
                 onClick={() => setMenuOpen(!menuOpen)}
                 className="p-2 text-muted-foreground hover:text-primary transition-colors"
               >
-                {menuOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
+                {menuOpen ? <HugeiconsIcon icon={Cancel01Icon} className="h-6 w-6" /> : <HugeiconsIcon icon={Menu01Icon} className="h-6 w-6" />}
               </button>
             </div>
           </div>
@@ -238,7 +239,7 @@ const LandingPage = () => {
                 <Link to="/signup?portal=staff">
                   <Button size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-1 active:translate-y-0.5 transition-all bg-primary relative overflow-hidden group">
                     <span className="relative z-10 flex items-center">
-                      Get Started <ArrowRight className="ml-3 h-5 w-5" />
+                      Get Started <HugeiconsIcon icon={ArrowRight01Icon} className="ml-3 h-5 w-5" />
                     </span>
                     <motion.div 
                       className="absolute inset-0 bg-white/20 -translate-x-full group-hover:translate-x-full transition-transform duration-1000 skew-x-12"
@@ -267,7 +268,7 @@ const LandingPage = () => {
                 <div className="h-8 w-px bg-border/50 hidden sm:block" />
                 <div className="space-y-1">
                    <div className="flex gap-1">
-                     {[1,2,3,4,5].map(i => <Sparkles key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
+                     {[1,2,3,4,5].map(i => <HugeiconsIcon icon={SparklesIcon} key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
                    </div>
                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Certified Medical Services</p>
                 </div>
@@ -301,7 +302,7 @@ const LandingPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
                     <div className="absolute bottom-4 left-4 right-4">
                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
-                          <Microscope className="w-3 h-3" /> Diagnostics
+                          <HugeiconsIcon icon={MicroscopeIcon} className="w-3 h-3" /> Diagnostics
                        </div>
                     </div>
                   </motion.div>
@@ -320,7 +321,7 @@ const LandingPage = () => {
                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-60 transition-opacity group-hover/card:opacity-80" />
                     <div className="absolute bottom-4 left-4 right-4">
                        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-[9px] font-black uppercase tracking-wider text-white">
-                          <Database className="w-3 h-3" /> Bio-Analytics
+                          <HugeiconsIcon icon={Database02Icon} className="w-3 h-3" /> Bio-Analytics
                        </div>
                     </div>
                   </motion.div>
@@ -343,7 +344,7 @@ const LandingPage = () => {
                           <h4 className="text-xl font-black text-white">Clinical Intelligence Team</h4>
                        </div>
                        <div className="w-12 h-12 bg-white/10 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/20 text-white">
-                          <Stethoscope className="w-6 h-6" />
+                          <HugeiconsIcon icon={StethoscopeIcon} className="w-6 h-6" />
                        </div>
                     </div>
                   </motion.div>
@@ -364,32 +365,32 @@ const LandingPage = () => {
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
             <FeatureCard 
-              icon={<FileText className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={Note01Icon} className="w-6 h-6" />} 
               title="Digital Health Records" 
               description="Access all your screening history and medical records in one centralized, secure digital vault." 
             />
             <FeatureCard 
-              icon={<LineChart className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={Analytics01Icon} className="w-6 h-6" />} 
               title="Health Analytics" 
               description="Gain insights into your health with automated trend analysis across your yearly medical evaluations." 
             />
             <FeatureCard 
-              icon={<Calendar className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={Calendar03Icon} className="w-6 h-6" />} 
               title="Appointment Scheduler" 
               description="Seamlessly book and manage your yearly medical screenings and follow-up consultations." 
             />
             <FeatureCard 
-              icon={<CheckCircle2 className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-6 h-6" />} 
               title="Verified Reports" 
               description="Access and download your official signed medical reports in PDF format with digital authenticity." 
             />
             <FeatureCard 
-              icon={<Shield className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />} 
               title="Encrypted" 
               description="Your data is private. Access yearly screening results with industry-standard encryption." 
             />
             <FeatureCard 
-              icon={<Bell className="w-6 h-6" />} 
+              icon={<HugeiconsIcon icon={Notification01Icon} className="w-6 h-6" />} 
               title="Alerts" 
               description="Never miss an appointment. Automated reminders for screenings and medical follow-ups." 
             />
@@ -447,7 +448,7 @@ const LandingPage = () => {
             >
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                  <Heart className="w-4 h-4 text-primary fill-primary/20" />
+                  <HugeiconsIcon icon={Heart} className="w-4 h-4 text-primary fill-primary/20" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">About Legit HealthCare</span>
                 </div>
                 <h2 className="text-4xl lg:text-6xl font-black tracking-tight leading-[1.05]">
@@ -461,7 +462,7 @@ const LandingPage = () => {
               <div className="space-y-6">
                 <div className="flex gap-4 items-start">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-                    <Shield className="w-5 h-5" />
+                    <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-lg font-bold">Uncompromising Security</h4>
@@ -470,7 +471,7 @@ const LandingPage = () => {
                 </div>
                 <div className="flex gap-4 items-start">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
-                    <Activity className="w-5 h-5" />
+                    <HugeiconsIcon icon={Activity01Icon} className="w-5 h-5" />
                   </div>
                   <div>
                     <h4 className="text-lg font-bold">Advanced Diagnostic Integrations</h4>
@@ -566,11 +567,11 @@ const LandingPage = () => {
                            </div>
                         </div>
                         <div className="p-4 bg-primary/10 flex items-center justify-center">
-                           <Shield className="w-5 h-5 text-primary mr-2" />
+                           <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5 text-primary mr-2" />
                            <span className="text-[10px] font-black uppercase text-primary tracking-widest">End-to-End Encrypted Patient Session</span>
                         </div>
                      </div>
-                     <CheckCircle2 className="absolute -top-6 -right-6 w-20 h-20 text-primary animate-bounce-slow" />
+                     <HugeiconsIcon icon={CheckmarkCircle02Icon} className="absolute -top-6 -right-6 w-20 h-20 text-primary animate-bounce-slow" />
                   </div>
                </div>
             </div>
@@ -596,11 +597,11 @@ const LandingPage = () => {
               </div>
                <div className="relative rounded-3xl overflow-hidden border border-white/20 h-[400px] lg:h-full bg-white/5 backdrop-blur-[40px] flex items-center justify-center p-12 group/security ring-1 ring-white/10">
                   <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent pointer-events-none" />
-                  <Activity className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/security:rotate-0" />
+                  <HugeiconsIcon icon={Activity01Icon} className="h-40 w-40 text-white opacity-5 absolute -right-10 -bottom-10 rotate-12 transition-transform duration-1000 group-hover/security:rotate-0" />
                   <div className="text-center relative z-10 space-y-6">
                      <div className="w-24 h-24 bg-white/10 rounded-2xl flex items-center justify-center mx-auto text-white border border-white/20 shadow-2xl relative group-hover/security:scale-110 transition-transform duration-500">
                         <div className="absolute inset-0 bg-primary blur-2xl opacity-20 group-hover/security:opacity-40 transition-opacity" />
-                        <Shield className="h-10 w-10 relative z-10" />
+                        <HugeiconsIcon icon={Shield01Icon} className="h-10 w-10 relative z-10" />
                      </div>
                      <div className="space-y-2">
                         <h4 className="text-3xl font-black text-white tracking-tight">NHA & NDPA Compliant</h4>
@@ -625,7 +626,7 @@ const LandingPage = () => {
                    <img src={getImageUrl(branding.logo_dark, '')} alt="Logo" className="h-6 transition-all" />
                  ) : (
                    <>
-                     <Activity className="h-6 w-6 text-primary mr-2" />
+                     <HugeiconsIcon icon={Activity01Icon} className="h-6 w-6 text-primary mr-2" />
                      <span className="text-2xl font-bold tracking-tight text-primary">{branding?.clinic_name || "Legit HealthCare"}</span>
                    </>
                  )}
@@ -647,19 +648,19 @@ const LandingPage = () => {
               <ul className="space-y-4 text-sm text-muted-foreground">
                 <li className="flex items-center gap-3 group transition-all">
                   <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
-                    <Mail className="w-4 h-4" />
+                    <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" />
                   </div>
                   <span className="group-hover:text-primary transition-colors">{branding?.email || "contact@legithealthcare.com"}</span>
                 </li>
                 <li className="flex items-center gap-3 group transition-all">
                   <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0">
-                    <Phone className="w-4 h-4" />
+                    <HugeiconsIcon icon={CallIcon} className="w-4 h-4" />
                   </div>
                   <span className="group-hover:text-primary transition-colors">{branding?.phone || "+234 (0) 800 LEGIT HC"}</span>
                 </li>
                 <li className="flex items-start gap-3 group transition-all">
                   <div className="w-8 h-8 rounded-lg bg-primary/5 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors shrink-0 mt-0.5">
-                    <MapPin className="w-4 h-4" />
+                    <HugeiconsIcon icon={Location01Icon} className="w-4 h-4" />
                   </div>
                   <span className="group-hover:text-primary transition-colors leading-relaxed">{branding?.address || "Healthway Avenue, Wellness City"}</span>
                 </li>
@@ -712,7 +713,7 @@ const LandingPage = () => {
           onClick={scrollToTop}
           className="fixed bottom-8 right-8 z-50 p-4 rounded-2xl bg-primary text-primary-foreground shadow-2xl shadow-primary/30 hover:scale-110 active:scale-95 transition-transform"
         >
-          <ArrowUp className="w-6 h-6" />
+          <HugeiconsIcon icon={ArrowUp01Icon} className="w-6 h-6" />
         </motion.button>
       )}
     </AnimatePresence>

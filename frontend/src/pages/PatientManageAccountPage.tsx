@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  User, Mail, Phone, Shield, ShieldCheck, 
-  Save, ArrowLeft, Building2, Calendar, IdCard,
-  Lock, Key, Fingerprint, ShieldEllipsis, Flag, Compass, Globe,
-  Loader2, Eye, EyeOff
-} from 'lucide-react';
+  UserIcon, Mail01Icon, CallIcon, ShieldIcon, ShieldCheck, 
+  Save, ArrowLeft01Icon, Building02Icon, Calendar03Icon, LicenseIcon,
+  LockIcon, KeyIcon, FingerPrintIcon, Flag02Icon, CompassIcon, GlobeIcon,
+  Loading03Icon, EyeIcon, EyeOff
+} from '@hugeicons/core-free-icons';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
 import { PatientLayout } from '@/components/layout/PatientLayout';
@@ -127,7 +128,7 @@ const PatientManageAccountPage = () => {
               <p className="text-[10px] md:text-xs text-muted-foreground font-medium mt-0.5">Manage your personal profile and security preferences.</p>
             </div>
             <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-xl border h-9 text-[10px]">
-              <ArrowLeft className="w-3 h-3" /> Dashboard
+              <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Dashboard
             </Button>
           </div>
 
@@ -138,7 +139,7 @@ const PatientManageAccountPage = () => {
                 <CardHeader className="p-5 border-b bg-muted/5">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                       <User className="w-4.5 h-4.5" />
+                       <HugeiconsIcon icon={UserIcon} className="w-4.5 h-4.5" />
                     </div>
                     <div>
                       <CardTitle className="text-base font-black tracking-tight">Personal Profile</CardTitle>
@@ -182,7 +183,7 @@ const PatientManageAccountPage = () => {
                       <div className="space-y-1">
                         <Label htmlFor="email" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
                         <div className="relative group">
-                          <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                           <Input
                             id="email"
                             className="h-10 pl-9 rounded-xl border font-bold text-[13px] focus:ring-4 focus:ring-primary/5 transition-all"
@@ -195,7 +196,7 @@ const PatientManageAccountPage = () => {
                       <div className="space-y-1">
                         <Label htmlFor="phone" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</Label>
                         <div className="relative group">
-                          <Phone className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={CallIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
                           <Input
                             id="phone"
                             className="h-10 pl-9 rounded-xl border font-bold text-[13px] focus:ring-4 focus:ring-primary/5 transition-all"
@@ -209,13 +210,13 @@ const PatientManageAccountPage = () => {
 
                     <div className="pt-5 border-t border-dashed space-y-4">
                       <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-1">
-                        <Fingerprint className="w-3.5 h-3.5 text-primary opacity-60" />
+                        <HugeiconsIcon icon={FingerPrintIcon} className="w-3.5 h-3.5 text-primary opacity-60" />
                         Verified Clinical Identity
                       </p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <IdCard className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={LicenseIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Staff ID</p>
@@ -224,7 +225,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <Calendar className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={Calendar03Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Birth</p>
@@ -233,7 +234,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <ShieldEllipsis className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={ShieldCheck} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Profile</p>
@@ -242,7 +243,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <Building2 className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={Building02Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Dept</p>
@@ -251,7 +252,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <Compass className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={CompassIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Section</p>
@@ -260,7 +261,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <Flag className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={Flag02Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Race</p>
@@ -269,7 +270,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50 md:col-span-2">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <Globe className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={GlobeIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Nationality</p>
@@ -281,7 +282,7 @@ const PatientManageAccountPage = () => {
                   </CardContent>
                   <CardFooter className="p-5 pt-0 bg-muted/5 flex justify-end">
                     <Button type="submit" disabled={saving} className="h-10 px-6 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
-                      {saving ? 'Saving...' : <><Save className="mr-2 h-3.5 w-3.5" /> Save Changes</>}
+                      {saving ? 'Saving...' : <><HugeiconsIcon icon={Save} className="mr-2 h-3.5 w-3.5" /> Save Changes</>}
                     </Button>
                   </CardFooter>
                 </form>
@@ -294,7 +295,7 @@ const PatientManageAccountPage = () => {
                 <CardHeader className="p-5 border-b bg-primary/[0.03]">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-xl text-primary">
-                      <ShieldCheck className="w-4 h-4" />
+                      <HugeiconsIcon icon={ShieldCheck} className="w-4 h-4" />
                     </div>
                     <div>
                       <CardTitle className="text-base font-black tracking-tight">Security</CardTitle>
@@ -307,7 +308,7 @@ const PatientManageAccountPage = () => {
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
-                            <Lock className="w-3.5 h-3.5" />
+                            <HugeiconsIcon icon={LockIcon} className="w-3.5 h-3.5" />
                           </div>
                           <span className="font-black text-[10px] uppercase tracking-wider">Two-Factor Auth</span>
                         </div>
@@ -336,7 +337,7 @@ const PatientManageAccountPage = () => {
                         }}
                       >
                         <div className="p-1 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                          <Key className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+                          <HugeiconsIcon icon={KeyIcon} className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
                         </div>
                         <span>Reset Passcode</span>
                      </Button>
@@ -350,7 +351,7 @@ const PatientManageAccountPage = () => {
                   <div className="p-6 space-y-4">
                     <DialogHeader className="space-y-3 items-center text-center">
                       <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm">
-                        <Key className="w-6 h-6" />
+                        <HugeiconsIcon icon={KeyIcon} className="w-6 h-6" />
                       </div>
                       <div className="space-y-1">
                         <DialogTitle className="text-xl font-black tracking-tight">Security Reset</DialogTitle>
@@ -398,7 +399,7 @@ const PatientManageAccountPage = () => {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                               >
-                                {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {showPassword ? <HugeiconsIcon icon={EyeOff} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
                               </button>
                             </div>
                           </div>
@@ -421,7 +422,7 @@ const PatientManageAccountPage = () => {
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                               >
-                                {showConfirmPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                {showConfirmPassword ? <HugeiconsIcon icon={EyeOff} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
                               </button>
                             </div>
                           </div>
@@ -447,7 +448,7 @@ const PatientManageAccountPage = () => {
                           }}
                           disabled={resetLoading}
                         >
-                          {resetLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Save className="h-4 w-4 mr-2" />}
+                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={Save} className="h-4 w-4 mr-2" />}
                           {resetLoading ? "Sending Code..." : "Send Verification Code"}
                         </Button>
                       ) : (
@@ -488,7 +489,7 @@ const PatientManageAccountPage = () => {
                           }}
                           disabled={resetLoading}
                         >
-                          {resetLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4 mr-2" />}
                           {resetLoading ? "Verifying..." : "Verify & Update Password"}
                         </Button>
                       )}
@@ -499,7 +500,7 @@ const PatientManageAccountPage = () => {
 
               <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col items-center text-center space-y-3">
                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-                    <Shield className="w-6 h-6" />
+                    <HugeiconsIcon icon={ShieldIcon} className="w-6 h-6" />
                  </div>
                  <div className="space-y-1">
                     <h4 className="font-black text-sm uppercase tracking-tight">Privacy Guard</h4>

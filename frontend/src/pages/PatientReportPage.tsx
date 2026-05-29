@@ -1,5 +1,13 @@
 import React, { useState } from 'react';
-import { FileText, Download, Mail, Loader2, X, Printer } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  FileText, 
+  Download01Icon, 
+  Mail01Icon, 
+  Loading03Icon, 
+  Cancel01Icon, 
+  PrinterIcon 
+} from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
@@ -217,7 +225,7 @@ const PatientReportPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-red-500/10 rounded-xl sm:rounded-2xl">
-                            <FileText className="text-red-500 h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={FileText} className="text-red-500 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">Patient Medical Report</h1>
@@ -246,25 +254,25 @@ const PatientReportPage: React.FC = () => {
                         <div className="flex items-center gap-4 w-full md:w-auto">
                             <Button variant="outline" className="w-full md:w-auto rounded-xl border-2 font-bold"
                                 onClick={() => { setSelectedPatient(null); setReportData(null); }}>
-                                <X className="mr-2 h-4 w-4" /> Close Report
+                                <HugeiconsIcon icon={Cancel01Icon} className="mr-2 h-4 w-4" /> Close Report
                             </Button>
                         </div>
                         <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto">
                             <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 text-xs sm:text-sm" onClick={handlePrint}>
-                                <Printer className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Print Report</span>
+                                <HugeiconsIcon icon={PrinterIcon} className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Print Report</span>
                             </Button>
                             <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-xs sm:text-sm" variant="outline" onClick={handleDownloadPDF}>
-                                <Download className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Download PDF</span>
+                                <HugeiconsIcon icon={Download01Icon} className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Download PDF</span>
                             </Button>
                             <Button className="flex-1 md:flex-none rounded-xl shadow-lg border-2 font-bold px-4 sm:px-6 bg-indigo-600 text-white hover:bg-indigo-700 text-xs sm:text-sm" onClick={handleEmailPDF}>
-                                <Mail className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Email Patient</span>
+                                <HugeiconsIcon icon={Mail01Icon} className="sm:mr-2 h-4 w-4" /> <span className="hidden sm:inline">Email Patient</span>
                             </Button>
                         </div>
                     </div>
 
                     {loading ? (
                         <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                            <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                            <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
                             <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
                         </div>
                     ) : reportData ? (
@@ -604,7 +612,7 @@ const PatientReportPage: React.FC = () => {
                         <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6 no-print">
                             <div className="text-center space-y-3">
                                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
-                                    <FileText className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                                    <HugeiconsIcon icon={FileText} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
                                 </div>
                                 <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
                                     No diagnostic data found for this patient in {activeYear}.
@@ -626,7 +634,7 @@ const PatientReportPage: React.FC = () => {
                     <Card className="border-2 border-dashed flex items-center justify-center min-h-[24rem] bg-muted/5 mt-8 p-6">
                         <div className="text-center space-y-3">
                             <div className="w-16 h-16 sm:w-24 sm:h-24 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
-                                <FileText className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
+                                <HugeiconsIcon icon={FileText} className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
                             </div>
                             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground/70">
                                 Search a patient to view report

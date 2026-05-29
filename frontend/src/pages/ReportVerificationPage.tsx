@@ -1,17 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-    CheckCircle2, 
-    XCircle, 
-    Loader2, 
+    CheckmarkCircle02Icon, 
+    CancelCircleIcon, 
+    Loading03Icon, 
     FileText, 
-    Calendar, 
-    Building2, 
-    User, 
+    Calendar03Icon, 
+    Building02Icon, 
+    UserIcon, 
     ShieldCheck, 
-    ExternalLink,
-    Clock
-} from 'lucide-react';
+    ArrowUpRight01Icon,
+    Clock01Icon
+} from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
@@ -67,7 +68,7 @@ const ReportVerificationPage: React.FC = () => {
                             className="flex flex-col items-center justify-center py-12"
                         >
                             <div className="relative">
-                                <Loader2 className="h-10 w-10 animate-spin text-primary" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary" />
                                 <div className="absolute inset-0 blur-xl bg-primary/20 animate-pulse rounded-full" />
                             </div>
                             <p className="mt-4 text-xs font-bold text-muted-foreground animate-pulse">
@@ -94,7 +95,7 @@ const ReportVerificationPage: React.FC = () => {
                                         <span className="font-black text-xs tracking-tighter">LEGIT HEALTHCARE</span>
                                     )}
                                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full">
-                                        <ShieldCheck className="h-2.5 w-2.5 text-primary" />
+                                        <HugeiconsIcon icon={ShieldCheck} className="h-2.5 w-2.5 text-primary" />
                                         <span className="text-[8px] font-black uppercase tracking-widest text-primary">Secure Portal</span>
                                     </div>
                                 </div>
@@ -106,9 +107,9 @@ const ReportVerificationPage: React.FC = () => {
                                     <div className="flex items-center gap-2.5">
                                         <div className={`p-1.5 rounded-lg ${status === 'success' ? 'bg-primary/20' : 'bg-destructive/20'}`}>
                                             {status === 'success' ? (
-                                                <CheckCircle2 className={`h-4 w-4 ${status === 'success' ? 'text-primary' : 'text-destructive'}`} />
+                                                <HugeiconsIcon icon={CheckmarkCircle02Icon} className={`h-4 w-4 ${status === 'success' ? 'text-primary' : 'text-destructive'}`} />
                                             ) : (
-                                                <XCircle className="h-4 w-4 text-destructive" />
+                                                <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4 text-destructive" />
                                             )}
                                         </div>
                                         <div>
@@ -133,7 +134,7 @@ const ReportVerificationPage: React.FC = () => {
                                             {/* Patient Info Header */}
                                             <div className="flex items-center gap-4 pb-4 border-b border-dashed border-border/60">
                                                 <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-primary/20 to-primary/5 flex items-center justify-center border border-primary/10 shrink-0 shadow-sm">
-                                                    <User className="h-6 w-6 text-primary" />
+                                                    <HugeiconsIcon icon={UserIcon} className="h-6 w-6 text-primary" />
                                                 </div>
                                                 <div className="flex-1 min-w-0">
                                                     <div className="flex items-center justify-between mb-1">
@@ -153,7 +154,7 @@ const ReportVerificationPage: React.FC = () => {
                                                         </div>
                                                         <div className="h-3 w-[1px] bg-border" />
                                                         <div className="flex items-center gap-1 text-primary">
-                                                            <ShieldCheck className="h-3 w-3" />
+                                                            <HugeiconsIcon icon={ShieldCheck} className="h-3 w-3" />
                                                             <span className="text-[9px] font-black uppercase tracking-wide">Identity Verified</span>
                                                         </div>
                                                     </div>
@@ -164,14 +165,14 @@ const ReportVerificationPage: React.FC = () => {
                                             <div className="grid grid-cols-2 gap-3">
                                                 <div className="p-2.5 rounded-xl bg-muted/30 border border-border/50 group hover:bg-muted/50 transition-colors">
                                                     <div className="flex items-center gap-1.5 mb-1 text-primary">
-                                                        <Calendar className="h-3 w-3" />
+                                                        <HugeiconsIcon icon={Calendar03Icon} className="h-3 w-3" />
                                                         <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Period</span>
                                                     </div>
                                                     <p className="text-xs font-bold">{reportDetails.year} Screening</p>
                                                 </div>
                                                 <div className="p-2.5 rounded-xl bg-muted/30 border border-border/50 group hover:bg-muted/50 transition-colors">
                                                     <div className="flex items-center gap-1.5 mb-1 text-primary">
-                                                        <Building2 className="h-3 w-3" />
+                                                        <HugeiconsIcon icon={Building02Icon} className="h-3 w-3" />
                                                         <span className="text-[8px] font-black uppercase tracking-wider text-muted-foreground">Section</span>
                                                     </div>
                                                     <p className="text-xs font-bold">{reportDetails.section}</p>
@@ -182,7 +183,7 @@ const ReportVerificationPage: React.FC = () => {
                                             <div className="p-3 rounded-xl bg-primary/[0.03] border border-primary/10">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center gap-1.5">
-                                                        <ShieldCheck className="h-3 w-3 text-primary" />
+                                                        <HugeiconsIcon icon={ShieldCheck} className="h-3 w-3 text-primary" />
                                                         <span className="text-[9px] font-black uppercase tracking-widest text-primary">Digital Signature</span>
                                                     </div>
                                                     <Badge variant="outline" className="text-[7px] font-mono border-primary/20 text-primary/70 h-3.5 px-1">AES-256</Badge>
@@ -204,7 +205,7 @@ const ReportVerificationPage: React.FC = () => {
                                     ) : (
                                         <div className="py-6 text-center">
                                             <div className="inline-flex h-12 w-12 items-center justify-center rounded-full bg-destructive/10 mb-3 ring-4 ring-destructive/5">
-                                                <XCircle className="h-6 w-6 text-destructive" />
+                                                <HugeiconsIcon icon={CancelCircleIcon} className="h-6 w-6 text-destructive" />
                                             </div>
                                             <h3 className="text-base font-black tracking-tight mb-1">Invalid Verification Code</h3>
                                             <p className="text-xs text-muted-foreground max-w-[240px] mx-auto leading-tight font-medium">
@@ -229,7 +230,7 @@ const ReportVerificationPage: React.FC = () => {
                                         </div>
                                         <Link to="/" className="flex items-center gap-1 text-[9px] font-black text-primary hover:opacity-80 transition-opacity uppercase tracking-wider">
                                             Main Portal
-                                            <ExternalLink className="h-2.5 w-2.5" />
+                                            <HugeiconsIcon icon={ArrowUpRight01Icon} className="h-2.5 w-2.5" />
                                         </Link>
                                     </div>
                                 </CardContent>

@@ -9,7 +9,8 @@ import {
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { AlertTriangle, Info, HelpCircle } from "lucide-react";
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Alert01Icon, HelpCircleIcon, Information } from '@hugeicons/core-free-icons';
 import { cn } from "@/lib/utils";
 
 interface ActionConfirmModalProps {
@@ -45,7 +46,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
     }
   }, [isOpen]);
 
-  const Icon = variant === 'danger' ? AlertTriangle : variant === 'warning' ? HelpCircle : Info;
+  const iconName = variant === 'danger' ? Alert01Icon : variant === 'warning' ? HelpCircleIcon : Information;
   const variantStyles = {
     danger: "bg-destructive/10 text-destructive border-destructive/20",
     warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",
@@ -64,7 +65,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
         <div className="p-8 space-y-6">
             <div className="flex flex-col items-center text-center space-y-4">
                 <div className={cn("p-4 rounded-2xl border-2 transition-all animate-in zoom-in-50 duration-300", variantStyles[variant])}>
-                    <Icon className="w-8 h-8" />
+                    <HugeiconsIcon icon={iconName} className="w-8 h-8" />
                 </div>
                 <div className="space-y-2">
                     <DialogTitle className="text-2xl font-black tracking-tight">{title}</DialogTitle>

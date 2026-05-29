@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Search, Loader2, ChevronRight } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Search01Icon, Loading03Icon, ArrowRight01Icon } from '@hugeicons/core-free-icons';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -192,7 +193,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           </div>
         )}
         <div className="flex items-center gap-2 flex-1 px-2 h-11">
-          <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+          <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-muted-foreground shrink-0" />
           <Input
             placeholder={computedPlaceholder}
             value={searchId}
@@ -210,7 +211,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
           disabled={searching || !searchId.trim()}
           className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}
         >
-          {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : buttonText}
+          {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : buttonText}
         </Button>
 
         {/* Search Results Card */}
@@ -258,7 +259,7 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
                         </div>
                       </div>
                       <Button size="sm" variant="ghost" className={`${isActive ? `opacity-100 ${activeBg} ${activeText}` : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
-                        Select <ChevronRight className="ml-1 h-3 w-3" />
+                        Select <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1 h-3 w-3" />
                       </Button>
                     </div>
                   </li>

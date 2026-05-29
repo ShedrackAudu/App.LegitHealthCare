@@ -2,7 +2,20 @@ import React, { useState } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Database, Download, Upload, FileSpreadsheet, Loader2, CheckCircle2, LayoutGrid, Import, User, Activity, ShieldCheck } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  Database02Icon, 
+  Download01Icon, 
+  Upload01Icon, 
+  FileSpreadsheetIcon, 
+  Loading03Icon, 
+  CheckmarkCircle02Icon, 
+  LayoutGridIcon, 
+  FileImportIcon, 
+  UserIcon, 
+  Activity01Icon, 
+  ShieldCheck 
+} from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
@@ -125,7 +138,7 @@ const DataManagementPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
-              <Database className="h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={Database02Icon} className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight">Data Management Hub</h1>
@@ -144,7 +157,7 @@ const DataManagementPage: React.FC = () => {
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <Download className="w-4 h-4" />
+              <HugeiconsIcon icon={Download01Icon} className="w-4 h-4" />
               Export
             </button>
             <button
@@ -155,7 +168,7 @@ const DataManagementPage: React.FC = () => {
                 : 'text-muted-foreground hover:bg-white/50 dark:hover:bg-slate-800/50'
               }`}
             >
-              <Upload className="w-4 h-4" />
+              <HugeiconsIcon icon={Upload01Icon} className="w-4 h-4" />
               Import
             </button>
           </div>
@@ -167,9 +180,9 @@ const DataManagementPage: React.FC = () => {
             <Card className="border-2 shadow-xl hover:border-primary/20 transition-all rounded-3xl overflow-hidden group">
               <div className="h-2 bg-primary w-full opacity-50 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="pb-4">
-                 <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 border border-primary/20">
-                    <User className="w-6 h-6" />
-                 </div>
+                  <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary mb-2 border border-primary/20">
+                     <HugeiconsIcon icon={UserIcon} className="w-6 h-6" />
+                  </div>
                  <CardTitle className="text-2xl font-black tracking-tight">Patient Directory</CardTitle>
                  <CardDescription className="text-sm font-bold text-muted-foreground">
                     Export all registered bio-data for the current section ({activeSection}).
@@ -177,9 +190,9 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
-                        <FileSpreadsheet className="w-6 h-6 text-primary" />
-                    </div>
+                     <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
+                         <HugeiconsIcon icon={FileSpreadsheetIcon} className="w-6 h-6 text-primary" />
+                     </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-tight">Full Archive Export</p>
                         <p className="text-[10px] text-muted-foreground font-medium italic">Includes all 13 bio-data fields.</p>
@@ -191,14 +204,14 @@ const DataManagementPage: React.FC = () => {
                   disabled={!!exporting}
                   className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
                  >
-                    {exporting === 'patients' ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                          <Download className="w-5 h-5" />
-                          Export Directory
-                      </>
-                    )}
+                     {exporting === 'patients' ? (
+                       <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
+                     ) : (
+                       <>
+                           <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
+                           Export Directory
+                       </>
+                     )}
                  </Button>
               </CardContent>
             </Card>
@@ -207,9 +220,9 @@ const DataManagementPage: React.FC = () => {
             <Card className="border-2 shadow-xl hover:border-indigo-500/20 transition-all rounded-3xl overflow-hidden group">
               <div className="h-2 bg-indigo-500 w-full opacity-50 group-hover:opacity-100 transition-opacity" />
               <CardHeader className="pb-4">
-                 <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-2 border border-indigo-500/20">
-                    <LayoutGrid className="w-6 h-6" />
-                 </div>
+                  <div className="w-12 h-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center text-indigo-500 mb-2 border border-indigo-500/20">
+                     <HugeiconsIcon icon={LayoutGridIcon} className="w-6 h-6" />
+                  </div>
                  <CardTitle className="text-2xl font-black tracking-tight">Screening Matrix</CardTitle>
                  <CardDescription className="text-sm font-bold text-muted-foreground">
                     Export all clinical diagnostic results for the {activeYear} session.
@@ -217,9 +230,9 @@ const DataManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="space-y-6">
                  <div className="bg-indigo-500/5 border border-indigo-500/10 rounded-2xl p-4 flex gap-4 items-center">
-                    <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
-                        <Activity className="w-6 h-6 text-indigo-500" />
-                    </div>
+                     <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
+                         <HugeiconsIcon icon={Activity01Icon} className="w-6 h-6 text-indigo-500" />
+                     </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-tight text-indigo-600">Joined Dataset Engine</p>
                         <p className="text-[10px] text-muted-foreground font-medium italic">Joins FBC, KFT, LFT, Lipid, ECG, and Consultations.</p>
@@ -231,14 +244,14 @@ const DataManagementPage: React.FC = () => {
                   disabled={!!exporting}
                   className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white transition-all active:scale-95"
                  >
-                    {exporting === 'screening' ? (
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                    ) : (
-                      <>
-                          <Download className="w-5 h-5" />
-                          Export Screening Matrix
-                      </>
-                    )}
+                     {exporting === 'screening' ? (
+                       <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
+                     ) : (
+                       <>
+                           <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
+                           Export Screening Matrix
+                       </>
+                     )}
                  </Button>
               </CardContent>
             </Card>
@@ -250,27 +263,27 @@ const DataManagementPage: React.FC = () => {
               <div className="absolute inset-0 bg-muted/5 z-0" />
               <div className="relative z-10">
                   <CardHeader className="pb-4">
-                     <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2 border border-amber-500/20">
-                        <Import className="w-6 h-6" />
-                     </div>
+                      <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center text-amber-500 mb-2 border border-amber-500/20">
+                         <HugeiconsIcon icon={FileImportIcon} className="w-6 h-6" />
+                      </div>
                       <CardTitle className="text-2xl font-black tracking-tight">Bulk Patient Import</CardTitle>
                       <CardDescription className="text-sm font-bold text-muted-foreground flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                          <span>Excel-based data ingestion for bulk registration into the {activeSection} directory.</span>
-                         <Button 
-                          variant="outline" 
-                          size="sm" 
-                          onClick={handleDownloadTemplate}
-                          className="h-8 rounded-lg font-black text-[10px] gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all shrink-0"
-                         >
-                            <Download className="w-3.5 h-3.5" />
-                            Download Template
-                         </Button>
+                          <Button 
+                           variant="outline" 
+                           size="sm" 
+                           onClick={handleDownloadTemplate}
+                           className="h-8 rounded-lg font-black text-[10px] gap-2 border-primary/20 hover:bg-primary/5 hover:text-primary transition-all shrink-0"
+                          >
+                             <HugeiconsIcon icon={Download01Icon} className="w-3.5 h-3.5" />
+                             Download Template
+                          </Button>
                       </CardDescription>
                    </CardHeader>
                   <CardContent className="space-y-6">
                      <div className="space-y-4">
-                        <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-4 items-center">
-                           <CheckCircle2 className="w-6 h-6 text-primary shrink-0" />
+                         <div className="bg-primary/5 border border-primary/10 rounded-2xl p-4 flex gap-4 items-center">
+                            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-6 h-6 text-primary shrink-0" />
                            <p className="text-[11px] text-primary dark:text-primary font-bold italic leading-relaxed">
                              Excel headers must match exactly. The system will map data based on the header names provided below.
                            </p>
@@ -316,14 +329,14 @@ const DataManagementPage: React.FC = () => {
                         disabled={importing}
                         className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-amber-500/20 bg-amber-500 hover:bg-amber-600 text-white transition-all active:scale-95"
                        >
-                         {importing ? (
-                          <Loader2 className="w-5 h-5 animate-spin" />
-                         ) : (
-                          <>
-                            <Upload className="w-5 h-5" />
-                            Upload Bio-Data
-                          </>
-                         )}
+                          {importing ? (
+                           <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
+                          ) : (
+                           <>
+                             <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5" />
+                             Upload Bio-Data
+                           </>
+                          )}
                        </Button>
                      </div>
                   </CardContent>
@@ -334,7 +347,7 @@ const DataManagementPage: React.FC = () => {
 
         <div className="mt-12 bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-inner">
             <div className="p-6 bg-white dark:bg-card rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
-                <ShieldCheck className="w-12 h-12 text-primary" />
+                <HugeiconsIcon icon={ShieldCheck} className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-xl font-black tracking-tight mb-2">Secure Data Custodianship</h3>

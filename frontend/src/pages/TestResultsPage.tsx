@@ -1,31 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Activity, 
+  Activity01Icon, 
   Save, 
-  Loader2, 
+  Loading03Icon, 
   Heart, 
   Wind, 
-  ChevronRight,
-  FlaskConical,
-  Brain,
-  ClipboardList,
-  Volume2,
-  ArrowLeft,
-  Search,
-  Users,
-  User,
-  Clock3,
-  Download,
-  UploadCloud,
-  FileSpreadsheet,
-  Info,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Trash2
-} from 'lucide-react';
+  ArrowRight01Icon,
+  Chemistry02Icon,
+  Brain02Icon,
+  ClipboardIcon,
+  VolumeHighIcon,
+  ArrowLeft01Icon,
+  Search01Icon,
+  UserGroupIcon,
+  UserIcon,
+  Clock01Icon,
+  Download01Icon,
+  CloudUploadIcon,
+  FileSpreadsheetIcon,
+  Information,
+  CheckmarkCircle02Icon,
+  CancelCircleIcon,
+  AlertCircleIcon,
+  Delete02Icon
+} from '@hugeicons/core-free-icons';
 import { 
   Dialog, 
   DialogContent, 
@@ -93,7 +94,7 @@ const TempAccessCountdown = () => {
 
     return (
         <div className="mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-600 animate-pulse bg-orange-100/50 px-3 py-1 rounded-full w-fit">
-            <Clock3 className="h-3 w-3" />
+            <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
             Temporary Access: {mins}:{secs < 10 ? `0${secs}` : secs} Remaining
         </div>
     );
@@ -325,14 +326,14 @@ const TestResultsPage: React.FC = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         {[
-                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
-                            { id: 'fbc', title: 'Full Blood Count', icon: FlaskConical, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
-                            { id: 'kft', title: 'Kidney Function Test', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
-                            { id: 'lipid', title: 'Lipid Profile', icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
-                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
+                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity01Icon, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
+                            { id: 'fbc', title: 'Full Blood Count', icon: Chemistry02Icon, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
+                            { id: 'kft', title: 'Kidney Function Test', icon: Activity01Icon, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
+                            { id: 'lipid', title: 'Lipid Profile', icon: Brain02Icon, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
+                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardIcon, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
                             { id: 'ecg', title: 'ECG Analysis', icon: Heart, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
                             { id: 'spirometry', title: 'Spirometry', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
-                            { id: 'audiometry', title: 'Audiometry', icon: Volume2, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
+                            { id: 'audiometry', title: 'Audiometry', icon: VolumeHighIcon, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
                         ].map((test) => (
                             <Card 
                                 key={test.id} 
@@ -341,13 +342,13 @@ const TestResultsPage: React.FC = () => {
                             >
                                 <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
                                     <div className={`p-2.5 sm:p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
-                                        <test.icon className="h-6 w-6 sm:h-8 sm:w-8" />
+                                        <HugeiconsIcon icon={test.icon} className="h-6 w-6 sm:h-8 sm:w-8" />
                                     </div>
                                     <div className="flex-1">
                                         <h3 className="text-base sm:text-xl font-bold">{test.title}</h3>
                                         <p className="text-[10px] sm:text-sm text-muted-foreground">Record diagnostic findings</p>
                                     </div>
-                                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
                                 </CardContent>
                             </Card>
                         ))}
@@ -361,7 +362,7 @@ const TestResultsPage: React.FC = () => {
         <MainLayout>
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                 <Button variant="ghost" onClick={() => navigate('/tests')} className="gap-2 -ml-2">
-                    <ArrowLeft className="h-4 w-4" /> Back to Test Selection
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to Test Selection
                 </Button>
 
                 {!patient ? (
@@ -370,7 +371,7 @@ const TestResultsPage: React.FC = () => {
                         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                             <div className="flex items-center gap-3">
                                 <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                                    <FlaskConical className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                                    <HugeiconsIcon icon={Chemistry02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
                                     <h1 className="text-base sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
@@ -388,7 +389,7 @@ const TestResultsPage: React.FC = () => {
                                         <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                                    <Users className="h-4 w-4" />
+                                                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
@@ -400,7 +401,7 @@ const TestResultsPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                VIEW <ChevronRight className="h-3 w-3" />
+                                                VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -428,7 +429,7 @@ const TestResultsPage: React.FC = () => {
                                             </label>
                                         </div>
                                         <div className="flex items-center gap-2 flex-1 px-2 h-11">
-                                            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+                                            <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-muted-foreground shrink-0" />
                                             <Input
                                                 placeholder={searchByPid ? "Search Patient ID (PID)..." : "Search Staff ID or Name..."}
                                                 value={searchId}
@@ -442,7 +443,7 @@ const TestResultsPage: React.FC = () => {
                                             disabled={searching || !searchId.trim()}
                                             className="bg-primary hover:bg-primary/90 shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                                         >
-                                            {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Profile'}
+                                            {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : 'Load Profile'}
                                         </Button>
 
                                         {/* Search Results Card */}
@@ -484,7 +485,7 @@ const TestResultsPage: React.FC = () => {
                                                                     </div>
                                                                 </div>
                                                                 <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
-                                                                    Select <ChevronRight className="ml-1 h-3 w-3" />
+                                                                    Select <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1 h-3 w-3" />
                                                                 </Button>
                                                             </div>
                                                         </li>
@@ -500,7 +501,7 @@ const TestResultsPage: React.FC = () => {
                         <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                             <div className="text-center space-y-2">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Activity className="w-8 h-8 text-muted-foreground/50" />
+                                    <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-muted-foreground/50" />
                                 </div>
                                 <p className="text-muted-foreground font-bold text-lg italic tracking-tight">Enter a Patient ID to begin recording {selectedTest?.toUpperCase()} results.</p>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">Context: {activeSection} Clinic • {activeYear}</p>
@@ -536,7 +537,7 @@ const TestResultsPage: React.FC = () => {
                     <DialogHeader className="text-left">
                         <div className="flex items-center gap-3 mb-2 text-left">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                <Users className="w-6 h-6" />
+                                <HugeiconsIcon icon={UserGroupIcon} className="w-6 h-6" />
                             </div>
                             <div>
                                 <DialogTitle className="text-lg sm:text-xl font-black tracking-tight uppercase">{selectedQueueDept} Queue</DialogTitle>
@@ -549,7 +550,7 @@ const TestResultsPage: React.FC = () => {
                         <ScrollArea className="h-[400px] px-1">
                             {loadingQueue ? (
                                 <div className="flex items-center justify-center h-full">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                                 </div>
                             ) : queueEntries.length > 0 ? (
                                 <div className="space-y-3">
@@ -575,7 +576,7 @@ const TestResultsPage: React.FC = () => {
                                                             <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
                                                             <span className="hidden sm:inline text-muted-foreground/60">•</span>
                                                             <span className="font-medium flex items-center gap-1">
-                                                                <Clock3 className="w-3 h-3 text-muted-foreground/60" />
+                                                                <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-muted-foreground/60" />
                                                                 {getRelativeTime(entry.created_at)}
                                                             </span>
                                                         </div>
@@ -591,7 +592,7 @@ const TestResultsPage: React.FC = () => {
                                                                     setIsQueueModalOpen(false);
                                                                 }}
                                                             >
-                                                                Proceed <ChevronRight className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                                Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
                                                             </Button>
                                                             {hasPermission('delete_from_queue') && (
                                                                 <Button 
@@ -601,7 +602,7 @@ const TestResultsPage: React.FC = () => {
                                                                     onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
                                                                     title="Remove from queue"
                                                                 >
-                                                                    <Trash2 className="w-3 h-3" />
+                                                                    <HugeiconsIcon icon={Delete02Icon} className="w-3 h-3" />
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -620,7 +621,7 @@ const TestResultsPage: React.FC = () => {
                                                         setIsQueueModalOpen(false);
                                                     }}
                                                 >
-                                                    Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                    Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                                                 </Button>
                                                 {hasPermission('delete_from_queue') && (
                                                     <Button 
@@ -630,7 +631,7 @@ const TestResultsPage: React.FC = () => {
                                                         onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
                                                         title="Remove from queue"
                                                     >
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
                                                     </Button>
                                                 )}
                                             </div>
@@ -639,7 +640,7 @@ const TestResultsPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                                    <Users className="h-12 w-12 mb-4 text-muted-foreground" />
+                                    <HugeiconsIcon icon={UserGroupIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
                                     <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Queue is Empty</p>
                                     <p className="text-xs text-muted-foreground mt-1">No patients are waiting for this test.</p>
                                 </div>
@@ -759,7 +760,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/20 rounded-xl shrink-0">
-                            <UploadCloud className="h-5 w-5 text-primary" />
+                            <HugeiconsIcon icon={CloudUploadIcon} className="h-5 w-5 text-primary" />
                         </div>
                         <div>
                             <CardTitle className="text-lg font-black tracking-tight uppercase leading-none">Bulk Result Upload</CardTitle>
@@ -772,7 +773,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                         onClick={handleDownloadTemplate}
                         className="w-full sm:w-auto gap-2 font-black text-[10px] uppercase border-primary/30 hover:bg-primary/10 transition-colors h-9"
                     >
-                        <Download className="h-3.5 w-3.5" /> Download Template
+                        <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" /> Download Template
                     </Button>
                 </div>
             </CardHeader>
@@ -781,7 +782,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                     <div className="space-y-4">
                         <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/50 border-2 border-dashed border-primary/20">
                             <div className="p-2 bg-amber-500/10 rounded-xl">
-                                <Info className="h-5 w-5 text-amber-600" />
+                                <HugeiconsIcon icon={Information} className="h-5 w-5 text-amber-600" />
                             </div>
                             <div className="space-y-1">
                                 <h4 className="font-black text-sm uppercase tracking-tight">Instructions</h4>
@@ -811,12 +812,12 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             >
                                 {uploading ? (
                                     <>
-                                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary mb-2" />
                                         <p className="text-sm font-bold animate-pulse">Processing Batch Data...</p>
                                     </>
                                 ) : (
                                     <>
-                                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                                        <HugeiconsIcon icon={FileSpreadsheetIcon} className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
                                         <p className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">Click to Select Excel File</p>
                                         <p className="text-[10px] text-muted-foreground uppercase font-black mt-1">Only .xlsx supported</p>
                                     </>
@@ -834,14 +835,14 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
                                             <div className="flex items-center gap-2 text-primary mb-1">
-                                                <CheckCircle2 className="h-4 w-4" />
+                                                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Success</span>
                                             </div>
                                             <p className="text-2xl font-black text-primary">{uploadResult.success_count}</p>
                                         </div>
                                         <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                                             <div className="flex items-center gap-2 text-rose-600 mb-1">
-                                                <XCircle className="h-4 w-4" />
+                                                <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Skipped</span>
                                             </div>
                                             <p className="text-2xl font-black text-rose-700">{uploadResult.skip_count}</p>
@@ -851,7 +852,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                                     {uploadResult.errors && uploadResult.errors.length > 0 && (
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2 text-amber-600">
-                                                <AlertCircle className="h-3 w-3" />
+                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-3 w-3" />
                                                 <span className="text-[9px] font-black uppercase italic">Processing Notes</span>
                                             </div>
                                             <ScrollArea className="h-[120px] rounded-lg bg-muted/50 p-2 border">
@@ -869,7 +870,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-48 text-center px-6">
                                     <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                                        <Search className="h-6 w-6 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Search01Icon} className="h-6 w-6 text-muted-foreground/30" />
                                     </div>
                                     <p className="text-xs font-bold text-muted-foreground/50 italic">No upload data available. Upload a file to view a detailed summary of the processed results.</p>
                                 </div>
@@ -929,7 +930,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         return (
             <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm font-bold text-muted-foreground animate-pulse">Fetching existing records...</p>
                 </div>
             </Card>
@@ -949,7 +950,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
                                 className="w-full h-full object-cover"
                             />
                         ) : (
-                            <User className="h-8 w-8 text-primary/40" />
+                            <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary/40" />
                         )}
                     </div>
 
@@ -1025,7 +1026,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -1067,7 +1068,7 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1108,7 +1109,7 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -1139,7 +1140,7 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1168,7 +1169,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
                         <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                     </Button>
                 </div>
             </form>
@@ -1201,7 +1202,7 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
                         )}
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                     </Button>
                 </div>
             </form>
@@ -1268,7 +1269,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -1302,7 +1303,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Glucose (FBS/RBS)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Glucose (FBS/RBS)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
@@ -1332,7 +1333,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Urine Analysis (U/A)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Urine Analysis (U/A)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
@@ -1370,7 +1371,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="flex justify-center sm:justify-end pt-8">
                 <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>

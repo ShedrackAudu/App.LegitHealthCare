@@ -1,29 +1,30 @@
 import React, { useState, useEffect } from 'react';
 import { MainLayout } from '@/components/layout/MainLayout';
-import { 
-  Package, 
-  Plus, 
-  Search, 
-  Filter, 
-  AlertTriangle, 
-  ArrowUpRight, 
-  ArrowDownRight, 
-  History, 
-  BarChart3, 
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  PackageIcon,
+  PlusSignIcon,
+  Search01Icon,
+  FilterIcon,
+  AlertCircleIcon,
+  ArrowUpRight01Icon,
+  ArrowDownRight01Icon,
+  History,
+  ChartBarIncreasingIcon,
   MoreVertical,
-  Edit,
-  Trash2,
+  Edit01Icon,
+  Delete02Icon,
   Box,
-  Truck,
-  Layers,
+  DeliveryTruckIcon,
+  LayersIcon,
   ChevronRight,
   TrendingUp,
-  Download,
-  CheckCircle2,
-  Clock,
-  ArrowRightLeft,
-  QrCode
-} from 'lucide-react';
+  Download01Icon,
+  CheckmarkCircle01Icon,
+  Clock01Icon,
+  ArrowLeftRightIcon,
+  QrCodeIcon
+} from '@hugeicons/core-free-icons';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { cn } from '@/lib/utils';
 import BarcodeScanner from '@/components/inventory/BarcodeScanner';
@@ -548,7 +549,7 @@ const InventoryPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
           <div className="flex items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
-              <Package className="h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={PackageIcon} className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">Inventory Management</h1>
@@ -571,7 +572,7 @@ const InventoryPage: React.FC = () => {
                   }}
                   className="flex items-center gap-1 sm:gap-2 bg-green-600 hover:bg-green-700 text-white w-full"
                 >
-                  <ArrowUpRight className="h-4 w-4 shrink-0" />
+                  <HugeiconsIcon icon={ArrowUpRight01Icon} className="h-4 w-4 shrink-0" />
                   <span className="truncate">Restock</span>
                 </Button>
                 <Button 
@@ -585,7 +586,7 @@ const InventoryPage: React.FC = () => {
                   }}
                   className="flex items-center gap-1 sm:gap-2 bg-rose-600 hover:bg-rose-700 text-white w-full"
                 >
-                  <ArrowDownRight className="h-4 w-4 shrink-0" />
+                  <HugeiconsIcon icon={ArrowDownRight01Icon} className="h-4 w-4 shrink-0" />
                   <span className="truncate">Deduct</span>
                 </Button>
               </>
@@ -594,7 +595,7 @@ const InventoryPage: React.FC = () => {
               <Dialog open={isAddItemOpen} onOpenChange={setIsAddItemOpen}>
                 <DialogTrigger>
                   <Button className="flex items-center gap-1 sm:gap-2 bg-primary hover:bg-primary/90 col-span-2 w-full">
-                    <Plus className="h-4 w-4 shrink-0" />
+                    <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4 shrink-0" />
                     <span className="truncate">New Item</span>
                   </Button>
                 </DialogTrigger>
@@ -619,7 +620,7 @@ const InventoryPage: React.FC = () => {
                             onClick={() => { setScannerTarget('new'); setIsScannerOpen(true); }}
                             className="shrink-0"
                           >
-                            <QrCode className="h-4 w-4" />
+                            <HugeiconsIcon icon={QrCodeIcon} className="h-4 w-4" />
                           </Button>
                         </div>
                       </div>
@@ -690,12 +691,12 @@ const InventoryPage: React.FC = () => {
               <CardDescription className="text-blue-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Total Items</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between">
                 {items.length}
-                <Box className="h-5 w-5 sm:h-8 sm:w-8 text-blue-500 opacity-20 shrink-0" />
+                <HugeiconsIcon icon={Box} className="h-5 w-5 sm:h-8 sm:w-8 text-blue-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 truncate">
-                <CheckCircle2 className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">All systems functional</span>
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">All systems functional</span>
               </div>
             </CardContent>
           </Card>
@@ -705,7 +706,7 @@ const InventoryPage: React.FC = () => {
               <CardDescription className="text-amber-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Low Stock</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between text-amber-700">
                 {lowStockItems.length}
-                <AlertTriangle className="h-5 w-5 sm:h-8 sm:w-8 text-amber-500 opacity-20 shrink-0" />
+                <HugeiconsIcon icon={AlertCircleIcon} className="h-5 w-5 sm:h-8 sm:w-8 text-amber-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
@@ -720,7 +721,7 @@ const InventoryPage: React.FC = () => {
               <CardDescription className="text-rose-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Expiring Soon</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between text-rose-700">
                 {expiringSoon.length}
-                <Clock className="h-5 w-5 sm:h-8 sm:w-8 text-rose-500 opacity-20 shrink-0" />
+                <HugeiconsIcon icon={Clock01Icon} className="h-5 w-5 sm:h-8 sm:w-8 text-rose-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
@@ -734,13 +735,13 @@ const InventoryPage: React.FC = () => {
             <CardHeader className="p-3 pb-1 sm:p-6 sm:pb-2">
               <CardDescription className="text-green-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Monthly Value</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between">
-                ₦{(items.reduce((acc, item) => acc + (item.stock_level * item.unit_price), 0)).toLocaleString()}
-                <BarChart3 className="h-5 w-5 sm:h-8 sm:w-8 text-green-500 opacity-20 shrink-0" />
+                ₦{(items.reduce((acc: number, item: any) => acc + (item.stock_level * item.unit_price), 0)).toLocaleString()}
+                <HugeiconsIcon icon={ChartBarIncreasingIcon} className="h-5 w-5 sm:h-8 sm:w-8 text-green-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 truncate">
-                <TrendingUp className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">Current valuation</span>
+                <HugeiconsIcon icon={TrendingUp} className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">Current valuation</span>
               </div>
             </CardContent>
           </Card>
@@ -753,28 +754,28 @@ const InventoryPage: React.FC = () => {
                 value="items" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <Box className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={Box} className="h-4 w-4 shrink-0" />
                 <span>Stock Items</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="categories" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <Layers className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={LayersIcon} className="h-4 w-4 shrink-0" />
                 <span>Categories</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="suppliers" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <Truck className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={DeliveryTruckIcon} className="h-4 w-4 shrink-0" />
                 <span>Suppliers</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="transactions" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <History className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={History} className="h-4 w-4 shrink-0" />
                 <span>Activity Log</span>
               </TabsTrigger>
             </TabsList>
@@ -783,7 +784,7 @@ const InventoryPage: React.FC = () => {
           <TabsContent value="items" className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between w-full">
               <div className="relative flex-1 md:w-96">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input 
                   placeholder="Search by name or SKU..." 
                   className="pl-9 h-10"
@@ -793,7 +794,7 @@ const InventoryPage: React.FC = () => {
               </div>
               <div className="flex items-center shrink-0">
                 <Button variant="outline" className="flex items-center gap-2 h-10 shrink-0">
-                  <Filter className="h-4 w-4" /> Filter
+                  <HugeiconsIcon icon={FilterIcon} className="h-4 w-4" /> Filter
                 </Button>
               </div>
             </div>
@@ -841,7 +842,7 @@ const InventoryPage: React.FC = () => {
                             {item.stock_level} {item.unit}
                           </span>
                           {item.stock_level <= item.min_stock_level && (
-                            <AlertTriangle className="h-4 w-4 text-amber-500" />
+                            <HugeiconsIcon icon={AlertCircleIcon} className="h-4 w-4 text-amber-500" />
                           )}
                         </div>
                       </TableCell>
@@ -859,7 +860,7 @@ const InventoryPage: React.FC = () => {
                       <TableCell className="text-right">
                         <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <Button variant="ghost" size="sm"><MoreVertical className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm"><HugeiconsIcon icon={MoreVertical} className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Item Actions</DropdownMenuLabel>
@@ -871,7 +872,7 @@ const InventoryPage: React.FC = () => {
                                 }}
                                 className="text-blue-600 focus:text-blue-600"
                               >
-                                <ArrowRightLeft className="h-4 w-4 mr-2" /> Adjust Stock
+                                <HugeiconsIcon icon={ArrowLeftRightIcon} className="h-4 w-4 mr-2" /> Adjust Stock
                               </DropdownMenuItem>
                             )}
                             <DropdownMenuSeparator />
@@ -879,10 +880,10 @@ const InventoryPage: React.FC = () => {
                               setEditingItem({...item});
                               setIsEditItemOpen(true);
                             }}>
-                              <Edit className="h-4 w-4 mr-2" /> Edit Details
+                              <HugeiconsIcon icon={Edit01Icon} className="h-4 w-4 mr-2" /> Edit Details
                             </DropdownMenuItem>
                             <DropdownMenuItem className="text-rose-600 focus:text-rose-600" onClick={() => handleDeleteItem(item.id)}>
-                              <Trash2 className="h-4 w-4 mr-2" /> Delete
+                              <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4 mr-2" /> Delete
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -904,7 +905,7 @@ const InventoryPage: React.FC = () => {
                 <Dialog open={isAddCategoryOpen} onOpenChange={setIsAddCategoryOpen}>
                   <DialogTrigger>
                     <Button size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" /> Add Category
+                      <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4" /> Add Category
                     </Button>
                   </DialogTrigger>
                   <DialogContent>
@@ -967,7 +968,7 @@ const InventoryPage: React.FC = () => {
                 <Dialog open={isAddSupplierOpen} onOpenChange={setIsAddSupplierOpen}>
                   <DialogTrigger>
                     <Button size="sm" className="gap-2">
-                      <Plus className="h-4 w-4" /> Add Supplier
+                      <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4" /> Add Supplier
                     </Button>
                   </DialogTrigger>
                   <DialogContent className="max-w-md">
@@ -1071,11 +1072,11 @@ const InventoryPage: React.FC = () => {
                           className="capitalize"
                         >
                           {t.transaction_type === 'Addition' ? (
-                            <ArrowUpRight className="h-3 w-3 mr-1" />
+                            <HugeiconsIcon icon={ArrowUpRight01Icon} className="h-3 w-3 mr-1" />
                           ) : t.transaction_type === 'Deduction' ? (
-                            <ArrowDownRight className="h-3 w-3 mr-1" />
+                            <HugeiconsIcon icon={ArrowDownRight01Icon} className="h-3 w-3 mr-1" />
                           ) : (
-                            <ArrowRightLeft className="h-3 w-3 mr-1" />
+                            <HugeiconsIcon icon={ArrowLeftRightIcon} className="h-3 w-3 mr-1" />
                           )}
                           {t.transaction_type}
                         </Badge>
@@ -1118,7 +1119,7 @@ const InventoryPage: React.FC = () => {
                       onClick={() => { setScannerTarget('edit'); setIsScannerOpen(true); }}
                       className="shrink-0"
                     >
-                      <QrCode className="h-4 w-4" />
+                      <HugeiconsIcon icon={QrCodeIcon} className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -1285,7 +1286,7 @@ const InventoryPage: React.FC = () => {
               </div>
               <div className="bg-muted p-3 rounded-lg flex items-center justify-between">
                 <span className="text-sm">Current Stock: <span className="font-bold">{selectedItem?.stock_level}</span></span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                <HugeiconsIcon icon={ChevronRight} className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Resulting Stock: <span className="font-bold text-primary">
                   {adjustmentType === 'Addition' ? (selectedItem?.stock_level + (parseInt(adjustmentQuantity) || 0)) : 
                    adjustmentType === 'Deduction' ? (selectedItem?.stock_level - (parseInt(adjustmentQuantity) || 0)) : 
@@ -1332,7 +1333,7 @@ const InventoryPage: React.FC = () => {
                     onClick={() => { setScannerTarget('fast_adjust'); setIsScannerOpen(true); }}
                     className="shrink-0"
                   >
-                    <QrCode className="h-4 w-4" />
+                    <HugeiconsIcon icon={QrCodeIcon} className="h-4 w-4" />
                   </Button>
                 </div>
                 
@@ -1390,7 +1391,7 @@ const InventoryPage: React.FC = () => {
                   </div>
                   <div className="bg-muted p-3 rounded-lg flex items-center justify-between">
                     <span className="text-sm">Current Stock: <span className="font-bold">{selectedItem.stock_level}</span></span>
-                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                    <HugeiconsIcon icon={ChevronRight} className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Resulting Stock: <span className="font-bold text-primary">
                       {adjustmentType === 'Addition' ? (selectedItem.stock_level + (parseInt(adjustmentQuantity) || 0)) : 
                        adjustmentType === 'Deduction' ? (selectedItem.stock_level - (parseInt(adjustmentQuantity) || 0)) : 

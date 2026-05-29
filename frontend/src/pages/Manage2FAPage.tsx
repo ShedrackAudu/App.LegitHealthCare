@@ -3,7 +3,8 @@ import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { ShieldCheck, ShieldAlert, Copy, Check, Info } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { ShieldCheck, CheckmarkCircle02Icon, Information } from '@hugeicons/core-free-icons';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -86,7 +87,7 @@ const Manage2FAPage = () => {
                 </Button>
 
                 <div className="flex items-center gap-3 mb-6">
-                    <ShieldCheck className="h-8 w-8 text-primary" />
+                    <HugeiconsIcon icon={ShieldCheck} className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold tracking-tight">Two-Factor Authentication</h1>
                 </div>
 
@@ -94,13 +95,13 @@ const Manage2FAPage = () => {
                     <Card className="border-2 border-primary/30">
                         <CardHeader>
                             <CardTitle className="text-primary flex items-center gap-2">
-                                <Check className="h-5 w-5" /> 2FA is Active
+                                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-5 w-5" /> 2FA is Active
                             </CardTitle>
                             <CardDescription>Your account is guarded by secondary verification.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="p-4 bg-muted/50 rounded-lg text-sm border flex items-start gap-2">
-                                <Info className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                                <HugeiconsIcon icon={Information} className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                                 <p>To disable Two-Factor Authentication, you must provide a valid code from your authenticator app.</p>
                             </div>
                             <div className="flex items-center gap-4">
@@ -189,7 +190,7 @@ const Manage2FAPage = () => {
                             <Card className="border-2 border-primary/50 bg-primary/5 shadow-lg">
                                 <CardHeader>
                                     <CardTitle className="text-primary flex items-center gap-2">
-                                        <Check className="h-5 w-5" /> Setup Complete!
+                                        <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-5 w-5" /> Setup Complete!
                                     </CardTitle>
                                     <CardDescription className="text-primary/80">
                                         Two-Factor Authentication is now enabled. Please save these backup recovery codes in a secure place. You will need them if you lose access to your device.

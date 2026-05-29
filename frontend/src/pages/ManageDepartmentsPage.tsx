@@ -4,7 +4,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Trash2, Building2, Plus, Loader2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Delete02Icon, Hospital02Icon, PlusSignIcon, Loading03Icon } from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
@@ -89,7 +90,7 @@ const ManageDepartmentsPage: React.FC = () => {
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <Building2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={Hospital02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight">Manage Departments</h1>
@@ -116,7 +117,7 @@ const ManageDepartmentsPage: React.FC = () => {
                                     />
                                 </div>
                                 <Button type="submit" className="w-full h-11 font-bold shadow-md" disabled={adding || !newDept.trim()}>
-                                    {adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="mr-2 h-5 w-5" /> Add Department</>}
+                                    {adding ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" /> Add Department</>}
                                 </Button>
                             </form>
                         </CardContent>
@@ -135,11 +136,11 @@ const ManageDepartmentsPage: React.FC = () => {
                         <CardContent className="p-0">
                             {loading ? (
                                 <div className="h-64 flex items-center justify-center">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                                 </div>
                             ) : departments.length === 0 ? (
                                 <div className="h-64 flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-4">
-                                    <Building2 className="h-16 w-16" />
+                                    <HugeiconsIcon icon={Hospital02Icon} className="h-16 w-16" />
                                     <p className="text-xl font-bold">No Departments Found</p>
                                 </div>
                             ) : (
@@ -148,7 +149,7 @@ const ManageDepartmentsPage: React.FC = () => {
                                         <div key={dept.id} className="flex items-center justify-between p-4 border-b last:border-0 hover:bg-muted/50 transition-colors">
                                             <span className="font-semibold text-lg">{dept.name}</span>
                                             <Button variant="ghost" size="icon" className="text-destructive hover:bg-destructive/10 hover:text-destructive" onClick={() => setDeleteModal({ open: true, id: dept.id, name: dept.name })}>
-                                                <Trash2 className="h-5 w-5" />
+                                                <HugeiconsIcon icon={Delete02Icon} className="h-5 w-5" />
                                             </Button>
                                         </div>
                                     ))}
