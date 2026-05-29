@@ -277,7 +277,7 @@ const PatientReportPage: React.FC = () => {
                         </div>
                     ) : reportData ? (
                         <>
-                            <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-background rounded-3xl border-2 border-dashed border-border" style={{ padding: '0.4rem' }}>
+                            <div className="flex flex-col items-center gap-1.5 py-1.5 px-4 overflow-x-auto print-container bg-muted/30 dark:bg-background rounded-3xl border-2 border-dashed border-border print:bg-transparent print:border-0 print:p-0 print:overflow-visible" style={{ padding: '0.4rem' }}>
                             {/* PAGE 1 */}
                             <div className="a4-page">
                                 {/* Branding Header Area */}

@@ -57,7 +57,7 @@ const NetworkStatusBanner = () => {
   return (
     <div
       className={`
-        sticky top-0 left-0 right-0 z-[9999] w-full shrink-0 overflow-hidden
+        sticky top-0 left-0 right-0 z-[9999] w-full shrink-0 overflow-hidden no-print
         transition-all duration-300 ease-in-out
         ${state === 'hidden' ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100'}
       `}

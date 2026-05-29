@@ -58,7 +58,7 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
           animation-play-state: paused;
         }
       `}</style>
-      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 ${getColors()}`}>
+      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 no-print ${getColors()}`}>
         <div className="flex items-center shrink-0 z-10">
           {getIcon()}
         </div>
