@@ -68,7 +68,7 @@ export const PatientSidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
+        "h-full border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
