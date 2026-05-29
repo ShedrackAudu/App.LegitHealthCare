@@ -94,8 +94,8 @@ const OTPPage = () => {
                   disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" disabled={loading}>
-                {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-4 w-4 animate-spin" /> : 'Verify Account'}
+              <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" loading={loading}>
+                Verify Account
               </Button>
             </form>
           )}

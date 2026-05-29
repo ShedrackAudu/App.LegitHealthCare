@@ -170,9 +170,9 @@ const PatientManage2FAPage = () => {
                                     </div>
                                 </CardContent>
                                 <CardFooter className="p-4 bg-muted/10 flex justify-center border-t">
-                                    <Button onClick={beginSetup} disabled={isGenerating} className="h-10 px-8 rounded-xl text-[11px] font-black shadow-lg shadow-primary/10 transition-all hover:scale-105 active:scale-95">
-                                        {isGenerating ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-3.5 w-3.5 animate-spin" /> : <HugeiconsIcon icon={Shield01Icon} className="mr-2 h-3.5 w-3.5" />}
-                                        {isGenerating ? "Preparing..." : "Start Setup"}
+                                    <Button onClick={beginSetup} loading={isGenerating} className="h-10 px-8 rounded-xl text-[11px] font-black shadow-lg shadow-primary/10 transition-all hover:scale-105 active:scale-95">
+                                        {!isGenerating && <HugeiconsIcon icon={Shield01Icon} className="mr-2 h-3.5 w-3.5" />}
+                                        Start Setup
                                     </Button>
                                 </CardFooter>
                             </Card>

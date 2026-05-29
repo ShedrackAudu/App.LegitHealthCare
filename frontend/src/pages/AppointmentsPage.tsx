@@ -409,27 +409,19 @@ const AppointmentsPage = () => {
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
-                                disabled={isBooking || !canManage}
+                                loading={isBooking}
+                                disabled={!canManage}
                                 className={`w-full h-14 sm:h-16 rounded-2xl text-sm sm:text-xl font-black gap-2 sm:gap-3 shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all bg-primary shadow-primary/20 ${!canManage ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                             >
-                                {isBooking ? (
+                                {canManage ? (
                                     <>
-                                        <HugeiconsIcon icon={Loading03Icon} className="h-6 w-6 animate-spin" />
-                                        Processing...
+                                        {!isBooking && <HugeiconsIcon icon={Calendar03Icon} className="h-5 w-5 sm:h-6 sm:w-6" />}
+                                        Schedule Appointment
                                     </>
                                 ) : (
                                     <>
-                                        {canManage ? (
-                                            <>
-                                                <HugeiconsIcon icon={Calendar03Icon} className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                Schedule Appointment
-                                            </>
-                                        ) : (
-                                            <>
-                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                Permission Required to Schedule
-                                            </>
-                                        )}
+                                        <HugeiconsIcon icon={AlertCircleIcon} className="h-5 w-5 sm:h-6 sm:w-6" />
+                                        Permission Required to Schedule
                                     </>
                                 )}
                             </Button>

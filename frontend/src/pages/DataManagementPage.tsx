@@ -201,17 +201,12 @@ const DataManagementPage: React.FC = () => {
                  
                  <Button 
                   onClick={() => handleExport('patients')}
-                  disabled={!!exporting}
+                  loading={exporting === 'patients'}
+                  disabled={!!exporting && exporting !== 'patients'}
                   className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-primary/20 transition-all active:scale-95"
                  >
-                     {exporting === 'patients' ? (
-                       <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
-                     ) : (
-                       <>
-                           <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
-                           Export Directory
-                       </>
-                     )}
+                     {exporting !== 'patients' && <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />}
+                     Export Directory
                  </Button>
               </CardContent>
             </Card>
@@ -241,17 +236,12 @@ const DataManagementPage: React.FC = () => {
                  
                  <Button 
                   onClick={() => handleExport('screening')}
-                  disabled={!!exporting}
+                  loading={exporting === 'screening'}
+                  disabled={!!exporting && exporting !== 'screening'}
                   className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-indigo-500/20 bg-indigo-600 hover:bg-indigo-700 text-white transition-all active:scale-95"
                  >
-                     {exporting === 'screening' ? (
-                       <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
-                     ) : (
-                       <>
-                           <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />
-                           Export Screening Matrix
-                       </>
-                     )}
+                     {exporting !== 'screening' && <HugeiconsIcon icon={Download01Icon} className="w-5 h-5" />}
+                     Export Screening Matrix
                  </Button>
               </CardContent>
             </Card>
@@ -326,17 +316,11 @@ const DataManagementPage: React.FC = () => {
                        />
                        <Button 
                         onClick={() => document.getElementById('import-file')?.click()}
-                        disabled={importing}
+                        loading={importing}
                         className="w-full h-14 rounded-2xl font-black text-sm gap-3 shadow-xl shadow-amber-500/20 bg-amber-500 hover:bg-amber-600 text-white transition-all active:scale-95"
                        >
-                          {importing ? (
-                           <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
-                          ) : (
-                           <>
-                             <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5" />
-                             Upload Bio-Data
-                           </>
-                          )}
+                          {!importing && <HugeiconsIcon icon={Upload01Icon} className="w-5 h-5" />}
+                          Upload Bio-Data
                        </Button>
                      </div>
                   </CardContent>

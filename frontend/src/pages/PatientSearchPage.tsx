@@ -117,23 +117,9 @@ const PatientSearchPage = () => {
           <Button 
             type="submit" 
             className="w-full h-16 text-xl font-bold rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-            disabled={loading}
+            loading={loading}
           >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <HugeiconsIcon icon={Search01Icon} className="w-6 h-6" />
-                </motion.div>
-                Searching...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Search Records <HugeiconsIcon icon={ArrowRight01Icon} className="w-6 h-6" />
-              </span>
-            )}
+            Search Records {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="w-6 h-6" />}
           </Button>
         </form>
 

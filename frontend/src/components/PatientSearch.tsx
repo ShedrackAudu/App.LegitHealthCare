@@ -208,10 +208,11 @@ export const PatientSearch: React.FC<PatientSearchProps> = ({
             onSearch(searchId, searchByPid ? 'pid' : 'general');
             setSearchId('');
           }}
-          disabled={searching || !searchId.trim()}
+          loading={searching}
+          disabled={!searchId.trim()}
           className={`${currentTheme.button} shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl transition-all w-full sm:w-auto`}
         >
-          {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : buttonText}
+          {buttonText}
         </Button>
 
         {/* Search Results Card */}

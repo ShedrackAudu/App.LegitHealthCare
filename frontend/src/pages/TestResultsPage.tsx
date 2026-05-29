@@ -1041,8 +1041,8 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
                 </div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -1083,8 +1083,8 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1124,8 +1124,8 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -1155,8 +1155,8 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1184,8 +1184,8 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
                     <div className="w-full sm:w-[320px] shrink-0">
                         <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
                     </div>
-                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                        {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                     </Button>
                 </div>
             </form>
@@ -1243,8 +1243,8 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
                             <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} allowDownload={false} />
                         )}
                     </div>
-                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                        {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                     </Button>
                 </div>
             </form>
@@ -1412,8 +1412,8 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
 
             <div className="flex justify-center sm:justify-end pt-8">
-                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>

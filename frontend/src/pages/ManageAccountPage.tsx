@@ -26,6 +26,8 @@ const ManageAccountPage = () => {
     const [lastName, setLastName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
+    const [updatingInfo, setUpdatingInfo] = useState(false);
+    const [updatingPassword, setUpdatingPassword] = useState(false);
 
     // Password State
     const [currentPassword, setCurrentPassword] = useState('');
@@ -58,6 +60,7 @@ const ManageAccountPage = () => {
 
     const handleUpdateInfo = async (e: React.FormEvent) => {
         e.preventDefault();
+        setUpdatingInfo(true);
         try {
             const resp = await axios.put(`/api/account/profile`, {
                 first_name: firstName,
@@ -71,6 +74,8 @@ const ManageAccountPage = () => {
             localStorage.setItem('user', JSON.stringify({ ...user, first_name: firstName, last_name: lastName, phone, email }));
         } catch (err: any) {
             toast.error(err.response?.data?.error || 'Failed to update profile.');
+        } finally {
+            setUpdatingInfo(false);
         }
     };
 
@@ -94,6 +99,7 @@ const ManageAccountPage = () => {
             return;
         }
 
+        setUpdatingPassword(true);
         try {
             const resp = await axios.put(`/api/account/password`, {
                 current_password: currentPassword,
@@ -106,6 +112,8 @@ const ManageAccountPage = () => {
             setConfirmPassword('');
         } catch (err: any) {
             toast.error(err.response?.data?.error || 'Failed to update password.');
+        } finally {
+            setUpdatingPassword(false);
         }
     };
 
@@ -185,7 +193,7 @@ const ManageAccountPage = () => {
                                 </div>
                             </CardContent>
                             <CardFooter>
-                                <Button type="submit" className="w-full">Update Info</Button>
+                                <Button type="submit" loading={updatingInfo} className="w-full">Update Info</Button>
                             </CardFooter>
                         </form>
                     </Card>
@@ -227,7 +235,7 @@ const ManageAccountPage = () => {
                                     </div>
                                 </CardContent>
                                 <CardFooter>
-                                    <Button type="submit" variant="secondary" className="w-full border-2">Change Password</Button>
+                                    <Button type="submit" variant="secondary" loading={updatingPassword} className="w-full border-2">Change Password</Button>
                                 </CardFooter>
                             </form>
                         </Card>

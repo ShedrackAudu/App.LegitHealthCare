@@ -743,20 +743,11 @@ const PatientReportPage: React.FC = () => {
 
                             <Button 
                                 onClick={handleBulkDownload}
-                                disabled={bulkLoading}
+                                loading={bulkLoading}
                                 className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                             >
-                                {bulkLoading ? (
-                                    <>
-                                        <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin" />
-                                        Processing...
-                                    </>
-                                ) : (
-                                    <>
-                                        <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />
-                                        Bulk Download (ZIP)
-                                    </>
-                                )}
+                                {!bulkLoading && <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />}
+                                Bulk Download (ZIP)
                             </Button>
                         </Card>
                     </div>

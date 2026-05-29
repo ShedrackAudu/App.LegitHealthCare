@@ -430,8 +430,8 @@ const LoginPage = () => {
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Harden Account'}
+                  <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={!forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
+                    Harden Account
                   </Button>
                </form>
             </div>
@@ -498,8 +498,8 @@ const LoginPage = () => {
                         </button>
                       </div>
 
-                      <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Log In'}
+                      <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        Log In
                       </Button>
                     </>
                   ) : (
@@ -522,8 +522,8 @@ const LoginPage = () => {
                           <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
                               Cancel
                           </Button>
-                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                            {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Verify'}
+                          <Button type="submit" loading={loading} className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest">
+                            Verify
                           </Button>
                       </div>
                     </div>
@@ -555,8 +555,8 @@ const LoginPage = () => {
                       </div>
                       <p className="text-[10px] text-muted-foreground font-medium px-2">Enter your registered details to receive an OTP.</p>
                     </div>
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading}>
-                      {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Verify Identity'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20">
+                      Verify Identity
                     </Button>
                     <button 
                         type="button" 
@@ -594,8 +594,8 @@ const LoginPage = () => {
                           disabled={loading} 
                       />
                     </div>
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || otp.length < 6}>
-                      {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Confirm OTP'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={otp.length < 6}>
+                      Confirm OTP
                     </Button>
                     <button 
                         type="button" 
@@ -647,8 +647,8 @@ const LoginPage = () => {
                       </div>
                     </div>
                     
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !resetPassword || resetPassword !== confirmPassword}>
-                      {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Verify & Finish'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={!resetPassword || resetPassword !== confirmPassword}>
+                      Verify & Finish
                     </Button>
                     <button 
                         type="button" 

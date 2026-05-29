@@ -242,10 +242,10 @@ const AccessKeysPage = () => {
 
                             <Button 
                                 onClick={handleGenerateCode} 
-                                disabled={generatingCode} 
+                                loading={generatingCode} 
                                 className="w-full rounded-2xl font-black text-xs h-14 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
                             >
-                                {generatingCode ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : <HugeiconsIcon icon={PlusSignIcon} className="w-5 h-5" />}
+                                {!generatingCode && <HugeiconsIcon icon={PlusSignIcon} className="w-5 h-5" />}
                                 SECURE GENERATE
                             </Button>
                         </CardContent>

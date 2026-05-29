@@ -288,9 +288,10 @@ const PatientMedicalReport: React.FC = () => {
                                         size="default"
                                         className="h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
                                         onClick={handleGenerateReport}
-                                        disabled={!selectedYear || loading || fetchingYears}
+                                        loading={loading}
+                                        disabled={!selectedYear || fetchingYears}
                                     >
-                                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-3.5 w-3.5 animate-spin" /> : <HugeiconsIcon icon={ArrowRight01Icon} className="mr-2 h-3.5 w-3.5" />}
+                                        {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="mr-2 h-3.5 w-3.5" />}
                                         Retrieve Report
                                     </Button>
                                 </div>

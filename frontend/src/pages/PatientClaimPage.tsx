@@ -274,9 +274,9 @@ const PatientClaimPage = () => {
               <Button 
                 type="submit" 
                 className="w-full h-14 text-lg font-black rounded-xl shadow-lg shadow-primary/20 hover:scale-[1.01] transition-all"
-                disabled={loading}
+                loading={loading}
               >
-                {loading ? 'Processing...' : 'Complete Registration'} <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 w-5 h-5" />
+                Complete Registration {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 w-5 h-5" />}
               </Button>
               
               <div className="p-4 border border-dashed rounded-xl bg-muted/50 text-center">

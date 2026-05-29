@@ -121,17 +121,11 @@ const AccessDeniedPage: React.FC = () => {
                                {!requestSent ? (
                                     <Button 
                                         onClick={handleRequestAccess}
-                                        disabled={isRequesting}
+                                        loading={isRequesting}
                                         className="w-full h-11 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-900/40 rounded-lg transition-all hover:scale-[1.01] active:scale-[0.98] border-none"
                                     >
-                                        {isRequesting ? (
-                                            <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <span className="flex items-center gap-2.5">
-                                                <HugeiconsIcon icon={SentIcon} className="w-4 h-4" />
-                                                Request Entrance Key
-                                            </span>
-                                        )}
+                                        {!isRequesting && <HugeiconsIcon icon={SentIcon} className="w-4 h-4 mr-2.5" />}
+                                        Request Entrance Key
                                     </Button>
                                ) : (
                                     <motion.div 
@@ -168,10 +162,11 @@ const AccessDeniedPage: React.FC = () => {
                                     </div>
                                     <Button 
                                         type="submit" 
-                                        disabled={isVerifying || accessCode.length < 4}
+                                        loading={isVerifying}
+                                        disabled={accessCode.length < 4}
                                         className="w-full h-11 bg-primary/90 hover:bg-primary text-[11px] font-bold rounded-lg shadow-lg shadow-primary/10 transition-all border-none"
                                     >
-                                        {isVerifying ? <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" /> : "Verify & Unlock Access"}
+                                        Verify & Unlock Access
                                     </Button>
                                 </form>
                             </div>

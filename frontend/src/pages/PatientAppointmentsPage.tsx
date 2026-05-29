@@ -339,21 +339,12 @@ const PatientAppointmentsPage = () => {
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
-                                disabled={isBooking}
+                                loading={isBooking}
                                 size="lg"
                                 className="w-full h-11 rounded-xl text-xs font-black gap-2 shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all bg-primary shadow-primary/20"
                             >
-                                {isBooking ? (
-                                    <>
-                                        <HugeiconsIcon icon={Loading03Icon} className="h-3.5 w-3.5 animate-spin" />
-                                        Confirming...
-                                    </>
-                                ) : (
-                                    <>
-                                        <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />
-                                        Complete Booking
-                                    </>
-                                )}
+                                {!isBooking && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
+                                Complete Booking
                             </Button>
 
                             <div className="p-3.5 rounded-xl bg-primary/5 border border-dashed border-primary/10 flex gap-3">

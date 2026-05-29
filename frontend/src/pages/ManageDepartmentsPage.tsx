@@ -116,8 +116,9 @@ const ManageDepartmentsPage: React.FC = () => {
                                         className="h-11 font-semibold"
                                     />
                                 </div>
-                                <Button type="submit" className="w-full h-11 font-bold shadow-md" disabled={adding || !newDept.trim()}>
-                                    {adding ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" /> Add Department</>}
+                                <Button type="submit" className="w-full h-11 font-bold shadow-md" loading={adding} disabled={!newDept.trim()}>
+                                    {!adding && <HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" />}
+                                    Add Department
                                 </Button>
                             </form>
                         </CardContent>

@@ -512,8 +512,8 @@ const SignupPage: React.FC = () => {
 
 
 
-                    <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
-                      {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Create Staff Account'}
+                    <Button type="submit" loading={loading} className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={!isStaffSignupEnabled}>
+                      Create Staff Account
                     </Button>
                   </form>
                 ) : (
@@ -558,9 +558,10 @@ const SignupPage: React.FC = () => {
                             <Button 
                               type="submit"
                               className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-                              disabled={verifyLoading || otp.length < 6}
+                              loading={verifyLoading}
+                              disabled={otp.length < 6}
                             >
-                              {verifyLoading ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : 'Verify & Continue'}
+                              Verify & Continue
                             </Button>
                           </div>
 
@@ -635,8 +636,8 @@ const SignupPage: React.FC = () => {
                         </div>
                       </div>
                       
-                      <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" disabled={searchLoading}>
-                        {searchLoading ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : 'Find My Records'}
+                      <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" loading={searchLoading}>
+                        Find My Records
                       </Button>
                     </form>
 
@@ -768,8 +769,8 @@ const SignupPage: React.FC = () => {
 
                     </div>
 
-                    <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" disabled={loading}>
-                      {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : 'Claim Account'}
+                    <Button type="submit" loading={loading} className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                      Claim Account
                     </Button>
                     
                     <button type="button" onClick={() => {setPatientStep('search'); setPatientStaffId('');}} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
@@ -818,9 +819,10 @@ const SignupPage: React.FC = () => {
                             <Button 
                               type="submit"
                               className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-                              disabled={verifyLoading || otp.length < 6}
+                              loading={verifyLoading}
+                              disabled={otp.length < 6}
                             >
-                              {verifyLoading ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : 'Verify & Finish'}
+                              Verify & Finish
                             </Button>
                           </div>
 

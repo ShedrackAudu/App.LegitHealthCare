@@ -495,18 +495,19 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         variant="default"
                         size="lg" 
                         onClick={handleAIGenerate}
-                        disabled={generatingAI || loading}
+                        loading={generatingAI}
+                        disabled={loading}
                         className="bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-black text-lg shadow-xl shadow-blue-500/20 h-12 rounded-xl border-0 w-full sm:w-auto order-2 sm:order-1"
                     >
-                        {generatingAI ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin mr-2" /> : (
+                        {!generatingAI && (
                             <div className="flex items-center justify-center whitespace-nowrap">
                                 <HugeiconsIcon icon={SparklesIcon} className="mr-2 h-5 w-5 shrink-0" /> AI Overview
                             </div>
                         )}
                     </Button>
                     
-                    <Button type="submit" size="lg" className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={loading || generatingAI}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : (
+                    <Button type="submit" size="lg" loading={loading} className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={generatingAI}>
+                        {!loading && (
                             <div className="flex items-center justify-center whitespace-nowrap">
                                 <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
                             </div>

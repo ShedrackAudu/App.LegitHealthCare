@@ -572,10 +572,10 @@ const UserManagementPage: React.FC = () => {
                 <Button variant="ghost" onClick={() => setIsEditModalOpen(false)} className="font-bold">Cancel</Button>
                 <Button
                   onClick={handleSaveRoles}
-                  disabled={saving}
+                  loading={saving}
                   className="gap-2 px-8 font-black shadow-lg shadow-primary/20"
                 >
-                  {saving ? <HugeiconsIcon icon={ReloadIcon} className="h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />}
+                  {!saving && <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />}
                   Apply Access Rules
                 </Button>
               </div>
@@ -639,9 +639,10 @@ const UserManagementPage: React.FC = () => {
             <Button
               onClick={handleResetPassword}
               className="font-bold"
-              disabled={isSubmitting || !newPassword || newPassword !== confirmPassword}
+              loading={isSubmitting}
+              disabled={!newPassword || newPassword !== confirmPassword}
             >
-              {isSubmitting ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 mr-2" />}
+              {!isSubmitting && <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 mr-2" />}
               Apply New Password
             </Button>
           </DialogFooter>
@@ -718,9 +719,9 @@ const UserManagementPage: React.FC = () => {
             <Button
               onClick={handleSaveInfo}
               className="font-bold"
-              disabled={saving}
+              loading={saving}
             >
-              {saving ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4 mr-2" />}
+              {!saving && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4 mr-2" />}
               Save Changes
             </Button>
           </DialogFooter>
@@ -841,9 +842,9 @@ const UserManagementPage: React.FC = () => {
                   <Button
                     onClick={handleAddUser}
                     className="font-bold gap-2 shadow-lg shadow-primary/20"
-                    disabled={saving}
+                    loading={saving}
                   >
-                    {saving ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
+                    {!saving && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
                     Create Account
                   </Button>
                 </div>
@@ -955,9 +956,10 @@ const UserManagementPage: React.FC = () => {
                 <Button 
                   onClick={handlePatientSearch} 
                   className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20"
-                  disabled={onboardLoading || !searchStaffId.trim()}
+                  loading={onboardLoading}
+                  disabled={!searchStaffId.trim()}
                 >
-                  {onboardLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : "Locate Records"}
+                  Locate Records
                 </Button>
               </motion.div>
             )}
@@ -1057,9 +1059,9 @@ const UserManagementPage: React.FC = () => {
                     <Button 
                       type="submit" 
                       className="flex-[2] rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20"
-                      disabled={onboardLoading}
+                      loading={onboardLoading}
                     >
-                      {onboardLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : "Create Account"}
+                      Create Account
                     </Button>
                   </div>
                 </form>

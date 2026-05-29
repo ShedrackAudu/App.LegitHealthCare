@@ -1037,8 +1037,8 @@ const RegistrationPage: React.FC = () => {
                       <HugeiconsIcon icon={Cancel01Icon} className="mr-2 h-5 w-5" /> Cancel
                     </Button>
                   )}
-                  <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
+                  <Button type="submit" size="lg" loading={loading} className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg">
+                    {!loading && (
                       <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Register Patient'}</>
                     )}
                   </Button>

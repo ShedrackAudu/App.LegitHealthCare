@@ -715,10 +715,11 @@ const BrandingSettingsPage: React.FC = () => {
                     <div className="flex justify-end pt-6 border-t mt-8">
                         <Button 
                             type="submit"
-                            disabled={saving}
+                            loading={saving}
                             size="lg" 
                             className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl"
-                        >    {saving ? 'Saving Application Branding...' : 'Save Appearance Changes'}
+                        >
+                            Save Appearance Changes
                         </Button>
                     </div>
                 </form>

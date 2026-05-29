@@ -77,9 +77,11 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                     <Button
                         onClick={() => handleAdd(type)}
                         className="w-full h-11 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-                        disabled={adding || !newItemName.trim()}
+                        loading={adding}
+                        disabled={!newItemName.trim()}
                     >
-                        {adding ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" /> Add {title.slice(0, -1)}</>}
+                        {!adding && <HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" />}
+                        Add {title.slice(0, -1)}
                     </Button>
                 </div>
             </CardContent>
@@ -766,12 +768,12 @@ const SystemConfigPage: React.FC = () => {
                                         <div className="flex justify-end gap-3 pt-4">
                                             <Button
                                                 type="submit"
-                                                disabled={emailSaving}
+                                                loading={emailSaving}
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {emailSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
-                                                {emailSaving ? 'Saving...' : 'Save Configuration'}
+                                                {!emailSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                Save Configuration
                                             </Button>
                                         </div>
                                     </form>
@@ -800,10 +802,10 @@ const SystemConfigPage: React.FC = () => {
                                                 variant="secondary"
                                                 className="w-full font-bold h-10 border-2 hover:bg-primary hover:text-white transition-all"
                                                 onClick={handleTestEmail}
-                                                disabled={testing}
+                                                loading={testing}
                                             >
-                                                {testing ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={Mail01Icon} className="mr-2 h-4 w-4" />}
-                                                {testing ? 'Sending...' : 'Send Test Email'}
+                                                {!testing && <HugeiconsIcon icon={Mail01Icon} className="mr-2 h-4 w-4" />}
+                                                Send Test Email
                                             </Button>
                                         </CardContent>
                                     </Card>
@@ -885,12 +887,12 @@ const SystemConfigPage: React.FC = () => {
                                 <div className="flex justify-end pt-4">
                                     <Button
                                         type="submit"
-                                        disabled={brandingSaving}
+                                        loading={brandingSaving}
                                         size="lg"
                                         className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                     >
-                                        {brandingSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
-                                        {brandingSaving ? 'Saving...' : 'Update Clinical Identity'}
+                                        {!brandingSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                        Update Clinical Identity
                                     </Button>
                                 </div>
                             </form>
@@ -1049,12 +1051,12 @@ const SystemConfigPage: React.FC = () => {
                                         <div className="flex justify-end pt-4">
                                             <Button
                                                 type="submit"
-                                                disabled={tickerSaving}
+                                                loading={tickerSaving}
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {tickerSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
-                                                {tickerSaving ? 'Saving...' : 'Save Announcement'}
+                                                {!tickerSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                Save Announcement
                                             </Button>
                                         </div>
                                     </form>
@@ -1093,12 +1095,13 @@ const SystemConfigPage: React.FC = () => {
                                                 description: 'Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.',
                                                 actionType: 'queue'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'queue'} 
+                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'queue'}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={ReloadIcon} className="mr-2 h-5 w-5" />}
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'queue') && <HugeiconsIcon icon={ReloadIcon} className="mr-2 h-5 w-5" />}
                                             Reset
                                         </Button>
                                     </div>
@@ -1117,12 +1120,13 @@ const SystemConfigPage: React.FC = () => {
                                                 description: 'Are you sure you want to permanently delete all system audit logs? This action is irreversible.',
                                                 actionType: 'audit'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'audit'} 
+                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'audit'}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'audit') && <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
                                             Clear
                                         </Button>
                                     </div>
@@ -1141,12 +1145,13 @@ const SystemConfigPage: React.FC = () => {
                                                 description: `Are you sure you want to permanently delete all patient bio-data for the active context? This action is irreversible.`,
                                                 actionType: 'biodata'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata'} 
+                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'biodata'}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata') && <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
                                             Clear
                                         </Button>
                                     </div>

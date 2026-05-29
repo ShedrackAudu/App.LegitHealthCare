@@ -635,8 +635,8 @@ const ConsultationPage: React.FC = () => {
 
                     <div className="pt-6 border-t flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
                       <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto px-10 h-12 font-bold order-2 sm:order-1" onClick={() => setPatient(null)}>Discard</Button>
-                      <Button type="submit" size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2" disabled={saving}>
-                        {saving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
+                      <Button type="submit" size="lg" loading={saving} className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2">
+                        {!saving && (
                           <div className="flex items-center justify-center whitespace-nowrap">
                              <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
                           </div>
