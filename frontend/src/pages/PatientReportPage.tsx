@@ -89,8 +89,8 @@ const PatientReportPage: React.FC = () => {
 
             const imgData = await toJpeg(pageEl, {
                 cacheBust: true,
-                pixelRatio: 2,
-                quality: 0.85,
+                pixelRatio: 3,
+                quality: 0.95,
                 width: width,
                 height: height,
                 style: { margin: '0' }
