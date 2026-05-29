@@ -25,7 +25,7 @@ import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import { toPng } from 'html-to-image';
+import { toJpeg } from 'html-to-image';
 import '@/styles/PatientReport.css';
 
 const PatientMedicalReport: React.FC = () => {
@@ -112,9 +112,10 @@ const PatientMedicalReport: React.FC = () => {
             const width = pageEl.scrollWidth;
             const height = pageEl.scrollHeight;
 
-            const imgData = await toPng(pageEl, {
+            const imgData = await toJpeg(pageEl, {
                 cacheBust: true,
                 pixelRatio: 2,
+                quality: 0.85,
                 width: width,
                 height: height,
                 style: { margin: '0' }
@@ -130,7 +131,7 @@ const PatientMedicalReport: React.FC = () => {
             const x = (pdfWidth - calcWidth) / 2;
             const y = (pdfHeight - calcHeight) / 2;
 
-            pdf.addImage(imgData, 'PNG', x, y, calcWidth, calcHeight);
+            pdf.addImage(imgData, 'JPEG', x, y, calcWidth, calcHeight);
         }
 
         return pdf.output('blob');
