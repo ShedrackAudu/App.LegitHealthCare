@@ -759,6 +759,35 @@ class AuditLog(db.Model):
                 kwargs['user_id'] = int(user_id)
             except (ValueError, TypeError):
                 kwargs['user_id'] = None
+
+        # Auto-detect device/user_agent from Flask request context
+        try:
+            from flask import has_request_context, request
+            if has_request_context():
+                details = kwargs.get('details')
+                details_data = {}
+                if details:
+                    try:
+                        details_data = json.loads(details)
+                    except:
+                        details_data = {"message": details}
+                else:
+                    details_data = {}
+
+                # Capture User Agent & Parse Platform/Browser
+                ua = request.user_agent
+                if ua:
+                    platform = ua.platform or "Unknown OS"
+                    browser = ua.browser or "Unknown Browser"
+                    details_data['device'] = {
+                        "platform": platform,
+                        "browser": browser,
+                        "user_agent": ua.string
+                    }
+                kwargs['details'] = json.dumps(details_data)
+        except Exception:
+            pass
+
         super().__init__(*args, **kwargs)
 
     @validates('user_id')

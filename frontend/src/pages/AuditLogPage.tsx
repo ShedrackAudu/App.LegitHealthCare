@@ -92,9 +92,12 @@ const AuditLogPage: React.FC = () => {
       const data = typeof details === 'string' ? JSON.parse(details) : details;
       if (typeof data !== 'object' || data === null) return <p className="text-xs font-bold">{String(data)}</p>;
       
+      const filteredData = Object.entries(data).filter(([key]) => key !== 'device' && key !== 'portal');
+      if (filteredData.length === 0) return <p className="text-[10px] text-muted-foreground italic">No additional metadata fields.</p>;
+
       return (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-2">
-          {Object.entries(data).map(([key, value]) => (
+          {filteredData.map(([key, value]) => (
             <div key={key} className="p-3 rounded-xl bg-slate-500/[0.03] border border-slate-500/10 hover:border-slate-500/20 transition-all">
               <p className="text-[9px] font-black uppercase text-slate-500/60 mb-0.5 tracking-widest">{key.replace(/_/g, ' ')}</p>
               <p className="text-[11px] font-bold text-foreground line-clamp-2" title={String(value)}>{String(value)}</p>
@@ -160,14 +163,14 @@ const AuditLogPage: React.FC = () => {
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><HugeiconsIcon icon={Activity01Icon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source IP</TableHead>
+                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source / Device</TableHead>
                       <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {logs.filter(log => 
-                      log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                      (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase()))
+                       log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                       (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase()))
                     ).map((log) => (
                       <TableRow 
                         key={log.id} 
@@ -198,8 +201,15 @@ const AuditLogPage: React.FC = () => {
                         <TableCell className="text-[11px] font-mono font-bold text-slate-400 py-2.5">
                           {log.resource}
                         </TableCell>
-                        <TableCell className="text-[11px] font-bold text-slate-400 py-2.5">
-                          {log.ip_address || '127.0.0.1'}
+                        <TableCell className="py-2.5">
+                          <div className="flex flex-col">
+                            <span className="text-[11px] font-bold text-slate-400">{log.ip_address || '127.0.0.1'}</span>
+                            {log.details?.device && (
+                              <span className="text-[9px] font-semibold text-muted-foreground/80 truncate max-w-[130px]" title={`${log.details.device.platform} / ${log.details.device.browser}`}>
+                                {log.details.device.platform} / {log.details.device.browser}
+                              </span>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell className="text-[11px] font-bold text-slate-500 py-2.5 text-right whitespace-nowrap">
                           {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')}
@@ -259,7 +269,7 @@ const AuditLogPage: React.FC = () => {
 
                         <ScrollArea className="max-h-[60vh]">
                             <div className="p-8 space-y-8">
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                                     <div className="space-y-1">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                                             <HugeiconsIcon icon={UserIcon} className="w-3 h-3" /> Originator
@@ -278,6 +288,17 @@ const AuditLogPage: React.FC = () => {
                                         </p>
                                         <p className="text-sm font-bold">{format(new Date(selectedLog.timestamp), 'MMM dd, yyyy HH:mm:ss')}</p>
                                     </div>
+                                    <div className="space-y-1">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-3 h-3"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg> Access Device
+                                        </p>
+                                        <p className="text-sm font-bold truncate" title={selectedLog.details?.device ? `${selectedLog.details.device.platform} / ${selectedLog.details.device.browser}` : 'Unknown'}>
+                                            {selectedLog.details?.device 
+                                                ? `${selectedLog.details.device.platform} (${selectedLog.details.device.browser})`
+                                                : 'Unknown'
+                                            }
+                                        </p>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-3">
@@ -289,6 +310,17 @@ const AuditLogPage: React.FC = () => {
                                         <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-primary opacity-20 group-hover:opacity-100 transition-opacity" />
                                     </div>
                                 </div>
+
+                                {selectedLog.details?.device?.user_agent && (
+                                    <div className="space-y-2">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            User Agent String
+                                        </p>
+                                        <div className="p-3.5 rounded-xl bg-slate-500/[0.03] border border-slate-500/10 text-[10px] font-mono text-muted-foreground break-all leading-normal">
+                                            {selectedLog.details.device.user_agent}
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">

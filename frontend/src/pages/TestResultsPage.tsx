@@ -56,6 +56,11 @@ import { toast as hotToast } from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
+const toTitleCase = (str: string): string => {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+};
+
 const TempAccessCountdown = () => {
     const { user } = useAppContext();
     const [timeLeft, setTimeLeft] = useState<number | null>(null);
@@ -910,8 +915,19 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         setLoading(true);
         try {
             const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
+            
+            let payload = { ...data };
+            if (testType === 'audiometry') {
+                if (payload.audiometry_result) {
+                    payload.audiometry_result = toTitleCase(payload.audiometry_result);
+                }
+                if (payload.audiometry_remark) {
+                    payload.audiometry_remark = toTitleCase(payload.audiometry_remark);
+                }
+            }
+
             await axios.post(`/api/tests/save-test/${type}`, {
-                ...data,
+                ...payload,
                 staff_id: patient.staff_id,
                 screening_year: activeYear,
                 current_test_type: testType
@@ -1178,7 +1194,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
 };
 
 const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }: any) => {
-    const { register, handleSubmit, reset } = useForm({
+    const { register, handleSubmit, reset, setValue } = useForm({
         defaultValues: initialData
     });
 
@@ -1192,8 +1208,34 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
         <div className="space-y-12">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
-                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
+                    <div className="space-y-2">
+                        <Label>Result <span className="text-rose-500">*</span></Label>
+                        <Input 
+                            {...register(resultKey, { 
+                                required: true,
+                                onBlur: (e) => {
+                                    if (test === 'Audiometry') {
+                                        setValue(resultKey, toTitleCase(e.target.value));
+                                    }
+                                }
+                            })} 
+                            required 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Remark <span className="text-rose-500">*</span></Label>
+                        <Input 
+                            {...register(remarkKey, { 
+                                required: true,
+                                onBlur: (e) => {
+                                    if (test === 'Audiometry') {
+                                        setValue(remarkKey, toTitleCase(e.target.value));
+                                    }
+                                }
+                            })} 
+                            required 
+                        />
+                    </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
                     <div className="w-full sm:w-[320px] shrink-0">
