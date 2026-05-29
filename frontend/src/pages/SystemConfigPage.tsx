@@ -771,7 +771,7 @@ const SystemConfigPage: React.FC = () => {
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
                                                 {emailSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
-                                                {emailSaving ? 'Saving...' : 'FloppyDiskIcon Configuration'}
+                                                {emailSaving ? 'Saving...' : 'Save Configuration'}
                                             </Button>
                                         </div>
                                     </form>
@@ -1054,7 +1054,7 @@ const SystemConfigPage: React.FC = () => {
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
                                                 {tickerSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
-                                                {tickerSaving ? 'Saving...' : 'FloppyDiskIcon Announcement'}
+                                                {tickerSaving ? 'Saving...' : 'Save Announcement'}
                                             </Button>
                                         </div>
                                     </form>

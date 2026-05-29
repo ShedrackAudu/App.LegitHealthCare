@@ -365,7 +365,7 @@ export const AISettingsPage = () => {
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 px-12 shadow-xl shadow-blue-500/20 rounded-xl text-lg w-full md:w-auto"
                         >
                             {saving ? <HugeiconsIcon icon={Loading03Icon} className="mr-3 h-6 w-6 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-3 h-6 w-6" />}
-                            FloppyDiskIcon AI Configuration
+                            Save AI Configuration
                         </Button>
                     </div>
                 </form>

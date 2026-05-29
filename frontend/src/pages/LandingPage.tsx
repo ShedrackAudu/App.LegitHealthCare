@@ -91,7 +91,7 @@ const LandingPage = () => {
 
   return (
     <>
-      <div className="min-h-screen bg-background text-foreground selection:bg-primary/20">
+      <div className="h-full overflow-y-auto bg-background text-foreground selection:bg-primary/20">
       {/* Navigation */}
       <nav className="fixed w-full z-50 bg-background/80 backdrop-blur-md border-b border-border">
         <div className="container mx-auto px-4 md:px-12 lg:px-20">

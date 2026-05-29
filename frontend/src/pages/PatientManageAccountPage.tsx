@@ -296,7 +296,7 @@ const PatientManageAccountPage = () => {
                   </CardContent>
                   <CardFooter className="p-5 pt-0 bg-muted/5 flex justify-end">
                     <Button type="submit" disabled={saving} className="h-10 px-6 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
-                      {saving ? 'Saving...' : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-3.5 w-3.5" /> FloppyDiskIcon Changes</>}
+                      {saving ? 'Saving...' : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-3.5 w-3.5" /> Save Changes</>}
                     </Button>
                   </CardFooter>
                 </form>
