@@ -4,12 +4,12 @@ import { useForm, Controller } from 'react-hook-form';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
-  Save, 
+  FloppyDiskIcon, 
   Loading03Icon, 
   Clock01Icon, 
   ArrowDown01Icon,
   ArrowUp01Icon,
-  ShieldCheck,
+  Shield01Icon,
   SparklesIcon,
   UserIcon
 } from '@hugeicons/core-free-icons';
@@ -508,7 +508,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <Button type="submit" size="lg" className="w-full sm:w-auto px-12 font-black text-lg shadow-xl shadow-primary/20 h-12 rounded-xl order-1 sm:order-2" disabled={loading || generatingAI}>
                         {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : (
                             <div className="flex items-center justify-center whitespace-nowrap">
-                                <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
+                                <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Submit Final Review
                             </div>
                         )}
                     </Button>
@@ -582,7 +582,7 @@ const DirectorPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                            <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
+                            <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight">Director Review Panel</h1>

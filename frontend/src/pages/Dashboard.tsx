@@ -9,7 +9,7 @@ import {
   UserSettings01Icon,
   UserAdd01Icon,
   Chemistry02Icon,
-  ShieldCheck,
+  Shield01Icon,
   Database02Icon,
   Activity01Icon,
   UserGroupIcon,
@@ -24,7 +24,7 @@ import {
   PackageIcon,
   Calendar03Icon,
   Note01Icon,
-  RobotIcon,
+  MachineRobotIcon,
   PaintBrush01Icon,
   Delete02Icon
 } from '@hugeicons/core-free-icons';
@@ -75,7 +75,7 @@ const quickActions = [
   { 
     title: 'Director Review', 
     description: 'Final clinical assessment & record validation.',
-    icon: ShieldCheck, 
+    icon: Shield01Icon, 
     path: '/director',
     color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     permission: 'director_review'
@@ -150,7 +150,7 @@ const adminActions = [
   { 
     title: 'Role Configuration', 
     description: 'Configure access control and role assignments.',
-    icon: ShieldCheck, 
+    icon: Shield01Icon, 
     path: '/roles-permissions',
     color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
     permission: 'manage_roles'
@@ -182,7 +182,7 @@ const adminActions = [
   { 
     title: 'AI Integration', 
     description: 'Configure AI agents and medical parameters.',
-    icon: RobotIcon, 
+    icon: MachineRobotIcon, 
     path: '/ai-integration',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_ai'

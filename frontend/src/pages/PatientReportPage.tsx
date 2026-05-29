@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  FileText, 
+  File01Icon, 
   Download01Icon, 
   Mail01Icon, 
   Loading03Icon, 
@@ -225,7 +225,7 @@ const PatientReportPage: React.FC = () => {
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-red-500/10 rounded-xl sm:rounded-2xl">
-                            <HugeiconsIcon icon={FileText} className="text-red-500 h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={File01Icon} className="text-red-500 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">Patient Medical Report</h1>
@@ -612,7 +612,7 @@ const PatientReportPage: React.FC = () => {
                         <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6 no-print">
                             <div className="text-center space-y-3">
                                 <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
-                                    <HugeiconsIcon icon={FileText} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                                    <HugeiconsIcon icon={File01Icon} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
                                 </div>
                                 <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
                                     No diagnostic data found for this patient in {activeYear}.
@@ -634,7 +634,7 @@ const PatientReportPage: React.FC = () => {
                     <Card className="border-2 border-dashed flex items-center justify-center min-h-[24rem] bg-muted/5 mt-8 p-6">
                         <div className="text-center space-y-3">
                             <div className="w-16 h-16 sm:w-24 sm:h-24 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
-                                <HugeiconsIcon icon={FileText} className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
+                                <HugeiconsIcon icon={File01Icon} className="w-8 h-8 sm:w-12 sm:h-12 text-muted-foreground/30" />
                             </div>
                             <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground/70">
                                 Search a patient to view report

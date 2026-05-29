@@ -9,7 +9,7 @@ import {
   Mail01Icon, 
   CallIcon, 
   Building02Icon, 
-  ShieldCheck, 
+  Shield01Icon, 
   CheckmarkCircle02Icon, 
   Activity01Icon, 
   GlobeIcon, 
@@ -97,7 +97,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
                     <ProfileInfoItem label="Age" value={userProfile.age ? `${userProfile.age} yrs` : null} icon={Activity01Icon} />
                   </div>
                   <div className="grid grid-cols-2 gap-3">
-                    <ProfileInfoItem label="Race" value={userProfile.race} icon={ShieldCheck} />
+                    <ProfileInfoItem label="Race" value={userProfile.race} icon={Shield01Icon} />
                     <ProfileInfoItem label="Nationality" value={userProfile.nationality} icon={GlobeIcon} />
                   </div>
                 </>

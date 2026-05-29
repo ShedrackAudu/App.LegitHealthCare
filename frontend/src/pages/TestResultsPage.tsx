@@ -4,10 +4,10 @@ import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
-  Save, 
+  FloppyDiskIcon, 
   Loading03Icon, 
-  Heart, 
-  Wind, 
+  FavouriteIcon, 
+  FastWindIcon, 
   ArrowRight01Icon,
   Chemistry02Icon,
   Brain02Icon,
@@ -20,8 +20,8 @@ import {
   Clock01Icon,
   Download01Icon,
   CloudUploadIcon,
-  FileSpreadsheetIcon,
-  Information,
+  Xls01Icon,
+  InformationCircleIcon,
   CheckmarkCircle02Icon,
   CancelCircleIcon,
   AlertCircleIcon,
@@ -331,8 +331,8 @@ const TestResultsPage: React.FC = () => {
                             { id: 'kft', title: 'Kidney Function Test', icon: Activity01Icon, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
                             { id: 'lipid', title: 'Lipid Profile', icon: Brain02Icon, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
                             { id: 'lft', title: 'Liver Function Test', icon: ClipboardIcon, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
-                            { id: 'ecg', title: 'ECG Analysis', icon: Heart, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
-                            { id: 'spirometry', title: 'Spirometry', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
+                            { id: 'ecg', title: 'ECG Analysis', icon: FavouriteIcon, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
+                            { id: 'spirometry', title: 'Spirometry', icon: FastWindIcon, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
                             { id: 'audiometry', title: 'Audiometry', icon: VolumeHighIcon, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
                         ].map((test) => (
                             <Card 
@@ -782,7 +782,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                     <div className="space-y-4">
                         <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/50 border-2 border-dashed border-primary/20">
                             <div className="p-2 bg-amber-500/10 rounded-xl">
-                                <HugeiconsIcon icon={Information} className="h-5 w-5 text-amber-600" />
+                                <HugeiconsIcon icon={InformationCircleIcon} className="h-5 w-5 text-amber-600" />
                             </div>
                             <div className="space-y-1">
                                 <h4 className="font-black text-sm uppercase tracking-tight">Instructions</h4>
@@ -817,7 +817,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                                     </>
                                 ) : (
                                     <>
-                                        <HugeiconsIcon icon={FileSpreadsheetIcon} className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                                        <HugeiconsIcon icon={Xls01Icon} className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
                                         <p className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">Click to Select Excel File</p>
                                         <p className="text-[10px] text-muted-foreground uppercase font-black mt-1">Only .xlsx supported</p>
                                     </>
@@ -1026,7 +1026,7 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -1068,7 +1068,7 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1109,7 +1109,7 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -1140,7 +1140,7 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
                 <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1169,7 +1169,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
                         <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                     </Button>
                 </div>
             </form>
@@ -1202,7 +1202,7 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
                         )}
                     </div>
                     <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                        {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                     </Button>
                 </div>
             </form>
@@ -1371,7 +1371,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="flex justify-center sm:justify-end pt-8">
                 <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
-                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
+                    {loading ? <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin" /> : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>

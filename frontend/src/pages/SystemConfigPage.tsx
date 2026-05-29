@@ -15,14 +15,14 @@ import {
   Loading03Icon,
   Settings02Icon,
   Mail01Icon,
-  Save,
-  Server,
+  FloppyDiskIcon,
+  ServerStack01Icon,
   EyeIcon,
-  EyeOff,
-  ShieldCheck,
+  ViewOffIcon,
+  Shield01Icon,
   StethoscopeIcon,
   ReloadIcon,
-  MegaphoneIcon
+  Megaphone01Icon
 } from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -353,7 +353,7 @@ const SystemConfigPage: React.FC = () => {
         try {
             await axios.post('/api/email/settings', emailSettings);
             
-            // Save contact branding as well (using JSON for text-only update)
+            // FloppyDiskIcon contact branding as well (using JSON for text-only update)
             await axios.post('/api/branding', {
                 email: contactSettings.email,
                 phone: contactSettings.phone,
@@ -625,15 +625,15 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <HugeiconsIcon icon={Server} className="h-5 w-5 text-primary" />
-                                                    SMTP Server Settings
+                                                    <HugeiconsIcon icon={ServerStack01Icon} className="h-5 w-5 text-primary" />
+                                                    SMTP ServerStack01Icon Settings
                                                 </CardTitle>
                                                 <CardDescription>Configure how the system connects to your email provider.</CardDescription>
                                             </CardHeader>
                                             <CardContent className="pt-6 space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP Server</Label>
+                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP ServerStack01Icon</Label>
                                                         <Input
                                                             className="h-11 font-bold border-2 focus-visible:ring-primary"
                                                             value={emailSettings.MAIL_SERVER}
@@ -692,7 +692,7 @@ const SystemConfigPage: React.FC = () => {
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
                                                         >
-                                                            {showPassword ? <HugeiconsIcon icon={EyeOff} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
+                                                            {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -744,7 +744,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-primary" />
                                                     Clinical Administration
                                                 </CardTitle>
                                                 <CardDescription>Configure administrative roles and clinical oversight.</CardDescription>
@@ -770,8 +770,8 @@ const SystemConfigPage: React.FC = () => {
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {emailSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
-                                                {emailSaving ? 'Saving...' : 'Save Configuration'}
+                                                {emailSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                {emailSaving ? 'Saving...' : 'FloppyDiskIcon Configuration'}
                                             </Button>
                                         </div>
                                     </form>
@@ -810,7 +810,7 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="bg-amber-500/10 border-2 border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
                                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600">
-                                            <HugeiconsIcon icon={Server} className="h-5 w-5" />
+                                            <HugeiconsIcon icon={ServerStack01Icon} className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-amber-900 text-[10px] uppercase tracking-wider text-amber-600">Security Note</h4>
@@ -889,7 +889,7 @@ const SystemConfigPage: React.FC = () => {
                                         size="lg"
                                         className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                     >
-                                        {brandingSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
+                                        {brandingSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
                                         {brandingSaving ? 'Saving...' : 'Update Clinical Identity'}
                                     </Button>
                                 </div>
@@ -988,7 +988,7 @@ const SystemConfigPage: React.FC = () => {
                                 <CardHeader className="border-b bg-muted/5 p-6">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <HugeiconsIcon icon={MegaphoneIcon} className="h-6 w-6 text-primary" />
+                                            <HugeiconsIcon icon={Megaphone01Icon} className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-primary font-black">System Announcement Ticker</CardTitle>
@@ -1053,8 +1053,8 @@ const SystemConfigPage: React.FC = () => {
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {tickerSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5" />}
-                                                {tickerSaving ? 'Saving...' : 'Save Announcement'}
+                                                {tickerSaving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                {tickerSaving ? 'Saving...' : 'FloppyDiskIcon Announcement'}
                                             </Button>
                                         </div>
                                     </form>

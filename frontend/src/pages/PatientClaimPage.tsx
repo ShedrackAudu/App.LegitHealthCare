@@ -7,7 +7,7 @@ import {
   Mail01Icon, 
   CallIcon, 
   LockIcon, 
-  Hash, 
+  TextNumberSignIcon, 
   Calendar03Icon, 
   Building02Icon,
   ArrowRight01Icon
@@ -176,7 +176,7 @@ const PatientClaimPage = () => {
                     <div className="p-3 rounded-xl bg-muted/30 border border-border/50">
                         <Label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground mb-1 block">Staff ID</Label>
                         <p className="font-bold text-foreground text-sm flex items-center gap-2">
-                           <HugeiconsIcon icon={Hash} className="w-3.5 h-3.5 text-primary" /> {formData.staff_id}
+                           <HugeiconsIcon icon={TextNumberSignIcon} className="w-3.5 h-3.5 text-primary" /> {formData.staff_id}
                         </p>
                     </div>
                 </div>

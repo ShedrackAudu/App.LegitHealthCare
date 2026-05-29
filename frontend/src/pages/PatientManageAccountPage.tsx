@@ -1,11 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { 
-  UserIcon, Mail01Icon, CallIcon, ShieldIcon, ShieldCheck, 
-  Save, ArrowLeft01Icon, Building02Icon, Calendar03Icon, LicenseIcon,
-  LockIcon, KeyIcon, FingerPrintIcon, Flag02Icon, CompassIcon, GlobeIcon,
-  Loading03Icon, EyeIcon, EyeOff
+import {
+  UserIcon,
+  Mail01Icon,
+  CallIcon,
+  Shield01Icon,
+  FloppyDiskIcon,
+  ArrowLeft01Icon,
+  Building02Icon,
+  Calendar03Icon,
+  LicenseIcon,
+  LockIcon,
+  LockKeyIcon,
+  FingerPrintIcon,
+  Flag02Icon,
+  CompassIcon,
+  GlobeIcon,
+  Loading03Icon,
+  EyeIcon,
+  ViewOffIcon
 } from '@hugeicons/core-free-icons';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import { PasswordMatchIndicator } from '@/components/ui/PasswordMatchIndicator';
@@ -234,7 +248,7 @@ const PatientManageAccountPage = () => {
                         </div>
                         <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
                            <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
-                              <HugeiconsIcon icon={ShieldCheck} className="w-3.5 h-3.5" />
+                              <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
                               <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Profile</p>
@@ -282,7 +296,7 @@ const PatientManageAccountPage = () => {
                   </CardContent>
                   <CardFooter className="p-5 pt-0 bg-muted/5 flex justify-end">
                     <Button type="submit" disabled={saving} className="h-10 px-6 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
-                      {saving ? 'Saving...' : <><HugeiconsIcon icon={Save} className="mr-2 h-3.5 w-3.5" /> Save Changes</>}
+                      {saving ? 'Saving...' : <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-3.5 w-3.5" /> FloppyDiskIcon Changes</>}
                     </Button>
                   </CardFooter>
                 </form>
@@ -295,7 +309,7 @@ const PatientManageAccountPage = () => {
                 <CardHeader className="p-5 border-b bg-primary/[0.03]">
                   <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-xl text-primary">
-                      <HugeiconsIcon icon={ShieldCheck} className="w-4 h-4" />
+                      <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
                     </div>
                     <div>
                       <CardTitle className="text-base font-black tracking-tight">Security</CardTitle>
@@ -337,7 +351,7 @@ const PatientManageAccountPage = () => {
                         }}
                       >
                         <div className="p-1 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                          <HugeiconsIcon icon={KeyIcon} className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+                          <HugeiconsIcon icon={LockKeyIcon} className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
                         </div>
                         <span>Reset Passcode</span>
                      </Button>
@@ -351,7 +365,7 @@ const PatientManageAccountPage = () => {
                   <div className="p-6 space-y-4">
                     <DialogHeader className="space-y-3 items-center text-center">
                       <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm">
-                        <HugeiconsIcon icon={KeyIcon} className="w-6 h-6" />
+                        <HugeiconsIcon icon={LockKeyIcon} className="w-6 h-6" />
                       </div>
                       <div className="space-y-1">
                         <DialogTitle className="text-xl font-black tracking-tight">Security Reset</DialogTitle>
@@ -399,7 +413,7 @@ const PatientManageAccountPage = () => {
                                 onClick={() => setShowPassword(!showPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                               >
-                                {showPassword ? <HugeiconsIcon icon={EyeOff} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
+                                {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
                               </button>
                             </div>
                           </div>
@@ -422,7 +436,7 @@ const PatientManageAccountPage = () => {
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                                 className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                               >
-                                {showConfirmPassword ? <HugeiconsIcon icon={EyeOff} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
+                                {showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
                               </button>
                             </div>
                           </div>
@@ -448,7 +462,7 @@ const PatientManageAccountPage = () => {
                           }}
                           disabled={resetLoading}
                         >
-                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={Save} className="h-4 w-4 mr-2" />}
+                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="h-4 w-4 mr-2" />}
                           {resetLoading ? "Sending Code..." : "Send Verification Code"}
                         </Button>
                       ) : (
@@ -489,7 +503,7 @@ const PatientManageAccountPage = () => {
                           }}
                           disabled={resetLoading}
                         >
-                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4 mr-2" />}
+                          {resetLoading ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 mr-2" />}
                           {resetLoading ? "Verifying..." : "Verify & Update Password"}
                         </Button>
                       )}
@@ -500,7 +514,7 @@ const PatientManageAccountPage = () => {
 
               <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col items-center text-center space-y-3">
                  <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-                    <HugeiconsIcon icon={ShieldIcon} className="w-6 h-6" />
+                    <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
                  </div>
                  <div className="space-y-1">
                     <h4 className="font-black text-sm uppercase tracking-tight">Privacy Guard</h4>

@@ -3,29 +3,29 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Search01Icon,
   SentIcon,
-  MicIcon,
+  Mic01Icon,
   SmileIcon,
   Attachment01Icon,
-  MoreVertical,
+  MoreVerticalIcon,
   CallIcon,
-  VideoIcon,
+  Video01Icon,
   UserIcon,
   UserGroupIcon,
   CheckmarkCircle02Icon,
-  TickDoubleIcon,
+  TickDouble01Icon,
   ArrowLeft01Icon,
-  RobotIcon,
+  MachineRobotIcon,
   PlusSignIcon,
   Loading03Icon,
   Delete02Icon,
   Alert01Icon,
   Mail01Icon,
-  ShieldCheck,
-  Reply,
+  Shield01Icon,
+  MailReply01Icon,
   Cancel01Icon,
   CancelCircleIcon,
   VolumeHighIcon,
-  VolumeMuteIcon
+  VolumeMute01Icon
 } from '@hugeicons/core-free-icons';
 import { 
   Dialog,
@@ -555,7 +555,7 @@ export default function MessagingPage() {
                   onClick={() => setIsMuted(!isMuted)}
                   title={isMuted ? "Unmute Notifications" : "Mute Notifications"}
               >
-                {isMuted ? <HugeiconsIcon icon={VolumeMuteIcon} className="h-4 w-4" /> : <HugeiconsIcon icon={VolumeHighIcon} className="h-4 w-4" />}
+                {isMuted ? <HugeiconsIcon icon={VolumeMute01Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={VolumeHighIcon} className="h-4 w-4" />}
               </Button>
               <Button 
                   size="sm" 
@@ -739,10 +739,10 @@ export default function MessagingPage() {
               </div>
               <div className="flex items-center gap-1">
                 <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={CallIcon} className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={VideoIcon} className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={Video01Icon} className="h-4 w-4" /></Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={MoreVertical} className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile/Settings</DropdownMenuItem>
@@ -805,7 +805,7 @@ export default function MessagingPage() {
                                     "border-muted-foreground/20 rounded-tl-none text-left"
                                   )}>
                                    <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary/80">
-                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
+                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "MailReply01Icon")}
                                    </span>
                                    <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
                                      {parentMsg.content}
@@ -868,9 +868,9 @@ export default function MessagingPage() {
                                          messageInputRef.current?.focus();
                                          setActiveActionsId(null);
                                      }}
-                                     title="Reply"
+                                     title="MailReply01Icon"
                                  >
-                                     <HugeiconsIcon icon={Reply} className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={MailReply01Icon} className="h-3.5 w-3.5" />
                                  </Button>
                                  <Button 
                                      variant="ghost" 
@@ -919,9 +919,9 @@ export default function MessagingPage() {
                                          messageInputRef.current?.focus();
                                          setActiveActionsId(null);
                                      }}
-                                     title="Reply"
+                                     title="MailReply01Icon"
                                  >
-                                     <HugeiconsIcon icon={Reply} className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={MailReply01Icon} className="h-3.5 w-3.5" />
                                  </Button>
                                  <Button 
                                      variant="ghost" 
@@ -984,7 +984,7 @@ export default function MessagingPage() {
                                  {!msg.is_deleted && (
                                    <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
                                      {format(new Date(msg.created_at), 'HH:mm')}
-                                     {msg.read_at ? <HugeiconsIcon icon={TickDoubleIcon} className="h-3 w-3" /> : <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-3 w-3" />}
+                                     {msg.read_at ? <HugeiconsIcon icon={TickDouble01Icon} className="h-3 w-3" /> : <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-3 w-3" />}
                                    </div>
                                  )}
                                </div>
@@ -1111,7 +1111,7 @@ export default function MessagingPage() {
                         className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"
                         onClick={() => toast('Voice notes coming soon!', { icon: '🎙️' })}
                       >
-                        <HugeiconsIcon icon={MicIcon} className="h-5 w-5" />
+                        <HugeiconsIcon icon={Mic01Icon} className="h-5 w-5" />
                       </Button>
                     ) : (
                       <Button 
@@ -1133,7 +1133,7 @@ export default function MessagingPage() {
             <div className="relative">
               <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center blur-2xl absolute inset-0 -z-10 animate-pulse" />
               <div className="w-24 h-24 bg-card rounded-3xl border-2 flex items-center justify-center shadow-xl">
-                <HugeiconsIcon icon={RobotIcon} className="h-10 w-10 text-primary" />
+                <HugeiconsIcon icon={MachineRobotIcon} className="h-10 w-10 text-primary" />
               </div>
             </div>
             <div className="max-w-xs space-y-2">
@@ -1354,7 +1354,7 @@ export default function MessagingPage() {
                                       onClick={() => changeMemberRole(m.id, 'Admin')}
                                       title="Make Admin"
                                   >
-                                      <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4" />
+                                      <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />
                                   </Button>
                                 )}
                                 <Button 
@@ -1505,7 +1505,7 @@ export default function MessagingPage() {
                   
                   <div className="space-y-2 mt-2 pt-4 border-t">
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                       <HugeiconsIcon icon={ShieldCheck} className="h-3 w-3" /> System Roles
+                       <HugeiconsIcon icon={Shield01Icon} className="h-3 w-3" /> System Roles
                     </p>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {activeChat.other_user.roles?.map((role: string) => (

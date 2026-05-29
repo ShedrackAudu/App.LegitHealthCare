@@ -9,16 +9,16 @@ import {
   AlertCircleIcon,
   ArrowUpRight01Icon,
   ArrowDownRight01Icon,
-  History,
-  ChartBarIncreasingIcon,
-  MoreVertical,
+  WorkHistoryIcon,
+  BarChartIcon,
+  MoreVerticalIcon,
   Edit01Icon,
   Delete02Icon,
-  Box,
-  DeliveryTruckIcon,
-  LayersIcon,
-  ChevronRight,
-  TrendingUp,
+  Package01Icon,
+  DeliveryTruck01Icon,
+  Layers01Icon,
+  ArrowRight01Icon,
+  Chart01Icon,
   Download01Icon,
   CheckmarkCircle01Icon,
   Clock01Icon,
@@ -691,7 +691,7 @@ const InventoryPage: React.FC = () => {
               <CardDescription className="text-blue-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Total Items</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between">
                 {items.length}
-                <HugeiconsIcon icon={Box} className="h-5 w-5 sm:h-8 sm:w-8 text-blue-500 opacity-20 shrink-0" />
+                <HugeiconsIcon icon={Package01Icon} className="h-5 w-5 sm:h-8 sm:w-8 text-blue-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
@@ -736,12 +736,12 @@ const InventoryPage: React.FC = () => {
               <CardDescription className="text-green-600 font-bold uppercase text-[10px] sm:text-xs tracking-wider truncate">Monthly Value</CardDescription>
               <CardTitle className="text-xl sm:text-3xl font-black flex items-center justify-between">
                 ₦{(items.reduce((acc: number, item: any) => acc + (item.stock_level * item.unit_price), 0)).toLocaleString()}
-                <HugeiconsIcon icon={ChartBarIncreasingIcon} className="h-5 w-5 sm:h-8 sm:w-8 text-green-500 opacity-20 shrink-0" />
+                <HugeiconsIcon icon={BarChartIcon} className="h-5 w-5 sm:h-8 sm:w-8 text-green-500 opacity-20 shrink-0" />
               </CardTitle>
             </CardHeader>
             <CardContent className="p-3 pt-0 sm:p-6 sm:pt-0">
               <div className="text-[10px] sm:text-xs text-muted-foreground flex items-center gap-1 truncate">
-                <HugeiconsIcon icon={TrendingUp} className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">Current valuation</span>
+                <HugeiconsIcon icon={Chart01Icon} className="h-3 w-3 text-green-500 shrink-0" /> <span className="truncate">Current valuation</span>
               </div>
             </CardContent>
           </Card>
@@ -754,28 +754,28 @@ const InventoryPage: React.FC = () => {
                 value="items" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <HugeiconsIcon icon={Box} className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={Package01Icon} className="h-4 w-4 shrink-0" />
                 <span>Stock Items</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="categories" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <HugeiconsIcon icon={LayersIcon} className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={Layers01Icon} className="h-4 w-4 shrink-0" />
                 <span>Categories</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="suppliers" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-primary-foreground text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <HugeiconsIcon icon={DeliveryTruckIcon} className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={DeliveryTruck01Icon} className="h-4 w-4 shrink-0" />
                 <span>Suppliers</span>
               </TabsTrigger>
               <TabsTrigger 
                 value="transactions" 
                 className="flex items-center justify-center sm:justify-start gap-2 px-3 sm:px-4 py-2.5 rounded-xl font-bold transition-all data-[state=active]:bg-primary data-[state=active]:text-slate-950 text-muted-foreground whitespace-nowrap text-xs sm:text-sm"
               >
-                <HugeiconsIcon icon={History} className="h-4 w-4 shrink-0" />
+                <HugeiconsIcon icon={WorkHistoryIcon} className="h-4 w-4 shrink-0" />
                 <span>Activity Log</span>
               </TabsTrigger>
             </TabsList>
@@ -860,7 +860,7 @@ const InventoryPage: React.FC = () => {
                       <TableCell className="text-right">
                         <DropdownMenu>
                         <DropdownMenuTrigger>
-                          <Button variant="ghost" size="sm"><HugeiconsIcon icon={MoreVertical} className="h-4 w-4" /></Button>
+                          <Button variant="ghost" size="sm"><HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" /></Button>
                         </DropdownMenuTrigger>
                           <DropdownMenuContent align="end">
                             <DropdownMenuLabel>Item Actions</DropdownMenuLabel>
@@ -1286,7 +1286,7 @@ const InventoryPage: React.FC = () => {
               </div>
               <div className="bg-muted p-3 rounded-lg flex items-center justify-between">
                 <span className="text-sm">Current Stock: <span className="font-bold">{selectedItem?.stock_level}</span></span>
-                <HugeiconsIcon icon={ChevronRight} className="h-4 w-4 text-muted-foreground" />
+                <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm">Resulting Stock: <span className="font-bold text-primary">
                   {adjustmentType === 'Addition' ? (selectedItem?.stock_level + (parseInt(adjustmentQuantity) || 0)) : 
                    adjustmentType === 'Deduction' ? (selectedItem?.stock_level - (parseInt(adjustmentQuantity) || 0)) : 
@@ -1391,7 +1391,7 @@ const InventoryPage: React.FC = () => {
                   </div>
                   <div className="bg-muted p-3 rounded-lg flex items-center justify-between">
                     <span className="text-sm">Current Stock: <span className="font-bold">{selectedItem.stock_level}</span></span>
-                    <HugeiconsIcon icon={ChevronRight} className="h-4 w-4 text-muted-foreground" />
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 text-muted-foreground" />
                     <span className="text-sm">Resulting Stock: <span className="font-bold text-primary">
                       {adjustmentType === 'Addition' ? (selectedItem.stock_level + (parseInt(adjustmentQuantity) || 0)) : 
                        adjustmentType === 'Deduction' ? (selectedItem.stock_level - (parseInt(adjustmentQuantity) || 0)) : 

@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { HugeiconsIcon } from '@hugeicons/react';
-import { CheckmarkCircle02Icon, ChevronDown } from '@hugeicons/core-free-icons';
+import { CheckmarkCircle02Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons';
 import { cn } from "@/lib/utils";
 
 export function SearchableCombobox({
@@ -112,7 +112,7 @@ export function SearchableCombobox({
           autoComplete="off"
         />
         <HugeiconsIcon 
-            icon={ChevronDown} 
+            icon={ArrowDown01Icon} 
             className="h-4 w-4 opacity-50 cursor-pointer hover:opacity-100 transition-opacity ml-2 shrink-0" 
             onClick={() => { setOpen(!open); if(!open) setSearch(""); }}
         />

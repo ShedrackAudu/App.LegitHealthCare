@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter }
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ShieldCheck, CheckmarkCircle02Icon, Information } from '@hugeicons/core-free-icons';
+import { Shield01Icon, CheckmarkCircle02Icon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { QRCodeSVG } from 'qrcode.react';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -87,7 +87,7 @@ const Manage2FAPage = () => {
                 </Button>
 
                 <div className="flex items-center gap-3 mb-6">
-                    <HugeiconsIcon icon={ShieldCheck} className="h-8 w-8 text-primary" />
+                    <HugeiconsIcon icon={Shield01Icon} className="h-8 w-8 text-primary" />
                     <h1 className="text-3xl font-bold tracking-tight">Two-Factor Authentication</h1>
                 </div>
 
@@ -101,7 +101,7 @@ const Manage2FAPage = () => {
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="p-4 bg-muted/50 rounded-lg text-sm border flex items-start gap-2">
-                                <HugeiconsIcon icon={Information} className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
+                                <HugeiconsIcon icon={InformationCircleIcon} className="h-4 w-4 mt-0.5 text-muted-foreground shrink-0" />
                                 <p>To disable Two-Factor Authentication, you must provide a valid code from your authenticator app.</p>
                             </div>
                             <div className="flex items-center gap-4">

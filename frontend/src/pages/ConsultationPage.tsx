@@ -15,9 +15,9 @@ import {
   Note01Icon,
   ClipboardIcon,
   Activity01Icon,
-  Heart,
+  FavouriteIcon,
   ThermometerIcon,
-  Save,
+  FloppyDiskIcon,
   Delete02Icon
 } from '@hugeicons/core-free-icons';
 import { usePermissions } from '@/hooks/usePermissions';
@@ -594,7 +594,7 @@ const ConsultationPage: React.FC = () => {
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><HugeiconsIcon icon={Heart} className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><HugeiconsIcon icon={FavouriteIcon} className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
                           <Input {...register('pulse')} className="h-12" />
                         </div>
                         <div className="space-y-2">
@@ -638,7 +638,7 @@ const ConsultationPage: React.FC = () => {
                       <Button type="submit" size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2" disabled={saving}>
                         {saving ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
                           <div className="flex items-center justify-center whitespace-nowrap">
-                             <HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
+                             <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
                           </div>
                         )}
                       </Button>

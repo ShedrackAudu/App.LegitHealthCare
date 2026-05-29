@@ -7,14 +7,14 @@ import {
   Database02Icon, 
   Download01Icon, 
   Upload01Icon, 
-  FileSpreadsheetIcon, 
+  Xls01Icon, 
   Loading03Icon, 
   CheckmarkCircle02Icon, 
   LayoutGridIcon, 
   FileImportIcon, 
   UserIcon, 
   Activity01Icon, 
-  ShieldCheck 
+  Shield01Icon 
 } from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -191,7 +191,7 @@ const DataManagementPage: React.FC = () => {
               <CardContent className="space-y-6">
                  <div className="bg-muted/30 border border-muted-foreground/10 rounded-2xl p-4 flex gap-4 items-center">
                      <div className="p-3 bg-white dark:bg-card rounded-xl shadow-sm">
-                         <HugeiconsIcon icon={FileSpreadsheetIcon} className="w-6 h-6 text-primary" />
+                         <HugeiconsIcon icon={Xls01Icon} className="w-6 h-6 text-primary" />
                      </div>
                     <div>
                         <p className="text-xs font-black uppercase tracking-tight">Full Archive Export</p>
@@ -347,7 +347,7 @@ const DataManagementPage: React.FC = () => {
 
         <div className="mt-12 bg-primary/5 border border-primary/10 rounded-3xl p-8 flex flex-col md:flex-row items-center gap-8 shadow-inner">
             <div className="p-6 bg-white dark:bg-card rounded-[2.5rem] shadow-2xl border border-primary/10 ring-8 ring-primary/5">
-                <HugeiconsIcon icon={ShieldCheck} className="w-12 h-12 text-primary" />
+                <HugeiconsIcon icon={Shield01Icon} className="w-12 h-12 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">
                 <h3 className="text-xl font-black tracking-tight mb-2">Secure Data Custodianship</h3>

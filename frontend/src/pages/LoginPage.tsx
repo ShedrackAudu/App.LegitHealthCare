@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { EyeIcon, EyeOff, Loading03Icon, LockIcon, UserIcon, Activity01Icon, ArrowLeft01Icon } from '@hugeicons/core-free-icons';
+import { EyeIcon, ViewOffIcon, Loading03Icon, LockIcon, UserIcon, Activity01Icon, ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'react-hot-toast';
 
@@ -482,7 +482,7 @@ const LoginPage = () => {
                             className="absolute right-4 top-4.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                             disabled={loading}
                           >
-                            {showPassword ? <HugeiconsIcon icon={EyeOff} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
+                            {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
                           </button>
                         </div>
                         {errors.password && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.password.message}</p>}

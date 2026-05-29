@@ -8,7 +8,7 @@ import {
   AlertCircleIcon, 
   Building02Icon, 
   HelpCircleIcon, 
-  ShieldCheck,
+  Shield01Icon,
   CheckmarkCircle02Icon
 } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
@@ -241,7 +241,7 @@ const PatientSearchPage = () => {
               <Card className="border-2 border-primary/20 bg-primary/5 backdrop-blur-xl">
                 <CardHeader className="text-center">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 text-primary">
-                      <HugeiconsIcon icon={ShieldCheck} className="w-6 h-6" />
+                      <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
                   </div>
                   <CardTitle className="text-xl font-bold">Account Already Exists</CardTitle>
                 </CardHeader>

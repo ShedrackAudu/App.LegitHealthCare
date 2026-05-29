@@ -3,7 +3,7 @@
 import * as React from "react"
 import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu"
 import { HugeiconsIcon } from '@hugeicons/react'
-import { CheckmarkCircle02Icon, ChevronRight, CircleIcon } from '@hugeicons/core-free-icons'
+import { CheckmarkCircle02Icon, ArrowRight01Icon, CircleIcon } from '@hugeicons/core-free-icons'
 
 import { cn } from "@/lib/utils"
 
@@ -35,7 +35,7 @@ const DropdownMenuSubTrigger = React.forwardRef<
     {...props}
   >
     {children}
-    <HugeiconsIcon icon={ChevronRight} className="ml-auto" />
+    <HugeiconsIcon icon={ArrowRight01Icon} className="ml-auto" />
   </DropdownMenuPrimitive.SubTrigger>
 ))
 DropdownMenuSubTrigger.displayName =

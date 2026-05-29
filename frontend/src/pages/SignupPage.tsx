@@ -13,8 +13,8 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/co
 import { Badge } from '@/components/ui/badge';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Activity01Icon, Loading03Icon, UserIcon, CallIcon, Mail01Icon, LockIcon, ShieldCheck, 
-  Email, EyeIcon, EyeOff, CheckmarkCircle02Icon, Cancel01Icon, Search01Icon, Building02Icon, 
+  Activity01Icon, Loading03Icon, UserIcon, CallIcon, Mail01Icon, LockIcon, Shield01Icon, 
+  EyeIcon, ViewOffIcon, CheckmarkCircle02Icon, Cancel01Icon, Search01Icon, Building02Icon, 
   Calendar03Icon, ArrowLeft01Icon 
 } from '@hugeicons/core-free-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -415,7 +415,7 @@ const SignupPage: React.FC = () => {
                         <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(220,38,38,0.03)_10px,rgba(220,38,38,0.03)_20px)] pointer-events-none"></div>
 
                         <div className="relative bg-destructive/10 p-5 rounded-2xl ring-4 ring-destructive/5 mb-2">
-                          <HugeiconsIcon icon={ShieldCheck} className="w-12 h-12 text-destructive animate-pulse" />
+                          <HugeiconsIcon icon={Shield01Icon} className="w-12 h-12 text-destructive animate-pulse" />
                           <div className="absolute -top-2 -right-2 bg-destructive w-5 h-5 rounded-full border-4 border-background flex items-center justify-center">
                             <HugeiconsIcon icon={LockIcon} className="w-2.5 h-2.5 text-white" />
                           </div>
@@ -464,7 +464,7 @@ const SignupPage: React.FC = () => {
                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Username</Label>
                     <div className="relative group">
                       <Input placeholder="johndoe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('username')} disabled={loading} />
-                      <HugeiconsIcon icon={Email} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <HugeiconsIcon icon={UserIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
                   </div>
 
@@ -494,7 +494,7 @@ const SignupPage: React.FC = () => {
                         <div className="relative group">
                           <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
                           <HugeiconsIcon icon={LockIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <HugeiconsIcon icon={EyeOff} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -504,8 +504,8 @@ const SignupPage: React.FC = () => {
                         </div>
                         <div className="relative group">
                           <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
-                          <HugeiconsIcon icon={ShieldCheck} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none">{showConfirmPassword ? <HugeiconsIcon icon={EyeOff} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
+                          <HugeiconsIcon icon={Shield01Icon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none">{showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
                         </div>
                       </div>
                     </div>
@@ -644,7 +644,7 @@ const SignupPage: React.FC = () => {
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-1">
                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-start gap-3">
                             <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-500 shrink-0">
-                               <HugeiconsIcon icon={ShieldCheck} className="w-5 h-5" />
+                               <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
                                <h4 className="text-[11px] font-black uppercase tracking-wider text-rose-500">Account Found</h4>
@@ -707,7 +707,7 @@ const SignupPage: React.FC = () => {
 
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <HugeiconsIcon icon={ShieldCheck} className="w-3 h-3" />
+                              <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
                             </div>
                             <div className="pl-4.5 flex items-center gap-1.5">
@@ -746,7 +746,7 @@ const SignupPage: React.FC = () => {
                               <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
                               <HugeiconsIcon icon={LockIcon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                                {showPassword ? <HugeiconsIcon icon={EyeOff} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
+                                {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
                               </button>
                             </div>
                          </div>
@@ -757,9 +757,9 @@ const SignupPage: React.FC = () => {
                             </div>
                             <div className="relative group">
                               <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                              <HugeiconsIcon icon={ShieldCheck} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <HugeiconsIcon icon={Shield01Icon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                                {showConfirmPassword ? <HugeiconsIcon icon={EyeOff} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
+                                {showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
                               </button>
                             </div>
                          </div>

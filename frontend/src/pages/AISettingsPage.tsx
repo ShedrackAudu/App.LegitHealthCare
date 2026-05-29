@@ -8,11 +8,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Checkbox } from '@/components/ui/checkbox';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  RobotIcon, 
-  Save, 
+  MachineRobotIcon, 
+  FloppyDiskIcon, 
   Loading03Icon, 
-  KeyIcon, 
-  FileText, 
+  LockKeyIcon, 
+  File01Icon, 
   Activity01Icon, 
   Delete02Icon 
 } from '@hugeicons/core-free-icons';
@@ -140,7 +140,7 @@ export const AISettingsPage = () => {
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 shadow-xl border-blue-500/10 mb-8 transition-all">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-blue-500/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <HugeiconsIcon icon={RobotIcon} className="text-blue-600 h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={MachineRobotIcon} className="text-blue-600 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">AI Director Insights</h1>
@@ -158,7 +158,7 @@ export const AISettingsPage = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -z-10 pointer-events-none"></div>
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <HugeiconsIcon icon={KeyIcon} className="h-6 w-6 text-blue-500" />
+                                <HugeiconsIcon icon={LockKeyIcon} className="h-6 w-6 text-blue-500" />
                                 Connection Details
                             </CardTitle>
                         </CardHeader>
@@ -258,7 +258,7 @@ export const AISettingsPage = () => {
                     <Card className="border-2 shadow-xl shadow-purple-500/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <HugeiconsIcon icon={FileText} className="h-6 w-6 text-purple-500" />
+                                <HugeiconsIcon icon={File01Icon} className="h-6 w-6 text-purple-500" />
                                 Prompt Formatting & Instructions
                             </CardTitle>
                         </CardHeader>
@@ -294,7 +294,7 @@ export const AISettingsPage = () => {
                     <Card className="border-2 shadow-xl shadow-amber-500/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <HugeiconsIcon icon={RobotIcon} className="h-6 w-6 text-amber-500" />
+                                <HugeiconsIcon icon={MachineRobotIcon} className="h-6 w-6 text-amber-500" />
                                 Sample Expert Comments
                             </CardTitle>
                             <CardDescription>
@@ -364,8 +364,8 @@ export const AISettingsPage = () => {
                             disabled={saving}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 px-12 shadow-xl shadow-blue-500/20 rounded-xl text-lg w-full md:w-auto"
                         >
-                            {saving ? <HugeiconsIcon icon={Loading03Icon} className="mr-3 h-6 w-6 animate-spin" /> : <HugeiconsIcon icon={Save} className="mr-3 h-6 w-6" />}
-                            Save AI Configuration
+                            {saving ? <HugeiconsIcon icon={Loading03Icon} className="mr-3 h-6 w-6 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="mr-3 h-6 w-6" />}
+                            FloppyDiskIcon AI Configuration
                         </Button>
                     </div>
                 </form>

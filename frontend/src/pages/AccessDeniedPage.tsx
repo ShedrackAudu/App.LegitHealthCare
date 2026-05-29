@@ -2,13 +2,12 @@ import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { 
-  Shield01Icon, 
-  Key01Icon, 
-  SentIcon, 
-  ArrowLeft01Icon, 
-  Loading03Icon, 
-  ShieldCheck 
+import {
+  Shield01Icon,
+  Key01Icon,
+  SentIcon,
+  ArrowLeft01Icon,
+  Loading03Icon
 } from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -141,7 +140,7 @@ const AccessDeniedPage: React.FC = () => {
                                         className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-3 text-center"
                                     >
                                         <p className="text-emerald-500 text-[10px] font-bold flex items-center justify-center gap-2 uppercase tracking-widest">
-                                            <HugeiconsIcon icon={ShieldCheck} className="w-3.5 h-3.5" /> Request Dispatched
+                                            <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> Request Dispatched
                                         </p>
                                     </motion.div>
                                )}

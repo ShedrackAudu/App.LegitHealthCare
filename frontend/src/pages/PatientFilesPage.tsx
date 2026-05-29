@@ -7,7 +7,7 @@ import {
   AlertCircleIcon, 
   Activity01Icon, 
   Calendar03Icon, 
-  FileText 
+  File01Icon 
 } from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { FileAttachmentSection } from '@/components/FileAttachmentSection';
@@ -93,7 +93,7 @@ const PatientFilesPage: React.FC = () => {
                 {!selectedYear && !fetchingYears ? (
                     <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-border/40 text-center px-6 py-12 space-y-4 shadow-inner">
                         <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                            <HugeiconsIcon icon={FileText} className="h-10 w-10 text-muted-foreground/30" />
+                            <HugeiconsIcon icon={File01Icon} className="h-10 w-10 text-muted-foreground/30" />
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">No History Found</h3>

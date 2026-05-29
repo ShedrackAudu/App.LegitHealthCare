@@ -10,11 +10,11 @@ import {
   Notification01Icon, 
   ArrowRight01Icon, 
   CheckmarkCircle02Icon, 
-  Heart, 
-  FacebookIcon, 
+  FavouriteIcon, 
+  Facebook01Icon,  
   TwitterIcon, 
   InstagramIcon, 
-  LinkedinIcon, 
+  Linkedin01Icon, 
   YoutubeIcon, 
   GlobeIcon, 
   Link01Icon, 
@@ -78,10 +78,10 @@ const LandingPage = () => {
 
   const getSocialIcon = (label: string) => {
     const l = label.toLowerCase();
-    if (l.includes('facebook')) return (props: any) => <HugeiconsIcon icon={FacebookIcon} {...props} />;
+    if (l.includes('facebook')) return (props: any) => <HugeiconsIcon icon={Facebook01Icon} {...props} />;
     if (l.includes('twitter') || l.includes('x')) return (props: any) => <HugeiconsIcon icon={TwitterIcon} {...props} />;
     if (l.includes('instagram')) return (props: any) => <HugeiconsIcon icon={InstagramIcon} {...props} />;
-    if (l.includes('linkedin')) return (props: any) => <HugeiconsIcon icon={LinkedinIcon} {...props} />;
+    if (l.includes('linkedin')) return (props: any) => <HugeiconsIcon icon={Linkedin01Icon} {...props} />;
     if (l.includes('youtube')) return (props: any) => <HugeiconsIcon icon={YoutubeIcon} {...props} />;
     if (l.includes('globe') || l.includes('web')) return (props: any) => <HugeiconsIcon icon={GlobeIcon} {...props} />;
     if (l.includes('whatsapp')) return (props: any) => <HugeiconsIcon icon={Message01Icon} {...props} />;
@@ -448,7 +448,7 @@ const LandingPage = () => {
             >
               <div className="space-y-4">
                 <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                  <HugeiconsIcon icon={Heart} className="w-4 h-4 text-primary fill-primary/20" />
+                  <HugeiconsIcon icon={FavouriteIcon} className="w-4 h-4 text-primary fill-primary/20" />
                   <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">About Legit HealthCare</span>
                 </div>
                 <h2 className="text-4xl lg:text-6xl font-black tracking-tight leading-[1.05]">

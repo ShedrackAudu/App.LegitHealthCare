@@ -4,7 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { ShieldCheck, Save, Loading03Icon, PlusSignIcon, Delete02Icon, ChevronDown, ChevronUp } from '@hugeicons/core-free-icons';
+import { Shield01Icon, FloppyDiskIcon, Loading03Icon, PlusSignIcon, Delete02Icon, ArrowDown01Icon, ArrowUp01Icon } from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
@@ -24,12 +24,12 @@ const AccordionRole = ({ role, permissions, isAdminRole, onTogglePermission, onS
       >
         <div className="flex items-center gap-4">
           <div className={`p-2 rounded-xl transition-all duration-300 ${isOpen ? 'bg-primary text-primary-foreground rotate-0' : 'bg-muted text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary'}`}>
-            {isOpen ? <HugeiconsIcon icon={ChevronUp} className="h-5 w-5" /> : <HugeiconsIcon icon={ChevronDown} className="h-5 w-5" />}
+            {isOpen ? <HugeiconsIcon icon={ArrowUp01Icon} className="h-5 w-5" /> : <HugeiconsIcon icon={ArrowDown01Icon} className="h-5 w-5" />}
           </div>
           <div>
             <h3 className="text-lg font-black tracking-tight uppercase flex items-center gap-2">
               {role.name}
-              {isAdminRole && <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4 text-rose-500" />}
+              {isAdminRole && <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 text-rose-500" />}
             </h3>
             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/70">
               {role.description || "Administrative access profile"}
@@ -59,7 +59,7 @@ const AccordionRole = ({ role, permissions, isAdminRole, onTogglePermission, onS
           <div className="grid grid-cols-2 lg:grid-cols-4 2xl:grid-cols-5 gap-y-8 gap-x-6 max-h-[400px] overflow-y-auto lg:max-h-none lg:overflow-visible pr-2 custom-scrollbar">
             {isAdminRole && (
               <div className="col-span-full bg-rose-500/5 border border-rose-500/20 rounded-xl p-4 flex gap-3 mb-2">
-                <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 text-rose-500 shrink-0" />
+                <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-rose-500 shrink-0" />
                 <p className="text-[10px] text-rose-700 leading-relaxed font-black uppercase tracking-wider">
                   Architectural Safeguard Active: The core Admin role's access tokens are immutable to ensure system-wide operational stability.
                 </p>
@@ -99,7 +99,7 @@ const AccordionRole = ({ role, permissions, isAdminRole, onTogglePermission, onS
                 disabled={saving}
                 className="h-12 px-8 rounded-xl font-black text-xs gap-2 shadow-lg shadow-primary/20 bg-primary hover:bg-primary transition-all border-none disabled:opacity-30 disabled:grayscale"
               >
-                {saving ? <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" /> : <HugeiconsIcon icon={Save} className="w-4 h-4" />}
+                {saving ? <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="w-4 h-4" />}
                 Assign Roles
               </Button>
             </div>
@@ -226,7 +226,7 @@ const RolePermissionPage: React.FC = () => {
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 shadow-xl border-primary/10 transition-all">
           <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-              <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground uppercase">System Access Control</h1>
@@ -234,7 +234,7 @@ const RolePermissionPage: React.FC = () => {
             </div>
           </div>
           <div className="bg-primary/10 border border-primary/20 px-4 py-2 rounded-xl flex items-center gap-3 w-full sm:w-auto justify-center sm:justify-start lg:w-fit shrink-0 shadow-sm">
-            <HugeiconsIcon icon={ShieldCheck} className="w-4 h-4 text-primary" />
+            <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4 text-primary" />
             <span className="text-[9px] sm:text-[11px] font-black uppercase text-primary tracking-[0.15em] leading-none">Security Override Enabled</span>
           </div>
         </div>
@@ -242,7 +242,7 @@ const RolePermissionPage: React.FC = () => {
         <Tabs defaultValue="matrix" className="w-full">
           <TabsList className="grid grid-cols-2 w-full md:w-[450px] mb-8 bg-muted/20 p-1.5 border-2 rounded-2xl h-auto min-h-[64px]">
             <TabsTrigger value="matrix" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all h-full">
-              <HugeiconsIcon icon={ShieldCheck} className="w-4 h-4" /> Role Matrix
+              <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" /> Role Matrix
             </TabsTrigger>
             <TabsTrigger value="create" className="rounded-xl font-black text-xs gap-2 data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-lg transition-all h-full">
               <HugeiconsIcon icon={PlusSignIcon} className="w-4 h-4" /> Add Role
@@ -299,7 +299,7 @@ const RolePermissionPage: React.FC = () => {
                     />
                   </div>
                   <Button className="w-full h-14 rounded-2xl font-black text-sm gap-2 mt-4 shadow-xl shadow-primary/20 transition-all border-none" disabled={creatingRole}>
-                    {creatingRole ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : <HugeiconsIcon icon={Save} className="w-5 h-5" />}
+                    {creatingRole ? <HugeiconsIcon icon={Loading03Icon} className="w-5 h-5 animate-spin" /> : <HugeiconsIcon icon={FloppyDiskIcon} className="w-5 h-5" />}
                     Create & Finalize Role
                   </Button>
                 </form>

@@ -1,6 +1,6 @@
 import toast, { Toaster, resolveValue } from 'react-hot-toast';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { CheckmarkCircle02Icon, AlertCircleIcon, Loading03Icon, Information, Comment01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
+import { CheckmarkCircle02Icon, AlertCircleIcon, Loading03Icon, InformationCircleIcon, Comment01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 
 export const CustomToaster = () => {
   return (
@@ -58,7 +58,7 @@ export const CustomToaster = () => {
                       {t.type === 'success' && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-6 w-6" />}
                       {t.type === 'error' && <HugeiconsIcon icon={AlertCircleIcon} className="h-6 w-6" />}
                       {t.type === 'loading' && <HugeiconsIcon icon={Loading03Icon} className="h-6 w-6 animate-spin" />}
-                      {t.type === 'blank' && !isMessage && <HugeiconsIcon icon={Information} className="h-6 w-6" />}
+                      {t.type === 'blank' && !isMessage && <HugeiconsIcon icon={InformationCircleIcon} className="h-6 w-6" />}
                       {isMessage && <HugeiconsIcon icon={Comment01Icon} className="h-6 w-6" />}
                   </div>
                 </div>

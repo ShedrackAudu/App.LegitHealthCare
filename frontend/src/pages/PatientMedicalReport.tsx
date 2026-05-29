@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
-    FileText,
+    File01Icon,
     Download01Icon,
     Mail01Icon,
     Loading03Icon,
     PrinterIcon,
     Calendar03Icon,
     ArrowRight01Icon,
-    ShieldCheck
+    Shield01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
@@ -257,7 +257,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                                            <HugeiconsIcon icon={FileText} className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            <HugeiconsIcon icon={File01Icon} className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
                                     </div>
@@ -301,7 +301,7 @@ const PatientMedicalReport: React.FC = () => {
                     {reportData && !loading && (
                         <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-3 md:p-3 rounded-xl border border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-md gap-3 md:gap-0">
                             <div className="flex items-center gap-3 px-2 md:px-4">
-                                <HugeiconsIcon icon={ShieldCheck} className="text-primary h-6 w-6 shrink-0" />
+                                <HugeiconsIcon icon={Shield01Icon} className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
@@ -324,7 +324,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/30 mb-2" />
                             ) : (
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <HugeiconsIcon icon={FileText} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                 </div>
                             )}
                             <div className="space-y-2">
@@ -351,7 +351,7 @@ const PatientMedicalReport: React.FC = () => {
                             <div className="relative mb-6">
                                 <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <HugeiconsIcon icon={FileText} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
+                                    <HugeiconsIcon icon={File01Icon} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
                                 </div>
                             </div>
                             <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>

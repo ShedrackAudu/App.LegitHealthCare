@@ -23,15 +23,14 @@ import {
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { HugeiconsIcon } from '@hugeicons/react';
-import { 
-  KeyIcon, 
-  PlusSignIcon, 
-  History, 
-  Loading03Icon, 
-  UserIcon, 
-  ShieldCheck, 
+import {
+  LockKeyIcon,
+  PlusSignIcon,
+  WorkHistoryIcon,
+  Loading03Icon,
+  UserIcon,
+  Shield01Icon,
   ZapIcon,
-  ShieldAlert,
   Delete02Icon
 } from '@hugeicons/core-free-icons';
 import axios from 'axios';
@@ -170,7 +169,7 @@ const AccessKeysPage = () => {
                 <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
-                            <HugeiconsIcon icon={KeyIcon} className="h-5 w-5 sm:h-8 sm:w-8 font-black" />
+                            <HugeiconsIcon icon={LockKeyIcon} className="h-5 w-5 sm:h-8 sm:w-8 font-black" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-primary uppercase leading-tight">Security Access Keys</h1>
@@ -252,11 +251,11 @@ const AccessKeysPage = () => {
                         </CardContent>
                     </Card>
 
-                    {/* History Table */}
+                    {/* WorkHistoryIcon Table */}
                     <Card className="lg:col-span-2 border-2 shadow-xl rounded-2xl overflow-hidden">
                         <CardHeader className="bg-muted/30 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-3">
                             <CardTitle className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2 shrink-0">
-                                <HugeiconsIcon icon={History} className="w-5 h-5 text-primary shrink-0" /> Active & Historical Keys
+                                <HugeiconsIcon icon={WorkHistoryIcon} className="w-5 h-5 text-primary shrink-0" /> Active & Historical Keys
                             </CardTitle>
                             <Badge variant="outline" className="font-black text-[9px] sm:text-[10px] bg-primary/5 text-primary border-primary/20 py-1.5 px-3">
                                 {accessCodes.length} KEYS LOGGED
@@ -305,7 +304,7 @@ const AccessKeysPage = () => {
                                                             </Badge>
                                                         ) : (
                                                             <Badge variant="outline" className="font-black text-[9px] bg-primary/10 text-primary border-primary/20 py-0.5">
-                                                                <HugeiconsIcon icon={ShieldCheck} className="w-3 h-3 mr-1" />
+                                                                <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3 mr-1" />
                                                                 Universal
                                                             </Badge>
                                                         )}
@@ -319,7 +318,7 @@ const AccessKeysPage = () => {
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="font-black text-[9px] bg-slate-500/10 text-slate-600 border-slate-500/20 py-0.5">
-                                                            <HugeiconsIcon icon={ShieldAlert} className="w-3 h-3 mr-1" />
+                                                            <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3 mr-1" />
                                                             Single-Use
                                                         </Badge>
                                                     )}
@@ -377,7 +376,7 @@ const AccessKeysPage = () => {
                                             <TableRow>
                                                 <TableCell colSpan={5} className="h-64 text-center">
                                                     <div className="flex flex-col items-center gap-3 opacity-20">
-                                                        <HugeiconsIcon icon={ShieldAlert} className="w-12 h-12" />
+                                                        <HugeiconsIcon icon={Shield01Icon} className="w-12 h-12" />
                                                         <p className="font-black uppercase tracking-widest text-xs">No active access overrides found.</p>
                                                     </div>
                                                 </TableCell>

@@ -8,7 +8,7 @@ import {
   UserGroupIcon,
   Search01Icon,
   UserAdd01Icon,
-  Save,
+  FloppyDiskIcon,
   Loading03Icon,
   Calendar03Icon,
   Activity01Icon,
@@ -20,7 +20,7 @@ import {
   Camera01Icon,
   Upload01Icon,
   EyeIcon,
-  VideoIcon,
+  Video01Icon,
   ImageAdd01Icon,
   CameraRotatedIcon,
   CircleIcon,
@@ -978,7 +978,7 @@ const RegistrationPage: React.FC = () => {
                   )}
                   <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
                     {loading ? <HugeiconsIcon icon={Loading03Icon} className="mr-2 h-5 w-5 animate-spin" /> : (
-                      <><HugeiconsIcon icon={Save} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                      <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'FloppyDiskIcon Registration'}</>
                     )}
                   </Button>
                 </div>
@@ -1080,7 +1080,7 @@ const RegistrationPage: React.FC = () => {
           <div className="p-4 pb-2">
             <DialogHeader>
               <DialogTitle className="text-lg font-black tracking-tight text-center flex items-center justify-center gap-2">
-                <HugeiconsIcon icon={VideoIcon} className="h-5 w-5 text-emerald-500" />
+                <HugeiconsIcon icon={Video01Icon} className="h-5 w-5 text-emerald-500" />
                 Camera Capture
               </DialogTitle>
               <DialogDescription className="text-center text-sm text-muted-foreground">Position your face in the frame and capture</DialogDescription>
@@ -1148,7 +1148,7 @@ const RegistrationPage: React.FC = () => {
                     className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                     onClick={() => startCamera(facingMode)}
                   >
-                    <HugeiconsIcon icon={VideoIcon} className="h-4 w-4" />
+                    <HugeiconsIcon icon={Video01Icon} className="h-4 w-4" />
                     Start Camera
                   </Button>
                 )}
@@ -1182,7 +1182,7 @@ const RegistrationPage: React.FC = () => {
                   className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                   onClick={useCapturedPhoto}
                 >
-                  <HugeiconsIcon icon={Save} className="h-4 w-4" />
+                  <HugeiconsIcon icon={FloppyDiskIcon} className="h-4 w-4" />
                   Use Photo
                 </Button>
               </>

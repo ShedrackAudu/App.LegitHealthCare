@@ -10,7 +10,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { HugeiconsIcon } from '@hugeicons/react';
-import { Alert01Icon, HelpCircleIcon, Information } from '@hugeicons/core-free-icons';
+import { Alert01Icon, HelpCircleIcon, InformationCircleIcon } from '@hugeicons/core-free-icons';
 import { cn } from "@/lib/utils";
 
 interface ActionConfirmModalProps {
@@ -46,7 +46,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
     }
   }, [isOpen]);
 
-  const iconName = variant === 'danger' ? Alert01Icon : variant === 'warning' ? HelpCircleIcon : Information;
+  const iconName = variant === 'danger' ? Alert01Icon : variant === 'warning' ? HelpCircleIcon : InformationCircleIcon;
   const variantStyles = {
     danger: "bg-destructive/10 text-destructive border-destructive/20",
     warning: "bg-amber-500/10 text-amber-600 border-amber-500/20",

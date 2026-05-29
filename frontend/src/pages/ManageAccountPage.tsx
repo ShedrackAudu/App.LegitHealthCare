@@ -5,11 +5,10 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { HugeiconsIcon } from '@hugeicons/react';
-import { 
-    UserIcon, 
-    LockIcon, 
-    ShieldAlert, 
-    ShieldCheck 
+import {
+  UserIcon,
+  LockIcon,
+  Shield01Icon
 } from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
@@ -238,7 +237,7 @@ const ManageAccountPage = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className={`p-2 rounded-xl ${user?.is_2fa_enabled ? 'bg-primary/10 text-primary' : 'bg-rose-500/10 text-rose-600'}`}>
-                                            {user?.is_2fa_enabled ? <HugeiconsIcon icon={ShieldCheck} className="w-5 h-5" /> : <HugeiconsIcon icon={ShieldAlert} className="w-5 h-5" />}
+                                            {user?.is_2fa_enabled ? <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" /> : <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />}
                                         </div>
                                         <CardTitle className="text-lg font-black tracking-tight whitespace-nowrap">Two-Factor Auth</CardTitle>
                                     </div>

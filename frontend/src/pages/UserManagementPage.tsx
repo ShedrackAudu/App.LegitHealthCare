@@ -20,21 +20,20 @@ import {
   UserGroupIcon,
   Search01Icon,
   UserSettings01Icon,
-  ShieldIcon,
+  Shield01Icon,
   Mail01Icon,
   CallIcon,
-  MoreVertical,
+  MoreVerticalIcon,
   CheckmarkCircle02Icon,
   CancelCircleIcon,
-  ShieldCheck,
-  KeyIcon,
+  LockKeyIcon,
   Calendar03Icon,
   ReloadIcon,
   Cancel01Icon,
   Loading03Icon,
   LockIcon,
   Hospital02Icon,
-  CopyIcon
+  Copy01Icon
 } from '@hugeicons/core-free-icons';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import {
@@ -503,7 +502,7 @@ const UserManagementPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                      <HugeiconsIcon icon={ShieldIcon} className="h-6 w-6" />
+                      <HugeiconsIcon icon={Shield01Icon} className="h-6 w-6" />
                     </div>
                     <div>
                       <h2 className="text-xl font-black tracking-tight">Configure User Roles</h2>
@@ -554,7 +553,7 @@ const UserManagementPage: React.FC = () => {
                           </div>
                         </div>
                         {userRolesInput.includes(role.name) && (
-                          <HugeiconsIcon icon={ShieldCheck} className="h-5 w-5 text-primary animate-in zoom-in" />
+                          <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-primary animate-in zoom-in" />
                         )}
                       </div>
                     ))}
@@ -562,7 +561,7 @@ const UserManagementPage: React.FC = () => {
                 </div>
 
                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex gap-3">
-                  <HugeiconsIcon icon={ShieldIcon} className="h-5 w-5 text-amber-500 shrink-0" />
+                  <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-amber-500 shrink-0" />
                   <p className="text-[10px] text-amber-700 leading-relaxed font-bold italic uppercase tracking-wider">
                     Warning: Changing roles will immediately affect the user's permissions and system access level. Use caution when assigning administrative roles.
                   </p>
@@ -576,7 +575,7 @@ const UserManagementPage: React.FC = () => {
                   disabled={saving}
                   className="gap-2 px-8 font-black shadow-lg shadow-primary/20"
                 >
-                  {saving ? <HugeiconsIcon icon={ReloadIcon} className="h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4" />}
+                  {saving ? <HugeiconsIcon icon={ReloadIcon} className="h-4 w-4 animate-spin" /> : <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />}
                   Apply Access Rules
                 </Button>
               </div>
@@ -588,7 +587,7 @@ const UserManagementPage: React.FC = () => {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <HugeiconsIcon icon={KeyIcon} className="h-5 w-5 text-primary" />
+              <HugeiconsIcon icon={LockKeyIcon} className="h-5 w-5 text-primary" />
               Administrative Password Reset
             </DialogTitle>
             <DialogDescription>
@@ -642,7 +641,7 @@ const UserManagementPage: React.FC = () => {
               className="font-bold"
               disabled={isSubmitting || !newPassword || newPassword !== confirmPassword}
             >
-              {isSubmitting ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4 mr-2" />}
+              {isSubmitting ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 mr-2" />}
               Apply New Password
             </Button>
           </DialogFooter>
@@ -872,7 +871,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-card p-4 rounded-xl border-2 flex items-center justify-between group">
                       <span className="font-black text-lg tracking-tight">{createdStaffData?.username}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(createdStaffData?.username)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <HugeiconsIcon icon={CopyIcon} className="h-4 w-4" />
+                        <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -882,7 +881,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex items-center justify-between group">
                       <span className="font-black text-2xl tracking-[0.2em] text-primary">{generatedPassword}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(generatedPassword)} className="text-primary hover:bg-primary/10">
-                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={CopyIcon} className="h-4 w-4" />}
+                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
@@ -1040,7 +1039,7 @@ const UserManagementPage: React.FC = () => {
                   </div>
 
                   <div className="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl flex gap-3">
-                    <HugeiconsIcon icon={ShieldIcon} className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-[9px] text-amber-700 font-bold italic uppercase tracking-wider leading-relaxed">
                       Administrative Action: A temporary password will be generated. The patient will be required to change it upon first login.
                     </p>
@@ -1090,7 +1089,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-card p-4 rounded-xl border-2 flex items-center justify-between group">
                       <span className="font-black text-lg tracking-tight">{onboardPatientData?.staff_id}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(onboardPatientData?.staff_id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <HugeiconsIcon icon={CopyIcon} className="h-4 w-4" />
+                        <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -1100,7 +1099,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex items-center justify-between group">
                       <span className="font-black text-2xl tracking-[0.2em] text-primary">{generatedPassword}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(generatedPassword)} className="text-primary hover:bg-primary/10">
-                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={CopyIcon} className="h-4 w-4" />}
+                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
@@ -1277,14 +1276,14 @@ const UserTable: React.FC<{
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="group-hover:bg-background">
-                        <HugeiconsIcon icon={MoreVertical} className="h-4 w-4" />
+                        <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 border-2 shadow-2xl">
                     <DropdownMenuLabel>Actions for @{user.username}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleAction('roles', user)} className="cursor-pointer gap-2">
-                      <HugeiconsIcon icon={ShieldCheck} className="h-4 w-4" />
+                      <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />
                       Edit Roles
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction('edit_info', user)} className="cursor-pointer gap-2">
@@ -1292,7 +1291,7 @@ const UserTable: React.FC<{
                       Edit Info
                     </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction('reset', user)} className="cursor-pointer gap-2">
-                      <HugeiconsIcon icon={KeyIcon} className="h-4 w-4" />
+                      <HugeiconsIcon icon={LockKeyIcon} className="h-4 w-4" />
                       Reset Password
                     </DropdownMenuItem>
                     <DropdownMenuItem 

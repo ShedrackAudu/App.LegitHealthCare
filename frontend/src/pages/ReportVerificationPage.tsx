@@ -5,11 +5,11 @@ import {
     CheckmarkCircle02Icon, 
     CancelCircleIcon, 
     Loading03Icon, 
-    FileText, 
+    File01Icon, 
     Calendar03Icon, 
     Building02Icon, 
     UserIcon, 
-    ShieldCheck, 
+    Shield01Icon, 
     ArrowUpRight01Icon,
     Clock01Icon
 } from '@hugeicons/core-free-icons';
@@ -95,7 +95,7 @@ const ReportVerificationPage: React.FC = () => {
                                         <span className="font-black text-xs tracking-tighter">LEGIT HEALTHCARE</span>
                                     )}
                                     <div className="flex items-center gap-1.5 px-2 py-0.5 bg-primary/10 border border-primary/20 rounded-full">
-                                        <HugeiconsIcon icon={ShieldCheck} className="h-2.5 w-2.5 text-primary" />
+                                        <HugeiconsIcon icon={Shield01Icon} className="h-2.5 w-2.5 text-primary" />
                                         <span className="text-[8px] font-black uppercase tracking-widest text-primary">Secure Portal</span>
                                     </div>
                                 </div>
@@ -154,7 +154,7 @@ const ReportVerificationPage: React.FC = () => {
                                                         </div>
                                                         <div className="h-3 w-[1px] bg-border" />
                                                         <div className="flex items-center gap-1 text-primary">
-                                                            <HugeiconsIcon icon={ShieldCheck} className="h-3 w-3" />
+                                                            <HugeiconsIcon icon={Shield01Icon} className="h-3 w-3" />
                                                             <span className="text-[9px] font-black uppercase tracking-wide">Identity Verified</span>
                                                         </div>
                                                     </div>
@@ -183,7 +183,7 @@ const ReportVerificationPage: React.FC = () => {
                                             <div className="p-3 rounded-xl bg-primary/[0.03] border border-primary/10">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <div className="flex items-center gap-1.5">
-                                                        <HugeiconsIcon icon={ShieldCheck} className="h-3 w-3 text-primary" />
+                                                        <HugeiconsIcon icon={Shield01Icon} className="h-3 w-3 text-primary" />
                                                         <span className="text-[9px] font-black uppercase tracking-widest text-primary">Digital Signature</span>
                                                     </div>
                                                     <Badge variant="outline" className="text-[7px] font-mono border-primary/20 text-primary/70 h-3.5 px-1">AES-256</Badge>

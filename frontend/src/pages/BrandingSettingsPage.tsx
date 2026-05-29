@@ -9,7 +9,7 @@ import {
   BrushIcon, 
   Upload01Icon, 
   Loading03Icon, 
-  ImageIcon, 
+  Image01Icon, 
   Delete02Icon, 
   Facebook02Icon, 
   NewTwitterIcon, 
@@ -263,7 +263,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -301,7 +301,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-white/20 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-white/20 mb-2" />
                                                 <span className="text-[10px] text-white/20 italic">No image selected</span>
                                             </div>
                                         )}
@@ -336,7 +336,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -370,7 +370,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -404,7 +404,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -529,7 +529,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </button>
                                         </>
                                     ) : (
-                                        <HugeiconsIcon icon={ImageIcon} className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-1" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-1" type="file" className="hidden" onChange={e => setHeroImage1(e.target.files?.[0] || null)} />
@@ -558,7 +558,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </button>
                                         </>
                                     ) : (
-                                        <HugeiconsIcon icon={ImageIcon} className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-2" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-2" type="file" className="hidden" onChange={e => setHeroImage2(e.target.files?.[0] || null)} />
@@ -587,7 +587,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </button>
                                         </>
                                     ) : (
-                                        <HugeiconsIcon icon={ImageIcon} className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-team" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-team" type="file" className="hidden" onChange={e => setHeroImageTeam(e.target.files?.[0] || null)} />
@@ -626,7 +626,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -661,7 +661,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
@@ -696,7 +696,7 @@ const BrandingSettingsPage: React.FC = () => {
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <HugeiconsIcon icon={ImageIcon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}

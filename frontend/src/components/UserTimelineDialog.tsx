@@ -9,8 +9,8 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Calendar03Icon, 
   Clock01Icon, 
-  ShieldIcon, 
-  KeyIcon, 
+  Shield01Icon, 
+  LockKeyIcon, 
   Login01Icon, 
   Logout01Icon, 
   UserSettings01Icon, 
@@ -78,8 +78,8 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
     const a = action.toUpperCase();
     if (a.includes('LOGIN')) return { icon: Login01Icon, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' };
     if (a.includes('LOGOUT')) return { icon: Logout01Icon, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' };
-    if (a.includes('PASSWORD')) return { icon: KeyIcon, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
-    if (a.includes('ROLE') || a.includes('PERMISSION')) return { icon: ShieldIcon, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' };
+    if (a.includes('PASSWORD')) return { icon: LockKeyIcon, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
+    if (a.includes('ROLE') || a.includes('PERMISSION')) return { icon: Shield01Icon, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' };
     if (a.includes('ONBOARD') || a.includes('CREATE')) return { icon: UserSettings01Icon, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
     if (a.includes('FAIL') || a.includes('ERROR')) return { icon: Alert01Icon, color: 'text-rose-600', bg: 'bg-rose-600/10', border: 'border-rose-600/20' };
     return { icon: Activity01Icon, color: 'text-muted-foreground', bg: 'bg-muted/20', border: 'border-muted' };
