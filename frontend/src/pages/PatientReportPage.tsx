@@ -46,6 +46,9 @@ const PatientReportPage: React.FC = () => {
                     year: activeYear,
                     company: activeSection
                 },
+                headers: {
+                    'X-Company-Context': activeSection
+                },
                 responseType: 'blob'
             });
             

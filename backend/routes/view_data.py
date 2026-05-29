@@ -220,6 +220,8 @@ def search_patients():
 
 def get_bind():
     context = request.headers.get('X-Company-Context', '').lower()
+    if not context:
+        context = request.args.get('company', '').lower()
     return context if context in ['dcp', 'dct'] else None
 
 @view_data_bp.route('/patients/all', methods=['GET'])
