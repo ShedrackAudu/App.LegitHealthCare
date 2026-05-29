@@ -42,6 +42,11 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
     }
   };
 
+  const speed = 40; // pixels per second (slower, uniform marquee speed)
+  const containerWidth = 1000; // estimated base container width in pixels
+  const estimatedTextWidth = message.length * 7; // approximate width of the text
+  const duration = (containerWidth + estimatedTextWidth) / speed;
+
   return (
     <>
       <style>{`
@@ -57,13 +62,29 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
         .animate-marquee:hover {
           animation-play-state: paused;
         }
+        @keyframes slide-down {
+          from {
+            max-height: 0;
+            opacity: 0;
+          }
+          to {
+            max-height: 40px;
+            opacity: 1;
+          }
+        }
+        .animate-slide-down {
+          animation: slide-down 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
       `}</style>
-      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 no-print ${getColors()}`}>
+      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 no-print animate-slide-down ${getColors()}`}>
         <div className="flex items-center shrink-0 z-10">
           {getIcon()}
         </div>
         <div className="flex-1 overflow-hidden relative w-full flex items-center h-full">
-          <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold">
+          <div 
+            className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold"
+            style={{ animationDuration: `${duration}s` }}
+          >
             {message}
           </div>
         </div>
