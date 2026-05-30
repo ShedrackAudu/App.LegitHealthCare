@@ -1203,3 +1203,12 @@ def auto_assign_permission_to_admin(mapper, connection, target):
     except Exception:
         # Fail silently during initial setup if roles table isn't ready
         pass
+
+@event.listens_for(AuditLog, 'after_insert')
+def on_audit_log_insert(mapper, connection, target):
+    try:
+        from extensions import socketio
+        socketio.emit('new_audit_log', target.to_dict(), to='staff_events')
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")

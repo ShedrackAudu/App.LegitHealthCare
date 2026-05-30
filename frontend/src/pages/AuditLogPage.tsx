@@ -35,7 +35,7 @@ const AuditLogPage: React.FC = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const { user } = useAppContext();
+  const { user, socket } = useAppContext();
 
   const fetchLogs = async (pageNum: number) => {
     setLoading(true);
@@ -54,6 +54,21 @@ const AuditLogPage: React.FC = () => {
   useEffect(() => {
     fetchLogs(page);
   }, [page]);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleNewLog = (newLog: any) => {
+      if (page === 1) {
+        setLogs(prev => [newLog, ...prev.slice(0, 14)]);
+      }
+    };
+    
+    socket.on('new_audit_log', handleNewLog);
+    return () => {
+      socket.off('new_audit_log', handleNewLog);
+    };
+  }, [socket, page]);
 
   const getActionColor = (action: string) => {
     const act = action.toUpperCase();

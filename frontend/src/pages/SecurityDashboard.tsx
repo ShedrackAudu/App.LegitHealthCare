@@ -25,6 +25,7 @@ import {
   Cell
 } from 'recharts';
 import api from '@/lib/api';
+import { useAppContext } from '@/context/AppContext';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
@@ -38,11 +39,27 @@ const COLORS = ['#0d9488', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#ea580c'
 
 export default function SecurityDashboard() {
   const navigate = useNavigate();
+  const { socket } = useAppContext();
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<any>(null);
   const [sessions, setSessions] = useState<any[]>([]);
   const [recentLogs, setRecentLogs] = useState<any[]>([]);
   const [revokingId, setRevokingId] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handleNewLog = (newLog: any) => {
+      setRecentLogs(prev => [newLog, ...prev.slice(0, 9)]);
+      fetchAnalytics();
+      fetchSessions();
+    };
+    
+    socket.on('new_audit_log', handleNewLog);
+    return () => {
+      socket.off('new_audit_log', handleNewLog);
+    };
+  }, [socket]);
 
   useEffect(() => {
     fetchAnalytics();

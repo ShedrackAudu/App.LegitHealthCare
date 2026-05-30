@@ -50,7 +50,7 @@ const toTitleCase = (str: string): string => {
 };
 
 const RegistrationPage: React.FC = () => {
-  const { activeSection, activeYear } = useAppContext();
+  const { activeSection, activeYear, socket } = useAppContext();
   const [searchParams] = useSearchParams();
   const [isSelecting, setIsSelecting] = useState(false);
   const navigate = useNavigate();
@@ -289,6 +289,21 @@ const RegistrationPage: React.FC = () => {
   useEffect(() => {
     fetchStats();
   }, [activeSection, activeYear]);
+
+  useEffect(() => {
+    if (!socket) return;
+    
+    const handlePatientRegistered = (data: any) => {
+      if (Number(data.screening_year) === Number(activeYear)) {
+        fetchStats();
+      }
+    };
+    
+    socket.on('patient_registered', handlePatientRegistered);
+    return () => {
+      socket.off('patient_registered', handlePatientRegistered);
+    };
+  }, [socket, activeYear, activeSection]);
 
   useEffect(() => {
     const fetchConfigs = async () => {

@@ -217,6 +217,15 @@ def register_patient():
         db.session.add(audit)
         db.session.commit()
         
+        # Emit Socket.IO event for real-time stats updates
+        try:
+            from extensions import socketio
+            socketio.emit('patient_registered', {
+                "screening_year": screening_year
+            }, to='staff_events')
+        except Exception as se:
+            print(f"Failed to emit patient_registered event: {se}")
+        
         # Trigger background email notification (Zero latency for the user)
         if patient.email and "@" in patient.email:
             trigger_registration_success_notification(patient.email, patient.first_name, screening_year)
