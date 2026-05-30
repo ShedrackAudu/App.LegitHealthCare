@@ -167,6 +167,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
 
+      newSocket.on('force_logout', () => {
+        toast.error("Your session has been revoked by an administrator.", { id: 'session_revoked' });
+        setUser(null);
+        setTimeout(() => {
+          window.location.href = '/login?reason=session_revoked';
+        }, 1500);
+      });
+
       // Initial fetch for unread count
       axios.get('/api/messages/conversations').then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
