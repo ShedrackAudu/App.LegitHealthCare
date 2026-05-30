@@ -606,7 +606,7 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
               { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: Activity01Icon },
@@ -615,28 +615,35 @@ const Dashboard: React.FC = () => {
             ].map((dept) => (
               <Card 
                 key={dept.id} 
-                className="group cursor-pointer transition-all border hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
+                className="group cursor-pointer transition-all duration-300 border border-border/80 hover:border-primary/30 overflow-hidden bg-card/45 backdrop-blur-sm relative"
                 onClick={() => fetchQueueList(dept.label)}
               >
-                <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
-                  <div className={`p-2 rounded-lg ${dept.color}`}>
-                    <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
+                <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative z-10">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
+                      <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs sm:text-sm font-bold tracking-tight text-foreground truncate">{dept.label}</h4>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="relative flex h-1.5 w-1.5 shrink-0">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-primary/70' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-primary' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/80">Waiting</span>
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={`${dept.color} font-black text-[10px]`}>
-                    QUEUED
-                  </Badge>
-                </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tighter">
-                    {queueStats?.[dept.id] || 0}
-                  </h3>
-                  <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">
-                    {dept.label} Waiting
-                  </p>
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    View Patients <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
+                      {queueStats?.[dept.id] || 0}
+                    </span>
+                    <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors">
+                      <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </div>
                 </CardContent>
+                <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Card>
             ))}
           </div>
