@@ -683,7 +683,7 @@ const PatientReportPage: React.FC = () => {
             )}
 
             {!selectedPatient && (
-                <div className="p-4 sm:p-6 no-print space-y-6">
+                <div className="no-print space-y-6">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
                         {/* Search Instructions Card */}
                         <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 p-6 rounded-3xl">
