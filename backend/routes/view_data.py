@@ -909,6 +909,57 @@ def verify_report(token):
         "generated_at": verification.generated_at.isoformat()
     }), 200
 
+@view_data_bp.route('/public/verify/<token>/pdf', methods=['GET'])
+def verify_report_pdf(token):
+    verification = ReportVerification.query.filter_by(verification_code=token).first()
+    if not verification:
+        return jsonify({"error": "Invalid or forged report signature."}), 404
+        
+    # Dynamically route model queries to the correct database (DCP/DCT)
+    request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
+    
+    from sqlalchemy import func
+    from models import BioData, ScreeningYearBioData
+    from utils.report_utils import generate_patient_report_pdf
+    
+    staff_id = verification.staff_id
+    year = verification.screening_year
+    bind = verification.section.lower()
+    
+    patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
+    if not patient:
+        return jsonify({"error": "Patient profile not found in this section."}), 404
+        
+    yearly = ScreeningYearBioData.query.filter(
+        func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
+        ScreeningYearBioData.screening_year == year
+    ).first()
+    
+    if not yearly:
+        return jsonify({"error": "Clinical data not found for the verified year."}), 404
+        
+    try:
+        report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+        pdf_bytes = generate_patient_report_pdf(report_data)
+        
+        # Create bytes buffer to send
+        pdf_buffer = io.BytesIO(pdf_bytes)
+        
+        first_name = (patient.first_name or '').strip().replace(' ', '_')
+        last_name = (patient.last_name or '').strip().replace(' ', '_')
+        filename = f"LHCSL_{year}_{bind.upper()}_Verified_Report_{first_name}_{last_name}.pdf"
+        
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=False,
+            download_name=filename
+        )
+    except Exception as e:
+        print(f"Error generating verified PDF: {str(e)}")
+        return jsonify({"error": f"Failed to generate report copy: {str(e)}"}), 500
+
+
 @view_data_bp.route('/dashboard/stats', methods=['GET'])
 @require_permission('view_dashboard')
 def get_dashboard_stats():

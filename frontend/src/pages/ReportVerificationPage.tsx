@@ -15,6 +15,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
 import axios from 'axios';
 import { useAppContext } from '../context/AppContext';
 import { API_BASE_URL } from '../lib/api';
@@ -200,6 +201,23 @@ const ReportVerificationPage: React.FC = () => {
                                                         </span>
                                                     </div>
                                                 </div>
+                                            </div>
+
+                                            {/* View Digital Copy */}
+                                            <div className="pt-2">
+                                                <Button 
+                                                    className="w-full h-11 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-black text-xs shadow-md tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
+                                                    asChild
+                                                >
+                                                    <a 
+                                                        href={`${API_BASE_URL}/api/public/verify/${token}/pdf`} 
+                                                        target="_blank" 
+                                                        rel="noopener noreferrer"
+                                                    >
+                                                        <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
+                                                        View Digital Report
+                                                    </a>
+                                                </Button>
                                             </div>
                                         </div>
                                     ) : (
