@@ -707,7 +707,7 @@ const PatientReportPage: React.FC = () => {
                         </Card>
 
                         {/* Bulk Download Card */}
-                        <Card className="border-2 border-slate-200 dark:border-slate-800 bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
                             <div className="space-y-4">
                                 <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
                                     <div className="p-3 bg-indigo-500/10 rounded-2xl">
@@ -734,7 +734,7 @@ const PatientReportPage: React.FC = () => {
                                         placeholder="e.g. 1-100 or 25"
                                         value={rangeInput}
                                         onChange={(e) => setRangeInput(e.target.value)}
-                                        className="rounded-xl border-2 border-slate-200 dark:border-slate-800 focus-visible:ring-indigo-500/50"
+                                        className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50"
                                         disabled={bulkLoading}
                                     />
                                     <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and download as a ZIP file.</p>
