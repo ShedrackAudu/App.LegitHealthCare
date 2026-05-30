@@ -25,22 +25,12 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 client = OpenAI(api_key=api_key)
                 
                 prompt_data = (
-                    f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 5.00 - 11.60 x10^9/L)\n"
-                    f"LYM (Lymphocyte Absolute): {fbc_data.get('lymp_abs') or '-'} x10^9/L (Ref Range: 1.30 - 4.00 x10^9/L)\n"
-                    f"MID (Mixed Absolute): {fbc_data.get('mid_abs') or '-'} x10^9/L (Ref Range: 0.30 - 1.00 x10^9/L)\n"
-                    f"GRA (Granulocyte Absolute): {fbc_data.get('gra_abs') or '-'} x10^9/L (Ref Range: 2.40 - 7.60 x10^9/L)\n"
-                    f"LYM% (Lymphocyte Percentage): {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1 - 48.5 %)\n"
-                    f"MID% (Mixed Percentage): {fbc_data.get('mid_percent') or '-'} % (Ref Range: 4.5 - 12.1 %)\n"
-                    f"GRA% (Granulocyte Percentage): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6 - 73.4 %)\n"
-                    f"RBC: {fbc_data.get('rbc') or '-'} x10^12/L (Ref Range: 4.33 - 5.78 x10^12/L)\n"
-                    f"HGB (Hemoglobin): {fbc_data.get('hgb') or '-'} g/dL (Ref Range: 13.2 - 17.3 g/dL)\n"
-                    f"HCT/PCV (Hematocrit): {fbc_data.get('pcv') or '-'} % (Ref Range: 39.90 - 53.90 %)\n"
-                    f"MCV: {fbc_data.get('mcv') or '-'} fL (Ref Range: 84 - 98 fL)\n"
-                    f"MCH: {fbc_data.get('mch') or '-'} pg (Ref Range: 27.5 - 32.4 pg)\n"
-                    f"MCHC: {fbc_data.get('mchc') or '-'} g/dL (Ref Range: 31.7 - 34.2 g/dL)\n"
-                    f"RDWc: {fbc_data.get('rdw') or '-'} % (Ref Range: 11.1 - 14.0 %)\n"
-                    f"PLT (Platelets): {fbc_data.get('plt') or '-'} x10^9/L (Ref Range: 156 - 342 x10^9/L)\n"
-                    f"PDWc: {fbc_data.get('pdw') or '-'} % (Ref Range: 37.8 - 43.6 %)\n"
+                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 34-53.9 %)\n"
+                    f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
+                    f"Lymphocyte: {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1-48 %)\n"
+                    f"Neutrophil (Granulocyte): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6-73.3 %)\n"
+                    f"Mixed (MID): {fbc_data.get('mid_percent') or '-'} % (Ref Range: 4.5-12.1 %)\n"
+                    f"Platelets (PLT): {fbc_data.get('plt') or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
                 )
                 
                 system_prompt = (
