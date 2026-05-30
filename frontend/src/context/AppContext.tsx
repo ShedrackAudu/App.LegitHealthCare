@@ -319,6 +319,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     fetchBranding();
   }, [fetchBranding]);
 
+  // Periodic check for PWA updates in production (checks every 5 minutes)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const interval = setInterval(() => {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.update().catch(err => console.warn("PWA Service Worker update check failed:", err));
+        });
+      }, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, []);
+
   return (
     <AppContext.Provider value={{ 
       activeSection, setActiveSection, 

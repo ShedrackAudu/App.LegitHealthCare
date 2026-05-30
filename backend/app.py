@@ -38,7 +38,7 @@ if 'http://localhost:5173' in frontend_urls and 'http://localhost:5174' not in f
 from flask_cors import CORS
 CORS(app, resources={r"/*": {"origins": frontend_urls}}, supports_credentials=True)
 
-socketio.init_app(app, cors_allowed_origins=frontend_urls)
+socketio.init_app(app, cors_allowed_origins=frontend_urls, ping_timeout=60, ping_interval=25)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
