@@ -580,7 +580,7 @@ export default function MessagingPage() {
 
         <ScrollArea className="flex-1 min-w-0 w-full">
           {searchQuery.length >= 2 ? (
-            <div className="w-[80%] mx-auto py-2 space-y-1">
+            <div className="px-4 py-2 space-y-1 w-full">
               <p className="text-[10px] font-bold text-muted-foreground uppercase px-3 py-1">Search Results</p>
               {searchResults.map(u => (
                 <button 
@@ -602,7 +602,7 @@ export default function MessagingPage() {
               {searchResults.length === 0 && <div className="p-4 text-center text-xs text-muted-foreground">No users found</div>}
             </div>
           ) : (
-            <div className="w-[80%] mx-auto py-2 space-y-1">
+            <div className="px-4 py-2 space-y-1 w-full">
               {conversations.map(conv => (
                 <button 
                   key={conv.id}
