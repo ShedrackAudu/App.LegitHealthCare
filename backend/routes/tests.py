@@ -217,7 +217,7 @@ def save_test_result(test_type):
                 company_context = request.headers.get('X-Company-Context')
                 threading.Thread(
                     target=generate_fbc_remark_in_background,
-                    args=(current_app._get_current_object(), staff_id, int(screening_year), payload, company_context)
+                    args=(current_app._get_current_object(), staff_id, int(screening_year), data, company_context)
                 ).start()
         
         # Trigger notification check
