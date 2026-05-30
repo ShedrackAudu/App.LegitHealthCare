@@ -241,9 +241,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        setUser(null);
-        localStorage.removeItem('user');
-        window.location.href = '/login?reason=inactivity';
+        axios.post('/api/logout').catch(() => {}).finally(() => {
+          setUser(null);
+          localStorage.removeItem('user');
+          window.location.href = '/login?reason=inactivity';
+        });
       }, 10 * 60 * 1000); // 10 minutes
     };
 

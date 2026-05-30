@@ -686,7 +686,15 @@ def login_2fa():
         
     return jsonify({"error": "Invalid 2FA code"}), 401
 @app.route('/api/logout', methods=['POST'])
+@jwt_required(optional=True)
 def logout():
+    from datetime import datetime, timedelta
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            user.last_seen_at = datetime.now() - timedelta(days=1)
+            db.session.commit()
     response = jsonify({"message": "Logout complete"})
     unset_jwt_cookies(response)
     return response, 200
