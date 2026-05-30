@@ -46,11 +46,14 @@ class RoutingSession(Session):
         try:
             # 2. Check for dynamic context (e.g., 'X-Company-Context' header)
             if request:
-                context = request.headers.get('X-Company-Context', '').lower()
+                context = request.environ.get('HTTP_X_COMPANY_CONTEXT', '')
+                if not context:
+                    context = request.headers.get('X-Company-Context', '')
                 # Fallback to query parameter for browser-initiated requests
                 # (iframe, img, a tags cannot send custom headers)
                 if not context:
-                    context = request.args.get('company', '').lower()
+                    context = request.args.get('company', '')
+                context = context.lower()
                 if context in _db.engines:
                     return _db.engines[context]
         except:

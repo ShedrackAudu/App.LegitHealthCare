@@ -911,34 +911,34 @@ def verify_report(token):
 
 @view_data_bp.route('/public/verify/<token>/pdf', methods=['GET'])
 def verify_report_pdf(token):
-    verification = ReportVerification.query.filter_by(verification_code=token).first()
-    if not verification:
-        return jsonify({"error": "Invalid or forged report signature."}), 404
-        
-    # Dynamically route model queries to the correct database (DCP/DCT)
-    request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
-    
-    from sqlalchemy import func
-    from models import BioData, ScreeningYearBioData
-    from utils.report_utils import generate_patient_report_pdf
-    
-    staff_id = verification.staff_id
-    year = verification.screening_year
-    bind = verification.section.lower()
-    
-    patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
-    if not patient:
-        return jsonify({"error": "Patient profile not found in this section."}), 404
-        
-    yearly = ScreeningYearBioData.query.filter(
-        func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
-        ScreeningYearBioData.screening_year == year
-    ).first()
-    
-    if not yearly:
-        return jsonify({"error": "Clinical data not found for the verified year."}), 404
-        
     try:
+        verification = ReportVerification.query.filter_by(verification_code=token).first()
+        if not verification:
+            return jsonify({"error": "Invalid or forged report signature."}), 404
+            
+        # Dynamically route model queries to the correct database (DCP/DCT)
+        request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
+        
+        from sqlalchemy import func
+        from models import BioData, ScreeningYearBioData
+        from utils.report_utils import generate_patient_report_pdf
+        
+        staff_id = verification.staff_id
+        year = verification.screening_year
+        bind = verification.section.lower()
+        
+        patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
+        if not patient:
+            return jsonify({"error": "Patient profile not found in this section."}), 404
+            
+        yearly = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
+            ScreeningYearBioData.screening_year == year
+        ).first()
+        
+        if not yearly:
+            return jsonify({"error": "Clinical data not found for the verified year."}), 404
+            
         report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
         pdf_bytes = generate_patient_report_pdf(report_data)
         
@@ -957,6 +957,8 @@ def verify_report_pdf(token):
         )
     except Exception as e:
         print(f"Error generating verified PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
         return jsonify({"error": f"Failed to generate report copy: {str(e)}"}), 500
 
 
