@@ -9,7 +9,8 @@ import {
   Delete02Icon,
   Tick01Icon,
   Building02Icon,
-  Clock01Icon
+  Clock01Icon,
+  Settings02Icon
 } from '@hugeicons/core-free-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -342,12 +343,12 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
             >
               <label className="sr-only">Toggle theme</label>
-              <HugeiconsIcon icon={Sun01Icon} className={`h-[1.2rem] w-[1.2rem] transition-all ${
+              <HugeiconsIcon icon={Sun01Icon} className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
                 resolvedTheme === "dark" 
                   ? "-rotate-90 scale-0 opacity-0" 
                   : "rotate-0 scale-100 opacity-100"
               }`} />
-              <HugeiconsIcon icon={Moon01Icon} className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
+              <HugeiconsIcon icon={Moon01Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
                 resolvedTheme === "dark" 
                   ? "rotate-0 scale-100 opacity-100" 
                   : "rotate-90 scale-0 opacity-0"
@@ -433,10 +434,21 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-0.5">
+                  <span className="text-sm font-bold text-foreground truncate">
+                    {user ? `${user.first_name} ${user.last_name}` : 'My Account'}
+                  </span>
+                  {user?.role && (
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                      {user.role}
+                    </span>
+                  )}
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account')}>
-                <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" /> Manage Account
+                <HugeiconsIcon icon={Settings02Icon} className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
