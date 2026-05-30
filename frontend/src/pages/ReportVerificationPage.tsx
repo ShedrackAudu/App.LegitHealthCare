@@ -211,7 +211,6 @@ const ReportVerificationPage: React.FC = () => {
                                                 >
                                                     <Link 
                                                         to={`/verify/${token}/report`}
-                                                        target="_blank"
                                                     >
                                                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
                                                         View Digital Report

@@ -162,7 +162,7 @@ const PublicReportPage: React.FC = () => {
     const { selected_patient } = reportData;
 
     return (
-        <div className="min-h-screen bg-background text-foreground pb-12 relative print:bg-transparent">
+        <div className="h-full overflow-y-auto bg-background text-foreground pb-12 relative print:bg-transparent">
             {/* Control Bar - hidden on print */}
             <div className="flex flex-col md:flex-row items-center justify-between bg-card/85 p-4 rounded-b-2xl border-b shadow-lg sticky top-0 z-50 backdrop-blur-md no-print gap-4 px-6 sm:px-12">
                 <div className="flex items-center gap-3 w-full md:w-auto">
