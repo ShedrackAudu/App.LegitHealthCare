@@ -26,7 +26,10 @@ import {
   Note01Icon,
   MachineRobotIcon,
   PaintBrush01Icon,
-  Delete02Icon
+  Delete02Icon,
+  VolumeHighIcon,
+  FastWindIcon,
+  FavouriteIcon
 } from '@hugeicons/core-free-icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -609,9 +612,9 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
               { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
-              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: Activity01Icon },
-              { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: Activity01Icon },
-              { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: Activity01Icon }
+              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: VolumeHighIcon },
+              { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: FastWindIcon },
+              { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: FavouriteIcon }
             ].map((dept) => (
               <Card 
                 key={dept.id} 
