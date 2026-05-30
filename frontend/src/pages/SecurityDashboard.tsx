@@ -434,27 +434,32 @@ export default function SecurityDashboard() {
                     Waiting for events...
                   </div>
                 ) : (
-                  recentLogs.map((log) => (
-                    <div key={log.id} className="p-3 px-6 hover:bg-muted/50 transition-colors flex items-start justify-between gap-4">
-                      <div className="space-y-0.5">
-                        <div className="flex items-center gap-2">
-                          <span className="text-muted-foreground">[{formatLogTime(log.timestamp)}]</span>
-                          <span className="font-bold text-teal-600 dark:text-teal-400">{log.action}</span>
+                  recentLogs.map((log) => {
+                    const detailsStr = log.details 
+                      ? (typeof log.details === 'object' ? JSON.stringify(log.details) : String(log.details))
+                      : '';
+                    return (
+                      <div key={log.id} className="p-3 px-6 hover:bg-muted/50 transition-colors flex items-start justify-between gap-4">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className="text-muted-foreground">[{formatLogTime(log.timestamp)}]</span>
+                            <span className="font-bold text-teal-600 dark:text-teal-400">{log.action}</span>
+                          </div>
+                          <p className="text-foreground/80">Resource: {log.resource}</p>
+                          {detailsStr && (
+                            <p className="text-muted-foreground truncate max-w-[280px]" title={detailsStr}>
+                              Details: {detailsStr}
+                            </p>
+                          )}
                         </div>
-                        <p className="text-foreground/80">Resource: {log.resource}</p>
-                        {log.details && (
-                          <p className="text-muted-foreground truncate max-w-[280px]" title={log.details}>
-                            Details: {log.details}
-                          </p>
-                        )}
+                        <div className="text-right shrink-0">
+                          <span className="px-1.5 py-0.5 rounded bg-secondary/80 text-[8px] font-black text-muted-foreground border border-border">
+                            {log.user_name || 'System'}
+                          </span>
+                        </div>
                       </div>
-                      <div className="text-right shrink-0">
-                        <span className="px-1.5 py-0.5 rounded bg-secondary/80 text-[8px] font-black text-muted-foreground border border-border">
-                          {log.username || 'System'}
-                        </span>
-                      </div>
-                    </div>
-                  ))
+                    );
+                  })
                 )}
               </div>
             </CardContent>
