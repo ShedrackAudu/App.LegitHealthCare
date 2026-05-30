@@ -775,15 +775,41 @@ class AuditLog(db.Model):
                     details_data = {}
 
                 # Capture User Agent & Parse Platform/Browser
-                ua = request.user_agent
-                if ua:
-                    platform = ua.platform or "Unknown OS"
-                    browser = ua.browser or "Unknown Browser"
-                    details_data['device'] = {
-                        "platform": platform,
-                        "browser": browser,
-                        "user_agent": ua.string
-                    }
+                user_agent_str = request.headers.get('User-Agent', '')
+                platform = "Unknown OS"
+                browser = "Unknown Browser"
+                
+                if user_agent_str:
+                    ua_lower = user_agent_str.lower()
+                    # Detect OS
+                    if 'windows' in ua_lower:
+                        platform = 'Windows'
+                    elif 'macintosh' in ua_lower or 'mac os' in ua_lower:
+                        platform = 'macOS'
+                    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
+                        platform = 'iOS'
+                    elif 'android' in ua_lower:
+                        platform = 'Android'
+                    elif 'linux' in ua_lower:
+                        platform = 'Linux'
+                        
+                    # Detect Browser
+                    if 'edg/' in ua_lower or 'edge' in ua_lower:
+                        browser = 'Edge'
+                    elif 'opr/' in ua_lower or 'opera' in ua_lower:
+                        browser = 'Opera'
+                    elif 'chrome' in ua_lower or 'crios' in ua_lower:
+                        browser = 'Chrome'
+                    elif 'firefox' in ua_lower or 'fxios' in ua_lower:
+                        browser = 'Firefox'
+                    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
+                        browser = 'Safari'
+
+                details_data['device'] = {
+                    "platform": platform,
+                    "browser": browser,
+                    "user_agent": user_agent_str
+                }
                 kwargs['details'] = json.dumps(details_data)
         except Exception:
             pass
@@ -865,6 +891,42 @@ class AuditLog(db.Model):
                 details_data = json.loads(self.details)
             except (ValueError, TypeError, json.JSONDecodeError):
                 details_data = {"message": self.details}
+
+        # Dynamic repair for existing records with "Unknown" device details
+        if 'device' in details_data and isinstance(details_data['device'], dict):
+            device = details_data['device']
+            ua_str = device.get('user_agent', '')
+            if (device.get('platform') == 'Unknown OS' or device.get('browser') == 'Unknown Browser') and ua_str:
+                ua_lower = ua_str.lower()
+                platform = device.get('platform')
+                browser = device.get('browser')
+                
+                if platform == 'Unknown OS':
+                    if 'windows' in ua_lower:
+                        platform = 'Windows'
+                    elif 'macintosh' in ua_lower or 'mac os' in ua_lower:
+                        platform = 'macOS'
+                    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
+                        platform = 'iOS'
+                    elif 'android' in ua_lower:
+                        platform = 'Android'
+                    elif 'linux' in ua_lower:
+                        platform = 'Linux'
+                        
+                if browser == 'Unknown Browser':
+                    if 'edg/' in ua_lower or 'edge' in ua_lower:
+                        browser = 'Edge'
+                    elif 'opr/' in ua_lower or 'opera' in ua_lower:
+                        browser = 'Opera'
+                    elif 'chrome' in ua_lower or 'crios' in ua_lower:
+                        browser = 'Chrome'
+                    elif 'firefox' in ua_lower or 'fxios' in ua_lower:
+                        browser = 'Firefox'
+                    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
+                        browser = 'Safari'
+                        
+                device['platform'] = platform
+                device['browser'] = browser
 
         user_name = "System"
         if self.user:

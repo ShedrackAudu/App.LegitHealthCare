@@ -211,9 +211,9 @@ export default function SecurityDashboard() {
                     Event Telemetry
                   </CardTitle>
                </div>
-               <div className="flex items-center gap-2 px-3 py-1 bg-secondary/30 dark:bg-white/5 border border-border rounded-full">
+               <div className="flex items-center gap-2 px-3 py-1 bg-emerald-500/10 dark:bg-emerald-500/20 border border-emerald-500/20 dark:border-emerald-500/30 rounded-full">
                   <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[9px] font-black uppercase tracking-tighter text-muted-foreground dark:text-white/70">Real-Time</span>
+                  <span className="text-[9px] font-black uppercase tracking-tighter text-emerald-600 dark:text-emerald-400">Real-Time</span>
                </div>
             </CardHeader>
             <CardContent className="pt-6 h-[320px] px-2">
