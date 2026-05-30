@@ -366,8 +366,8 @@ const TestResultsPage: React.FC = () => {
     return (
         <MainLayout>
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <Button variant="ghost" onClick={() => navigate('/tests')} className="gap-2 -ml-2">
-                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to Test Selection
+                <Button variant="outline" onClick={() => navigate('/tests')} className="gap-2 border-2">
+                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to search
                 </Button>
 
                 {!patient ? (
