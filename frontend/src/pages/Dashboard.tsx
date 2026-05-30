@@ -217,6 +217,14 @@ const Dashboard: React.FC = () => {
   const [loadingQueue, setLoadingQueue] = React.useState(false);
   const [deleteConfirmOpen, setDeleteConfirmOpen] = React.useState(false);
   const [deletePendingEntry, setDeletePendingEntry] = React.useState<{ dept: string; staffId: string } | null>(null);
+  const [currentTime, setCurrentTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setCurrentTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   // PWA Install Prompt State (mobile dashboard banner)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -410,6 +418,10 @@ const Dashboard: React.FC = () => {
             <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
+            </p>
+            <p className="text-xs text-muted-foreground/80 mt-2 flex items-center gap-1.5 font-bold transition-all">
+              <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5 text-primary" />
+              {currentTime.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {currentTime.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
             </p>
           </div>
           <div className="flex items-center gap-3 bg-card border rounded-xl p-2 md:p-3 md:px-5 w-full md:w-auto justify-start md:justify-end">
