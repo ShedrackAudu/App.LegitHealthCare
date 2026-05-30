@@ -945,7 +945,15 @@ class AuditLog(db.Model):
                 except:
                     user_name = f"User {self.user_id}"
             else:
-                user_name = f"User {self.user_id}"
+                try:
+                    # Fallback query StaffUser explicitly (handles flush/after_insert states)
+                    staff = StaffUser.query.get(self.user_id)
+                    if staff:
+                        user_name = f"{staff.first_name} {staff.last_name}"
+                    else:
+                        user_name = f"User {self.user_id}"
+                except:
+                    user_name = f"User {self.user_id}"
 
         return {
             "id": self.id,
