@@ -209,14 +209,13 @@ const ReportVerificationPage: React.FC = () => {
                                                     className="w-full h-11 rounded-xl bg-primary hover:bg-primary/95 text-primary-foreground font-black text-xs shadow-md tracking-wider flex items-center justify-center gap-2 transition-all active:scale-[0.98]"
                                                     asChild
                                                 >
-                                                    <a 
-                                                        href={`${API_BASE_URL}/api/public/verify/${token}/pdf`} 
-                                                        target="_blank" 
-                                                        rel="noopener noreferrer"
+                                                    <Link 
+                                                        to={`/verify/${token}/report`}
+                                                        target="_blank"
                                                     >
                                                         <HugeiconsIcon icon={File01Icon} className="w-4 h-4" />
                                                         View Digital Report
-                                                    </a>
+                                                    </Link>
                                                 </Button>
                                             </div>
                                         </div>

@@ -962,6 +962,55 @@ def verify_report_pdf(token):
         return jsonify({"error": f"Failed to generate report copy: {str(e)}"}), 500
 
 
+@view_data_bp.route('/public/verify/<token>/report-data', methods=['GET'])
+def public_verify_report_data(token):
+    try:
+        verification = ReportVerification.query.filter_by(verification_code=token).first()
+        if not verification:
+            return jsonify({"error": "Invalid or forged report signature."}), 404
+            
+        # Dynamically route model queries to the correct database (DCP/DCT)
+        request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
+        
+        from sqlalchemy import func
+        from models import BioData, ScreeningYearBioData
+        
+        staff_id = verification.staff_id
+        year = verification.screening_year
+        bind = verification.section.lower()
+        
+        patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
+        if not patient:
+            return jsonify({"error": "Patient profile not found in this section."}), 404
+            
+        yearly = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
+            ScreeningYearBioData.screening_year == year
+        ).first()
+        
+        if not yearly:
+            return jsonify({"error": "Clinical data not found for the verified year."}), 404
+            
+        report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+        
+        # Add basic patient summary for frontend compatibility
+        report_data['selected_patient'] = {
+            'first_name': patient.first_name,
+            'middle_name': patient.middle_name,
+            'last_name': patient.last_name,
+            'patient_id': yearly.patient_id,
+            'staff_id': patient.staff_id,
+            'department': patient.department
+        }
+        
+        return jsonify(report_data), 200
+    except Exception as e:
+        print(f"Error fetching public verification report data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to retrieve report data: {str(e)}"}), 500
+
+
 @view_data_bp.route('/dashboard/stats', methods=['GET'])
 @require_permission('view_dashboard')
 def get_dashboard_stats():

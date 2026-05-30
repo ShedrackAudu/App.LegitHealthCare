@@ -15,6 +15,7 @@ import ViewPatientsPage from './pages/ViewPatientsPage';
 import ViewRecordsPage from './pages/ViewRecordsPage';
 import PatientReportPage from './pages/PatientReportPage';
 import ReportVerificationPage from './pages/ReportVerificationPage';
+import PublicReportPage from './pages/PublicReportPage';
 import ManageAccountPage from './pages/ManageAccountPage';
 import Manage2FAPage from './pages/Manage2FAPage';
 import SystemConfigPage from './pages/SystemConfigPage';
@@ -59,6 +60,7 @@ function RootApp() {
                 <Route path="/verify-otp" element={<OTPPage />} />
                 <Route path="/forgot-password" element={<Navigate to="/login?forgot=true" replace />} />
                 <Route path="/verify/:token" element={<ReportVerificationPage />} />
+                <Route path="/verify/:token/report" element={<PublicReportPage />} />
 
 
 
