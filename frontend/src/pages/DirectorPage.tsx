@@ -581,7 +581,7 @@ const DirectorPage: React.FC = () => {
         <MainLayout noScroll={!!patient}>
             <div className={`animate-in fade-in duration-500 ${patient ? 'flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0' : 'space-y-8 pb-20'}`}>
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all shrink-0">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
                             <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 sm:h-8 sm:w-8 text-primary" />
                         </div>

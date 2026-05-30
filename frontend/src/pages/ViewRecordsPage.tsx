@@ -98,7 +98,7 @@ const ViewRecordsPage: React.FC = () => {
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                 {/* Unified Search Header style matching Director Review */}
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
                             <HugeiconsIcon icon={Database02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>

@@ -518,7 +518,7 @@ const RegistrationPage: React.FC = () => {
       <div className="space-y-6 registration-page">
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
                 <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />

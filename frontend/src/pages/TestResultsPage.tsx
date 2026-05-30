@@ -324,9 +324,19 @@ const TestResultsPage: React.FC = () => {
         return (
             <MainLayout>
                 <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="text-center space-y-2">
-                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
-                        <p className="text-muted-foreground text-lg">Select a test type to record or view patient results.</p>
+                    <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
+                        <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                                <HugeiconsIcon icon={Chemistry02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            </div>
+                            <div>
+                                <h1 className="text-base sm:text-2xl font-black tracking-tight">Diagnostic Test Results</h1>
+                                <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                            </div>
+                        </div>
+                        <div className="text-xs sm:text-sm text-muted-foreground font-bold flex items-center bg-muted/30 px-4 py-2 rounded-xl border-2 self-start xl:self-auto">
+                            Select a test type below to record or view patient results.
+                        </div>
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -366,15 +376,33 @@ const TestResultsPage: React.FC = () => {
     return (
         <MainLayout>
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <Button variant="outline" onClick={() => navigate('/tests')} className="gap-2 border-2">
-                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to search
-                </Button>
+                {patient ? (
+                    <Button 
+                        variant="outline" 
+                        onClick={() => {
+                            setPatient(null);
+                            setSearchId('');
+                            setSearchResults([]);
+                        }} 
+                        className="gap-2 border-2 rounded-xl font-bold"
+                    >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to search
+                    </Button>
+                ) : (
+                    <Button 
+                        variant="outline" 
+                        onClick={() => navigate('/tests')} 
+                        className="gap-2 border-2 rounded-xl font-bold"
+                    >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to Test Selection
+                    </Button>
+                )}
 
                 {!patient ? (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Top Search Bar Style from Consultation */}
                         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                                 <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
                                     <HugeiconsIcon icon={Chemistry02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                                 </div>
