@@ -1,12 +1,74 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
 import pandas as pd
 from io import BytesIO
 import json
+
+def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, company_context):
+    with app.app_context():
+        with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
+            try:
+                from models import db, AISettings, FBCResult
+                from openai import OpenAI
+                import os
+                
+                settings = AISettings.query.first()
+                api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+                if not api_key:
+                    print("FBC AI Remark Error: OpenAI API Key is not configured.")
+                    return
+                    
+                client = OpenAI(api_key=api_key)
+                
+                prompt_data = (
+                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 34-53.9 %)\n"
+                    f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
+                    f"Lymphocyte: {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1-48 %)\n"
+                    f"Neutrophil (Granulocyte): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6-73.3 %)\n"
+                    f"Mixed (MID): {fbc_data.get('mid_percent') or '-'} % (Ref Range: 4.5-12.1 %)\n"
+                    f"Platelets (PLT): {fbc_data.get('plt') or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
+                    f"Hemoglobin (HGB): {fbc_data.get('hgb') or '-'} g/dL\n"
+                    f"RBC: {fbc_data.get('rbc') or '-'} x10^12/L\n"
+                )
+                
+                system_prompt = (
+                    "You are a medical assistant analyzing patient Full Blood Count (FBC) results.\n"
+                    "Review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field.\n"
+                    "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
+                )
+                
+                response = client.chat.completions.create(
+                    model=settings.model_selection if (settings and settings.model_selection) else "gpt-4o",
+                    messages=[
+                        {"role": "system", "content": system_prompt},
+                        {"role": "user", "content": f"FBC Results:\n{prompt_data}"}
+                    ],
+                    max_tokens=60
+                )
+                
+                remark = response.choices[0].message.content.strip()
+                # Clean up wrapping quotes if the AI output includes them
+                if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
+                    remark = remark[1:-1].strip()
+                if len(remark) > 130:
+                    remark = remark[:127] + "..."
+                
+                # Fetch FBC record and update
+                fbc_record = FBCResult.query.filter(
+                    func.lower(func.trim(FBCResult.staff_id)) == func.lower(func.trim(staff_id)),
+                    FBCResult.screening_year == screening_year
+                ).first()
+                if fbc_record:
+                    fbc_record.fbc_remark = remark
+                    db.session.commit()
+            except Exception as e:
+                print(f"FBC AI Remark Thread Exception: {e}")
+                import traceback
+                traceback.print_exc()
 
 tests_bp = Blueprint('tests', __name__)
 
@@ -144,6 +206,19 @@ def save_test_result(test_type):
             details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": log_test_type}
         )
         db.session.commit()
+
+        # Generate FBC remark in the background if enabled
+        if test_type == 'fbc':
+            config_enabled = SystemConfig.query.get('ai_fbc_remarks_enabled')
+            is_enabled = config_enabled.value == 'true' if config_enabled else True
+            if is_enabled:
+                import threading
+                from flask import current_app
+                company_context = request.headers.get('X-Company-Context')
+                threading.Thread(
+                    target=generate_fbc_remark_in_background,
+                    args=(current_app._get_current_object(), staff_id, int(screening_year), payload, company_context)
+                ).start()
         
         # Trigger notification check
         from utils.notification_logic import trigger_report_ready_notification

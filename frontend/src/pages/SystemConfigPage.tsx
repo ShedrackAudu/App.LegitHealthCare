@@ -175,6 +175,7 @@ const SystemConfigPage: React.FC = () => {
 
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
     const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
+    const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
     const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
@@ -258,6 +259,9 @@ const SystemConfigPage: React.FC = () => {
             });
             if (response.data.staff_signup_enabled !== undefined) {
                 setStaffSignupEnabled(response.data.staff_signup_enabled === 'true');
+            }
+            if (response.data.ai_fbc_remarks_enabled !== undefined) {
+                setAiFbcRemarksEnabled(response.data.ai_fbc_remarks_enabled === 'true');
             }
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
@@ -483,6 +487,28 @@ const SystemConfigPage: React.FC = () => {
             toast.success(`Staff signup has been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
             toast.error("Failed to update signup setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
+    const handleToggleAiFbcRemarks = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !aiFbcRemarksEnabled;
+            await axios.post('/api/admin/config', 
+                { ai_fbc_remarks_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setAiFbcRemarksEnabled(newValue);
+            toast.success(`AI FBC remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update AI FBC remarks setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -944,6 +970,42 @@ const SystemConfigPage: React.FC = () => {
                                                     <span
                                                         className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
                                                             staffSignupEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">AI FBC Remarks Generation</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) results using AI in the background and writes a brief summary to the remark field.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${aiFbcRemarksEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {aiFbcRemarksEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving}
+                                                onClick={handleToggleAiFbcRemarks}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
                                                         }`}
                                                     />
                                                 )}
