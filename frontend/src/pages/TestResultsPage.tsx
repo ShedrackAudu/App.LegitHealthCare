@@ -339,32 +339,35 @@ const TestResultsPage: React.FC = () => {
                         </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[
-                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity01Icon, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
-                            { id: 'fbc', title: 'Full Blood Count', icon: Chemistry02Icon, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
-                            { id: 'kft', title: 'Kidney Function Test', icon: Activity01Icon, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
-                            { id: 'lipid', title: 'Lipid Profile', icon: Brain02Icon, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
-                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardIcon, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
-                            { id: 'ecg', title: 'ECG Analysis', icon: FavouriteIcon, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
-                            { id: 'spirometry', title: 'Spirometry', icon: FastWindIcon, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
-                            { id: 'audiometry', title: 'Audiometry', icon: VolumeHighIcon, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
+                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity01Icon, color: 'text-orange-500', bg: 'bg-orange-500/8 dark:bg-orange-500/10', hoverBg: 'group-hover:bg-orange-500/15', border: 'hover:border-orange-500/30' },
+                            { id: 'fbc', title: 'Full Blood Count', icon: Chemistry02Icon, color: 'text-rose-500', bg: 'bg-rose-500/8 dark:bg-rose-500/10', hoverBg: 'group-hover:bg-rose-500/15', border: 'hover:border-rose-500/30' },
+                            { id: 'kft', title: 'Kidney Function Test', icon: Activity01Icon, color: 'text-blue-500', bg: 'bg-blue-500/8 dark:bg-blue-500/10', hoverBg: 'group-hover:bg-blue-500/15', border: 'hover:border-blue-500/30' },
+                            { id: 'lipid', title: 'Lipid Profile', icon: Brain02Icon, color: 'text-amber-500', bg: 'bg-amber-500/8 dark:bg-amber-500/10', hoverBg: 'group-hover:bg-amber-500/15', border: 'hover:border-amber-500/30' },
+                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardIcon, color: 'text-primary', bg: 'bg-primary/8 dark:bg-primary/10', hoverBg: 'group-hover:bg-primary/15', border: 'hover:border-primary/30' },
+                            { id: 'ecg', title: 'ECG Analysis', icon: FavouriteIcon, color: 'text-red-500', bg: 'bg-red-500/8 dark:bg-red-500/10', hoverBg: 'group-hover:bg-red-500/15', border: 'hover:border-red-500/30' },
+                            { id: 'spirometry', title: 'Spirometry', icon: FastWindIcon, color: 'text-sky-500', bg: 'bg-sky-500/8 dark:bg-sky-500/10', hoverBg: 'group-hover:bg-sky-500/15', border: 'hover:border-sky-500/30' },
+                            { id: 'audiometry', title: 'Audiometry', icon: VolumeHighIcon, color: 'text-purple-500', bg: 'bg-purple-500/8 dark:bg-purple-500/10', hoverBg: 'group-hover:bg-purple-500/15', border: 'hover:border-purple-500/30' },
                         ].map((test) => (
                             <Card 
                                 key={test.id} 
-                                className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50"
+                                className={`group cursor-pointer hover:shadow-lg transition-all duration-300 border border-border/80 ${test.border} bg-card/65 backdrop-blur-sm relative overflow-hidden`}
                                 onClick={() => navigate(`/tests/${test.id}`)}
                             >
-                                <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-                                    <div className={`p-2.5 sm:p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
-                                        <HugeiconsIcon icon={test.icon} className="h-6 w-6 sm:h-8 sm:w-8" />
+                                <CardContent className="p-3.5 sm:p-4 flex items-center gap-3 relative z-10">
+                                    <div className={`p-2.5 rounded-xl ${test.bg} ${test.color} ${test.hoverBg} transition-all duration-300 group-hover:scale-105 shrink-0`}>
+                                        <HugeiconsIcon icon={test.icon} className="h-5.5 w-5.5" />
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-base sm:text-xl font-bold">{test.title}</h3>
-                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Record diagnostic findings</p>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate group-hover:text-primary transition-colors">{test.title}</h3>
+                                        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate mt-0.5">Record diagnostics</p>
                                     </div>
-                                    <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors shrink-0">
+                                        <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                                    </div>
                                 </CardContent>
+                                <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </Card>
                         ))}
                     </div>
