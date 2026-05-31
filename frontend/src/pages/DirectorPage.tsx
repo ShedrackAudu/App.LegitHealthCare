@@ -11,7 +11,8 @@ import {
   ArrowUp01Icon,
   Shield01Icon,
   SparklesIcon,
-  UserIcon
+  UserIcon,
+  Cancel01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
@@ -304,11 +305,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-red-500">*</span></Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')}</Label>
                                 {f.includes('REMARK') ? (
-                                    <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
+                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
                                 ) : (
-                                    <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm font-mono" required />
+                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm font-mono" />
                                 )}
                             </div>
                         ))}
@@ -318,17 +319,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Chloride, and Calcium">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'BICARBONATE_CA', 'KFT_REMARK'].map(f => {
-                            const isOptional = ['BICARBONATE_CA', 'KFT_REMARK'].includes(f);
                             const displayName = f === 'BICARBONATE_CA' ? 'CALCIUM CA' : f.replace('_', ' ');
                             return (
                                 <div key={f} className="space-y-1">
                                     <Label className="text-xs whitespace-nowrap truncate block">
-                                        {displayName} {!isOptional && <span className="text-red-500">*</span>}
+                                        {displayName}
                                     </Label>
                                     <Input 
-                                        {...register(f.toLowerCase(), isOptional ? {} : { required: true })} 
+                                        {...register(f.toLowerCase())} 
                                         className="h-9 text-sm font-mono" 
-                                        required={!isOptional} 
                                     />
                                 </div>
                             );
@@ -340,8 +339,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {['TOTAL_CHOLESTEROL', 'TRIGLYCERIDES', 'HDL', 'LDL', 'LP_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
-                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
+                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
+                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
                             </div>
                         ))}
                     </div>
@@ -351,8 +350,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['AST', 'ALT', 'ALP', 'TB', 'CB', 'UREA', 'CREATININE', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')} <span className="text-red-500">*</span></Label>
-                                <Input {...register(f.toLowerCase(), { required: true })} className="h-9 text-sm" required />
+                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
+                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
                             </div>
                         ))}
                     </div>
@@ -361,8 +360,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
-                            { id: 'ecg_result', label: 'ECG Status' },
-                            { id: 'ecg_remark', label: 'ECG Remark' },
+                            { id: 'ecg_result', label: 'ECG Status', optional: true },
+                            { id: 'ecg_remark', label: 'ECG Remark', optional: true },
                             { id: 'spirometry_result', label: 'Spirometry' },
                             { id: 'spirometry_remark', label: 'Spiro Remark' },
                             { id: 'audiometry_result', label: 'Audiometry' },
@@ -371,8 +370,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             { id: 'height', label: 'Height (m)' }
                         ].map(f => (
                             <div key={f.id} className="space-y-1">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} <span className="text-red-500">*</span></Label>
-                                <Input {...register(f.id, { required: true })} className="h-9 text-sm" required />
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} {!f.optional && <span className="text-red-500">*</span>}</Label>
+                                <Input {...register(f.id, f.optional ? {} : { required: true })} className="h-9 text-sm" required={!f.optional} />
                             </div>
                         ))}
                     </div>
@@ -525,6 +524,128 @@ const DirectorPage: React.FC = () => {
     const [history, setHistory] = useState<any>(null);
     const [searching, setSearching] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [bulkAiEnabled, setBulkAiEnabled] = useState(true);
+
+    // Batch AI Processing states
+    const [batchOpen, setBatchOpen] = useState(false);
+    const [batchStartId, setBatchStartId] = useState('');
+    const [batchEndId, setBatchEndId] = useState('');
+    const [batchProcessing, setBatchProcessing] = useState(false);
+    const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
+    const [batchLogs, setBatchLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
+
+    useEffect(() => {
+        const fetchBulkAiStatus = async () => {
+            try {
+                const res = await axios.get('/api/config/bulk-ai-review-status');
+                if (res.data && res.data.bulk_ai_review_enabled !== undefined) {
+                    setBulkAiEnabled(res.data.bulk_ai_review_enabled);
+                }
+            } catch (err) {
+                console.error("Failed to load bulk AI config status:", err);
+            }
+        };
+        fetchBulkAiStatus();
+    }, []);
+
+    const startBatchProcess = async () => {
+        const val = batchStartId.trim();
+        let start = 0;
+        let end = 0;
+        
+        if (val.includes('-')) {
+            const parts = val.split('-');
+            start = parseInt(parts[0]);
+            end = parseInt(parts[1]);
+        } else {
+            start = parseInt(val);
+            end = parseInt(val);
+        }
+        
+        if (isNaN(start) || isNaN(end) || start > end || start <= 0) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100 or 25).");
+            return;
+        }
+        
+        setBatchProcessing(true);
+        const total = end - start + 1;
+        setBatchProgress({ current: 0, total, successCount: 0, failCount: 0 });
+        
+        const initialLogs = [];
+        for (let i = start; i <= end; i++) {
+            initialLogs.push({ id: i, status: 'pending' as const, message: 'Queued' });
+        }
+        setBatchLogs(initialLogs);
+        
+        for (let i = start; i <= end; i++) {
+            setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
+            
+            try {
+                // 1. Resolve patient using PID
+                const pRes = await axios.get(`/patient/${i}?year=${activeYear}&strict=true&search_type=pid`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientData = pRes.data;
+                const staffId = patientData.staff_id;
+                
+                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Fetching history...' } : log));
+
+                // 2. Fetch history
+                const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientHistory = hRes.data;
+                
+                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Overview...' } : log));
+
+                // 3. Generate AI comments
+                const aiRes = await axios.post('/api/ai/generate', {
+                    staff_id: staffId,
+                    screening_year: activeYear
+                }, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                const { comments } = aiRes.data;
+                const commentList = Array.isArray(comments) ? comments : [aiRes.data.overview || '', '', '', ''];
+                
+                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Saving director review...' } : log));
+
+                // 4. Submit save payload
+                const savePayload = {
+                    ...patientHistory?.review,
+                    ...patientHistory?.consultation,
+                    ...patientHistory?.special,
+                    ...patientHistory?.fbc,
+                    ...patientHistory?.kft,
+                    ...patientHistory?.lipid,
+                    ...patientHistory?.lft,
+                    comment_one: commentList[0] || '',
+                    comment_two: commentList[1] || '',
+                    comment_three: commentList[2] || '',
+                    comment_four: commentList[3] || '',
+                    staff_id: staffId,
+                    screening_year: activeYear
+                };
+                
+                await axios.post('/api/director/save-director-review', savePayload, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                // Success log
+                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: `Completed: ${patientData.first_name} ${patientData.last_name}` } : log));
+                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                
+            } catch (err: any) {
+                const errMsg = err.response?.data?.error || err.message || "Failed to process";
+                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: errMsg } : log));
+                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, failCount: prev.failCount + 1 }));
+            }
+        }
+        
+        setBatchProcessing(false);
+        toast.success("Batch processing completed!");
+    };
     const selectPatient = (p: any) => {
         handleSearchWithId(p.staff_id, 'general');
     };
@@ -605,22 +726,137 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 mt-8 p-6">
-                        <div className="text-center space-y-3">
-                            <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
-                                <HugeiconsIcon icon={Activity01Icon} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
-                            </div>
-                            <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
-                                Search for a patient to begin clinical review.
-                            </p>
-                            <div className="flex flex-col items-center gap-1 sm:gap-2">
-                                <div className="h-px w-8 bg-muted-foreground/20" />
-                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
-                                    Context: {activeSection} Clinic • {activeYear}
+                    <div className={bulkAiEnabled ? "grid grid-cols-1 md:grid-cols-2 gap-8 mt-8" : "max-w-2xl mx-auto w-full mt-8"}>
+                        {/* Single Patient Review Placeholder Card */}
+                        <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[22rem] bg-muted/5 p-8 text-center rounded-3xl">
+                            <div className="space-y-4">
+                                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-110 duration-300">
+                                    <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-muted-foreground/50" />
+                                </div>
+                                <h2 className="text-xl font-bold tracking-tight text-foreground">Single Patient Review</h2>
+                                <p className="text-muted-foreground font-medium text-sm italic max-w-sm mx-auto leading-snug">
+                                    Search for a patient using the search bar at the top to begin individual clinical review.
                                 </p>
+                                <div className="flex flex-col items-center gap-1">
+                                    <div className="h-px w-8 bg-muted-foreground/20" />
+                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
+                                        Context: {activeSection} Clinic • {activeYear}
+                                    </p>
+                                </div>
                             </div>
-                        </div>
-                    </Card>
+                        </Card>
+
+                        {/* Bulk AI Review Generator Card */}
+                        {bulkAiEnabled && (
+                            <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                                <div className="space-y-4">
+                                    <div className="flex items-center gap-3">
+                                        <div className="p-3 bg-primary/10 rounded-2xl">
+                                            <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
+                                            <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                        <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
+                                        <ul className="list-disc list-inside space-y-1 pl-1">
+                                            <li>Patient has been registered for the screening year.</li>
+                                            <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
+                                        </ul>
+                                    </div>
+
+                                    {!batchProcessing && batchProgress.total === 0 ? (
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bulk-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                <Input
+                                                    id="bulk-pid-range"
+                                                    placeholder="e.g. 1-100 or 25"
+                                                    value={batchStartId}
+                                                    onChange={(e) => setBatchStartId(e.target.value)}
+                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50"
+                                                />
+                                                <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
+                                            </div>
+                                            <Button 
+                                                onClick={startBatchProcess}
+                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                            >
+                                                <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                Bulk Generate AI Reviews
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                <div className="p-2 bg-muted/40 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                    <p className="text-lg font-black mt-1 text-primary">{batchProgress.current} / {batchProgress.total}</p>
+                                                </div>
+                                                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                    <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchProgress.successCount}</p>
+                                                </div>
+                                                <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                    <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchProgress.failCount}</p>
+                                                </div>
+                                                <div className="p-2 bg-muted/40 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                    <p className="text-lg font-black mt-1 text-foreground">
+                                                        {batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                <div 
+                                                    className="bg-primary h-full transition-all duration-300 rounded-full"
+                                                    style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                    {batchLogs.map(log => (
+                                                        <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                            <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                            <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                            <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                'bg-muted-foreground/10 text-muted-foreground'
+                                                            }`}>
+                                                                {log.status}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            
+                                            {!batchProcessing && (
+                                                <Button 
+                                                    onClick={() => {
+                                                        setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                        setBatchLogs([]);
+                                                    }}
+                                                    variant="outline"
+                                                    className="w-full h-10 font-bold rounded-xl text-xs"
+                                                >
+                                                    Reset & Start Another Range
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+                        )}
+                    </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
                         <ReviewContent 

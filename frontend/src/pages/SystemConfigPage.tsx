@@ -25,6 +25,7 @@ import {
   Megaphone01Icon
 } from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -136,6 +137,8 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
 
 const SystemConfigPage: React.FC = () => {
     const { activeSection, user } = useAppContext();
+    const { hasPermission } = usePermissions();
+    const canManageMaintenance = hasPermission('system_maintenance');
     const [departments, setDepartments] = useState<ConfigItem[]>([]);
     const [races, setRaces] = useState<ConfigItem[]>([]);
     const [nationalities, setNationalities] = useState<ConfigItem[]>([]);
@@ -176,6 +179,7 @@ const SystemConfigPage: React.FC = () => {
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
     const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
     const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
+    const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
     const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
@@ -262,6 +266,9 @@ const SystemConfigPage: React.FC = () => {
             }
             if (response.data.ai_fbc_remarks_enabled !== undefined) {
                 setAiFbcRemarksEnabled(response.data.ai_fbc_remarks_enabled === 'true');
+            }
+            if (response.data.bulk_ai_review_enabled !== undefined) {
+                setBulkAiReviewEnabled(response.data.bulk_ai_review_enabled === 'true');
             }
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
@@ -509,6 +516,28 @@ const SystemConfigPage: React.FC = () => {
             toast.success(`AI FBC remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
             toast.error("Failed to update AI FBC remarks setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+ 
+    const handleToggleBulkAiReview = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !bulkAiReviewEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_ai_review_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkAiReviewEnabled(newValue);
+            toast.success(`Bulk AI review generator has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk AI review generator setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -954,7 +983,7 @@ const SystemConfigPage: React.FC = () => {
                                             </span>
                                             <button
                                                 type="button"
-                                                disabled={maintenanceSaving}
+                                                disabled={maintenanceSaving || !canManageMaintenance}
                                                 onClick={handleToggleSignup}
                                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                                                     staffSignupEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
@@ -990,7 +1019,7 @@ const SystemConfigPage: React.FC = () => {
                                             </span>
                                             <button
                                                 type="button"
-                                                disabled={maintenanceSaving}
+                                                disabled={maintenanceSaving || !canManageMaintenance}
                                                 onClick={handleToggleAiFbcRemarks}
                                                 className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
                                                     aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
@@ -1015,6 +1044,42 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Bulk AI Review Generator</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Enable or disable the Bulk AI Review Generator feature on the Director Review landing page.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkAiReviewEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {bulkAiReviewEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleBulkAiReview}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    bulkAiReviewEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
                                                 Configure the default application theme (Light or Dark) for all users when they don't have a local preference.
@@ -1024,7 +1089,7 @@ const SystemConfigPage: React.FC = () => {
                                             <div className="flex gap-2">
                                                 <Button 
                                                     onClick={() => handleSaveDefaultTheme('light')}
-                                                    disabled={maintenanceSaving}
+                                                    disabled={maintenanceSaving || !canManageMaintenance}
                                                     variant={defaultThemeSetting === 'light' ? "default" : "outline"}
                                                     size="sm"
                                                     className="font-bold"
@@ -1033,7 +1098,7 @@ const SystemConfigPage: React.FC = () => {
                                                 </Button>
                                                 <Button 
                                                     onClick={() => handleSaveDefaultTheme('dark')}
-                                                    disabled={maintenanceSaving}
+                                                    disabled={maintenanceSaving || !canManageMaintenance}
                                                     variant={defaultThemeSetting === 'dark' ? "default" : "outline"}
                                                     size="sm"
                                                     className="font-bold"
@@ -1076,6 +1141,7 @@ const SystemConfigPage: React.FC = () => {
                                                 </span>
                                                 <button
                                                     type="button"
+                                                    disabled={!canManageMaintenance}
                                                     onClick={() => setTickerEnabled(!tickerEnabled)}
                                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tickerEnabled ? 'bg-primary' : 'bg-muted'}`}
                                                 >
@@ -1091,6 +1157,7 @@ const SystemConfigPage: React.FC = () => {
                                                 onChange={(e) => setTickerMessage(e.target.value)}
                                                 placeholder="Type your system-wide announcement message here..."
                                                 rows={3}
+                                                disabled={!canManageMaintenance}
                                                 className="flex min-h-[80px] w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             />
                                         </div>
@@ -1100,6 +1167,7 @@ const SystemConfigPage: React.FC = () => {
                                             <select
                                                 value={tickerIcon}
                                                 onChange={(e) => setTickerIcon(e.target.value as any)}
+                                                disabled={!canManageMaintenance}
                                                 className="h-11 w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary border-primary/20"
                                             >
                                                 <option value="info">Information ℹ️</option>
@@ -1114,6 +1182,7 @@ const SystemConfigPage: React.FC = () => {
                                             <Button
                                                 type="submit"
                                                 loading={tickerSaving}
+                                                disabled={tickerSaving || !canManageMaintenance}
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
@@ -1158,7 +1227,7 @@ const SystemConfigPage: React.FC = () => {
                                                 actionType: 'queue'
                                             })} 
                                             loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'queue'} 
-                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'queue'}
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'queue') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
@@ -1183,7 +1252,7 @@ const SystemConfigPage: React.FC = () => {
                                                 actionType: 'audit'
                                             })} 
                                             loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'audit'} 
-                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'audit'}
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'audit') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
@@ -1208,7 +1277,7 @@ const SystemConfigPage: React.FC = () => {
                                                 actionType: 'biodata'
                                             })} 
                                             loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata'} 
-                                            disabled={maintenanceSaving && confirmMaintenanceModal.actionType !== 'biodata'}
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'biodata') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"

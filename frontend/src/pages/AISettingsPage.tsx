@@ -28,6 +28,8 @@ const PARAMETERS = [
     { id: 'Spirometry', label: 'Spirometry' },
     { id: 'Audiometry', label: 'Audiometry' },
     { id: 'ECG', label: 'ECG (Electrocardiogram)' },
+    { id: 'Weight', label: 'Weight' },
+    { id: 'Height', label: 'Height' },
 ];
 
 const CONSULTATION_PARAMETERS = [
@@ -43,6 +45,7 @@ const CONSULTATION_PARAMETERS = [
     { id: 'Consultation:psa', label: 'PSA Result & Remark' },
     { id: 'Consultation:sugar', label: 'Blood Sugar (FBS/RBS)' },
     { id: 'Consultation:urinalysis', label: 'Urinalysis Result' },
+    { id: 'Consultation:ua_remark_others', label: 'U/A Remark Others' },
     { id: 'Consultation:dm_status', label: 'Diabetes Status' },
     { id: 'Consultation:htn_status', label: 'Hypertension Status' },
     { id: 'Consultation:bp', label: 'Blood Pressure' },
@@ -50,7 +53,9 @@ const CONSULTATION_PARAMETERS = [
     { id: 'Consultation:spo2', label: 'SPO2 (Saturation)' },
     { id: 'Consultation:hs_status', label: 'Heart Sounds (S3, S4)' },
     { id: 'Consultation:breast', label: 'Breast Exam' },
+    { id: 'Consultation:breast_others', label: 'Breast Others' },
     { id: 'Consultation:abdomen', label: 'Abdominal Exam' },
+    { id: 'Consultation:abdomen_others', label: 'Abdomen Others' },
     { id: 'Consultation:hx_pe', label: 'H&P Assessment' },
     { id: 'Consultation:other_assessments', label: 'Other Assessments' },
     { id: 'Consultation:overall_lab', label: 'Overall Lab Remark' },
