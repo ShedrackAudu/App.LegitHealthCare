@@ -445,8 +445,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              </div>
                              <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark <span className="text-red-500">*</span></Label>
-                                <textarea {...register('overall_lab_remark', { required: true })} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." required />
+                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark</Label>
+                                <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
                              </div>
                         </div>
 
@@ -751,7 +751,7 @@ const DirectorPage: React.FC = () => {
                             <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
                                 <div className="space-y-4">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="p-3 bg-primary/10 rounded-2xl shrink-0">
+                                        <div className="p-3 bg-primary/10 rounded-2xl">
                                             <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
                                         </div>
                                         <div>
