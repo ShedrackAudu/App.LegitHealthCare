@@ -238,6 +238,14 @@ def get_bulk_ai_review_status():
     is_enabled = config.value.lower() == 'true' if config else True
     return jsonify({"bulk_ai_review_enabled": is_enabled}), 200
 
+@app.route('/api/config/bulk-report-download-status', methods=['GET'])
+def get_bulk_report_download_status():
+    from models import SystemConfig
+    config = SystemConfig.query.get('bulk_report_download_enabled')
+    # Default to true if not set
+    is_enabled = config.value.lower() == 'true' if config else True
+    return jsonify({"bulk_report_download_enabled": is_enabled}), 200
+
 @app.route('/api/config/ticker', methods=['GET'])
 def get_ticker_config():
     from models import SystemConfig

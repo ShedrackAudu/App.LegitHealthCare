@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   File01Icon, 
@@ -31,8 +31,27 @@ const PatientReportPage: React.FC = () => {
     const [searching, setSearching] = useState(false);
     const [rangeInput, setRangeInput] = useState('');
     const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkDownloadEnabled, setBulkDownloadEnabled] = useState(true);
+
+    useEffect(() => {
+        const checkBulkDownloadStatus = async () => {
+            try {
+                const res = await api.get('/api/config/bulk-report-download-status');
+                if (res.data && res.data.bulk_report_download_enabled !== undefined) {
+                    setBulkDownloadEnabled(res.data.bulk_report_download_enabled);
+                }
+            } catch (err) {
+                console.error('Failed to fetch bulk report download status:', err);
+            }
+        };
+        checkBulkDownloadStatus();
+    }, []);
 
     const handleBulkDownload = async () => {
+        if (!bulkDownloadEnabled) {
+            toast.error("Bulk report downloading is currently disabled by the system administrator.");
+            return;
+        }
         if (!rangeInput.trim()) {
             toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
             return;
@@ -714,7 +733,14 @@ const PatientReportPage: React.FC = () => {
                                         <HugeiconsIcon icon={Download01Icon} className="text-indigo-600 h-6 w-6" />
                                     </div>
                                     <div>
-                                        <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Downloader</h2>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Downloader</h2>
+                                            {!bulkDownloadEnabled && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                    Disabled
+                                                </span>
+                                            )}
+                                        </div>
                                         <p className="text-xs text-muted-foreground">Download clinical PDFs for hardcopy printing</p>
                                     </div>
                                 </div>
@@ -734,8 +760,8 @@ const PatientReportPage: React.FC = () => {
                                         placeholder="e.g. 1-100 or 25"
                                         value={rangeInput}
                                         onChange={(e) => setRangeInput(e.target.value)}
-                                        className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50"
-                                        disabled={bulkLoading}
+                                        className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                        disabled={bulkLoading || !bulkDownloadEnabled}
                                     />
                                     <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and download as a ZIP file.</p>
                                 </div>
@@ -744,7 +770,8 @@ const PatientReportPage: React.FC = () => {
                             <Button 
                                 onClick={handleBulkDownload}
                                 loading={bulkLoading}
-                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                disabled={!bulkDownloadEnabled}
+                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                             >
                                 {!bulkLoading && <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />}
                                 Bulk Download (ZIP)

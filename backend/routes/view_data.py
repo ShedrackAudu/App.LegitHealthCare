@@ -714,6 +714,11 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
 @view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
 @jwt_required()
 def bulk_download_reports():
+    from models import SystemConfig
+    download_config = SystemConfig.query.get('bulk_report_download_enabled')
+    if download_config and download_config.value.lower() != 'true':
+        return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
+
     user_id_str = get_jwt_identity()
     if not user_id_str:
         return jsonify({"error": "Authentication required"}), 401

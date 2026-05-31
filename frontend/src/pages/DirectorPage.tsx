@@ -726,7 +726,7 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <div className={bulkAiEnabled ? "grid grid-cols-1 md:grid-cols-2 gap-8 mt-8" : "max-w-2xl mx-auto w-full mt-8"}>
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
                         {/* Single Patient Review Placeholder Card */}
                         <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[22rem] bg-muted/5 p-8 text-center rounded-3xl">
                             <div className="space-y-4">
@@ -747,15 +747,21 @@ const DirectorPage: React.FC = () => {
                         </Card>
 
                         {/* Bulk AI Review Generator Card */}
-                        {bulkAiEnabled && (
-                            <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
                                 <div className="space-y-4">
                                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
                                             <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
                                         </div>
                                         <div>
-                                            <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
+                                            <div className="flex items-center gap-2">
+                                                <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
+                                                {!bulkAiEnabled && (
+                                                    <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                        Disabled
+                                                    </span>
+                                                )}
+                                            </div>
                                             <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
                                         </div>
                                     </div>
@@ -777,13 +783,15 @@ const DirectorPage: React.FC = () => {
                                                     placeholder="e.g. 1-100 or 25"
                                                     value={batchStartId}
                                                     onChange={(e) => setBatchStartId(e.target.value)}
-                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50"
+                                                    disabled={!bulkAiEnabled}
+                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
                                                 />
                                                 <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
                                             </div>
                                             <Button 
                                                 onClick={startBatchProcess}
-                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                                disabled={!bulkAiEnabled}
+                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                                             >
                                                 <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
                                                 Bulk Generate AI Reviews
@@ -855,7 +863,6 @@ const DirectorPage: React.FC = () => {
                                     )}
                                 </div>
                             </Card>
-                        )}
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
