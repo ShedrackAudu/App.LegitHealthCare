@@ -468,20 +468,20 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One <span className="text-red-500">*</span></Label>
-                                    <textarea {...register('comment_one', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." required />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One</Label>
+                                    <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two <span className="text-red-500">*</span></Label>
-                                    <textarea {...register('comment_two', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." required />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two</Label>
+                                    <textarea {...register('comment_two')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three <span className="text-red-500">*</span></Label>
-                                    <textarea {...register('comment_three', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." required />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three</Label>
+                                    <textarea {...register('comment_three')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." />
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four <span className="text-red-500">*</span></Label>
-                                    <textarea {...register('comment_four', { required: true })} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." required />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four</Label>
+                                    <textarea {...register('comment_four')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." />
                                 </div>
                             </div>
                         </div>
@@ -750,8 +750,8 @@ const DirectorPage: React.FC = () => {
                         {bulkAiEnabled && (
                             <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
                                 <div className="space-y-4">
-                                    <div className="flex items-center gap-3">
-                                        <div className="p-3 bg-primary/10 rounded-2xl">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                        <div className="p-3 bg-primary/10 rounded-2xl shrink-0">
                                             <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
                                         </div>
                                         <div>
