@@ -1471,7 +1471,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
         setLoading(true);
         setResult(null);
         try {
-            const resp = await axios.post(`/api/bulk-ai-remarks/${testType}`, 
+            const resp = await axios.post(`/api/tests/bulk-ai-remarks/${testType}`, 
                 { range: range.trim(), screening_year: activeYear },
                 { headers: { 'X-Company-Context': activeSection } }
             );
