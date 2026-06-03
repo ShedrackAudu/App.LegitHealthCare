@@ -273,10 +273,10 @@ const PublicReportPage: React.FC = () => {
                             <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
                             <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
                             <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                            <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
+                            <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-8.3</td><td>mmol/L</td></tr>
                             <tr>
                                 <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
-                                <td>Male: 0.7-1.4<br />Female: 0.6-1.2</td><td>mmol/L<br />mmol/L</td>
+                                <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
                             </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
@@ -287,11 +287,11 @@ const PublicReportPage: React.FC = () => {
                             </tr>
                             <tr>
                                 <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
-                                <td>Male: 60-165<br />Female: 42-88</td><td>mg/dL<br />mg/dL</td>
+                                <td>Male: &lt;150<br />Female: &lt;150</td><td>mg/dL<br />mg/dL</td>
                             </tr>
                             <tr>
                                 <td></td><td>HDL-c</td><td>{reportData.results.lipid?.hdl || '-'}</td>
-                                <td>Male: 35-80<br />Female: 42-88</td><td>mg/dL<br />mg/dL</td>
+                                <td>Male: =&gt;40<br />Female: =&gt;40</td><td>mg/dL<br />mg/dL</td>
                             </tr>
                             <tr><td></td><td>LDL-c</td><td>{reportData.results.lipid?.ldl || '-'}</td><td>&lt;130</td><td>mg/dL</td></tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>

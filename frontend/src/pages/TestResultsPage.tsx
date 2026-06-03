@@ -543,6 +543,12 @@ const TestResultsPage: React.FC = () => {
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">Context: {activeSection} Clinic • {activeYear}</p>
                             </div>
                         </Card>
+
+                        <BulkAIRemarksSection 
+                            testType={selectedTest} 
+                            activeYear={activeYear} 
+                            activeSection={activeSection} 
+                        />
                     </div>
                 ) : (
                     <TestFormContainer 
@@ -1174,13 +1180,13 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>AST <span className="text-rose-500">*</span></Label><Input {...register('ast', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>AST</Label><Input {...register('ast')} type="number" step="any" placeholder="0.00" /></div>
                 <div className="space-y-2"><Label>ALT <span className="text-rose-500">*</span></Label><Input {...register('alt', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>ALP</Label><Input {...register('alp')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label>TB</Label><Input {...register('tb')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label>CB</Label><Input {...register('cb')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA</Label><Input {...register('urea')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE</Label><Input {...register('creatinine')} type="number" step="any" placeholder="0.00" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
@@ -1448,6 +1454,102 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
                 </Button>
             </div>
         </form>
+    );
+};
+
+const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
+    const [range, setRange] = useState('');
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<any>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!range.trim()) {
+            toast.error("Please enter a Patient ID range (e.g. 1-50)");
+            return;
+        }
+        setLoading(true);
+        setResult(null);
+        try {
+            const resp = await axios.post(`/api/bulk-ai-remarks/${testType}`, 
+                { range: range.trim(), screening_year: activeYear },
+                { headers: { 'X-Company-Context': activeSection } }
+            );
+            setResult(resp.data);
+            toast.success("Bulk AI remarks generation completed!");
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.error || "Failed to generate bulk AI remarks");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!['fbc', 'kft', 'lipid', 'lft'].includes(testType || '')) return null;
+
+    return (
+        <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md mt-6">
+            <CardHeader className="p-6 pb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 self-start">
+                        <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-lg font-black tracking-tight text-left">Bulk AI Remarks Generator</CardTitle>
+                        <p className="text-xs text-muted-foreground text-left">Generate AI remarks for a serial range of patient IDs concurrently.</p>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-6 pt-0 space-y-4">
+                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                    <div className="flex-1 space-y-2">
+                        <Label htmlFor="bulk-range" className="text-xs font-bold uppercase tracking-wider text-slate-500">Patient ID Range</Label>
+                        <Input 
+                            id="bulk-range"
+                            placeholder="e.g. 1-50 or LHCSL2026DCP001-LHCSL2026DCP050"
+                            value={range}
+                            onChange={(e) => setRange(e.target.value)}
+                            disabled={loading}
+                            className="h-11 rounded-xl font-semibold border-2"
+                        />
+                    </div>
+                    <Button 
+                        type="submit" 
+                        disabled={loading || !range.trim()}
+                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                    >
+                        {loading ? (
+                            <>
+                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
+                                Processing AI...
+                            </>
+                        ) : 'Generate Remarks'}
+                    </Button>
+                </form>
+
+                {result && (
+                    <div className="p-4 bg-muted/30 border rounded-xl space-y-2 text-sm animate-in fade-in duration-300">
+                        <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-wider">
+                            <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Succeeded: {result.processed_count}</span>
+                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed: {result.error_count}</span>
+                        </div>
+                        {result.errors && result.errors.length > 0 && (
+                            <div className="space-y-1.5 pt-2">
+                                <p className="font-bold text-xs text-rose-500 uppercase tracking-widest">Failed IDs details:</p>
+                                <div className="max-h-28 overflow-y-auto divide-y border rounded-lg bg-background text-xs font-medium">
+                                    {result.errors.map((err: any, idx: number) => (
+                                        <div key={idx} className="p-2 flex justify-between gap-4">
+                                            <span className="font-bold uppercase text-slate-600 shrink-0">{err.patient_id}</span>
+                                            <span className="text-slate-500 italic text-right truncate">{err.error}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 };
 

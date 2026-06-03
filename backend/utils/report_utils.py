@@ -281,13 +281,13 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         ['', td('Sodium'), td(kft.get('sodium')), td('135-145'), td('mmol/L'), ''],
         ['', td('Chloride'), td(kft.get('chloride')), td('97-107'), td('mmol/L'), ''],
         ['', td('Bicarbonate'), td(kft.get('hco3')), td('20-31'), td('mmol/L'), ''],
-        ['', td('Urea'), td(lft.get('urea')), td('10-50'), td('mg/dL'), ''],
-        ['', td('Cretinine'), td(lft.get('creatinine')), td('Male: 0.7-1.4<br/>Female: 0.6-1.2'), td('mmol/L<br/>mmol/L'), ''],
+        ['', td('Urea'), td(lft.get('urea')), td('2.5-8.3'), td('mmol/L'), ''],
+        ['', td('Cretinine'), td(lft.get('creatinine')), td('Male: 80-133<br/>Female: 62-115'), td('umol/L<br/>umol/L'), ''],
         
         # Lipid Profile
         [td('Lipid Profile', True), td('Total Cholesterol'), td(lipid.get('tcho')), td('&lt;200'), td('mg/dL'), td(lipid.get('remark'))],
-        ['', td('Trigracerides'), td(lipid.get('tg')), td('Male: 60-165<br/>Female: 42-88'), td('mg/dL<br/>mg/dL'), ''],
-        ['', td('HDL-c'), td(lipid.get('hdl')), td('Male: 35-80<br/>Female: 42-88'), td('mg/dL<br/>mg/dL'), ''],
+        ['', td('Trigracerides'), td(lipid.get('tg')), td('Male: &lt;150<br/>Female: &lt;150'), td('mg/dL<br/>mg/dL'), ''],
+        ['', td('HDL-c'), td(lipid.get('hdl')), td('Male: =&gt;40<br/>Female: =&gt;40'), td('mg/dL<br/>mg/dL'), ''],
         ['', td('LDL-c'), td(lipid.get('ldl')), td('&lt;130'), td('mg/dL'), ''],
         
         # Liver Function

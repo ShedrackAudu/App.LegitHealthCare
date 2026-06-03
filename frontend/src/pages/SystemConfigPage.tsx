@@ -517,9 +517,9 @@ const SystemConfigPage: React.FC = () => {
                 }
             );
             setAiFbcRemarksEnabled(newValue);
-            toast.success(`AI FBC remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
+            toast.success(`Lab tests AI remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
-            toast.error("Failed to update AI FBC remarks setting.");
+            toast.error("Failed to update Lab tests AI remarks setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -1034,9 +1034,9 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">AI FBC Remarks Generation</h4>
+                                            <h4 className="font-bold text-lg text-foreground">Lab Tests AI Remarks Generation</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) results using AI in the background and writes a brief summary to the remark field.
+                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) and Lipid Profile results using AI in the background and writes a brief summary to the remark fields.
                                             </p>
                                         </div>
                                         <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
