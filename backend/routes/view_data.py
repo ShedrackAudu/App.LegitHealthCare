@@ -628,7 +628,12 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
             "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
+            "chronic_cough": c.chronic_cough, "chronic_chest_pain": c.chronic_chest_pain,
+            "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
+            "jaundice": c.jaundice, "murmur": c.murmur, "dm": c.dm_status, "htn": c.htn_status,
+            "hs": c.hs_status, "breast_remark": c.breast_remark, "other_assessments": c.other_assessments,
+            "remarks": c.other_remarks
         }
     
     f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -642,7 +647,7 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     if k:
         results["kft"] = {
             "potassium": k.potassium, "sodium": k.sodium, "hco3": k.hco3,
-            "chloride": k.chloride, "remark": k.kft_remark
+            "chloride": k.chloride, "remark": k.kft_remark, "bicarbonate": k.bicarbonate_ca
         }
     
     li = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -663,7 +668,10 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     s = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if s:
         results["special"] = {
-            "ecg": s.ecg_result, "spirometry": s.spirometry_result, "audiometry": s.audiometry_result
+            "ecg": s.ecg_result, "ecg_remark": s.ecg_remark, 
+            "spirometry": s.spirometry_result, "spirometry_remark": s.spirometry_remark,
+            "audiometry": s.audiometry_result, "audiometry_remark": s.audiometry_remark,
+            "weight": s.weight, "height": s.height
         }
 
     d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -675,7 +683,37 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "comment_three": d.comment_three,
             "comment_four": d.comment_four,
             "lab_remark": d.overall_lab_remark,
-            "hx_pe": d.assessment_hx_pe
+            "hx_pe": d.assessment_hx_pe,
+            "other_remarks": d.other_remarks,
+            "other_assessments": d.other_assessments,
+            "dm_status": d.dm_status,
+            "htn_status": d.htn_status,
+            "bp": d.bp,
+            "pulse": d.pulse,
+            "spo2": d.spo2,
+            "hs_status": d.hs_status,
+            "breast_exam": d.breast_exam,
+            "breast_remark": d.breast_remark,
+            "breast_others": d.breast_others,
+            "abdomen": d.abdomen,
+            "abdomen_others": d.abdomen_others,
+            "psa": d.psa,
+            "psa_remark": d.psa_remark,
+            "fbs": d.fbs,
+            "rbs": d.rbs,
+            "fbs_rbs_remark": d.fbs_rbs_remark,
+            "ua_result": d.ua_result,
+            "ua_remark": d.ua_remark,
+            "ua_remark_others": d.ua_remark_others,
+            "luts": d.luts,
+            "chronic_cough": d.chronic_cough,
+            "chronic_chest_pain": d.chronic_chest_pain,
+            "chest_infection": d.chest_infection,
+            "heart_dx": d.heart_dx,
+            "palor": d.palor,
+            "jaundice": d.jaundice,
+            "murmur": d.murmur,
+            "chest_status": d.chest_status
         }
     
     # Determine Timing
