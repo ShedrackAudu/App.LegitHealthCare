@@ -1311,7 +1311,7 @@ const RegistrationPage: React.FC = () => {
       {/* Department Breakdown Dialog */}
       <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
         <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
-          <DialogHeader>
+          <DialogHeader className="text-left">
             <DialogTitle className="text-xl font-bold flex items-center gap-2">
               <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-6 w-6" />
               Department Breakdown
