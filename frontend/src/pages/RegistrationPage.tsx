@@ -89,6 +89,7 @@ const RegistrationPage: React.FC = () => {
   const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -637,6 +638,7 @@ const RegistrationPage: React.FC = () => {
             sub={`${activeYear} Screening`}
             icon={UserGroupIcon}
             color="text-blue-600"
+            onClick={() => setIsDeptDialogOpen(true)}
           />
           <StatCard
             title="Registered Today"
@@ -1306,12 +1308,65 @@ const RegistrationPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Department Breakdown Dialog */}
+      <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-6 w-6" />
+              Department Breakdown
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-medium">
+              Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-4">
+            {stats?.department_stats && stats.department_stats.length > 0 ? (
+              stats.department_stats.map((dept: any, index: number) => {
+                const total = stats.year_total || 1;
+                const percentage = Math.round((dept.count / total) * 100);
+                return (
+                  <div key={index} className="space-y-1">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-bold text-foreground capitalize">{dept.department}</span>
+                      <span className="font-black text-primary">{dept.count.toLocaleString()} ({percentage}%)</span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div 
+                        className="bg-primary h-full rounded-full transition-all duration-500" 
+                        style={{ width: `${percentage}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No department statistics available for this period.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDeptDialogOpen(false)}
+              className="font-bold"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
 
-const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border transition-all overflow-hidden relative">
+const StatCard = ({ title, value, sub, icon: Icon, color, onClick }: any) => (
+  <Card 
+    className={`border transition-all overflow-hidden relative ${onClick ? 'cursor-pointer hover:border-primary/45 hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+    onClick={onClick}
+  >
     <CardContent className="py-2 px-2.5 flex flex-col justify-center gap-1 h-full min-h-[52px]">
       <div className="flex items-center gap-1.5">
         <HugeiconsIcon icon={Icon} className={`h-3 w-3 ${color} shrink-0`} />

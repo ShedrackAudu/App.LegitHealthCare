@@ -262,6 +262,14 @@ def get_registration_stats():
     age_40_above = base_query.filter(ScreeningYearBioData.age >= 40).count()
     age_below_40 = base_query.filter(ScreeningYearBioData.age < 40).count()
     
+    # Department breakdown
+    dept_counts_raw = db.session.query(
+        ScreeningYearBioData.department,
+        func.count(ScreeningYearBioData.id)
+    ).filter_by(screening_year=year).group_by(ScreeningYearBioData.department).order_by(func.count(ScreeningYearBioData.id).desc()).all()
+    
+    dept_counts = [{"department": dept or "Unknown", "count": count} for dept, count in dept_counts_raw]
+    
     return jsonify({
         "total_comprehensive": total_comprehensive,
         "year_total": base_query.count(),
@@ -269,5 +277,6 @@ def get_registration_stats():
         "males": males,
         "females": females,
         "age_40_above": age_40_above,
-        "age_below_40": age_below_40
+        "age_below_40": age_below_40,
+        "department_stats": dept_counts
     }), 200
