@@ -113,194 +113,205 @@ export const Sidebar: React.FC = () => {
   };
 
   return (
-    <aside
-      className={cn(
-        "h-screen sticky top-0 touch-none border-r transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
-        isCollapsed 
-          ? "fixed bottom-4 left-4 h-auto w-auto bg-transparent border-0 sm:sticky sm:top-0 sm:h-screen sm:w-16 sm:border-r sm:border-primary-foreground/10 sm:dark:border-border sm:bg-primary sm:dark:bg-black" 
-          : "fixed inset-y-0 left-0 w-64 bg-primary dark:bg-black text-primary-foreground dark:text-foreground border-r border-primary-foreground/10 dark:border-border sm:sticky sm:h-screen"
+    <>
+      {/* Mobile Overlay backdrop */}
+      {!isCollapsed && (
+        <div 
+          onClick={toggleSidebar}
+          className="lg:hidden fixed inset-0 bg-black/40 z-35 no-print"
+        />
       )}
-    >
-      <Link 
-        to="/" 
+
+      <aside
         className={cn(
-          "h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 dark:border-border hover:bg-white/10 dark:hover:bg-zinc-900 transition-colors cursor-pointer group",
-          isCollapsed && "hidden sm:flex"
+          "h-screen sticky top-0 touch-none border-r border-primary-foreground/10 dark:border-border bg-primary dark:bg-black text-primary-foreground dark:text-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+          isCollapsed ? "lg:w-16" : "lg:w-64",
+          isCollapsed 
+            ? "max-lg:hidden" 
+            : "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64 max-lg:z-50 max-lg:shadow-2xl"
         )}
       >
-        {/* Clinic Logo */}
-        {!isCollapsed ? (
-          branding?.logo_dark ? (
-            <SafeImage 
-              src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
-              alt={branding?.clinic_name || "Logo"} 
-              className="max-h-10 w-auto object-contain group-hover:opacity-80 transition-opacity" 
-              fallbackText={branding?.clinic_name}
-            />
-          ) : (
-            <div className="text-primary-foreground dark:text-foreground font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary-foreground/80 dark:group-hover:text-foreground/80 transition-colors">
-              <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
-              {branding?.clinic_name || 'LEGIT HC'}
-            </div>
-          )
-        ) : (
-          branding?.logo_light ? (
-            <SafeImage 
-              src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
-              alt="Logo" 
-              className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
-            />
-          ) : (
-            <div className="text-primary-foreground dark:text-foreground font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary-foreground/80 dark:group-hover:text-foreground/80 transition-colors">
-              <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
-            </div>
-          )
-        )}
-      </Link>
-
-      <div className={cn("flex flex-col flex-1 overflow-hidden", isCollapsed ? "sm:py-4 py-0" : "py-4")}>
-        <div
-          ref={scrollContainerRef}
-          className={cn(
-            "flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar",
-            isCollapsed && "hidden sm:block"
-          )}
-        >
-          {/* Main Items */}
-          {[...sharedItems, ...medicalItems].map((item) => {
-            // Visible to everyone, access handled by ProtectedRoute
-            return (
-              <NavLink
-                key={item.path}
-                to={item.path}
-                className={({ isActive }) => cn(
-                  "flex items-center rounded-lg transition-all duration-200 group/item relative",
-                  isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
-                  isActive
-                    ? "bg-white/30 text-white dark:bg-primary"
-                    : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
-                )}
-              >
-                <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
-                <span className={cn(
-                  "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
-                  isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
-                )}>
-                  {item.title}
-                </span>
-
-                {!isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
-                  <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] animate-in zoom-in">
-                    {unreadMessagesCount}
-                  </Badge>
-                )}
-
-                {isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
-                  <div className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-background animate-pulse" />
-                )}
-
-                {isCollapsed && (
-                  <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
-                    {item.title}
-                  </div>
-                )}
-              </NavLink>
-            );
-          })}
-
-          {/* Admin Section - Dynamic Visibility */}
-          {(() => {
-            const filteredAdminItems = adminItems.filter(item =>
-              item.permission ? hasPermission(item.permission) : isAdmin()
-            );
-
-            if (filteredAdminItems.length === 0) return null;
-
-            return (
-              <div className="pt-1 pb-2 space-y-0.5">
-                <div className={cn(
-                  "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground/60 dark:text-muted-foreground/60 transition-all duration-300",
-                  isCollapsed && "flex justify-center"
-                )}>
-                  {isCollapsed ? (
-                    <div className="h-px bg-primary-foreground/20 dark:bg-border w-10 my-3" />
-                  ) : (
-                    "Admin Control Panel"
-                  )}
-                </div>
-                {filteredAdminItems.map((item) => {
-                  return (
-                    <NavLink
-                      key={item.path}
-                      to={item.path}
-                      className={({ isActive }) => cn(
-                        "flex items-center rounded-lg transition-all duration-200 group/item relative",
-                        isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
-                        isActive
-                          ? "bg-white/30 text-white dark:bg-primary"
-                          : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
-                      )}
-                    >
-                      <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
-                      <span className={cn(
-                        "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
-                        isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
-                      )}>
-                        {item.title}
-                      </span>
-
-                      {isCollapsed && (
-                        <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
-                          {item.title}
-                        </div>
-                      )}
-                    </NavLink>
-                  );
-                })}
-              </div>
-            );
-          })()}
-        </div>
-
-        <div className={cn("px-3 mt-auto space-y-1.5", isCollapsed && "sm:block flex flex-col")}>
-          {/* Logout Button */}
-          <button
-            onClick={handleLogout}
-            className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
-              isCollapsed ? "justify-center w-10 mx-auto sm:flex hidden" : "px-3 gap-3 justify-start"
-            )}
-            title="Log out"
-          >
-            <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
-            {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
-          </button>
-
-          {/* Separator */}
-          <div className={cn("h-px bg-white/30 dark:bg-border my-1.5 mx-1", isCollapsed && "hidden sm:block")} />
-
-          {/* Collapse/Expand Button */}
-          <button
-            onClick={toggleSidebar}
-            className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-white border-0 cursor-pointer focus:outline-none",
-              isCollapsed 
-                ? "justify-center w-10 h-10 mx-auto bg-primary dark:bg-zinc-900 shadow-lg border border-primary-foreground/20 dark:border-border sm:bg-transparent sm:shadow-none sm:border-0 hover:bg-white/10" 
-                : "px-3 gap-3 justify-start w-full h-10 hover:bg-white/10"
-            )}
-            title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
-          >
-            {isCollapsed ? (
-              <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+        <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 dark:border-border hover:bg-white/10 dark:hover:bg-zinc-900 transition-colors cursor-pointer group">
+          {/* Clinic Logo */}
+          {!isCollapsed ? (
+            branding?.logo_dark ? (
+              <SafeImage 
+                src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+                alt={branding?.clinic_name || "Logo"} 
+                className="max-h-10 w-auto object-contain group-hover:opacity-80 transition-opacity" 
+                fallbackText={branding?.clinic_name}
+              />
             ) : (
-              <>
-                <HugeiconsIcon icon={SidebarLeft01Icon} className="h-5 w-5 shrink-0" />
-                <span className="font-semibold text-sm">Collapse</span>
-              </>
-            )}
-          </button>
+              <div className="text-primary-foreground dark:text-foreground font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary-foreground/80 dark:group-hover:text-foreground/80 transition-colors">
+                <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
+                {branding?.clinic_name || 'LEGIT HC'}
+              </div>
+            )
+          ) : (
+            branding?.logo_light ? (
+              <SafeImage 
+                src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
+                alt="Logo" 
+                className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
+              />
+            ) : (
+              <div className="text-primary-foreground dark:text-foreground font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary-foreground/80 dark:group-hover:text-foreground/80 transition-colors">
+                <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
+              </div>
+            )
+          )}
+        </Link>
+
+        <div className="flex flex-col flex-1 py-4 overflow-hidden">
+          <div
+            ref={scrollContainerRef}
+            className="flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar"
+          >
+            {/* Main Items */}
+            {[...sharedItems, ...medicalItems].map((item) => {
+              // Visible to everyone, access handled by ProtectedRoute
+              return (
+                <NavLink
+                  key={item.path}
+                  to={item.path}
+                  className={({ isActive }) => cn(
+                    "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                    isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
+                    isActive
+                      ? "bg-white/30 text-white dark:bg-primary"
+                      : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
+                  )}
+                >
+                  <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+                  <span className={cn(
+                    "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
+                    isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
+                  )}>
+                    {item.title}
+                  </span>
+
+                  {!isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
+                    <Badge variant="destructive" className="ml-auto h-5 w-5 rounded-full p-0 flex items-center justify-center text-[10px] animate-in zoom-in">
+                      {unreadMessagesCount}
+                    </Badge>
+                  )}
+
+                  {isCollapsed && item.path === '/messages' && unreadMessagesCount > 0 && (
+                    <div className="absolute top-1 right-1 w-2 h-2 bg-rose-500 rounded-full border border-background animate-pulse" />
+                  )}
+
+                  {isCollapsed && (
+                    <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                      {item.title}
+                    </div>
+                  )}
+                </NavLink>
+              );
+            })}
+
+            {/* Admin Section - Dynamic Visibility */}
+            {(() => {
+              const filteredAdminItems = adminItems.filter(item =>
+                item.permission ? hasPermission(item.permission) : isAdmin()
+              );
+
+              if (filteredAdminItems.length === 0) return null;
+
+              return (
+                <div className="pt-1 pb-2 space-y-0.5">
+                  <div className={cn(
+                    "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground/60 dark:text-muted-foreground/60 transition-all duration-300",
+                    isCollapsed && "flex justify-center"
+                  )}>
+                    {isCollapsed ? (
+                      <div className="h-px bg-primary-foreground/20 dark:bg-border w-10 my-3" />
+                    ) : (
+                      "Admin Control Panel"
+                    )}
+                  </div>
+                  {filteredAdminItems.map((item) => {
+                    return (
+                      <NavLink
+                        key={item.path}
+                        to={item.path}
+                        className={({ isActive }) => cn(
+                          "flex items-center rounded-lg transition-all duration-200 group/item relative",
+                          isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
+                          isActive
+                            ? "bg-white/30 text-white dark:bg-primary"
+                            : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
+                        )}
+                      >
+                        <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+                        <span className={cn(
+                          "font-semibold transition-opacity duration-300 whitespace-nowrap overflow-hidden",
+                          isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
+                        )}>
+                          {item.title}
+                        </span>
+
+                        {isCollapsed && (
+                          <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                            {item.title}
+                          </div>
+                        )}
+                      </NavLink>
+                    );
+                  })}
+                </div>
+              );
+            })()}
+          </div>
+
+          <div className="px-3 mt-auto space-y-1.5">
+            {/* Logout Button */}
+            <button
+              onClick={handleLogout}
+              className={cn(
+                "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+                isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+              )}
+              title="Log out"
+            >
+              <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
+            </button>
+
+            {/* Separator */}
+            <div className="h-px bg-white/30 dark:bg-border my-1.5 mx-1" />
+
+            {/* Collapse/Expand Button */}
+            <button
+              onClick={toggleSidebar}
+              className={cn(
+                "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+                isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+              )}
+              title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+            >
+              {isCollapsed ? (
+                <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+              ) : (
+                <>
+                  <HugeiconsIcon icon={SidebarLeft01Icon} className="h-5 w-5 shrink-0" />
+                  <span className="font-semibold text-sm">Collapse</span>
+                </>
+              )}
+            </button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+
+      {/* Floating mobile expand button */}
+      {isCollapsed && (
+        <button
+          onClick={toggleSidebar}
+          className="lg:hidden fixed bottom-4 left-4 z-45 flex items-center justify-center rounded-lg bg-primary dark:bg-zinc-900 border border-primary-foreground/10 dark:border-border text-white w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-primary/95 dark:hover:bg-zinc-800 transition-colors"
+          title="Expand Sidebar"
+        >
+          <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+        </button>
+      )}
+    </>
   );
 };
