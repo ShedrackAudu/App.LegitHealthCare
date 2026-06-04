@@ -263,8 +263,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
-      <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
+    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1600px] w-full mx-auto flex h-full items-center justify-between gap-4">
         
         {/* Left Side: Back Button, Page Title, and Mobile Logo Mark */}
         <div className="flex items-center gap-2 min-w-0">
