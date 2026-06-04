@@ -174,6 +174,11 @@ export const Sidebar: React.FC = () => {
                 <NavLink
                   key={item.path}
                   to={item.path}
+                  onClick={() => {
+                    if (window.innerWidth < 1024) {
+                      setIsCollapsed(true);
+                    }
+                  }}
                   className={({ isActive }) => cn(
                     "flex items-center rounded-lg transition-all duration-200 group/item relative",
                     isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
@@ -234,6 +239,11 @@ export const Sidebar: React.FC = () => {
                       <NavLink
                         key={item.path}
                         to={item.path}
+                        onClick={() => {
+                          if (window.innerWidth < 1024) {
+                            setIsCollapsed(true);
+                          }
+                        }}
                         className={({ isActive }) => cn(
                           "flex items-center rounded-lg transition-all duration-200 group/item relative",
                           isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
@@ -306,7 +316,7 @@ export const Sidebar: React.FC = () => {
       {isCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="lg:hidden fixed bottom-4 left-4 z-[55] flex items-center justify-center rounded-lg bg-card border border-border text-foreground w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-muted transition-colors"
+          className="lg:hidden fixed bottom-4 left-4 z-[55] flex items-center justify-center rounded-lg bg-primary border border-primary-foreground/10 text-primary-foreground w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-primary/90 transition-colors"
           title="Expand Sidebar"
         >
           <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
