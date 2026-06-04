@@ -36,6 +36,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { useLocation } from 'react-router-dom';
+import { SafeImage } from '@/components/common/SafeImage';
 
 const getPageTitle = (pathname: string, branding: any, brandingError: boolean) => {
   if (pathname.includes('/dashboard')) return 'Dashboard';
@@ -265,16 +266,35 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
         
-        {/* Left Side: Back Button, Page Title */}
+        {/* Left Side: Back Button, Page Title, and Mobile Logo Mark */}
         <div className="flex items-center gap-2 min-w-0">
           <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
+          
+          {/* Desktop Title */}
           <div className="hidden sm:flex items-center gap-2 min-w-0 overflow-hidden">
             {brandingError && <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 text-muted-foreground/50 shrink-0" />}
             <h1 className="text-sm sm:text-base md:text-xl font-bold tracking-tight truncate whitespace-nowrap">
               {pageTitle}
             </h1>
+          </div>
+
+          {/* Mobile Logo Mark */}
+          <div className="flex sm:hidden items-center gap-2 min-w-0">
+            {branding?.logo_dark ? (
+              <SafeImage 
+                src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+                alt={branding?.clinic_name || "Logo"} 
+                className="max-h-8 w-auto object-contain" 
+                fallbackText={branding?.clinic_name || 'LEGIT HC'}
+              />
+            ) : (
+              <div className="text-primary font-bold text-sm truncate flex items-center gap-1.5">
+                <HugeiconsIcon icon={Building02Icon} className="h-4.5 w-4.5 text-primary shrink-0" />
+                <span className="truncate max-w-[120px]">{branding?.clinic_name || 'LEGIT HC'}</span>
+              </div>
+            )}
           </div>
         </div>
 
