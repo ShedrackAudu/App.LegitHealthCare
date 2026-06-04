@@ -177,6 +177,7 @@ export const Sidebar: React.FC = () => {
                   onClick={() => {
                     if (window.innerWidth < 1024) {
                       setIsCollapsed(true);
+                      localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
                     }
                   }}
                   className={({ isActive }) => cn(
@@ -242,6 +243,7 @@ export const Sidebar: React.FC = () => {
                         onClick={() => {
                           if (window.innerWidth < 1024) {
                             setIsCollapsed(true);
+                            localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
                           }
                         }}
                         className={({ isActive }) => cn(
