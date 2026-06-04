@@ -684,7 +684,7 @@ def bulk_ai_remarks(test_type):
                         f"ALP: {record.alp or '-'} U/L (Ref Range: Male: 80-306 U/L, Female: 64-306 U/L)\n"
                         f"TB: {record.tb or '-'} mg/dL (Ref Range: 0-1.2 mg/dL)\n"
                         f"CB: {record.cb or '-'} mg/dL (Ref Range: 0-0.4 mg/dL)\n"
-                        f"Urea: {record.urea or '-'} mmol/L (Ref Range: 2.5-8.3 mmol/L)\n"
+                        f"Urea: {record.urea or '-'} mmol/L (Ref Range: 2.5-9.33 mmol/L)\n"
                         f"Creatinine: {record.creatinine or '-'} umol/L (Ref Range: Male: 80-133 umol/L, Female: 62-115 umol/L)\n"
                     )
                     system_prompt = (
