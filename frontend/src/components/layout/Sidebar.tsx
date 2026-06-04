@@ -118,7 +118,7 @@ export const Sidebar: React.FC = () => {
       {!isCollapsed && (
         <div 
           onClick={toggleSidebar}
-          className="lg:hidden fixed inset-0 bg-black/40 z-35 no-print"
+          className="lg:hidden fixed inset-0 bg-black/40 z-[55] no-print"
         />
       )}
 
@@ -128,7 +128,7 @@ export const Sidebar: React.FC = () => {
           isCollapsed ? "lg:w-16" : "lg:w-64",
           isCollapsed 
             ? "max-lg:hidden" 
-            : "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64 max-lg:z-50 max-lg:shadow-2xl"
+            : "max-lg:fixed max-lg:inset-y-0 max-lg:left-0 max-lg:w-64 max-lg:z-[60] max-lg:shadow-2xl"
         )}
       >
         <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 dark:border-border hover:bg-white/10 dark:hover:bg-zinc-900 transition-colors cursor-pointer group">
@@ -178,7 +178,7 @@ export const Sidebar: React.FC = () => {
                     "flex items-center rounded-lg transition-all duration-200 group/item relative",
                     isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                     isActive
-                      ? "bg-white/30 text-white dark:bg-primary"
+                      ? "bg-white text-primary shadow-lg shadow-black/10 dark:bg-primary dark:text-white dark:shadow-none"
                       : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
                   )}
                 >
@@ -238,7 +238,7 @@ export const Sidebar: React.FC = () => {
                           "flex items-center rounded-lg transition-all duration-200 group/item relative",
                           isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
                           isActive
-                            ? "bg-white/30 text-white dark:bg-primary"
+                            ? "bg-white text-primary shadow-lg shadow-black/10 dark:bg-primary dark:text-white dark:shadow-none"
                             : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
                         )}
                       >
@@ -306,7 +306,7 @@ export const Sidebar: React.FC = () => {
       {isCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="lg:hidden fixed bottom-4 left-4 z-45 flex items-center justify-center rounded-lg bg-primary dark:bg-zinc-900 border border-primary-foreground/10 dark:border-border text-white w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-primary/95 dark:hover:bg-zinc-800 transition-colors"
+          className="lg:hidden fixed bottom-4 left-4 z-[55] flex items-center justify-center rounded-lg bg-primary dark:bg-zinc-900 border border-primary-foreground/10 dark:border-border text-white w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-primary/95 dark:hover:bg-zinc-800 transition-colors"
           title="Expand Sidebar"
         >
           <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
