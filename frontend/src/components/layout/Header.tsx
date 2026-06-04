@@ -282,9 +282,9 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
 
           {/* Mobile Logo Mark */}
           <div className="flex sm:hidden items-center gap-2 min-w-0">
-            {branding?.logo_dark ? (
+            {branding?.logo_light ? (
               <SafeImage 
-                src={`${(window as any).API_BASE_URL}${branding.logo_dark}`} 
+                src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
                 alt={branding?.clinic_name || "Logo"} 
                 className="max-h-8 w-auto object-contain" 
                 fallbackText={branding?.clinic_name || 'LEGIT HC'}
