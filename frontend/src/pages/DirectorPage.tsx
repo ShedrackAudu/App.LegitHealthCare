@@ -443,7 +443,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
-                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
+                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                              <div className="space-y-1 col-span-full lg:col-span-4">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark</Label>
                                 <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
