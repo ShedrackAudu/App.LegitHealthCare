@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavLink, useLocation, Link } from 'react-router-dom';
+import { NavLink, useLocation, Link, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
+import axios from 'axios';
 import {
   DashboardSquare02Icon,
   UserAdd01Icon,
@@ -20,8 +21,9 @@ import {
   Calendar03Icon,
   Activity01Icon,
   PackageIcon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
+  Logout01Icon
 } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -37,31 +39,10 @@ interface SidebarItem {
   permission?: string | string[];
 }
 
-const medicalItems: SidebarItem[] = [
-  { title: 'Registration', path: '/registration', icon: UserAdd01Icon },
-  { title: 'Consultation', path: '/consultation', icon: StethoscopeIcon },
-  { title: 'Test Results', path: '/tests', icon: Chemistry02Icon },
-  { title: 'Director Review', path: '/director', icon: Shield01Icon },
-  { title: 'Patient Report', path: '/patient-report', icon: Note01Icon },
-  { title: 'Screening Matrix', path: '/view-records', icon: Database02Icon },
-  { title: 'Patient Directory', path: '/view-patients', icon: UserGroupIcon },
-  { title: 'Appointments', path: '/appointments', icon: Calendar03Icon },
-  { title: 'Inventory', path: '/inventory', icon: PackageIcon, permission: 'view_inventory' },
-  { title: 'Messaging', path: '/messages', icon: Comment01Icon },
-];
+const medicalItems: SidebarItem[] = [];
 
 
-const adminItems: SidebarItem[] = [
-  { title: 'Security Center', path: '/security-analytics', icon: Activity01Icon, permission: 'manage_roles' },
-  { title: 'User Management', path: '/user-management', icon: UserSettings01Icon, permission: 'view_users' },
-  { title: 'Role Configuration', path: '/roles-permissions', icon: Shield01Icon, permission: 'manage_roles' },
-  { title: 'Audit Trails', path: '/audit-logs', icon: Note01Icon, permission: 'view_audit_logs' },
-  { title: 'Data Management', path: '/data-management', icon: Database02Icon, permission: 'download_data' },
-  { title: 'Access Keys', path: '/admin/access-keys', icon: Key01Icon, permission: 'manage_access_keys' },
-  { title: 'AI Integration', path: '/ai-integration', icon: MachineRobotIcon, permission: 'manage_ai' },
-  { title: 'System Branding', path: '/system-branding', icon: PaintBrush01Icon, permission: 'manage_branding' },
-  { title: 'System Settings', path: '/system-config', icon: Settings02Icon, permission: 'manage_departments' },
-];
+const adminItems: SidebarItem[] = [];
 
 const sharedItems: SidebarItem[] = [
   { title: 'Dashboard', path: '/dashboard', icon: DashboardSquare02Icon },
@@ -71,24 +52,21 @@ export const Sidebar: React.FC = () => {
   const [isCollapsed, setIsCollapsed] = useState(() => {
     const saved = localStorage.getItem('legit_sidebar_collapsed');
     if (saved !== null) return JSON.parse(saved);
-    
-    // Fallback for new visitors or cleared storage: auto-collapse on small screens
-    if (typeof window !== 'undefined' && window.innerWidth < 1024) return true;
-    return false;
+    return true; // Lock in collapsed state by default
   });
-  const { branding, brandingError, unreadMessagesCount } = useAppContext();
+  const { branding, brandingError, unreadMessagesCount, user, setUser } = useAppContext();
   const { isAdmin, hasPermission, hasAnyPermission } = usePermissions();
   const location = useLocation();
+  const navigate = useNavigate();
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleResize = () => {
-      // Auto-collapse only on resize if width drops below threshold
       if (window.innerWidth < 1024) {
         setIsCollapsed(true);
       } else {
         const saved = localStorage.getItem('legit_sidebar_collapsed');
-        setIsCollapsed(saved !== null ? JSON.parse(saved) : false);
+        setIsCollapsed(saved !== null ? JSON.parse(saved) : true);
       }
     };
 
@@ -112,6 +90,21 @@ export const Sidebar: React.FC = () => {
     const timer = setTimeout(scrollActiveIntoView, 100);
     return () => clearTimeout(timer);
   }, [location.pathname]);
+
+  const handleLogout = async () => {
+    if (user) {
+        try {
+            await axios.post('/api/logout', { 
+                user_id: user.id,
+                portal: 'staff' 
+            });
+        } catch (err) {
+            console.error("Logout logging failed", err);
+        }
+    }
+    setUser(null);
+    navigate('/login');
+  };
 
   const toggleSidebar = () => {
     const newState = !isCollapsed;
@@ -258,16 +251,41 @@ export const Sidebar: React.FC = () => {
           })()}
         </div>
 
-        <div className="px-3 mt-auto">
-          <Button
-            variant="ghost"
-            size="icon"
+        <div className="px-3 mt-auto space-y-1.5">
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
+            title="Log out"
+          >
+            <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
+          </button>
+
+          {/* Separator */}
+          <div className="h-px bg-border/80 my-1.5 mx-1" />
+
+          {/* Collapse/Expand Button */}
+          <button
             onClick={toggleSidebar}
-            className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5" /> : <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5" />}
-          </Button>
+            {isCollapsed ? (
+              <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+            ) : (
+              <>
+                <HugeiconsIcon icon={SidebarLeft01Icon} className="h-5 w-5 shrink-0" />
+                <span className="font-semibold text-sm">Collapse</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </aside>
