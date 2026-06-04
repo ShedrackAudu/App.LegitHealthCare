@@ -549,7 +549,7 @@ def bulk_ai_remarks(test_type):
         from openai import OpenAI
         import os
         import re
-        from concurrent.futures import ThreadPoolExecutor
+        from gevent.pool import Pool
 
         settings = AISettings.query.first()
         api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
@@ -736,8 +736,8 @@ def bulk_ai_remarks(test_type):
             except Exception as ex:
                 return item["pid"], item["record_id"], item["remark_field"], False, str(ex)
 
-        with ThreadPoolExecutor(max_workers=5) as executor:
-            api_results = list(executor.map(call_openai, records_to_process))
+        pool = Pool(5)
+        api_results = pool.map(call_openai, records_to_process)
 
         # Step 3: Save and commit remarks in the main thread (100% thread-safe)
         for pid, record_id, remark_field, success, detail in api_results:
