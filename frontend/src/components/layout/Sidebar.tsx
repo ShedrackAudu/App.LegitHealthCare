@@ -266,7 +266,7 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {/* Separator */}
-          <div className="h-px bg-primary-foreground/10 my-1.5 mx-1" />
+          <div className="h-px bg-white/30 my-1.5 mx-1" />
 
           {/* Collapse/Expand Button */}
           <button
