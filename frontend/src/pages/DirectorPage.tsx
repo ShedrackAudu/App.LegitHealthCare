@@ -588,13 +588,24 @@ const DirectorPage: React.FC = () => {
                 const patientData = pRes.data;
                 const staffId = patientData.staff_id;
                 
-                setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Fetching history...' } : log));
-
                 // 2. Fetch history
                 const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 const patientHistory = hRes.data;
+
+                const review = patientHistory?.review;
+                const hasExistingComment = review && (
+                    (review.comment_one && review.comment_one.trim()) ||
+                    (review.comment_two && review.comment_two.trim()) ||
+                    (review.comment_three && review.comment_three.trim()) ||
+                    (review.comment_four && review.comment_four.trim())
+                );
+                if (hasExistingComment) {
+                    setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: 'Skipped: Review comments already exist' } : log));
+                    setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                    continue;
+                }
                 
                 setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Overview...' } : log));
 

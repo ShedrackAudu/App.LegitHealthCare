@@ -610,6 +610,14 @@ def bulk_ai_remarks(test_type):
         if not model_class:
             return jsonify({"error": "Invalid test type"}), 400
 
+        target_remark_fields = {
+            'fbc': 'fbc_remark',
+            'lipid': 'lp_remark',
+            'lft': 'lft_remark',
+            'kft': 'kft_remark'
+        }
+        target_remark_field = target_remark_fields.get(test_type)
+
         # Step 1: Collect prompt data in the main thread (100% thread-safe database access)
         records_to_process = []
         for pid in matched_pids:
@@ -624,6 +632,13 @@ def bulk_ai_remarks(test_type):
                 if not record:
                     errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
                     continue
+
+                # Skip if patient already has a remark for this test type
+                if target_remark_field:
+                    existing_remark = getattr(record, target_remark_field, None)
+                    if existing_remark and existing_remark.strip():
+                        errors.append({"patient_id": pid, "error": "Skipped: AI remark already exists."})
+                        continue
 
                 # Determine fields
                 prompt_data = ""
