@@ -166,7 +166,7 @@ export const Sidebar: React.FC = () => {
                   "flex items-center rounded-lg transition-all duration-200 group/item relative",
                   isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                   isActive
-                    ? "bg-white/30 text-white dark:bg-white/10"
+                    ? "bg-white/30 text-white dark:bg-primary/20 dark:text-primary"
                     : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
                 )}
               >
@@ -226,7 +226,7 @@ export const Sidebar: React.FC = () => {
                         "flex items-center rounded-lg transition-all duration-200 group/item relative",
                         isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
                         isActive
-                          ? "bg-white/30 text-white dark:bg-white/10"
+                          ? "bg-white/30 text-white dark:bg-primary/20 dark:text-primary"
                           : "text-primary-foreground/80 hover:bg-white/10 hover:text-white dark:text-muted-foreground dark:hover:bg-white/5 dark:hover:text-white"
                       )}
                     >
