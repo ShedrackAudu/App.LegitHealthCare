@@ -685,8 +685,6 @@ def bulk_ai_remarks(test_type):
                         f"ALP: {record.alp or '-'} U/L (Ref Range: Male: 80-306 U/L, Female: 64-306 U/L)\n"
                         f"TB: {record.tb or '-'} mg/dL (Ref Range: 0-1.2 mg/dL)\n"
                         f"CB: {record.cb or '-'} mg/dL (Ref Range: 0-0.4 mg/dL)\n"
-                        f"Urea: {record.urea or '-'} mmol/L (Ref Range: 2.5-9.33 mmol/L)\n"
-                        f"Creatinine: {record.creatinine or '-'} umol/L (Ref Range: Male: 80-133 umol/L, Female: 62-115 umol/L)\n"
                     )
                     system_prompt = (
                         "You are a medical assistant analyzing patient Liver Function Test (LFT) results."
@@ -697,11 +695,16 @@ def bulk_ai_remarks(test_type):
                     remark_field = "lft_remark"
 
                 elif test_type == 'kft':
+                    lft_record = LFTResult.query.filter_by(staff_id=record.staff_id, screening_year=record.screening_year).first()
+                    urea_val = lft_record.urea if lft_record else '-'
+                    creatinine_val = lft_record.creatinine if lft_record else '-'
                     prompt_data = (
                         f"Potassium: {record.potassium or '-'} mmol/L (Ref Range: 3.5-5.0 mmol/L)\n"
                         f"Sodium: {record.sodium or '-'} mmol/L (Ref Range: 135-145 mmol/L)\n"
                         f"Chloride: {record.chloride or '-'} mmol/L (Ref Range: 97-107 mmol/L)\n"
                         f"Bicarbonate (HCO3): {record.hco3 or '-'} mmol/L (Ref Range: 20-31 mmol/L)\n"
+                        f"Urea: {urea_val or '-'} mmol/L (Ref Range: 2.5-9.33 mmol/L)\n"
+                        f"Creatinine: {creatinine_val or '-'} umol/L (Ref Range: Male: 80-133 umol/L, Female: 62-115 umol/L)\n"
                     )
                     system_prompt = (
                         "You are a medical assistant analyzing patient Kidney Function Test (KFT) results."

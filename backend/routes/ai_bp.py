@@ -169,15 +169,18 @@ def generate_overview():
         if "KFT" in selected_params:
             kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if kft:
+                lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+                urea_val = lft.urea if lft else 'N/A'
+                creat_val = lft.creatinine if lft else 'N/A'
                 context_parts.append(f"--- KFT Results ---")
-                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}")
+                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}, Urea: {urea_val}, Creatinine: {creat_val}")
                 context_parts.append(f"Remark: {kft.kft_remark}")
 
         if "LFT" in selected_params:
             lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if lft:
                 context_parts.append(f"--- LFT Results ---")
-                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}, Urea: {lft.urea}, Creatinine: {lft.creatinine}")
+                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}")
                 context_parts.append(f"Remark: {lft.lft_remark}")
 
         if "Lipid Profile" in selected_params:
