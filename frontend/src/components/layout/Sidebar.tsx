@@ -115,7 +115,7 @@ export const Sidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-full border-r border-primary-foreground/10 bg-primary text-primary-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+        "h-screen sticky top-0 touch-none border-r border-primary-foreground/10 bg-primary text-primary-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
