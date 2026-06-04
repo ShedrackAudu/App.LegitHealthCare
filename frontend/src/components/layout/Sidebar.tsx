@@ -115,11 +115,19 @@ export const Sidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-screen sticky top-0 touch-none border-r border-primary-foreground/10 dark:border-border bg-primary dark:bg-black text-primary-foreground dark:text-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
-        isCollapsed ? "w-16" : "w-64"
+        "h-screen sticky top-0 touch-none border-r transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+        isCollapsed 
+          ? "fixed bottom-4 left-4 h-auto w-auto bg-transparent border-0 sm:sticky sm:top-0 sm:h-screen sm:w-16 sm:border-r sm:border-primary-foreground/10 sm:dark:border-border sm:bg-primary sm:dark:bg-black" 
+          : "fixed inset-y-0 left-0 w-64 bg-primary dark:bg-black text-primary-foreground dark:text-foreground border-r border-primary-foreground/10 dark:border-border sm:sticky sm:h-screen"
       )}
     >
-      <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 dark:border-border hover:bg-white/10 dark:hover:bg-zinc-900 transition-colors cursor-pointer group">
+      <Link 
+        to="/" 
+        className={cn(
+          "h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 dark:border-border hover:bg-white/10 dark:hover:bg-zinc-900 transition-colors cursor-pointer group",
+          isCollapsed && "hidden sm:flex"
+        )}
+      >
         {/* Clinic Logo */}
         {!isCollapsed ? (
           branding?.logo_dark ? (
@@ -150,10 +158,13 @@ export const Sidebar: React.FC = () => {
         )}
       </Link>
 
-      <div className="flex flex-col flex-1 py-4 overflow-hidden">
+      <div className={cn("flex flex-col flex-1 overflow-hidden", isCollapsed ? "sm:py-4 py-0" : "py-4")}>
         <div
           ref={scrollContainerRef}
-          className="flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar"
+          className={cn(
+            "flex-1 space-y-2 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar",
+            isCollapsed && "hidden sm:block"
+          )}
         >
           {/* Main Items */}
           {[...sharedItems, ...medicalItems].map((item) => {
@@ -251,13 +262,13 @@ export const Sidebar: React.FC = () => {
           })()}
         </div>
 
-        <div className="px-3 mt-auto space-y-1.5">
+        <div className={cn("px-3 mt-auto space-y-1.5", isCollapsed && "sm:block flex flex-col")}>
           {/* Logout Button */}
           <button
             onClick={handleLogout}
             className={cn(
               "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
-              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+              isCollapsed ? "justify-center w-10 mx-auto sm:flex hidden" : "px-3 gap-3 justify-start"
             )}
             title="Log out"
           >
@@ -266,14 +277,16 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {/* Separator */}
-          <div className="h-px bg-white/30 dark:bg-border my-1.5 mx-1" />
+          <div className={cn("h-px bg-white/30 dark:bg-border my-1.5 mx-1", isCollapsed && "hidden sm:block")} />
 
           {/* Collapse/Expand Button */}
           <button
             onClick={toggleSidebar}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
-              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+              "flex items-center rounded-lg transition-all duration-200 text-white border-0 cursor-pointer focus:outline-none",
+              isCollapsed 
+                ? "justify-center w-10 h-10 mx-auto bg-primary dark:bg-zinc-900 shadow-lg border border-primary-foreground/20 dark:border-border sm:bg-transparent sm:shadow-none sm:border-0 hover:bg-white/10" 
+                : "px-3 gap-3 justify-start w-full h-10 hover:bg-white/10"
             )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
