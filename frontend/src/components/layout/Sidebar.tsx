@@ -166,7 +166,7 @@ export const Sidebar: React.FC = () => {
                   "flex items-center rounded-lg transition-all duration-200 group/item relative",
                   isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                   isActive
-                    ? "bg-white text-primary shadow-lg shadow-black/10"
+                    ? "bg-white/30 text-white"
                     : "text-primary-foreground/80 hover:bg-white/10 hover:text-white"
                 )}
               >
@@ -226,7 +226,7 @@ export const Sidebar: React.FC = () => {
                         "flex items-center rounded-lg transition-all duration-200 group/item relative",
                         isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
                         isActive
-                          ? "bg-white text-primary shadow-lg shadow-black/10"
+                          ? "bg-white/30 text-white"
                           : "text-primary-foreground/80 hover:bg-white/10 hover:text-white"
                       )}
                     >
@@ -256,7 +256,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={handleLogout}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-rose-300 hover:bg-white/10 hover:text-rose-200 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
               isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
             )}
             title="Log out"
@@ -272,7 +272,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={toggleSidebar}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-primary-foreground/80 hover:bg-white/10 hover:text-white border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              "flex items-center rounded-lg transition-all duration-200 text-white hover:bg-white/10 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
               isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
             )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
