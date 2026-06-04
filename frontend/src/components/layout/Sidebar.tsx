@@ -115,11 +115,11 @@ export const Sidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-full border-r bg-background transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+        "h-full border-r border-primary-foreground/10 bg-primary text-primary-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
-      <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b hover:bg-muted/30 transition-colors cursor-pointer group">
+      <Link to="/" className="h-14 shrink-0 flex items-center px-4 border-b border-primary-foreground/10 hover:bg-white/10 transition-colors cursor-pointer group">
         {/* Clinic Logo */}
         {!isCollapsed ? (
           branding?.logo_dark ? (
@@ -130,7 +130,7 @@ export const Sidebar: React.FC = () => {
               fallbackText={branding?.clinic_name}
             />
           ) : (
-            <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary/80 transition-colors">
+            <div className="text-primary-foreground font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary-foreground/80 transition-colors">
               <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
               {branding?.clinic_name || 'LEGIT HC'}
             </div>
@@ -143,7 +143,7 @@ export const Sidebar: React.FC = () => {
               className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
             />
           ) : (
-            <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary/80 transition-colors">
+            <div className="text-primary-foreground font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary-foreground/80 transition-colors">
               <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
             </div>
           )
@@ -166,8 +166,8 @@ export const Sidebar: React.FC = () => {
                   "flex items-center rounded-lg transition-all duration-200 group/item relative",
                   isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                    : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                    ? "bg-white text-primary shadow-lg shadow-black/10"
+                    : "text-primary-foreground/80 hover:bg-white/10 hover:text-white"
                 )}
               >
                 <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
@@ -208,11 +208,11 @@ export const Sidebar: React.FC = () => {
             return (
               <div className="pt-1 pb-2 space-y-0.5">
                 <div className={cn(
-                  "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
+                  "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-primary-foreground/60 transition-all duration-300",
                   isCollapsed && "flex justify-center"
                 )}>
                   {isCollapsed ? (
-                    <div className="h-px bg-border/80 w-10 my-3" />
+                    <div className="h-px bg-primary-foreground/20 w-10 my-3" />
                   ) : (
                     "Admin Control Panel"
                   )}
@@ -226,8 +226,8 @@ export const Sidebar: React.FC = () => {
                         "flex items-center rounded-lg transition-all duration-200 group/item relative",
                         isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
                         isActive
-                          ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                          : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+                          ? "bg-white text-primary shadow-lg shadow-black/10"
+                          : "text-primary-foreground/80 hover:bg-white/10 hover:text-white"
                       )}
                     >
                       <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
@@ -256,7 +256,7 @@ export const Sidebar: React.FC = () => {
           <button
             onClick={handleLogout}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              "flex items-center rounded-lg transition-all duration-200 text-rose-300 hover:bg-white/10 hover:text-rose-200 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
               isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
             )}
             title="Log out"
@@ -266,13 +266,13 @@ export const Sidebar: React.FC = () => {
           </button>
 
           {/* Separator */}
-          <div className="h-px bg-border/80 my-1.5 mx-1" />
+          <div className="h-px bg-primary-foreground/10 my-1.5 mx-1" />
 
           {/* Collapse/Expand Button */}
           <button
             onClick={toggleSidebar}
             className={cn(
-              "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-primary/10 hover:text-primary border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              "flex items-center rounded-lg transition-all duration-200 text-primary-foreground/80 hover:bg-white/10 hover:text-white border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
               isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
             )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
