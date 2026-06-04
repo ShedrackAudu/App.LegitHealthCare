@@ -124,7 +124,7 @@ export const Sidebar: React.FC = () => {
 
       <aside
         className={cn(
-          "h-screen sticky top-0 touch-none border-r border-border bg-card text-card-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
+          "h-[100dvh] sticky top-0 touch-none border-r border-border bg-card text-card-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
           "lg:bg-primary lg:text-primary-foreground lg:border-primary-foreground/10",
           "dark:lg:bg-card dark:lg:text-card-foreground dark:lg:border-border",
           isCollapsed ? "lg:w-16" : "lg:w-64",

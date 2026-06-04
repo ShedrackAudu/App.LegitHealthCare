@@ -49,7 +49,7 @@ function RootApp() {
     <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
       <AppProvider>
         <Router>
-          <div className="flex flex-col h-screen w-screen overflow-hidden">
+          <div className="flex flex-col h-[100dvh] w-screen overflow-hidden">
             <NetworkStatusBanner />
             <div className="flex-1 min-h-0 relative">
               <CustomToaster />
