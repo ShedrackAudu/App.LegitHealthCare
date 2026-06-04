@@ -218,6 +218,7 @@ def save_test_result(test_type):
         record.cb = f"{random.uniform(0.01, 0.4):.2f}"
         record.ast = f"{random.uniform(0.1, 46.0):.1f}"
         record.alp = str(random.randint(64, 306))
+        record.urea = f"{random.uniform(2.5, 9.33):.2f}"
 
     if test_type == 'special':
         from models import QueueEntry
