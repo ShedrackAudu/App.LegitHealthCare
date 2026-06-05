@@ -440,10 +440,10 @@ class ScreeningYearBioData(db.Model):
 class QueueEntry(db.Model):
     __tablename__ = 'queue_entries'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
-    department = db.Column(db.String(50), nullable=False) # Consultation, Audiometry, Spirometry, ECG
-    status = db.Column(db.String(20), default='Waiting') # Waiting, Completed
+    staff_id = db.Column(db.String(50), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
+    department = db.Column(db.String(50), nullable=False, index=True) # Consultation, Audiometry, Spirometry, ECG
+    status = db.Column(db.String(20), default='Waiting', index=True) # Waiting, Completed
     created_at = db.Column(db.DateTime, default=datetime.now)
     queue_number = db.Column(db.Integer, nullable=True)
 

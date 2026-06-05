@@ -22,16 +22,16 @@ def get_queue_counts():
 
     # Get counts per department, joined with ScreeningYearBioData to ensure they are in the matrix
     counts = db.session.query(
-        func.trim(QueueEntry.department), 
+        QueueEntry.department, 
         func.count(QueueEntry.id)
     ).join(
         ScreeningYearBioData, 
-        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) & 
+        (QueueEntry.staff_id == ScreeningYearBioData.staff_id) & 
         (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
     ).filter(
         QueueEntry.screening_year == year, 
         QueueEntry.status == 'Waiting'
-    ).group_by(func.trim(QueueEntry.department)).all()
+    ).group_by(QueueEntry.department).all()
     
     result = {
         "consultation": 0,
@@ -101,7 +101,7 @@ def get_department_queue(department):
         QueueEntry, ScreeningYearBioData
     ).join(
         ScreeningYearBioData,
-        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) &
+        (QueueEntry.staff_id == ScreeningYearBioData.staff_id) &
         (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
     ).filter(
         QueueEntry.department == target_dept,
@@ -213,7 +213,7 @@ def delete_patient_from_queue(department, staff_id):
 
     # Find the QueueEntry
     entry = QueueEntry.query.filter(
-        func.trim(QueueEntry.staff_id) == func.trim(staff_id),
+        QueueEntry.staff_id == staff_id.strip(),
         QueueEntry.screening_year == int(year),
         QueueEntry.department == target_dept,
         QueueEntry.status == 'Waiting'
