@@ -91,6 +91,7 @@ const RegistrationPage: React.FC = () => {
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
   const [isDailyDialogOpen, setIsDailyDialogOpen] = useState(false);
+  const [isTargetHistoryDialogOpen, setIsTargetHistoryDialogOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -676,6 +677,7 @@ const RegistrationPage: React.FC = () => {
             sub={`${stats?.today || 0} / 80 Patients`}
             icon={Activity01Icon}
             color="text-primary"
+            onClick={() => setIsTargetHistoryDialogOpen(true)}
           />
         </div>
 
@@ -1398,6 +1400,68 @@ const RegistrationPage: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => setIsDailyDialogOpen(false)}
+              className="font-bold"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Daily Target History Dialog */}
+      <Dialog open={isTargetHistoryDialogOpen} onOpenChange={setIsTargetHistoryDialogOpen}>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <HugeiconsIcon icon={Activity01Icon} className="text-primary h-6 w-6" />
+              Daily Target History
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-medium">
+              Daily screening target metrics (Target: 80 Patients/day)
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-4">
+            {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+              stats.daily_stats.map((day: any, index: number) => {
+                const dateFormatted = day.date && day.date !== 'Unknown' 
+                  ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                  : 'Unknown Date';
+                const percentage = Math.round((day.count / 80) * 100);
+                const barWidth = Math.min(percentage, 100);
+                
+                // Harmonious colors based on target achievements
+                let progressColor = 'bg-rose-500';
+                if (percentage >= 100) progressColor = 'bg-emerald-500';
+                else if (percentage >= 75) progressColor = 'bg-primary';
+                else if (percentage >= 50) progressColor = 'bg-amber-500';
+
+                return (
+                  <div key={index} className="space-y-1.5 border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="font-bold text-foreground">{dateFormatted}</span>
+                      <span className="font-black text-foreground">
+                        {percentage}% <span className="text-xs text-muted-foreground font-medium">({day.count}/80)</span>
+                      </span>
+                    </div>
+                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                      <div 
+                        className={`${progressColor} h-full rounded-full transition-all duration-500`} 
+                        style={{ width: `${barWidth}%` }}
+                      />
+                    </div>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No target history statistics available for this period.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsTargetHistoryDialogOpen(false)}
               className="font-bold"
             >
               Close
