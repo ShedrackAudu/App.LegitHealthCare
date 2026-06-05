@@ -21,6 +21,7 @@ export default defineConfig({
         short_name: 'Legit HealthCare',
         description: 'Premium Healthcare Management System',
         background_color: '#000000',
+        theme_color: '#000000',
         display: 'standalone',
         scope: '/',
         start_url: '/',
