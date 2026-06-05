@@ -40,6 +40,7 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -1314,152 +1315,193 @@ const RegistrationPage: React.FC = () => {
       </Dialog>
       {/* Department Breakdown Dialog */}
       <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
-          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
-              <HugeiconsIcon icon={UserGroupIcon} className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-xl font-bold text-white leading-none">
-                Department Breakdown
-              </DialogTitle>
-              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
-                Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
-              </DialogDescription>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={UserGroupIcon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Department Breakdown</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
+                </DialogDescription>
+              </div>
             </div>
           </DialogHeader>
-          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-4">
-            {stats?.department_stats && stats.department_stats.length > 0 ? (
-              stats.department_stats.map((dept: any, index: number) => {
-                const total = stats.year_total || 1;
-                const percentage = Math.round((dept.count / total) * 100);
-                return (
-                  <div key={index} className="space-y-1.5">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-zinc-200 capitalize">{dept.department}</span>
-                      <span className="font-black text-emerald-400">{dept.count.toLocaleString()} ({percentage}%)</span>
-                    </div>
-                    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
-                        style={{ width: `${percentage}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
-                  <HugeiconsIcon icon={UserGroupIcon} className="h-8 w-8" />
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.department_stats && stats.department_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.department_stats.map((dept: any, index: number) => {
+                    const total = stats.year_total || 1;
+                    const percentage = Math.round((dept.count / total) * 100);
+                    return (
+                      <div key={index} className="space-y-1.5 p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-foreground capitalize">{dept.department}</span>
+                          <span className="font-black text-primary">{dept.count.toLocaleString()} ({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-primary h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO STATISTICS</p>
-                <p className="text-xs text-zinc-600 mt-1">No department statistics available for this period.</p>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={UserGroupIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No department statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsDeptDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Daily Breakdown Dialog */}
       <Dialog open={isDailyDialogOpen} onOpenChange={setIsDailyDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
-          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
-              <HugeiconsIcon icon={Calendar03Icon} className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-xl font-bold text-white leading-none">
-                Daily Registration Breakdown
-              </DialogTitle>
-              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
-                Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
-              </DialogDescription>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={Calendar03Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Daily Registration Breakdown</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
+                </DialogDescription>
+              </div>
             </div>
           </DialogHeader>
-          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-3">
-            {stats?.daily_stats && stats.daily_stats.length > 0 ? (
-              stats.daily_stats.map((day: any, index: number) => {
-                const dateFormatted = day.date && day.date !== 'Unknown' 
-                  ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
-                  : 'Unknown Date';
-                return (
-                  <div key={index} className="flex items-center justify-between border-b border-zinc-800/40 pb-2.5 last:border-0 last:pb-0 text-sm">
-                    <span className="font-bold text-zinc-200">{dateFormatted}</span>
-                    <span className="font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-xs">
-                      {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
-                    </span>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
-                  <HugeiconsIcon icon={Calendar03Icon} className="h-8 w-8" />
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.daily_stats.map((day: any, index: number) => {
+                    const dateFormatted = day.date && day.date !== 'Unknown' 
+                      ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                      : 'Unknown Date';
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3">
+                        <span className="font-bold text-sm text-foreground">{dateFormatted}</span>
+                        <span className="font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full text-xs shrink-0">
+                          {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
+                        </span>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO REGISTRATIONS</p>
-                <p className="text-xs text-zinc-600 mt-1">No daily statistics available for this period.</p>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={Calendar03Icon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No daily statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsDailyDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
+
       {/* Daily Target History Dialog */}
       <Dialog open={isTargetHistoryDialogOpen} onOpenChange={setIsTargetHistoryDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
-          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
-            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
-              <HugeiconsIcon icon={Activity01Icon} className="h-6 w-6" />
-            </div>
-            <div className="space-y-1">
-              <DialogTitle className="text-xl font-bold text-white leading-none">
-                Daily Target History
-              </DialogTitle>
-              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
-                Daily screening target metrics (Target: 80 Patients/day)
-              </DialogDescription>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={Activity01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Daily Target History</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Daily screening target metrics (Target: 80 Patients/day)
+                </DialogDescription>
+              </div>
             </div>
           </DialogHeader>
-          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-4">
-            {stats?.daily_stats && stats.daily_stats.length > 0 ? (
-              stats.daily_stats.map((day: any, index: number) => {
-                const dateFormatted = day.date && day.date !== 'Unknown' 
-                  ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
-                  : 'Unknown Date';
-                const percentage = Math.round((day.count / 80) * 100);
-                const barWidth = Math.min(percentage, 100);
-                
-                // Harmonious colors based on target achievements
-                let progressColor = 'bg-rose-500';
-                if (percentage >= 100) progressColor = 'bg-emerald-500';
-                else if (percentage >= 75) progressColor = 'bg-emerald-600';
-                else if (percentage >= 50) progressColor = 'bg-amber-500';
 
-                return (
-                  <div key={index} className="space-y-1.5 border-b border-zinc-800/40 pb-3.5 last:border-0 last:pb-0">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-zinc-200">{dateFormatted}</span>
-                      <span className="font-black text-white">
-                        {percentage}% <span className="text-xs text-zinc-400 font-medium">({day.count}/80)</span>
-                      </span>
-                    </div>
-                    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
-                      <div 
-                        className={`${progressColor} h-full rounded-full transition-all duration-500`} 
-                        style={{ width: `${barWidth}%` }}
-                      />
-                    </div>
-                  </div>
-                );
-              })
-            ) : (
-              <div className="flex flex-col items-center justify-center py-12 text-center">
-                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
-                  <HugeiconsIcon icon={Activity01Icon} className="h-8 w-8" />
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.daily_stats.map((day: any, index: number) => {
+                    const dateFormatted = day.date && day.date !== 'Unknown' 
+                      ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                      : 'Unknown Date';
+                    const percentage = Math.round((day.count / 80) * 100);
+                    const barWidth = Math.min(percentage, 100);
+                    
+                    // Harmonious colors based on target achievements
+                    let progressColor = 'bg-rose-500';
+                    if (percentage >= 100) progressColor = 'bg-emerald-500';
+                    else if (percentage >= 75) progressColor = 'bg-primary';
+                    else if (percentage >= 50) progressColor = 'bg-amber-500';
+
+                    return (
+                      <div key={index} className="space-y-2.5 p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-foreground">{dateFormatted}</span>
+                          <span className="font-black text-foreground">
+                            {percentage}% <span className="text-xs text-muted-foreground font-medium">({day.count}/80)</span>
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div 
+                            className={`${progressColor} h-full rounded-full transition-all duration-500`} 
+                            style={{ width: `${barWidth}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
                 </div>
-                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO TARGET HISTORY</p>
-                <p className="text-xs text-zinc-600 mt-1">No target history statistics available for this period.</p>
-              </div>
-            )}
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={Activity01Icon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No target history statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsTargetHistoryDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
           </div>
         </DialogContent>
       </Dialog>
