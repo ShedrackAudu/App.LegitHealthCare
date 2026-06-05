@@ -938,12 +938,10 @@ class AuditLog(db.Model):
                 device['browser'] = browser
 
         user_name = "System"
-        if self.user:
-            user_name = f"{self.user.first_name} {self.user.last_name}"
-        elif self.user_id:
-            # Fallback check for Patient Portal users
-            portal = details_data.get('portal', 'staff')
-            if portal == 'patient':
+        portal = details_data.get('portal', 'staff')
+        
+        if portal == 'patient':
+            if self.user_id:
                 try:
                     # Look up in PatientPortalUser (which uses 'patients' bind)
                     patient = PatientPortalUser.query.get(self.user_id)
@@ -953,7 +951,10 @@ class AuditLog(db.Model):
                         user_name = f"Patient {self.user_id}"
                 except:
                     user_name = f"User {self.user_id}"
-            else:
+        else:
+            if self.user:
+                user_name = f"{self.user.first_name} {self.user.last_name}"
+            elif self.user_id:
                 try:
                     # Fallback query StaffUser explicitly (handles flush/after_insert states)
                     staff = StaffUser.query.get(self.user_id)
