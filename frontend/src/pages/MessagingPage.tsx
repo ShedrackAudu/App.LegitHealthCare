@@ -38,6 +38,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -84,7 +85,7 @@ export default function MessagingPage() {
   const [activeActionsId, setActiveActionsId] = useState<number | null>(null);
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Group Management State
   const [isManagingMembers, setIsManagingMembers] = useState(false);
@@ -1102,23 +1103,22 @@ export default function MessagingPage() {
                   </Button>
                 </div>
                 <div className="flex-1 relative group">
-                  <Input 
+                  <Textarea 
                     ref={messageInputRef}
                     placeholder="Type a message..." 
-                    className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 h-11 rounded-xl transition-all font-medium py-3"
+                    className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 min-h-[44px] max-h-32 rounded-xl transition-all font-medium py-2.5 resize-none overflow-y-auto w-full"
+                    rows={1}
                     value={newMessage}
                     onChange={(e) => {
                       setNewMessage(e.target.value);
                       handleTyping(e.target.value.length > 0);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') sendMessage();
-                    }}
                     onBlur={() => handleTyping(false)}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <div className="absolute right-3 bottom-1.5 flex items-center gap-1">
                     {newMessage.trim() === '' ? (
                       <Button 
+                        type="button"
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"
@@ -1128,6 +1128,7 @@ export default function MessagingPage() {
                       </Button>
                     ) : (
                       <Button 
+                        type="button"
                         size="icon" 
                         className="h-8 w-8 rounded-full shadow-lg shadow-primary/20 animate-in zoom-in-50 duration-200"
                         onClick={sendMessage}
