@@ -1537,7 +1537,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                             disabled={loading}
                         />
                         <Label htmlFor="override-remarks" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
-                            Override/Replace existing AI remarks for patients in this range
+                            Override existing remarks
                         </Label>
                     </div>
                 </form>

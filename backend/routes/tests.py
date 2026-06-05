@@ -639,7 +639,7 @@ def bulk_ai_remarks(test_type):
                 if target_remark_field and not override:
                     existing_remark = getattr(record, target_remark_field, None)
                     if existing_remark and existing_remark.strip():
-                        errors.append({"patient_id": pid, "error": "Skipped: AI remark already exists."})
+                        errors.append({"patient_id": pid, "error": "Skipped: remark already exists."})
                         continue
 
                 # Determine fields
