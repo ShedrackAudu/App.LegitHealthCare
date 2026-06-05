@@ -450,8 +450,8 @@ class QueueEntry(db.Model):
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     
     # Medical Fields
     luts = db.Column(db.String(10)) # Yes/No
@@ -494,8 +494,8 @@ class ConsultationData(db.Model):
 class FBCResult(db.Model):
     __tablename__ = 'fbc_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     pcv = db.Column(db.String(20))
     wbc = db.Column(db.String(20))
     plt = db.Column(db.String(20))
@@ -519,8 +519,8 @@ class FBCResult(db.Model):
 class KFTResult(db.Model):
     __tablename__ = 'kft_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     potassium = db.Column(db.String(20))
     sodium = db.Column(db.String(20))
     chloride = db.Column(db.String(20))
@@ -533,8 +533,8 @@ class KFTResult(db.Model):
 class LipidResult(db.Model):
     __tablename__ = 'lipid_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     total_cholesterol = db.Column(db.String(20))
     triglycerides = db.Column(db.String(20))
     hdl = db.Column(db.String(20))
@@ -546,8 +546,8 @@ class LipidResult(db.Model):
 class LFTResult(db.Model):
     __tablename__ = 'lft_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     ast = db.Column(db.String(20))
     alt = db.Column(db.String(20))
     alp = db.Column(db.String(20))
@@ -562,8 +562,8 @@ class LFTResult(db.Model):
 class SpecialTestsResult(db.Model):
     __tablename__ = 'special_tests_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     ecg_result = db.Column(db.String(255))
     ecg_remark = db.Column(db.Text)
     spirometry_result = db.Column(db.String(255))
@@ -579,8 +579,8 @@ class SpecialTestsResult(db.Model):
 class DirectorReview(db.Model):
     __tablename__ = 'director_reviews'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     
     # Final Review Specific Fields
     dm_status = db.Column(db.String(50))
