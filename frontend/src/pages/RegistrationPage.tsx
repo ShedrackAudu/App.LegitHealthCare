@@ -1314,30 +1314,34 @@ const RegistrationPage: React.FC = () => {
       </Dialog>
       {/* Department Breakdown Dialog */}
       <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-6 w-6" />
-              Department Breakdown
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground font-medium">
-              Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
+          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
+            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
+              <HugeiconsIcon icon={UserGroupIcon} className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl font-bold text-white leading-none">
+                Department Breakdown
+              </DialogTitle>
+              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
+                Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-4">
+          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-4">
             {stats?.department_stats && stats.department_stats.length > 0 ? (
               stats.department_stats.map((dept: any, index: number) => {
                 const total = stats.year_total || 1;
                 const percentage = Math.round((dept.count / total) * 100);
                 return (
-                  <div key={index} className="space-y-1">
+                  <div key={index} className="space-y-1.5">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-foreground capitalize">{dept.department}</span>
-                      <span className="font-black text-primary">{dept.count.toLocaleString()} ({percentage}%)</span>
+                      <span className="font-bold text-zinc-200 capitalize">{dept.department}</span>
+                      <span className="font-black text-emerald-400">{dept.count.toLocaleString()} ({percentage}%)</span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
                       <div 
-                        className="bg-primary h-full rounded-full transition-all duration-500" 
+                        className="bg-emerald-500 h-full rounded-full transition-all duration-500" 
                         style={{ width: `${percentage}%` }}
                       />
                     </div>
@@ -1345,81 +1349,77 @@ const RegistrationPage: React.FC = () => {
                 );
               })
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No department statistics available for this period.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
+                  <HugeiconsIcon icon={UserGroupIcon} className="h-8 w-8" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO STATISTICS</p>
+                <p className="text-xs text-zinc-600 mt-1">No department statistics available for this period.</p>
+              </div>
             )}
-          </div>
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDeptDialogOpen(false)}
-              className="font-bold"
-            >
-              Close
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
       {/* Daily Breakdown Dialog */}
       <Dialog open={isDailyDialogOpen} onOpenChange={setIsDailyDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-6 w-6" />
-              Daily Registration Breakdown
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground font-medium">
-              Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
+          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
+            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
+              <HugeiconsIcon icon={Calendar03Icon} className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl font-bold text-white leading-none">
+                Daily Registration Breakdown
+              </DialogTitle>
+              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
+                Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-3">
+          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-3">
             {stats?.daily_stats && stats.daily_stats.length > 0 ? (
               stats.daily_stats.map((day: any, index: number) => {
                 const dateFormatted = day.date && day.date !== 'Unknown' 
                   ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
                   : 'Unknown Date';
                 return (
-                  <div key={index} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0 text-sm">
-                    <span className="font-bold text-foreground">{dateFormatted}</span>
-                    <span className="font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full text-xs">
+                  <div key={index} className="flex items-center justify-between border-b border-zinc-800/40 pb-2.5 last:border-0 last:pb-0 text-sm">
+                    <span className="font-bold text-zinc-200">{dateFormatted}</span>
+                    <span className="font-black text-emerald-400 bg-emerald-950/60 border border-emerald-500/20 px-2.5 py-0.5 rounded-full text-xs">
                       {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
                     </span>
                   </div>
                 );
               })
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No daily statistics available for this period.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
+                  <HugeiconsIcon icon={Calendar03Icon} className="h-8 w-8" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO REGISTRATIONS</p>
+                <p className="text-xs text-zinc-600 mt-1">No daily statistics available for this period.</p>
+              </div>
             )}
-          </div>
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDailyDialogOpen(false)}
-              className="font-bold"
-            >
-              Close
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
       {/* Daily Target History Dialog */}
       <Dialog open={isTargetHistoryDialogOpen} onOpenChange={setIsTargetHistoryDialogOpen}>
-        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
-          <DialogHeader className="text-left">
-            <DialogTitle className="text-xl font-bold flex items-center gap-2">
-              <HugeiconsIcon icon={Activity01Icon} className="text-primary h-6 w-6" />
-              Daily Target History
-            </DialogTitle>
-            <DialogDescription className="text-sm text-muted-foreground font-medium">
-              Daily screening target metrics (Target: 80 Patients/day)
-            </DialogDescription>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border border-zinc-800 bg-zinc-950 text-white shadow-2xl">
+          <DialogHeader className="text-left flex flex-row items-start gap-4 space-y-0">
+            <div className="p-3 bg-emerald-950/40 border border-emerald-500/20 text-emerald-400 rounded-xl shrink-0 flex items-center justify-center">
+              <HugeiconsIcon icon={Activity01Icon} className="h-6 w-6" />
+            </div>
+            <div className="space-y-1">
+              <DialogTitle className="text-xl font-bold text-white leading-none">
+                Daily Target History
+              </DialogTitle>
+              <DialogDescription className="text-xs text-emerald-500/80 font-medium">
+                Daily screening target metrics (Target: 80 Patients/day)
+              </DialogDescription>
+            </div>
           </DialogHeader>
-          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-4">
+          <div className="mt-6 max-h-[350px] overflow-y-auto pr-2 space-y-4">
             {stats?.daily_stats && stats.daily_stats.length > 0 ? (
               stats.daily_stats.map((day: any, index: number) => {
                 const dateFormatted = day.date && day.date !== 'Unknown' 
@@ -1431,18 +1431,18 @@ const RegistrationPage: React.FC = () => {
                 // Harmonious colors based on target achievements
                 let progressColor = 'bg-rose-500';
                 if (percentage >= 100) progressColor = 'bg-emerald-500';
-                else if (percentage >= 75) progressColor = 'bg-primary';
+                else if (percentage >= 75) progressColor = 'bg-emerald-600';
                 else if (percentage >= 50) progressColor = 'bg-amber-500';
 
                 return (
-                  <div key={index} className="space-y-1.5 border-b border-border/50 pb-3 last:border-0 last:pb-0">
+                  <div key={index} className="space-y-1.5 border-b border-zinc-800/40 pb-3.5 last:border-0 last:pb-0">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-bold text-foreground">{dateFormatted}</span>
-                      <span className="font-black text-foreground">
-                        {percentage}% <span className="text-xs text-muted-foreground font-medium">({day.count}/80)</span>
+                      <span className="font-bold text-zinc-200">{dateFormatted}</span>
+                      <span className="font-black text-white">
+                        {percentage}% <span className="text-xs text-zinc-400 font-medium">({day.count}/80)</span>
                       </span>
                     </div>
-                    <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                    <div className="w-full bg-zinc-800 rounded-full h-2 overflow-hidden">
                       <div 
                         className={`${progressColor} h-full rounded-full transition-all duration-500`} 
                         style={{ width: `${barWidth}%` }}
@@ -1452,20 +1452,14 @@ const RegistrationPage: React.FC = () => {
                 );
               })
             ) : (
-              <p className="text-sm text-muted-foreground text-center py-8">
-                No target history statistics available for this period.
-              </p>
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="p-3 bg-zinc-900 border border-zinc-800 text-zinc-500 rounded-2xl mb-3">
+                  <HugeiconsIcon icon={Activity01Icon} className="h-8 w-8" />
+                </div>
+                <p className="text-sm font-bold uppercase tracking-widest text-zinc-500">NO TARGET HISTORY</p>
+                <p className="text-xs text-zinc-600 mt-1">No target history statistics available for this period.</p>
+              </div>
             )}
-          </div>
-          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsTargetHistoryDialogOpen(false)}
-              className="font-bold"
-            >
-              Close
-            </Button>
           </div>
         </DialogContent>
       </Dialog>
