@@ -90,6 +90,7 @@ const RegistrationPage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
+  const [isDailyDialogOpen, setIsDailyDialogOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
   const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
@@ -646,6 +647,7 @@ const RegistrationPage: React.FC = () => {
             sub={`${activeYear} Screening`}
             icon={UserGroupIcon}
             color="text-primary"
+            onClick={() => setIsDailyDialogOpen(true)}
           />
           <StatCard
             title="Gender Mix"
@@ -1351,6 +1353,51 @@ const RegistrationPage: React.FC = () => {
               type="button"
               variant="outline"
               onClick={() => setIsDeptDialogOpen(false)}
+              className="font-bold"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+      {/* Daily Breakdown Dialog */}
+      <Dialog open={isDailyDialogOpen} onOpenChange={setIsDailyDialogOpen}>
+        <DialogContent className="sm:max-w-md p-6 overflow-hidden rounded-2xl border bg-background shadow-2xl">
+          <DialogHeader className="text-left">
+            <DialogTitle className="text-xl font-bold flex items-center gap-2">
+              <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-6 w-6" />
+              Daily Registration Breakdown
+            </DialogTitle>
+            <DialogDescription className="text-sm text-muted-foreground font-medium">
+              Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
+            </DialogDescription>
+          </DialogHeader>
+          <div className="mt-4 max-h-[350px] overflow-y-auto pr-2 space-y-3">
+            {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+              stats.daily_stats.map((day: any, index: number) => {
+                const dateFormatted = day.date && day.date !== 'Unknown' 
+                  ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                  : 'Unknown Date';
+                return (
+                  <div key={index} className="flex items-center justify-between border-b border-border/50 pb-2 last:border-0 last:pb-0 text-sm">
+                    <span className="font-bold text-foreground">{dateFormatted}</span>
+                    <span className="font-black text-primary bg-primary/10 px-2 py-0.5 rounded-full text-xs">
+                      {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
+                    </span>
+                  </div>
+                );
+              })
+            ) : (
+              <p className="text-sm text-muted-foreground text-center py-8">
+                No daily statistics available for this period.
+              </p>
+            )}
+          </div>
+          <div className="flex justify-end gap-3 mt-6 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setIsDailyDialogOpen(false)}
               className="font-bold"
             >
               Close

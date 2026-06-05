@@ -270,6 +270,14 @@ def get_registration_stats():
     
     dept_counts = [{"department": dept or "Unknown", "count": count} for dept, count in dept_counts_raw]
     
+    # Daily breakdown for the specific screening year
+    daily_counts_raw = db.session.query(
+        func.date(ScreeningYearBioData.created_at),
+        func.count(ScreeningYearBioData.id)
+    ).filter_by(screening_year=year).group_by(func.date(ScreeningYearBioData.created_at)).order_by(func.date(ScreeningYearBioData.created_at).desc()).all()
+    
+    daily_stats = [{"date": str(d_date) if d_date else "Unknown", "count": count} for d_date, count in daily_counts_raw if count > 0]
+    
     return jsonify({
         "total_comprehensive": total_comprehensive,
         "year_total": base_query.count(),
@@ -278,5 +286,6 @@ def get_registration_stats():
         "females": females,
         "age_40_above": age_40_above,
         "age_below_40": age_below_40,
-        "department_stats": dept_counts
+        "department_stats": dept_counts,
+        "daily_stats": daily_stats
     }), 200
