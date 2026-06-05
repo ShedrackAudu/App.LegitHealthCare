@@ -49,6 +49,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
@@ -1459,6 +1460,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
 const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
     const [range, setRange] = useState('');
+    const [override, setOverride] = useState(false);
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<any>(null);
 
@@ -1472,7 +1474,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
         setResult(null);
         try {
             const resp = await axios.post(`/api/tests/bulk-ai-remarks/${testType}`, 
-                { range: range.trim(), screening_year: activeYear },
+                { range: range.trim(), screening_year: activeYear, override },
                 { headers: { 'X-Company-Context': activeSection } }
             );
             setResult(resp.data);
@@ -1501,30 +1503,43 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                 </div>
             </CardHeader>
             <CardContent className="p-6 pt-0 space-y-4">
-                <form onSubmit={handleSubmit} className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
-                    <div className="flex-1 space-y-2">
-                        <Label htmlFor="bulk-range" className="text-xs font-bold uppercase tracking-wider text-slate-500">Patient ID Range</Label>
-                        <Input 
-                            id="bulk-range"
-                            placeholder="e.g. 1-50 or LHCSL2026DCP001-LHCSL2026DCP050"
-                            value={range}
-                            onChange={(e) => setRange(e.target.value)}
-                            disabled={loading}
-                            className="h-11 rounded-xl font-semibold border-2"
-                        />
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="bulk-range" className="text-xs font-bold uppercase tracking-wider text-slate-500">Patient ID Range</Label>
+                            <Input 
+                                id="bulk-range"
+                                placeholder="e.g. 1-50 or LHCSL2026DCP001-LHCSL2026DCP050"
+                                value={range}
+                                onChange={(e) => setRange(e.target.value)}
+                                disabled={loading}
+                                className="h-11 rounded-xl font-semibold border-2"
+                            />
+                        </div>
+                        <Button 
+                            type="submit" 
+                            disabled={loading || !range.trim()}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                        >
+                            {loading ? (
+                                <>
+                                    <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
+                                    Processing AI...
+                                </>
+                            ) : 'Generate Remarks'}
+                        </Button>
                     </div>
-                    <Button 
-                        type="submit" 
-                        disabled={loading || !range.trim()}
-                        className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
-                    >
-                        {loading ? (
-                            <>
-                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
-                                Processing AI...
-                            </>
-                        ) : 'Generate Remarks'}
-                    </Button>
+                    <div className="flex items-center space-x-2 pt-1">
+                        <Checkbox 
+                            id="override-remarks" 
+                            checked={override} 
+                            onCheckedChange={(checked: boolean) => setOverride(checked)}
+                            disabled={loading}
+                        />
+                        <Label htmlFor="override-remarks" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                            Override/Replace existing AI remarks for patients in this range
+                        </Label>
+                    </div>
                 </form>
 
                 {result && (

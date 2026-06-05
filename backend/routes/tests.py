@@ -543,6 +543,7 @@ def bulk_ai_remarks(test_type):
         data = request.json
         range_str = data.get('range')
         screening_year = data.get('screening_year')
+        override = data.get('override', False)
         if not range_str or not screening_year:
             return jsonify({"error": "Range and Screening Year are required"}), 400
 
@@ -634,8 +635,8 @@ def bulk_ai_remarks(test_type):
                     errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
                     continue
 
-                # Skip if patient already has a remark for this test type
-                if target_remark_field:
+                # Skip if patient already has a remark for this test type and override is not enabled
+                if target_remark_field and not override:
                     existing_remark = getattr(record, target_remark_field, None)
                     if existing_remark and existing_remark.strip():
                         errors.append({"patient_id": pid, "error": "Skipped: AI remark already exists."})
