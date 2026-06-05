@@ -179,8 +179,7 @@ def get_users():
                 if not engine: continue
                 
                 from sqlalchemy import text
-                # Query the bio_data table directly to avoid RoutingSession conflicts
-                sql = text("SELECT department, phone FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                sql = text("SELECT department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
                 with engine.connect() as conn:
                     result = conn.execute(sql, {"sid": p.username}).fetchone()
                     if result:
@@ -189,6 +188,10 @@ def get_users():
                         p_dict['department'] = result[0] 
                         if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
                             p_dict['phone'] = result[1]
+                        if result[2]:
+                            p_dict['first_name'] = result[2]
+                        if result[3]:
+                            p_dict['last_name'] = result[3]
                         break
             except Exception as e:
                 current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")

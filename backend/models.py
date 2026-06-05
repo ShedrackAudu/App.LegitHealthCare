@@ -192,6 +192,8 @@ class PatientPortalUser(db.Model):
     def to_dict(self):
         # Dynamically find the section (DCP/DCT) by checking both clinical databases
         section = None
+        first_name = self.first_name
+        last_name = self.last_name
         from flask import current_app
         from sqlalchemy import text
         
@@ -199,19 +201,23 @@ class PatientPortalUser(db.Model):
             try:
                 engine = db.engines.get(bind_key)
                 if not engine: continue
-                sql = text("SELECT staff_id FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                sql = text("SELECT first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
                 with engine.connect() as conn:
                     result = conn.execute(sql, {"sid": self.username}).fetchone()
                     if result:
                         section = bind_key.upper()
+                        if result[0]:
+                            first_name = result[0]
+                        if result[1]:
+                            last_name = result[1]
                         break
             except:
                 continue
 
         return {
             "id": self.id,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
+            "first_name": first_name,
+            "last_name": last_name,
             "username": self.username,
             "email": self.email,
             "phone": self.phone,
