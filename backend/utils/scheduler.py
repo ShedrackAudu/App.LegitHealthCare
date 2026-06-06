@@ -8,11 +8,10 @@ OTP verification (is_verified == False).
 import os
 import atexit
 from datetime import datetime, timedelta
-from apscheduler.schedulers.background import BackgroundScheduler
-from apscheduler.triggers.cron import CronTrigger
+from apscheduler.triggers.interval import IntervalTrigger
 
-
-scheduler = BackgroundScheduler(daemon=True)
+# Scheduler instance declared globally but instantiated dynamically
+scheduler = None
 
 
 def send_weekly_verification_reminders(app):
@@ -99,27 +98,47 @@ def send_weekly_verification_reminders(app):
 
 def init_scheduler(app):
     """
-    Initializes and starts the APScheduler BackgroundScheduler.
-    The scheduler runs the weekly verification reminder job every 7 days.
+    Initializes and starts the APScheduler scheduler dynamically based on environment.
+    The scheduler runs the verification reminder job every 12 hours.
     
     Guards:
     - SCHEDULER_ENABLED env var can be set to 'false' to disable.
     - Only starts once (prevents duplicate schedulers in multi-worker setups).
     """
+    global scheduler
+
     # Allow disabling via environment variable or in testing mode
     if os.getenv('SCHEDULER_ENABLED', 'true').lower() == 'false' or app.config.get('TESTING'):
         print("[SCHEDULER] Disabled via SCHEDULER_ENABLED=false or TESTING mode")
         return
 
-    # Prevent duplicate schedulers (e.g., when Gunicorn pre-forks workers)
-    if scheduler.running:
+    # Prevent duplicate schedulers
+    if scheduler is not None and scheduler.running:
         print("[SCHEDULER] Already running, skipping duplicate init.")
         return
 
-    # Schedule the weekly job: every Monday at 10:00 AM
+    # Detect if running in gevent environment
+    try:
+        from gevent.monkey import is_module_patched
+        is_gevent = is_module_patched('socket') or is_module_patched('thread')
+    except ImportError:
+        is_gevent = False
+
+    if is_gevent:
+        from apscheduler.schedulers.gevent import GeventScheduler
+        scheduler = GeventScheduler()
+        scheduler_name = "GeventScheduler"
+    else:
+        from apscheduler.schedulers.background import BackgroundScheduler
+        scheduler = BackgroundScheduler(daemon=True)
+        scheduler_name = "BackgroundScheduler"
+
+    # Schedule the weekly job to run every 12 hours.
+    # Because send_weekly_verification_reminders checks last_reminder_sent,
+    # it won't duplicate emails, but will catch up immediately after restarts/sleep.
     scheduler.add_job(
         func=send_weekly_verification_reminders,
-        trigger=CronTrigger(day_of_week='mon', hour=10, minute=0),
+        trigger=IntervalTrigger(hours=12),
         args=[app],
         id='weekly_verification_reminder',
         name='Weekly Patient Verification Reminder',
@@ -127,7 +146,7 @@ def init_scheduler(app):
     )
 
     scheduler.start()
-    print("[SCHEDULER] Background scheduler started. Weekly verification reminders active (Mondays at 10:00 AM).")
+    print(f"[SCHEDULER] {scheduler_name} started. Weekly verification reminders active (running every 12 hours).")
 
     # Ensure clean shutdown
-    atexit.register(lambda: scheduler.shutdown(wait=False))
+    atexit.register(lambda: scheduler.shutdown(wait=False) if scheduler is not None else None)
