@@ -419,7 +419,7 @@ const PatientReportPage: React.FC = () => {
                                         {/* FBC */}
                                         <tr className="category-row">
                                             <td>FBC</td>
-                                            <td>PCV</td><td>{reportData.results.fbc?.pcv || '-'}</td><td>34-53.9</td><td>%</td><td rowSpan={5}>{reportData.results.fbc?.remark || '-'}</td>
+                                            <td>PCV</td><td>{reportData.results.fbc?.pcv || '-'}</td><td>36-53.9</td><td>%</td><td rowSpan={5}>{reportData.results.fbc?.remark || '-'}</td>
                                         </tr>
                                         <tr><td></td><td>WBC</td><td>{reportData.results.fbc?.wbc || '-'}</td><td>3-11</td><td>x109/L</td></tr>
                                         <tr><td></td><td>Lymphocryte</td><td>{reportData.results.fbc?.lymp_percent || '-'}</td><td>19.1-48</td><td>%</td></tr>

@@ -25,7 +25,7 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 client = OpenAI(api_key=api_key)
                 
                 prompt_data = (
-                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 34-53.9 %)\n"
+                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 36-53.9 %)\n"
                     f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
                     f"Lymphocyte: {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1-48 %)\n"
                     f"Neutrophil (Granulocyte): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6-73.3 %)\n"
@@ -649,7 +649,7 @@ def bulk_ai_remarks(test_type):
 
                 if test_type == 'fbc':
                     prompt_data = (
-                        f"PCV: {record.pcv or '-'} % (Ref Range: 34-53.9 %)\n"
+                        f"PCV: {record.pcv or '-'} % (Ref Range: 36-53.9 %)\n"
                         f"WBC: {record.wbc or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
                         f"Lymphocyte: {record.lymp_percent or '-'} % (Ref Range: 19.1-48 %)\n"
                         f"Neutrophil (Granulocyte): {record.gra_percent or '-'} % (Ref Range: 43.6-73.3 %)\n"

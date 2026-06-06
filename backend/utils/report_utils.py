@@ -269,7 +269,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         ['', td('RBS'), td(consult.get('rbs')), td('&lt;200'), td('ml/dL'), ''],
         
         # FBC
-        [td('FBC', True), td('PCV'), td(fbc.get('pcv')), td('34-53.9'), td('%'), td(fbc.get('remark'))],
+        [td('FBC', True), td('PCV'), td(fbc.get('pcv')), td('36-53.9'), td('%'), td(fbc.get('remark'))],
         ['', td('WBC'), td(fbc.get('wbc')), td('3-11'), td('x109/L'), ''],
         ['', td('Lymphocryte'), td(fbc.get('lymp_percent')), td('19.1-48'), td('%'), ''],
         ['', td('Neutrophil'), td(fbc.get('gra_percent')), td('43.6-73.3'), td('%'), ''],
