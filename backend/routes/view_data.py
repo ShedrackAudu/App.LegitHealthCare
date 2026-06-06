@@ -622,13 +622,22 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     
     c = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if c:
+        hx_parts = []
+        if c.assessment_hx_pe and str(c.assessment_hx_pe).strip():
+            hx_parts.append(str(c.assessment_hx_pe).strip())
+        if c.other_remarks and str(c.other_remarks).strip():
+            hx_parts.append(str(c.other_remarks).strip())
+        if c.other_assessments and str(c.other_assessments).strip():
+            hx_parts.append(str(c.other_assessments).strip())
+        consult_hx_pe = "; ".join(hx_parts) if hx_parts else None
+
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
             "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
             "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
+            "hx_pe": consult_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
             "chronic_cough": c.chronic_cough, "chronic_chest_pain": c.chronic_chest_pain,
             "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
             "jaundice": c.jaundice, "murmur": c.murmur, "dm": c.dm_status, "htn": c.htn_status,
@@ -673,9 +682,18 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "audiometry": s.audiometry_result, "audiometry_remark": s.audiometry_remark,
             "weight": s.weight, "height": s.height
         }
-
+ 
     d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if d:
+        hx_parts_dir = []
+        if d.assessment_hx_pe and str(d.assessment_hx_pe).strip():
+            hx_parts_dir.append(str(d.assessment_hx_pe).strip())
+        if d.other_remarks and str(d.other_remarks).strip():
+            hx_parts_dir.append(str(d.other_remarks).strip())
+        if d.other_assessments and str(d.other_assessments).strip():
+            hx_parts_dir.append(str(d.other_assessments).strip())
+        director_hx_pe = "; ".join(hx_parts_dir) if hx_parts_dir else None
+
         results["director"] = {
             "assessment": d.overall_assessment,
             "comment_one": d.comment_one,
@@ -683,7 +701,7 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "comment_three": d.comment_three,
             "comment_four": d.comment_four,
             "lab_remark": d.overall_lab_remark,
-            "hx_pe": d.assessment_hx_pe,
+            "hx_pe": director_hx_pe,
             "other_remarks": d.other_remarks,
             "other_assessments": d.other_assessments,
             "dm_status": d.dm_status,
