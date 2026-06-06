@@ -1,4 +1,5 @@
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import get_jwt_identity
 from models import db, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, DirectorReview, AuditLog
 from datetime import datetime
 from decorators import require_permission
@@ -57,6 +58,8 @@ def get_patient_history(staff_id):
     review = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if review:
         history['review'] = {c.name: getattr(review, c.name) for c in review.__table__.columns}
+        if 'fbs_rbs_remark' in history['review']:
+            history['review']['sugar_remark'] = history['review']['fbs_rbs_remark']
         
     if not history:
         return jsonify({"message": "No data found for this patient in the selected year"}), 404
@@ -128,6 +131,19 @@ def save_director_review():
         }
     ]
 
+    # Capture director's name from JWT identity
+    user_id = get_jwt_identity()
+    director_name = None
+    if user_id and user_id != 'undefined' and user_id != 'null':
+        try:
+            from models import StaffUser
+            u_id = int(str(user_id))
+            user = StaffUser.query.get(u_id)
+            if user:
+                director_name = user.first_name
+        except Exception as e:
+            pass
+
     try:
         for config in model_configs:
             model = config['model']
@@ -141,6 +157,11 @@ def save_director_review():
                 if model == DirectorReview:
                     record.first_submitted_at = datetime.now()
                 db.session.add(record)
+            
+            # Attribute director's name to consulted_by_name if model is ConsultationData and name is blank
+            if model == ConsultationData and director_name:
+                if not record.consulted_by_name:
+                    record.consulted_by_name = director_name
             
             # Update specific fields
             updated = False
@@ -165,6 +186,15 @@ def save_director_review():
                 # If nothing was updated for a secondary model, don't necessarily keep it in session if it's new
                 # But for simplicity in this sync, we just commit.
                 pass
+
+        # Remove patient from Consultation Queue
+        from models import QueueEntry
+        from sqlalchemy import func
+        db.session.query(QueueEntry).filter(
+            func.trim(QueueEntry.staff_id) == func.trim(staff_id), 
+            QueueEntry.screening_year == year_int, 
+            QueueEntry.department == 'Consultation'
+        ).delete(synchronize_session=False)
 
         # Log action
         AuditLog.log_action(
