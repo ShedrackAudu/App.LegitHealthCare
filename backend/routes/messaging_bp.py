@@ -315,3 +315,36 @@ def delete_single_message(message_id):
     AuditLog.log_action("Delete Message", resource=f"ChatMessage:{message_id}", details={"message_id": message_id})
     
     return jsonify({"message": "Message deleted successfully"}), 200
+
+@messaging_bp.route('/groups/<int:group_id>/members/<int:target_user_id>/role', methods=['PUT'])
+@jwt_required()
+def update_group_member_role(group_id, target_user_id):
+    current_user_id = int(get_jwt_identity())
+    data = request.json
+    new_role = data.get('role')
+    
+    if new_role not in ['Admin', 'Member']:
+        return jsonify({"error": "Invalid role"}), 400
+        
+    # Check if current user is admin of the group
+    admin_check = ChatGroupMember.query.filter_by(group_id=group_id, user_id=current_user_id, role='Admin').first()
+    if not admin_check:
+        return jsonify({"error": "Only group admins can assign roles"}), 403
+        
+    # Find target membership
+    membership = ChatGroupMember.query.filter_by(group_id=group_id, user_id=target_user_id).first()
+    if not membership:
+        return jsonify({"error": "Member not found"}), 404
+        
+    # Prevent demoting the last admin
+    if new_role == 'Member' and membership.role == 'Admin':
+        admin_count = ChatGroupMember.query.filter_by(group_id=group_id, role='Admin').count()
+        if admin_count <= 1:
+            return jsonify({"error": "Cannot demote the only admin of this group"}), 400
+            
+    membership.role = new_role
+    db.session.commit()
+    
+    AuditLog.log_action("Change Group Member Role", resource=f"ChatGroup:{group_id}", details={"target_user_id": target_user_id, "new_role": new_role})
+    return jsonify({"message": f"Member role updated to {new_role}"}), 200
+

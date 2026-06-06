@@ -22,17 +22,17 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
-import { 
-  Key, 
-  Plus, 
-  History, 
-  Loader2, 
-  User as UserIcon, 
-  ShieldCheck, 
-  Zap,
-  ShieldAlert,
-  Trash2
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  LockKeyIcon,
+  PlusSignIcon,
+  WorkHistoryIcon,
+  Loading03Icon,
+  UserIcon,
+  Shield01Icon,
+  ZapIcon,
+  Delete02Icon
+} from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { format } from 'date-fns';
@@ -167,9 +167,9 @@ const AccessKeysPage = () => {
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
                 <div className="flex flex-col md:flex-row justify-between items-stretch md:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary shrink-0">
-                            <Key className="h-5 w-5 sm:h-8 sm:w-8 font-black" />
+                            <HugeiconsIcon icon={LockKeyIcon} className="h-5 w-5 sm:h-8 sm:w-8 font-black" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-primary uppercase leading-tight">Security Access Keys</h1>
@@ -185,7 +185,7 @@ const AccessKeysPage = () => {
                     <Card className="lg:col-span-1 border-2 shadow-xl rounded-2xl h-fit border-primary/10 overflow-hidden">
                         <CardHeader className="bg-primary/[0.03] border-b pb-4">
                             <CardTitle className="text-lg font-black tracking-tight flex items-center gap-2">
-                                <Zap className="w-5 h-5 text-primary" /> Generate New Token
+                                <HugeiconsIcon icon={ZapIcon} className="w-5 h-5 text-primary" /> Generate New Token
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
@@ -242,20 +242,20 @@ const AccessKeysPage = () => {
 
                             <Button 
                                 onClick={handleGenerateCode} 
-                                disabled={generatingCode} 
+                                loading={generatingCode} 
                                 className="w-full rounded-2xl font-black text-xs h-14 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02] active:scale-95"
                             >
-                                {generatingCode ? <Loader2 className="w-5 h-5 animate-spin" /> : <Plus className="w-5 h-5" />}
+                                {!generatingCode && <HugeiconsIcon icon={PlusSignIcon} className="w-5 h-5" />}
                                 SECURE GENERATE
                             </Button>
                         </CardContent>
                     </Card>
 
-                    {/* History Table */}
+                    {/* WorkHistoryIcon Table */}
                     <Card className="lg:col-span-2 border-2 shadow-xl rounded-2xl overflow-hidden">
                         <CardHeader className="bg-muted/30 border-b flex flex-col sm:flex-row items-start sm:items-center justify-between py-4 gap-3">
                             <CardTitle className="text-base sm:text-lg font-black tracking-tight flex items-center gap-2 shrink-0">
-                                <History className="w-5 h-5 text-primary shrink-0" /> Active & Historical Keys
+                                <HugeiconsIcon icon={WorkHistoryIcon} className="w-5 h-5 text-primary shrink-0" /> Active & Historical Keys
                             </CardTitle>
                             <Badge variant="outline" className="font-black text-[9px] sm:text-[10px] bg-primary/5 text-primary border-primary/20 py-1.5 px-3">
                                 {accessCodes.length} KEYS LOGGED
@@ -278,7 +278,7 @@ const AccessKeysPage = () => {
                                         {loading ? (
                                             <TableRow>
                                                 <TableCell colSpan={5} className="h-64 text-center">
-                                                    <Loader2 className="w-8 h-8 animate-spin mx-auto text-primary/20" />
+                                                    <HugeiconsIcon icon={Loading03Icon} className="w-8 h-8 animate-spin mx-auto text-primary/20" />
                                                 </TableCell>
                                             </TableRow>
                                         ) : accessCodes.map(code => (
@@ -299,12 +299,12 @@ const AccessKeysPage = () => {
                                                     <div className="flex items-center gap-2">
                                                         {code.target_user_name && code.target_user_name !== 'Universal' ? (
                                                             <Badge variant="outline" className="font-black text-[9px] bg-amber-500/10 text-amber-600 border-amber-500/20 py-0.5">
-                                                                <UserIcon className="w-3 h-3 mr-1" />
+                                                                <HugeiconsIcon icon={UserIcon} className="w-3 h-3 mr-1" />
                                                                 {code.target_user_name}
                                                             </Badge>
                                                         ) : (
                                                             <Badge variant="outline" className="font-black text-[9px] bg-primary/10 text-primary border-primary/20 py-0.5">
-                                                                <ShieldCheck className="w-3 h-3 mr-1" />
+                                                                <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3 mr-1" />
                                                                 Universal
                                                             </Badge>
                                                         )}
@@ -313,12 +313,12 @@ const AccessKeysPage = () => {
                                                 <TableCell className="text-center py-5">
                                                     {code.is_multi_use ? (
                                                         <Badge variant="outline" className="font-black text-[9px] bg-indigo-500/10 text-indigo-600 border-indigo-500/20 py-0.5">
-                                                            <Zap className="w-3 h-3 mr-1" />
+                                                            <HugeiconsIcon icon={ZapIcon} className="w-3 h-3 mr-1" />
                                                             Multi-Use
                                                         </Badge>
                                                     ) : (
                                                         <Badge variant="outline" className="font-black text-[9px] bg-slate-500/10 text-slate-600 border-slate-500/20 py-0.5">
-                                                            <ShieldAlert className="w-3 h-3 mr-1" />
+                                                            <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3 mr-1" />
                                                             Single-Use
                                                         </Badge>
                                                     )}
@@ -360,12 +360,13 @@ const AccessKeysPage = () => {
                                                             </Button>
                                                         )}
                                                         <Button 
+                                                            type="button" 
                                                             variant="ghost" 
                                                             size="sm" 
                                                             onClick={() => setDeleteModal({ open: true, id: code.id })}
                                                             className="h-8 w-8 p-0 text-muted-foreground hover:text-destructive rounded-lg"
                                                         >
-                                                            <Trash2 className="h-4 w-4" />
+                                                            <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                         </Button>
                                                     </div>
                                                 </TableCell>
@@ -375,7 +376,7 @@ const AccessKeysPage = () => {
                                             <TableRow>
                                                 <TableCell colSpan={5} className="h-64 text-center">
                                                     <div className="flex flex-col items-center gap-3 opacity-20">
-                                                        <ShieldAlert className="w-12 h-12" />
+                                                        <HugeiconsIcon icon={Shield01Icon} className="w-12 h-12" />
                                                         <p className="font-black uppercase tracking-widest text-xs">No active access overrides found.</p>
                                                     </div>
                                                 </TableCell>

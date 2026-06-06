@@ -5,7 +5,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Activity, Loader2, ArrowLeft } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Activity01Icon, Loading03Icon, ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { ModeToggle } from '@/components/mode-toggle';
 import { useAppContext } from '@/context/AppContext';
 
@@ -61,7 +62,7 @@ const OTPPage = () => {
           <CardHeader className="py-4 text-left space-y-1">
             <Link to="/" className="flex items-center justify-start mb-3 hover:opacity-80 transition-opacity">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
-                <Activity className="w-8 h-8 text-primary" />
+                <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-primary" />
               </div>
             </Link>
             <CardTitle className="text-2xl font-bold tracking-tight">Verify Email</CardTitle>
@@ -93,15 +94,15 @@ const OTPPage = () => {
                   disabled={loading}
                 />
               </div>
-              <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" disabled={loading}>
-                {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Verify Account'}
+              <Button type="submit" className="w-full h-11 text-base font-bold shadow-sm" loading={loading}>
+                Verify Account
               </Button>
             </form>
           )}
         </CardContent>
           <CardFooter className="flex flex-col space-y-3 py-4 border-t border-border mt-2">
             <Link to="/signup" className="flex items-center text-sm text-muted-foreground hover:text-primary transition-colors">
-              <ArrowLeft className="mr-2 h-4 w-4" />
+              <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" />
               Back to Signup
             </Link>
           </CardFooter>

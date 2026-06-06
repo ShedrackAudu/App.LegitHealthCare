@@ -1,16 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-    FileText,
-    Download,
-    Mail,
-    Loader2,
-    X,
-    Printer,
-    Calendar,
-    ChevronRight,
-    ShieldCheck,
-    AlertCircle
-} from 'lucide-react';
+    File01Icon,
+    Download01Icon,
+    Mail01Icon,
+    Loading03Icon,
+    PrinterIcon,
+    Calendar03Icon,
+    ArrowRight01Icon,
+    Shield01Icon
+} from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,7 +25,7 @@ import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
-import { toPng } from 'html-to-image';
+import { toJpeg } from 'html-to-image';
 import '@/styles/PatientReport.css';
 
 const PatientMedicalReport: React.FC = () => {
@@ -113,9 +112,10 @@ const PatientMedicalReport: React.FC = () => {
             const width = pageEl.scrollWidth;
             const height = pageEl.scrollHeight;
 
-            const imgData = await toPng(pageEl, {
+            const imgData = await toJpeg(pageEl, {
                 cacheBust: true,
-                pixelRatio: 2,
+                pixelRatio: 3,
+                quality: 0.95,
                 width: width,
                 height: height,
                 style: { margin: '0' }
@@ -131,7 +131,7 @@ const PatientMedicalReport: React.FC = () => {
             const x = (pdfWidth - calcWidth) / 2;
             const y = (pdfHeight - calcHeight) / 2;
 
-            pdf.addImage(imgData, 'PNG', x, y, calcWidth, calcHeight);
+            pdf.addImage(imgData, 'JPEG', x, y, calcWidth, calcHeight);
         }
 
         return pdf.output('blob');
@@ -258,7 +258,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
                                         <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                                            <FileText className="h-5 w-5 sm:h-6 sm:w-6" />
+                                            <HugeiconsIcon icon={File01Icon} className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
                                         <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
                                     </div>
@@ -271,7 +271,7 @@ const PatientMedicalReport: React.FC = () => {
                                     <div className="w-full sm:w-44">
                                         <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
                                             <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
-                                                <Calendar className="mr-2 h-3.5 w-3.5 text-primary" />
+                                                <HugeiconsIcon icon={Calendar03Icon} className="mr-2 h-3.5 w-3.5 text-primary" />
                                                 <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
                                             </SelectTrigger>
                                             <SelectContent className="rounded-xl font-bold">
@@ -288,9 +288,10 @@ const PatientMedicalReport: React.FC = () => {
                                         size="default"
                                         className="h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
                                         onClick={handleGenerateReport}
-                                        disabled={!selectedYear || loading || fetchingYears}
+                                        loading={loading}
+                                        disabled={!selectedYear || fetchingYears}
                                     >
-                                        {loading ? <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" /> : <ChevronRight className="mr-2 h-3.5 w-3.5" />}
+                                        {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="mr-2 h-3.5 w-3.5" />}
                                         Retrieve Report
                                     </Button>
                                 </div>
@@ -302,18 +303,18 @@ const PatientMedicalReport: React.FC = () => {
                     {reportData && !loading && (
                         <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-3 md:p-3 rounded-xl border border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-md gap-3 md:gap-0">
                             <div className="flex items-center gap-3 px-2 md:px-4">
-                                <ShieldCheck className="text-primary h-6 w-6 shrink-0" />
+                                <HugeiconsIcon icon={Shield01Icon} className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
                                 <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
-                                    <Printer className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Print
+                                    <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
-                                    <Download className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Download
+                                    <HugeiconsIcon icon={Download01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Download</span>
                                 </Button>
-                                <Button className="w-full md:w-auto rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
-                                    <Mail className="mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> Email Report
+                                <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
+                                    <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
                                 </Button>
                             </div>
                         </div>
@@ -322,10 +323,10 @@ const PatientMedicalReport: React.FC = () => {
                     {!reportData && !loading && (
                         <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
                             {fetchingYears ? (
-                                <Loader2 className="h-10 w-10 animate-spin text-primary/30 mb-2" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/30 mb-2" />
                             ) : (
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <FileText className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                 </div>
                             )}
                             <div className="space-y-2">
@@ -350,9 +351,9 @@ const PatientMedicalReport: React.FC = () => {
                     {loading && (
                         <div className="flex flex-col items-center justify-center py-20 md:py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
                             <div className="relative mb-6">
-                                <Loader2 className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
                                 <div className="absolute inset-0 flex items-center justify-center">
-                                    <FileText className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
+                                    <HugeiconsIcon icon={File01Icon} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
                                 </div>
                             </div>
                             <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>
@@ -449,10 +450,10 @@ const PatientMedicalReport: React.FC = () => {
                                     <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
                                     <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
                                     <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                                    <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>10-50</td><td>mg/dL</td></tr>
+                                    <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-9.33</td><td>mmol/L</td></tr>
                                     <tr>
                                         <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
-                                        <td>Male: 0.7-1.4<br />Female: 0.6-1.2</td><td>mmol/L<br />mmol/L</td>
+                                        <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
                                     </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
@@ -463,11 +464,11 @@ const PatientMedicalReport: React.FC = () => {
                                     </tr>
                                     <tr>
                                         <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
-                                        <td>Male: 60-165<br />Female: 42-88</td><td>mg/dL<br />mg/dL</td>
+                                        <td>Male: &lt;150<br />Female: &lt;150</td><td>mg/dL<br />mg/dL</td>
                                     </tr>
                                     <tr>
                                         <td></td><td>HDL-c</td><td>{reportData.results.lipid?.hdl || '-'}</td>
-                                        <td>Male: 35-80<br />Female: 42-88</td><td>mg/dL<br />mg/dL</td>
+                                        <td>Male: =&gt;40<br />Female: =&gt;40</td><td>mg/dL<br />mg/dL</td>
                                     </tr>
                                     <tr><td></td><td>LDL-c</td><td>{reportData.results.lipid?.ldl || '-'}</td><td>&lt;130</td><td>mg/dL</td></tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>

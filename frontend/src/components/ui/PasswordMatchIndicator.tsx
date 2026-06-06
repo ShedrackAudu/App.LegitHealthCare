@@ -1,5 +1,6 @@
 import React from 'react';
-import { CheckCircle2, X } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckmarkCircle02Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 
 interface PasswordMatchIndicatorProps {
     password?: string;
@@ -22,12 +23,12 @@ export const PasswordMatchIndicator: React.FC<PasswordMatchIndicatorProps> = ({
         }`}>
             {isMatch ? (
                 <>
-                    <CheckCircle2 className="w-3 h-3" />
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3 h-3" />
                     <span className="text-[9px] font-black uppercase tracking-tighter">Match</span>
                 </>
             ) : (
                 <>
-                    <X className="w-3 h-3" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="w-3 h-3" />
                     <span className="text-[9px] font-black uppercase tracking-tighter">Mismatch</span>
                 </>
             )}

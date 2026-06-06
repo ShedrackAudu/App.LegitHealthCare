@@ -1,9 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion } from 'framer-motion';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  MessageSquare, Phone, Mail, ExternalLink, Send, 
-  ArrowLeft, Loader2, Building2, IdCard
-} from 'lucide-react';
+  WhatsappIcon, 
+  CallIcon, 
+  Mail01Icon, 
+  ArrowUpRight01Icon, 
+  SentIcon, 
+  ArrowLeft01Icon, 
+  Loading03Icon, 
+  Building02Icon, 
+  LicenseIcon 
+} from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -106,7 +114,7 @@ const PatientContactPage: React.FC = () => {
         return (
             <PatientLayout>
                 <div className="h-[60vh] flex items-center justify-center">
-                    <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin text-primary" />
                 </div>
             </PatientLayout>
         );
@@ -124,7 +132,7 @@ const PatientContactPage: React.FC = () => {
                         </p>
                     </div>
                     <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-xl border h-9 text-[10px]">
-                        <ArrowLeft className="w-3 h-3" /> Dashboard
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Dashboard
                     </Button>
                 </div>
 
@@ -135,7 +143,7 @@ const PatientContactPage: React.FC = () => {
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
-                                    <Phone className="w-4 h-4" />
+                                    <HugeiconsIcon icon={CallIcon} className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Call Support</p>
@@ -148,7 +156,7 @@ const PatientContactPage: React.FC = () => {
                                     disabled={!contactInfo.phone}
                                 >
                                     <a href={`tel:${contactInfo.phone?.replace(/\D/g, '')}`}>
-                                        <Phone className="mr-1.5 h-3 w-3" /> Call
+                                        <HugeiconsIcon icon={CallIcon} className="mr-1.5 h-3 w-3" /> Call
                                     </a>
                                 </Button>
                             </div>
@@ -160,7 +168,7 @@ const PatientContactPage: React.FC = () => {
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
                                 <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 shrink-0">
-                                    <Mail className="w-4 h-4" />
+                                    <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Email Support</p>
@@ -174,7 +182,7 @@ const PatientContactPage: React.FC = () => {
                                     disabled={!contactInfo.email}
                                 >
                                     <a href={`mailto:${contactInfo.email}`}>
-                                        <Send className="mr-1.5 h-3 w-3" /> Email
+                                        <HugeiconsIcon icon={SentIcon} className="mr-1.5 h-3 w-3" /> Email
                                     </a>
                                 </Button>
                             </div>
@@ -189,7 +197,7 @@ const PatientContactPage: React.FC = () => {
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
-                                        <MessageSquare className="w-4.5 h-4.5" />
+                                        <HugeiconsIcon icon={WhatsappIcon} className="w-4.5 h-4.5" />
                                     </div>
                                     <div>
                                         <CardTitle className="text-base font-black tracking-tight">WhatsApp</CardTitle>
@@ -206,11 +214,11 @@ const PatientContactPage: React.FC = () => {
                             {/* Identity Badge */}
                             <div className="flex flex-wrap gap-2">
                                 <div className="flex items-center gap-1.5 bg-muted/30 px-2.5 py-1 rounded-lg border text-[9px] font-black text-muted-foreground">
-                                    <IdCard className="w-3 h-3 text-primary" />
+                                    <HugeiconsIcon icon={LicenseIcon} className="w-3 h-3 text-primary" />
                                     {patientMeta.staff_id || 'N/A'}
                                 </div>
                                 <div className="flex items-center gap-1.5 bg-muted/30 px-2.5 py-1 rounded-lg border text-[9px] font-black text-muted-foreground">
-                                    <Building2 className="w-3 h-3 text-primary" />
+                                    <HugeiconsIcon icon={Building02Icon} className="w-3 h-3 text-primary" />
                                     {patientMeta.department || 'N/A'} · {patientMeta.section || 'N/A'}
                                 </div>
                             </div>
@@ -238,14 +246,14 @@ const PatientContactPage: React.FC = () => {
                                     className="h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-[10px] active:scale-95 transition-all"
                                     onClick={handleWhatsAppSend}
                                 >
-                                    <Send className="mr-1.5 h-3.5 w-3.5" /> Send Message
+                                    <HugeiconsIcon icon={SentIcon} className="mr-1.5 h-3.5 w-3.5" /> Send Message
                                 </Button>
                                 <Button 
                                     variant="outline"
                                     className="h-10 rounded-xl border font-black text-[10px] text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all"
                                     onClick={handleDirectWhatsApp}
                                 >
-                                    <ExternalLink className="mr-1.5 h-3.5 w-3.5" /> Direct Chat
+                                    <HugeiconsIcon icon={ArrowUpRight01Icon} className="mr-1.5 h-3.5 w-3.5" /> Direct Chat
                                 </Button>
                             </div>
                         </CardContent>

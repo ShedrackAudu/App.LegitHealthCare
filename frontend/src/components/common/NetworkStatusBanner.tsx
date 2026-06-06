@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
-import { WifiOff, Wifi } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { Wifi01Icon, WifiOff01Icon } from '@hugeicons/core-free-icons';
 
 type BannerState = 'hidden' | 'offline' | 'back-online';
 
@@ -56,16 +57,16 @@ const NetworkStatusBanner = () => {
   return (
     <div
       className={`
-        fixed top-0 left-0 right-0 z-[9999]
-        transition-transform duration-500 ease-[cubic-bezier(0.4,0,0.2,1)]
-        ${state === 'hidden' ? '-translate-y-full' : 'translate-y-0'}
+        sticky top-0 left-0 right-0 z-[9999] w-full shrink-0 overflow-hidden no-print
+        transition-all duration-300 ease-in-out
+        ${state === 'hidden' ? 'max-h-0 opacity-0' : 'max-h-12 opacity-100'}
       `}
       role="alert"
       aria-live="assertive"
     >
       <div
         className={`
-          flex items-center justify-center gap-2.5 px-4 py-2.5
+          flex items-center justify-center gap-2.5 px-4 py-1
           text-sm font-semibold text-white
           transition-colors duration-300
           ${isOffline
@@ -76,12 +77,12 @@ const NetworkStatusBanner = () => {
       >
         {isOffline ? (
           <>
-            <WifiOff className="h-4 w-4 shrink-0 animate-pulse" />
+            <HugeiconsIcon icon={WifiOff01Icon} className="h-4 w-4 shrink-0 animate-pulse" />
             <span>You are offline. Check your internet connection.</span>
           </>
         ) : (
           <>
-            <Wifi className="h-4 w-4 shrink-0" />
+            <HugeiconsIcon icon={Wifi01Icon} className="h-4 w-4 shrink-0" />
             <span>You're back online!</span>
           </>
         )}

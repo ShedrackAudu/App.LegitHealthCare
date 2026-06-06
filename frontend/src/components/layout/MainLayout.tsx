@@ -2,21 +2,28 @@ import React, { useEffect, useRef, useState } from 'react';
 import { Header } from './Header';
 import { Sidebar } from './Sidebar';
 import axios from 'axios';
-import { AlertTriangle, Info, ShieldAlert, Pin, CheckCircle2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Alert01Icon,
+  InformationCircleIcon,
+  Shield01Icon,
+  PinIcon,
+  CheckmarkCircle01Icon
+} from '@hugeicons/core-free-icons';
 
 const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, icon }) => {
   const getIcon = () => {
     switch (icon) {
       case 'warning':
-        return <AlertTriangle className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
+        return <HugeiconsIcon icon={Alert01Icon} className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
       case 'alert':
-        return <ShieldAlert className="h-3.5 w-3.5 text-white animate-bounce shrink-0" />;
+        return <HugeiconsIcon icon={Shield01Icon} className="h-3.5 w-3.5 text-white animate-bounce shrink-0" />;
       case 'success':
-        return <CheckCircle2 className="h-3.5 w-3.5 text-white shrink-0" />;
+        return <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-3.5 w-3.5 text-white shrink-0" />;
       case 'pin':
-        return <Pin className="h-3.5 w-3.5 text-white shrink-0" />;
+        return <HugeiconsIcon icon={PinIcon} className="h-3.5 w-3.5 text-white shrink-0" />;
       default:
-        return <Info className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
+        return <HugeiconsIcon icon={InformationCircleIcon} className="h-3.5 w-3.5 text-white animate-pulse shrink-0" />;
     }
   };
 
@@ -35,6 +42,11 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
     }
   };
 
+  const speed = 40; // pixels per second (slower, uniform marquee speed)
+  const containerWidth = 1000; // estimated base container width in pixels
+  const estimatedTextWidth = message.length * 7; // approximate width of the text
+  const duration = (containerWidth + estimatedTextWidth) / speed;
+
   return (
     <>
       <style>{`
@@ -45,19 +57,34 @@ const TickerBanner: React.FC<{ message: string; icon: string }> = ({ message, ic
         .animate-marquee {
           display: inline-block;
           padding-left: 100%;
-          animation: marquee 25s linear infinite;
+          animation: marquee 35s linear infinite;
         }
         .animate-marquee:hover {
           animation-play-state: paused;
         }
+        @keyframes slide-down {
+          from {
+            max-height: 0;
+            opacity: 0;
+          }
+          to {
+            max-height: 40px;
+            opacity: 1;
+          }
+        }
+        .animate-slide-down {
+          animation: slide-down 0.6s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
       `}</style>
-      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 ${getColors()}`}>
-        <div className="flex items-center gap-1.5 shrink-0 bg-black/15 px-2 py-0.5 rounded border border-white/10 z-10">
+      <div className={`w-full py-0.5 px-4 border-b flex items-center justify-between text-xs font-bold gap-3 z-[1000] relative overflow-hidden transition-all duration-300 no-print animate-slide-down ${getColors()}`}>
+        <div className="flex items-center shrink-0 z-10">
           {getIcon()}
-          <span className="uppercase tracking-widest text-[9px] font-black opacity-90">Alert:</span>
         </div>
         <div className="flex-1 overflow-hidden relative w-full flex items-center h-full">
-          <div className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold">
+          <div 
+            className="inline-block whitespace-nowrap animate-marquee cursor-default text-[11px] font-bold"
+            style={{ animationDuration: `${duration}s` }}
+          >
             {message}
           </div>
         </div>
@@ -98,7 +125,7 @@ export const MainLayout: React.FC<{ children: React.ReactNode; title?: string; n
   const hasTicker = ticker && ticker.enabled && ticker.message.trim();
 
   return (
-    <div className="flex flex-col h-screen w-screen bg-background transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
+    <div className="flex flex-col h-full w-full bg-background transition-colors duration-500 overflow-hidden print:h-auto print:overflow-visible">
       {hasTicker && (
         <TickerBanner message={ticker.message} icon={ticker.icon} />
       )}

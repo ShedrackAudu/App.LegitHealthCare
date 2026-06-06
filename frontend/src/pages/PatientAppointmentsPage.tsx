@@ -4,19 +4,20 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Clock, 
-  Loader2,
-  AlertCircle,
-  Calendar,
-  User,
-  Building2,
-  Mail,
-  Phone,
-  Globe,
-  CheckCircle2,
-  ArrowRight
-} from 'lucide-react';
+  Clock01Icon, 
+  Loading03Icon,
+  AlertCircleIcon,
+  Calendar03Icon,
+  UserIcon,
+  Building02Icon,
+  Mail01Icon,
+  CallIcon,
+  GlobeIcon,
+  CheckmarkCircle02Icon,
+  ArrowRight01Icon
+} from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -55,7 +56,7 @@ type AppointmentValues = z.infer<typeof appointmentSchema>;
 const BioItem = ({ label, value, icon: Icon }: any) => (
     <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 transition-all group">
         <div className="p-2 rounded-lg bg-background border shadow-sm text-primary group-hover:scale-105 transition-transform shrink-0">
-            <Icon className="h-4 w-4" />
+            <HugeiconsIcon icon={Icon} className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
             <p className="text-[9px] uppercase tracking-widest font-black text-muted-foreground leading-none mb-1">{label}</p>
@@ -168,13 +169,13 @@ const PatientAppointmentsPage = () => {
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-5 md:p-8 text-white shadow-xl shadow-amber-500/20 group">
           {/* Integrated Background Icon */}
           <div className="absolute -right-10 -bottom-10 w-48 h-48 text-white/[0.12] pointer-events-none -rotate-12 transition-transform duration-1000 group-hover:rotate-0">
-             <Calendar className="w-full h-full stroke-[1.5]" />
+             <HugeiconsIcon icon={Calendar03Icon} className="w-full h-full stroke-[1.5]" />
           </div>
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2" />
           
           <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-4">
              <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[8px] md:text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
-               <Clock className="w-2.5 h-2.5" /> Scheduling Active
+               <HugeiconsIcon icon={Clock01Icon} className="w-2.5 h-2.5" /> Scheduling Active
              </div>
              <div className="space-y-1.5">
                 <h1 className="text-xl md:text-3xl font-black tracking-tight leading-none">Book Appointment</h1>
@@ -187,7 +188,7 @@ const PatientAppointmentsPage = () => {
 
         {loadingProfile ? (
             <div className="flex flex-col items-center justify-center py-40">
-                <Loader2 className="h-12 w-12 animate-spin text-amber-500 mb-4" />
+                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-amber-500 mb-4" />
                 <p className="text-sm font-black uppercase tracking-widest text-muted-foreground animate-pulse">Synchronizing Patient ID...</p>
             </div>
         ) : (
@@ -199,7 +200,7 @@ const PatientAppointmentsPage = () => {
                         <CardHeader className="bg-primary/5 border-b border-primary/10 p-5">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
-                                    <User className="h-5 w-5" />
+                                    <HugeiconsIcon icon={UserIcon} className="h-5 w-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
                                     <CardTitle className="text-base font-black leading-none truncate">{profile?.first_name} {profile?.last_name}</CardTitle>
@@ -208,20 +209,20 @@ const PatientAppointmentsPage = () => {
                                             {profile?.staff_id}
                                         </span>
                                         <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase">
-                                            <CheckCircle2 className="w-2.5 h-2.5" /> Active
+                                            <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-2.5 h-2.5" /> Active
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-4 space-y-2 bg-muted/5">
-                            <BioItem label="DEPARTMENT" value={profile?.department} icon={Building2} />
-                            <BioItem label="CONTACT PHONE" value={profile?.phone} icon={Phone} />
-                            <BioItem label="EMAIL ADDRESS" icon={Mail} value={profile?.email} />
-                            <BioItem label="GENDER / AGE" value={`${profile?.gender} • ${profile?.age} yrs`} icon={User} />
+                            <BioItem label="DEPARTMENT" value={profile?.department} icon={Building02Icon} />
+                            <BioItem label="CONTACT PHONE" value={profile?.phone} icon={CallIcon} />
+                            <BioItem label="EMAIL ADDRESS" icon={Mail01Icon} value={profile?.email} />
+                            <BioItem label="GENDER / AGE" value={`${profile?.gender} • ${profile?.age} yrs`} icon={UserIcon} />
                             <div className="pt-2 px-1">
                                 <Button variant="link" className="px-0 h-auto font-bold text-[11px] text-primary group" onClick={() => window.location.href='/patient/account'}>
-                                    Profile Settings <ArrowRight className="ml-1.5 w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                                    Profile Settings <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1.5 w-3 h-3 group-hover:translate-x-1 transition-transform" />
                                 </Button>
                             </div>
                         </CardContent>
@@ -247,7 +248,7 @@ const PatientAppointmentsPage = () => {
                                 <div className="space-y-1">
                                     <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-70">Preferred Date <span className="text-red-500">*</span></Label>
                                     <div className="relative group">
-                                        <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary transition-colors z-10" />
+                                        <HugeiconsIcon icon={Calendar03Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary transition-colors z-10" />
                                         <Input 
                                             type="date"
                                             min={today}
@@ -258,7 +259,7 @@ const PatientAppointmentsPage = () => {
                                     <div className="flex justify-between items-center px-0.5">
                                          {errors.appointment_date ? (
                                             <p className="text-[9px] text-red-500 font-bold flex items-center gap-1">
-                                                <AlertCircle className="h-2.5 w-2.5" />
+                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                                 {errors.appointment_date.message}
                                             </p>
                                         ) : (
@@ -270,12 +271,12 @@ const PatientAppointmentsPage = () => {
                                 <div className="space-y-2">
                                     <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-70">
                                         Time Slot <span className="text-red-500">*</span>
-                                        {fetchingSlots && <Loader2 className="inline ml-2 h-2.5 w-2.5 animate-spin text-primary" />}
+                                        {fetchingSlots && <HugeiconsIcon icon={Loading03Icon} className="inline ml-2 h-2.5 w-2.5 animate-spin text-primary" />}
                                     </Label>
                                     
                                     {!selectedDate ? (
                                         <div className="py-4 rounded-xl bg-muted/5 border border-dashed border-muted/20 flex items-center justify-center gap-2 text-muted-foreground/30">
-                                            <Clock className="w-3.5 h-3.5 opacity-20" />
+                                            <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 opacity-20" />
                                             <p className="text-[8px] font-black uppercase tracking-[0.2em]">Select a date first</p>
                                         </div>
                                     ) : (
@@ -309,7 +310,7 @@ const PatientAppointmentsPage = () => {
                                     )}
                                     {errors.time_slot && (
                                         <p className="text-[9px] text-red-500 font-bold flex items-center gap-1 ml-0.5">
-                                            <AlertCircle className="h-2.5 w-2.5" />
+                                            <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                             {errors.time_slot.message}
                                         </p>
                                     )}
@@ -325,7 +326,7 @@ const PatientAppointmentsPage = () => {
                                     <div className="flex justify-between items-center px-0.5">
                                         {errors.reason && (
                                             <p className="text-[9px] text-red-500 font-bold flex items-center gap-1">
-                                                <AlertCircle className="h-2.5 w-2.5" />
+                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                                 {errors.reason.message}
                                             </p>
                                         )}
@@ -338,26 +339,17 @@ const PatientAppointmentsPage = () => {
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
-                                disabled={isBooking}
+                                loading={isBooking}
                                 size="lg"
                                 className="w-full h-11 rounded-xl text-xs font-black gap-2 shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all bg-primary shadow-primary/20"
                             >
-                                {isBooking ? (
-                                    <>
-                                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
-                                        Confirming...
-                                    </>
-                                ) : (
-                                    <>
-                                        <CheckCircle2 className="h-4 w-4" />
-                                        Complete Booking
-                                    </>
-                                )}
+                                {!isBooking && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
+                                Complete Booking
                             </Button>
 
                             <div className="p-3.5 rounded-xl bg-primary/5 border border-dashed border-primary/10 flex gap-3">
                                 <div className="p-1 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
-                                     <Globe className="w-3 h-3" />
+                                     <HugeiconsIcon icon={GlobeIcon} className="w-3 h-3" />
                                 </div>
                                 <div className="space-y-0.5">
                                     <p className="text-[9px] font-black text-emerald-800 uppercase tracking-wider opacity-60">Next Steps</p>
@@ -376,7 +368,7 @@ const PatientAppointmentsPage = () => {
                                             <CardTitle className="text-lg md:text-xl font-black">Visit History</CardTitle>
                                             <CardDescription className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">Status of your clinic appointments</CardDescription>
                                         </div>
-                                        {fetchingAppointments && <Loader2 className="h-4 w-4 animate-spin text-primary" />}
+                                        {fetchingAppointments && <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-primary" />}
                                     </div>
                                 </CardHeader>
                                 <CardContent className="p-0">
@@ -403,11 +395,11 @@ const PatientAppointmentsPage = () => {
                                                             <TableCell className="py-4 pl-6">
                                                                 <div className="space-y-1">
                                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
-                                                                        <Calendar className="h-3.5 w-3.5 text-primary" />
+                                                                        <HugeiconsIcon icon={Calendar03Icon} className="h-3.5 w-3.5 text-primary" />
                                                                         {new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                                     </div>
                                                                     <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground/60">
-                                                                        <Clock className="h-3.5 w-3.5" />
+                                                                        <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
                                                                         {app.time_slot}
                                                                     </div>
                                                                 </div>
@@ -454,7 +446,7 @@ const PatientAppointmentsPage = () => {
                                                 <div key={app.id} className="p-4 rounded-xl border bg-muted/5 space-y-3">
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex items-center gap-2">
-                                                            <Calendar className="h-4 w-4 text-primary" />
+                                                            <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4 text-primary" />
                                                             <p className="text-xs font-black">{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
                                                         </div>
                                                         <Badge className={`${
@@ -466,7 +458,7 @@ const PatientAppointmentsPage = () => {
                                                         </Badge>
                                                     </div>
                                                     <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
-                                                        <Clock className="h-3 w-3" />
+                                                        <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
                                                         {app.time_slot}
                                                     </div>
                                                     <div className="pt-2 border-t border-dashed border-muted/20">

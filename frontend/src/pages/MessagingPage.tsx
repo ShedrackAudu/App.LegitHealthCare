@@ -1,31 +1,32 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { 
-  Search, 
-  Send, 
-  Mic, 
-  Smile, 
-  Paperclip, 
-  MoreVertical, 
-  Phone, 
-  Video,
-  User,
-  Users,
-  Check,
-  CheckCheck,
-  ArrowLeft,
-  Bot,
-  Plus,
-  Loader2,
-  Trash2,
-  AlertTriangle,
-  Mail,
-  ShieldCheck,
-  Reply,
-  X,
-  XCircle,
-  Volume2,
-  VolumeX
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Search01Icon,
+  SentIcon,
+  Mic01Icon,
+  SmileIcon,
+  Attachment01Icon,
+  MoreVerticalIcon,
+  CallIcon,
+  Video01Icon,
+  UserIcon,
+  UserGroupIcon,
+  CheckmarkCircle02Icon,
+  TickDouble01Icon,
+  ArrowLeft01Icon,
+  MachineRobotIcon,
+  PlusSignIcon,
+  Loading03Icon,
+  Delete02Icon,
+  Alert01Icon,
+  Mail01Icon,
+  Shield01Icon,
+  MailReply01Icon,
+  Cancel01Icon,
+  CancelCircleIcon,
+  VolumeHighIcon,
+  VolumeMute01Icon
+} from '@hugeicons/core-free-icons';
 import { 
   Dialog,
   DialogContent,
@@ -37,6 +38,7 @@ import { useAppContext } from '@/context/AppContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
@@ -83,7 +85,7 @@ export default function MessagingPage() {
   const [activeActionsId, setActiveActionsId] = useState<number | null>(null);
   const longPressTimer = useRef<any>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
-  const messageInputRef = useRef<HTMLInputElement>(null);
+  const messageInputRef = useRef<HTMLTextAreaElement>(null);
 
   // Group Management State
   const [isManagingMembers, setIsManagingMembers] = useState(false);
@@ -409,6 +411,18 @@ export default function MessagingPage() {
     }
   };
 
+  const changeMemberRole = async (targetUserId: number, role: 'Admin' | 'Member') => {
+    if (!activeChat) return;
+    const gid = activeChat.id.split('_')[1];
+    try {
+      await axios.put(`/api/messages/groups/${gid}/members/${targetUserId}/role`, { role });
+      toast.success(`Role updated to ${role}`);
+      fetchGroupMembers(gid);
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update member role");
+    }
+  };
+
   const deleteMessage = async (msgId: number) => {
     try {
       await axios.delete(`/api/messages/messages/${msgId}`);
@@ -520,12 +534,12 @@ export default function MessagingPage() {
   };
 
   return (
-    <MainLayout>
-      <div className="flex h-[calc(100vh-135px)] bg-card rounded-2xl border-2 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-500">
+    <MainLayout noScroll={true}>
+      <div className="flex h-full w-full bg-card rounded-2xl border-2 overflow-hidden shadow-2xl animate-in fade-in zoom-in-95 duration-500">
       
       {/* Conversations Sidebar */}
       <div className={cn(
-        "w-full md:w-80 md:min-w-80 md:max-w-80 shrink-0 border-r flex flex-col bg-muted/10",
+        "w-full md:w-80 md:min-w-80 md:max-w-80 shrink-0 border-r flex flex-col bg-muted/10 relative",
         activeChat ? "hidden md:flex" : "flex"
       )}>
         <div className="p-4 border-b space-y-4">
@@ -542,7 +556,7 @@ export default function MessagingPage() {
                   onClick={() => setIsMuted(!isMuted)}
                   title={isMuted ? "Unmute Notifications" : "Mute Notifications"}
               >
-                {isMuted ? <VolumeX className="h-4 w-4" /> : <Volume2 className="h-4 w-4" />}
+                {isMuted ? <HugeiconsIcon icon={VolumeMute01Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={VolumeHighIcon} className="h-4 w-4" />}
               </Button>
               <Button 
                   size="sm" 
@@ -550,12 +564,12 @@ export default function MessagingPage() {
                   className="h-9 px-4 rounded-xl gap-2 font-black uppercase text-[10px] tracking-widest shadow-lg shadow-primary/20 hover:scale-105 transition-all bg-primary" 
                   onClick={openNewGroup}
               >
-                <Plus className="h-4 w-4" /> New Group
+                <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4" /> Group
               </Button>
             </div>
           </div>
           <div className="relative">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input 
               placeholder="Search users..." 
               className="pl-9 bg-card border-none ring-1 ring-border focus-visible:ring-primary/50"
@@ -565,9 +579,9 @@ export default function MessagingPage() {
           </div>
         </div>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 min-w-0 w-full">
           {searchQuery.length >= 2 ? (
-            <div className="p-2 space-y-1">
+            <div className="px-4 py-2 space-y-1 w-full">
               <p className="text-[10px] font-bold text-muted-foreground uppercase px-3 py-1">Search Results</p>
               {searchResults.map(u => (
                 <button 
@@ -589,7 +603,7 @@ export default function MessagingPage() {
               {searchResults.length === 0 && <div className="p-4 text-center text-xs text-muted-foreground">No users found</div>}
             </div>
           ) : (
-            <div className="p-2 space-y-1">
+            <div className="px-4 py-2 space-y-1 w-full">
               {conversations.map(conv => (
                 <button 
                   key={conv.id}
@@ -605,7 +619,7 @@ export default function MessagingPage() {
                         "font-bold",
                         activeChat?.id === conv.id ? "bg-primary-foreground/20" : "bg-primary/5 text-primary"
                       )}>
-                      {conv.type === 'direct' ? conv.other_user?.first_name?.[0] : <Users className="h-5 w-5" />}
+                      {conv.type === 'direct' ? conv.other_user?.first_name?.[0] : <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />}
                       </AvatarFallback>
                     </Avatar>
                     {conv.type === 'direct' && (
@@ -616,13 +630,13 @@ export default function MessagingPage() {
                     )}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-baseline gap-1">
-                      <div className="font-bold text-sm truncate">
+                    <div className="flex justify-between items-baseline gap-2 min-w-0">
+                      <div className="font-bold text-sm truncate min-w-0">
                         {conv.type === 'direct' ? `${conv.other_user.first_name} ${conv.other_user.last_name}` : conv.group.name}
                       </div>
                       {conv.last_message && (
                         <div className={cn(
-                            "text-[10px] whitespace-nowrap opacity-70",
+                            "text-[10px] whitespace-nowrap opacity-70 shrink-0",
                             activeChat?.id === conv.id ? "text-primary-foreground" : "text-muted-foreground"
                         )}>
                           {format(new Date(conv.last_message.created_at), 'HH:mm')}
@@ -665,7 +679,7 @@ export default function MessagingPage() {
               {conversations.length === 0 && (
                 <div className="p-8 text-center space-y-2">
                   <div className="w-12 h-12 bg-primary/5 rounded-full flex items-center justify-center mx-auto">
-                    <Search className="h-6 w-6 text-primary/40" />
+                    <HugeiconsIcon icon={Search01Icon} className="h-6 w-6 text-primary/40" />
                   </div>
                   <p className="text-xs text-muted-foreground">Search users to start chatting</p>
                 </div>
@@ -673,6 +687,15 @@ export default function MessagingPage() {
             </div>
           )}
         </ScrollArea>
+        {/* Floating New Chat Button */}
+        <Button
+          size="icon"
+          onClick={openNewChat}
+          className="absolute bottom-4 right-4 h-12 w-12 rounded-full shadow-2xl hover:scale-110 active:scale-95 transition-all duration-200 bg-primary text-primary-foreground z-20 hover:bg-primary/90 animate-in zoom-in md:hidden"
+          title="New Chat"
+        >
+          <HugeiconsIcon icon={PlusSignIcon} className="h-6 w-6" />
+        </Button>
       </div>
 
       {/* Active Chat Area */}
@@ -686,7 +709,7 @@ export default function MessagingPage() {
             <div className="h-16 border-b flex items-center justify-between px-4 bg-card/50 backdrop-blur-md sticky top-0 z-10">
               <div className="flex items-center gap-3">
                 <Button variant="ghost" size="icon" className="md:hidden" onClick={() => setActiveChat(null)}>
-                  <ArrowLeft className="h-5 w-5" />
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5" />
                 </Button>
                 <Avatar className="h-10 w-10 border-2 border-primary/10">
                   <AvatarFallback className="bg-primary/5 text-primary font-bold uppercase text-xs">
@@ -716,34 +739,47 @@ export default function MessagingPage() {
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><Phone className="h-4 w-4" /></Button>
-                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><Video className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={CallIcon} className="h-4 w-4" /></Button>
+                <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={Video01Icon} className="h-4 w-4" /></Button>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
-                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><MoreVertical className="h-4 w-4" /></Button>
+                    <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-primary"><HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" /></Button>
                   </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)}>View Profile/Settings</DropdownMenuItem>
+                  <DropdownMenuContent align="end" className="w-56">
+                    <DropdownMenuItem onClick={() => setIsProfileOpen(true)} className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={UserIcon} className="h-4 w-4 text-muted-foreground" />
+                      <span>View Profile/Settings</span>
+                    </DropdownMenuItem>
                     {activeChat.type === 'group' && (
-                      <DropdownMenuItem onClick={() => { setIsManagingMembers(true); setIsAddingToGroup(false); }}>
-                        Manage Group Members
+                      <DropdownMenuItem onClick={() => { setIsManagingMembers(true); setIsAddingToGroup(false); }} className="flex items-center gap-2 cursor-pointer">
+                        <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4 text-muted-foreground" />
+                        <span>Manage Group Members</span>
                       </DropdownMenuItem>
                     )}
-                    <DropdownMenuItem>Search Chat</DropdownMenuItem>
-                    <DropdownMenuItem>Mute Notifications</DropdownMenuItem>
-                    <DropdownMenuItem className="text-rose-500 font-bold" onClick={() => setIsDeleteModalOpen(true)}>
-                      <Trash2 className="h-4 w-4 mr-2" />
-                      {activeChat.type === 'group' ? 'Clear Group History' : 'Delete Conversation'}
+                    <DropdownMenuItem className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={Search01Icon} className="h-4 w-4 text-muted-foreground" />
+                      <span>Search Chat</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => setIsMuted(!isMuted)} className="flex items-center gap-2 cursor-pointer">
+                      <HugeiconsIcon icon={isMuted ? VolumeHighIcon : VolumeMute01Icon} className="h-4 w-4 text-muted-foreground" />
+                      <span>{isMuted ? 'Unmute Notifications' : 'Mute Notifications'}</span>
+                    </DropdownMenuItem>
+                    <DropdownMenuItem className="text-rose-500 font-bold flex items-center gap-2 cursor-pointer" onClick={() => setIsDeleteModalOpen(true)}>
+                      <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
+                      <span>{activeChat.type === 'group' ? 'Clear Group History' : 'Delete Conversation'}</span>
                     </DropdownMenuItem>
 
                     {activeChat.type === 'group' && groupRole === 'Admin' && (
-                      <DropdownMenuItem className="text-rose-600 font-black" onClick={() => setIsDeleteGroupModalOpen(true)}>
-                        <XCircle className="h-4 w-4 mr-2" />
-                        Delete Entire Group
+                      <DropdownMenuItem className="text-rose-600 font-black flex items-center gap-2 cursor-pointer" onClick={() => setIsDeleteGroupModalOpen(true)}>
+                        <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4" />
+                        <span>Delete Entire Group</span>
                       </DropdownMenuItem>
                     )}
                     
-                    <DropdownMenuItem className="text-zinc-500 opacity-50">Block User</DropdownMenuItem>
+                    <DropdownMenuItem className="text-zinc-500 opacity-50 flex items-center gap-2 cursor-not-allowed">
+                      <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
+                      <span>Block User</span>
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
               </div>
@@ -783,7 +819,7 @@ export default function MessagingPage() {
                                     "border-muted-foreground/20 rounded-tl-none text-left"
                                   )}>
                                    <span className="font-bold block text-[9px] uppercase tracking-tighter mb-1 font-sans text-primary/80">
-                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "Reply")}
+                                     {parentMsg.sender_id === user.id ? "Your Message" : (parentMsg.sender_name || "MailReply01Icon")}
                                    </span>
                                    <div className="text-[11px] line-clamp-2 break-words leading-relaxed text-muted-foreground">
                                      {parentMsg.content}
@@ -846,9 +882,9 @@ export default function MessagingPage() {
                                          messageInputRef.current?.focus();
                                          setActiveActionsId(null);
                                      }}
-                                     title="Reply"
+                                     title="MailReply01Icon"
                                  >
-                                     <Reply className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={MailReply01Icon} className="h-3.5 w-3.5" />
                                  </Button>
                                  <Button 
                                      variant="ghost" 
@@ -864,7 +900,7 @@ export default function MessagingPage() {
                                      }}
                                      title="React"
                                  >
-                                     <Smile className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={SmileIcon} className="h-3.5 w-3.5" />
                                  </Button>
                                  {groupRole === 'Admin' && (
                                      <Button 
@@ -874,7 +910,7 @@ export default function MessagingPage() {
                                          onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
                                          title="Delete (Admin)"
                                      >
-                                         <Trash2 className="h-3.5 w-3.5" />
+                                         <HugeiconsIcon icon={Delete02Icon} className="h-3.5 w-3.5" />
                                      </Button>
                                  )}
                               </div>
@@ -897,9 +933,9 @@ export default function MessagingPage() {
                                          messageInputRef.current?.focus();
                                          setActiveActionsId(null);
                                      }}
-                                     title="Reply"
+                                     title="MailReply01Icon"
                                  >
-                                     <Reply className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={MailReply01Icon} className="h-3.5 w-3.5" />
                                  </Button>
                                  <Button 
                                      variant="ghost" 
@@ -915,7 +951,7 @@ export default function MessagingPage() {
                                      }}
                                      title="React"
                                  >
-                                     <Smile className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={SmileIcon} className="h-3.5 w-3.5" />
                                  </Button>
                                  <Button 
                                      variant="ghost" 
@@ -924,7 +960,7 @@ export default function MessagingPage() {
                                      onClick={(e) => { e.stopPropagation(); deleteMessage(msg.id); }}
                                      title="Delete"
                                  >
-                                     <Trash2 className="h-3.5 w-3.5" />
+                                     <HugeiconsIcon icon={Delete02Icon} className="h-3.5 w-3.5" />
                                  </Button>
                               </div>
                             )}
@@ -962,7 +998,7 @@ export default function MessagingPage() {
                                  {!msg.is_deleted && (
                                    <div className="flex items-center gap-1 mt-1 justify-end opacity-60 text-[9px] text-primary-foreground">
                                      {format(new Date(msg.created_at), 'HH:mm')}
-                                     {msg.read_at ? <CheckCheck className="h-3 w-3" /> : <Check className="h-3 w-3" />}
+                                     {msg.read_at ? <HugeiconsIcon icon={TickDouble01Icon} className="h-3 w-3" /> : <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-3 w-3" />}
                                    </div>
                                  )}
                                </div>
@@ -1021,7 +1057,7 @@ export default function MessagingPage() {
                             <p className="text-xs text-muted-foreground truncate">{replyingTo.content}</p>
                         </div>
                         <Button variant="ghost" size="icon" className="h-7 w-7 rounded-full" onClick={() => setReplyingTo(null)}>
-                            <X className="h-4 w-4" />
+                            <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
                         </Button>
                     </div>
                 )}
@@ -1037,7 +1073,7 @@ export default function MessagingPage() {
                       setShowEmojiPicker(!showEmojiPicker);
                     }}
                   >
-                    <Smile className="h-5 w-5" />
+                    <HugeiconsIcon icon={SmileIcon} className="h-5 w-5" />
                   </Button>
                   
                   {showEmojiPicker && (
@@ -1063,41 +1099,41 @@ export default function MessagingPage() {
                     className="h-9 w-9 text-muted-foreground hover:text-primary transition-colors"
                     onClick={() => toast('Attachment feature coming soon!', { icon: '📂' })}
                   >
-                    <Paperclip className="h-5 w-5" />
+                    <HugeiconsIcon icon={Attachment01Icon} className="h-5 w-5" />
                   </Button>
                 </div>
                 <div className="flex-1 relative group">
-                  <Input 
+                  <Textarea 
                     ref={messageInputRef}
                     placeholder="Type a message..." 
-                    className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 h-11 rounded-xl transition-all font-medium py-3"
+                    className="pr-12 bg-muted/30 border-none ring-1 ring-border focus-visible:ring-primary/40 min-h-[44px] max-h-32 rounded-xl transition-all font-medium py-2.5 resize-none overflow-y-auto w-full"
+                    rows={1}
                     value={newMessage}
                     onChange={(e) => {
                       setNewMessage(e.target.value);
                       handleTyping(e.target.value.length > 0);
                     }}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') sendMessage();
-                    }}
                     onBlur={() => handleTyping(false)}
                   />
-                  <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1">
+                  <div className="absolute right-3 bottom-1.5 flex items-center gap-1">
                     {newMessage.trim() === '' ? (
                       <Button 
+                        type="button"
                         variant="ghost" 
                         size="icon" 
                         className="h-8 w-8 text-primary/60 hover:text-primary hover:bg-primary/10 rounded-full transition-all"
                         onClick={() => toast('Voice notes coming soon!', { icon: '🎙️' })}
                       >
-                        <Mic className="h-5 w-5" />
+                        <HugeiconsIcon icon={Mic01Icon} className="h-5 w-5" />
                       </Button>
                     ) : (
                       <Button 
+                        type="button"
                         size="icon" 
                         className="h-8 w-8 rounded-full shadow-lg shadow-primary/20 animate-in zoom-in-50 duration-200"
                         onClick={sendMessage}
                       >
-                        <Send className="h-4 w-4" />
+                        <HugeiconsIcon icon={SentIcon} className="h-4 w-4" />
                       </Button>
                     )}
                   </div>
@@ -1110,8 +1146,8 @@ export default function MessagingPage() {
           <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-6">
             <div className="relative">
               <div className="w-32 h-32 bg-primary/5 rounded-full flex items-center justify-center blur-2xl absolute inset-0 -z-10 animate-pulse" />
-              <div className="w-24 h-24 bg-card rounded-3xl border-2 flex items-center justify-center shadow-xl transform rotate-12 transition-transform hover:rotate-0 duration-500">
-                <Bot className="h-10 w-10 text-primary" />
+              <div className="w-24 h-24 bg-card rounded-3xl border-2 flex items-center justify-center shadow-xl">
+                <HugeiconsIcon icon={MachineRobotIcon} className="h-10 w-10 text-primary" />
               </div>
             </div>
             <div className="max-w-xs space-y-2">
@@ -1167,7 +1203,7 @@ export default function MessagingPage() {
               </div>
             )}
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
               <Input 
                 placeholder="Search staff members..." 
                 className="pl-9 h-11"
@@ -1181,7 +1217,7 @@ export default function MessagingPage() {
               <ScrollArea className="h-[250px] pr-4">
                 {loadingUsers ? (
                   <div className="flex items-center justify-center h-full">
-                    <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 text-primary animate-spin" />
                   </div>
                 ) : (
                   <div className="space-y-1 pt-1">
@@ -1209,7 +1245,7 @@ export default function MessagingPage() {
                           </Avatar>
                           {selectedMembers.includes(u.id) && (
                             <div className="absolute -top-1 -right-1 bg-primary text-primary-foreground rounded-full p-0.5 animate-in zoom-in">
-                              <Check className="h-3 w-3" />
+                              <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-3 w-3" />
                             </div>
                           )}
                         </div>
@@ -1284,7 +1320,7 @@ export default function MessagingPage() {
                         fetchAvailableUsers(); 
                     }}
                 >
-                  <Plus className="h-3.5 w-3.5 mr-1" /> Add People
+                  <HugeiconsIcon icon={PlusSignIcon} className="h-3.5 w-3.5 mr-1" /> Add People
                 </Button>
               )}
             </div>
@@ -1323,14 +1359,28 @@ export default function MessagingPage() {
                                 {m.role}
                             </Badge>
                             {groupRole === 'Admin' && m.id !== user.id && (
+                              <div className="flex items-center gap-1">
+                                {m.role !== 'Admin' && (
+                                  <Button 
+                                      variant="ghost" 
+                                      size="icon" 
+                                      className="h-8 w-8 text-muted-foreground hover:text-amber-500 opacity-0 group-hover/member:opacity-100 transition-all rounded-full"
+                                      onClick={() => changeMemberRole(m.id, 'Admin')}
+                                      title="Make Admin"
+                                  >
+                                      <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />
+                                  </Button>
+                                )}
                                 <Button 
                                     variant="ghost" 
                                     size="icon" 
                                     className="h-8 w-8 text-muted-foreground hover:text-rose-500 opacity-0 group-hover/member:opacity-100 transition-all rounded-full"
                                     onClick={() => removeGroupMember(m.id)}
+                                    title="Remove Member"
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                 </Button>
+                              </div>
                             )}
                         </div>
                       </div>
@@ -1348,7 +1398,7 @@ export default function MessagingPage() {
             ) : (
               <div className="space-y-4 animate-in slide-in-from-right-4">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input 
                     placeholder="Search people to add..." 
                     className="pl-9 h-11 font-bold"
@@ -1359,7 +1409,7 @@ export default function MessagingPage() {
                 <ScrollArea className="h-[250px] border-2 rounded-xl p-2 bg-muted/10">
                   {loadingUsers ? (
                     <div className="flex flex-col items-center justify-center h-full space-y-2 py-8">
-                      <Loader2 className="h-8 w-8 text-primary animate-spin" />
+                      <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 text-primary animate-spin" />
                       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Loading People...</p>
                     </div>
                   ) : (
@@ -1398,7 +1448,7 @@ export default function MessagingPage() {
                             </div>
                             <div className={cn("text-[10px]", selectedMembers.includes(u.id) ? "text-white/70" : "text-muted-foreground")}>@{u.username}</div>
                           </div>
-                          {selectedMembers.includes(u.id) ? <Check className="h-4 w-4 text-white" /> : <Plus className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />}
+                          {selectedMembers.includes(u.id) ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4 text-white" /> : <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4 text-muted-foreground opacity-0 group-hover:opacity-100" />}
                         </button>
                       ))}
                       {(groupSearchQuery.length > 0 && availableUsers.filter((u: any) => 
@@ -1464,12 +1514,12 @@ export default function MessagingPage() {
                 </div>
 
                 <div className="grid grid-cols-1 gap-4 text-left">
-                  <ProfileInfoItem label="Email Address" value={activeChat.other_user.email} icon={Mail} isLink />
-                  <ProfileInfoItem label="Phone Number" value={activeChat.other_user.phone} icon={Phone} isLink />
+                  <ProfileInfoItem label="Email Address" value={activeChat.other_user.email} icon={Mail01Icon} isLink />
+                  <ProfileInfoItem label="Phone Number" value={activeChat.other_user.phone} icon={CallIcon} isLink />
                   
                   <div className="space-y-2 mt-2 pt-4 border-t">
                     <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground flex items-center gap-2">
-                       <ShieldCheck className="h-3 w-3" /> System Roles
+                       <HugeiconsIcon icon={Shield01Icon} className="h-3 w-3" /> System Roles
                     </p>
                     <div className="flex flex-wrap gap-1.5 pt-1">
                       {activeChat.other_user.roles?.map((role: string) => (

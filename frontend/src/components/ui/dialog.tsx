@@ -2,7 +2,8 @@
 
 import * as React from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { X } from "lucide-react"
+import { HugeiconsIcon } from '@hugeicons/react'
+import { Cancel01Icon } from '@hugeicons/core-free-icons'
 import { cn } from "@/lib/utils"
 
 // Custom Dialog Implementation (Replaces @radix-ui/react-dialog)
@@ -91,7 +92,7 @@ const DialogContent: React.FC<{ children: React.ReactNode; className?: string; h
               onClick={() => context.setOpen(false)}
               className="absolute right-4 top-4 rounded-full p-1 opacity-70 transition-opacity hover:bg-muted hover:opacity-100 focus:outline-none"
             >
-              <X className="h-4 w-4" />
+              <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
               <span className="sr-only">Close</span>
             </button>
           )}

@@ -1,21 +1,18 @@
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Activity, 
-  FileText, 
-  Calendar, 
-  ArrowRight, 
-  Shield, 
-  Clock,
-  TrendingUp,
-  CheckCircle2,
-  AlertCircle,
-  User,
-  Building2,
-  Download,
-  Smartphone,
-  X
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Clock01Icon,
+  CheckmarkCircle01Icon,
+  Cancel01Icon,
+  SmartPhone01Icon,
+  Download01Icon,
+  Activity01Icon,
+  Shield01Icon,
+  Note01Icon,
+  Calendar03Icon,
+  AlertCircleIcon
+} from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
@@ -202,13 +199,13 @@ const PatientDashboard = () => {
           <div>
             <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/70">Patient Overview</h2>
             <div className="flex items-center gap-1.5 text-muted-foreground font-bold text-[10px]">
-               <Clock className="w-3 h-3 text-primary" />
+               <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-primary" />
                <span className="tabular-nums">{formatDateTime(currentTime).replace(' - ', ' | ')}</span>
             </div>
           </div>
           <div className="flex gap-1.5">
              <div className="px-2 py-1 bg-primary/10 text-primary rounded-lg border border-primary/10 flex items-center gap-1 text-[9px] font-black">
-                <CheckCircle2 className="w-3 h-3" /> Verified
+                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3 h-3" /> Verified
              </div>
           </div>
         </div>
@@ -230,18 +227,18 @@ const PatientDashboard = () => {
                   className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
                   aria-label="Dismiss"
                 >
-                  <X className="h-4 w-4" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
                 </button>
-
+ 
                 {/* Background decoration */}
                 <div className="absolute -right-6 -bottom-6 w-32 h-32 text-primary/[0.06] pointer-events-none">
-                  <Smartphone className="w-full h-full" />
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-full h-full" />
                 </div>
-
+ 
                 <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-3">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className="h-11 w-11 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
-                      <Download className="h-5 w-5 text-primary" />
+                      <HugeiconsIcon icon={Download01Icon} className="h-5 w-5 text-primary" />
                     </div>
                     <div className="min-w-0">
                       <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
@@ -250,12 +247,12 @@ const PatientDashboard = () => {
                       </p>
                     </div>
                   </div>
-
+ 
                   <Button
                     onClick={handleInstallClick}
                     className="w-full sm:w-auto h-10 sm:h-9 rounded-lg font-black text-xs uppercase tracking-wider shadow-lg shadow-primary/20 active:scale-95 transition-all shrink-0 gap-2"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
                     Install Now
                   </Button>
                 </div>
@@ -269,10 +266,9 @@ const PatientDashboard = () => {
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
           className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-5 md:p-6 text-primary-foreground shadow-xl shadow-primary/20"
-        >
-          {/* Background Integrated Icon and Decorative Circles */}
+        >          {/* Background Integrated Icon and Decorative Circles */}
           <div className="absolute -right-12 -bottom-12 w-64 h-64 text-white/[0.07] pointer-events-none -rotate-12 transition-transform duration-1000 group-hover:rotate-0">
-            <Activity className="w-full h-full stroke-[1.5]" />
+            <HugeiconsIcon icon={Activity01Icon} className="w-full h-full stroke-[1.5]" />
           </div>
           <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
           <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/4" />
@@ -280,7 +276,7 @@ const PatientDashboard = () => {
           <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
             <div className="space-y-3.5 text-left flex-1">
                <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
-                 <Shield className="w-2.5 h-2.5" /> NHA & NDPA Secured
+                 <HugeiconsIcon icon={Shield01Icon} className="w-2.5 h-2.5" /> NHA & NDPA Secured
                </div>
                <h1 className="text-xl md:text-3xl font-black tracking-tight leading-tight">
                   Welcome back, <br />
@@ -291,7 +287,7 @@ const PatientDashboard = () => {
                   Access your screening reports, schedule clinical visits, and track your wellness progress.
                </p>
             </div>
-
+ 
             <div className="flex flex-row gap-2 shrink-0 w-full lg:w-auto mt-0">
                <button 
                  className={`flex-1 lg:flex-none rounded-lg font-black px-3 h-8 text-[9px] uppercase tracking-wider shadow-lg active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
@@ -307,11 +303,11 @@ const PatientDashboard = () => {
                    }
                  }}
                >
-                 {(reportProgress?.percentage || 0) < 100 ? <Shield className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
+                 {(reportProgress?.percentage || 0) < 100 ? <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3" /> : <HugeiconsIcon icon={Note01Icon} className="w-3 h-3" />}
                  Reports
                </button>
                <button className="flex-1 lg:flex-none bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg font-black px-3 h-8 text-[9px] uppercase tracking-wider active:scale-95 transition-all flex items-center justify-center gap-1.5" onClick={() => navigate('/patient/appointments')}>
-                 <Calendar className="w-3 h-3" /> Book Visit
+                 <HugeiconsIcon icon={Calendar03Icon} className="w-3 h-3" /> Book Visit
                </button>
             </div>
           </div>
@@ -327,7 +323,7 @@ const PatientDashboard = () => {
             <CardContent className="p-3 md:p-5">
               {!reportProgress ? (
                 <div className="flex items-center justify-center h-24">
-                  <Activity className="h-4 w-4 animate-spin text-primary/30" />
+                  <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4 animate-spin text-primary/30" />
                   <span className="ml-2.5 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Analyzing...</span>
                 </div>
               ) : (
@@ -351,7 +347,7 @@ const PatientDashboard = () => {
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
                             <span className="text-[13px] md:text-[27px] font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
                                 {reportProgress.percentage}%
-                            </span>
+                             </span>
                         </div>
                     </div>
                     
@@ -366,12 +362,12 @@ const PatientDashboard = () => {
                         
                         <div className="flex flex-wrap gap-1 md:gap-2">
                             <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-primary/10 rounded-md border border-primary/20 text-[8px] md:text-[11px] font-black text-primary flex items-center gap-1">
-                                <CheckCircle2 className="h-2 w-2 md:h-3.5 md:w-3.5" />
+                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-2 w-2 md:h-3.5 md:w-3.5" />
                                 {reportProgress.points}/{reportProgress.total} Items
                             </div>
                             {reportProgress.missing_count > 0 && (
                                 <div className="px-1.5 py-0.5 md:px-3 md:py-1 bg-amber-500/10 rounded-md border border-amber-500/20 text-[8px] md:text-[11px] font-black text-amber-600 flex items-center gap-1">
-                                    <AlertCircle className="h-2 w-2 md:h-3.5 md:w-3.5" />
+                                    <HugeiconsIcon icon={AlertCircleIcon} className="h-2 w-2 md:h-3.5 md:w-3.5" />
                                     {reportProgress.missing_count} Pending
                                 </div>
                             )}
@@ -425,13 +421,12 @@ const PatientDashboard = () => {
           initial="hidden"
           animate="show"
           className="grid grid-cols-2 gap-3"
-        >
-          <motion.div variants={item}>
+        >          <motion.div variants={item}>
             <Card className="border shadow-md rounded-lg overflow-hidden bg-card/40 backdrop-blur-sm">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1">
                    <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-600">
-                      <FileText className="w-3.5 h-3.5" />
+                      <HugeiconsIcon icon={Note01Icon} className="w-3.5 h-3.5" />
                    </div>
                    <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">Reports</span>
                 </div>
@@ -442,13 +437,13 @@ const PatientDashboard = () => {
               </CardContent>
             </Card>
           </motion.div>
-
+ 
           <motion.div variants={item}>
             <Card className="border shadow-md rounded-lg overflow-hidden bg-card/40 backdrop-blur-sm">
               <CardContent className="p-3">
                 <div className="flex items-center justify-between mb-1">
                    <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
-                      <Calendar className="w-3.5 h-3.5" />
+                      <HugeiconsIcon icon={Calendar03Icon} className="w-3.5 h-3.5" />
                    </div>
                    <span className="text-[7px] md:text-[8px] font-black uppercase text-muted-foreground tracking-widest">Last Screening</span>
                 </div>

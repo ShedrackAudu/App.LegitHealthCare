@@ -1,5 +1,6 @@
 import React from 'react';
-import { WifiOff, RefreshCcw, Home } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { WifiOff01Icon, ReloadIcon, Home01Icon } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 
 const OfflinePage: React.FC = () => {
@@ -12,7 +13,7 @@ const OfflinePage: React.FC = () => {
       <div className="relative mb-8">
         <div className="absolute inset-0 bg-primary/10 rounded-full scale-150 animate-pulse" />
         <div className="relative bg-card p-8 rounded-[2.5rem] shadow-2xl border-4 border-primary/10">
-          <WifiOff size={80} className="text-primary" />
+          <HugeiconsIcon icon={WifiOff01Icon} className="w-20 h-20 text-primary" />
         </div>
       </div>
 
@@ -30,7 +31,7 @@ const OfflinePage: React.FC = () => {
           onClick={handleRetry}
           className="h-14 rounded-2xl font-bold flex-1 gap-2 shadow-xl shadow-primary/20 hover:scale-105 transition-all text-lg"
         >
-          <RefreshCcw size={20} />
+          <HugeiconsIcon icon={ReloadIcon} className="w-5 h-5 animate-spin-slow" />
           Retry Connection
         </Button>
         <Button 
@@ -38,7 +39,7 @@ const OfflinePage: React.FC = () => {
           onClick={() => window.location.href = '/'}
           className="h-14 rounded-2xl font-bold flex-1 gap-2 border-2 text-lg"
         >
-          <Home size={20} />
+          <HugeiconsIcon icon={Home01Icon} className="w-5 h-5" />
           Go Home
         </Button>
       </div>

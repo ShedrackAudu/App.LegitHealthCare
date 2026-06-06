@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Database,
-  Search,
-  Trash2, 
-  Loader2,
-  ChevronRight,
-  ChevronLeft
-} from 'lucide-react';
+  Database02Icon,
+  Search01Icon,
+  Delete02Icon, 
+  Loading03Icon,
+  ArrowRight01Icon,
+  ArrowLeft01Icon
+} from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
@@ -97,9 +98,9 @@ const ViewRecordsPage: React.FC = () => {
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
                 {/* Unified Search Header style matching Director Review */}
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                            <Database className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={Database02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight">Screening Records Matrix</h1>
@@ -130,13 +131,13 @@ const ViewRecordsPage: React.FC = () => {
                     <CardContent className="p-0">
                         {loading && recordsData.records.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-20 gap-4">
-                                <Loader2 className="h-12 w-12 text-primary animate-spin" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 text-primary animate-spin" />
                                 <p className="font-bold text-muted-foreground animate-pulse">Gathering diagnostic data...</p>
                             </div>
                         ) : recordsData.records.length === 0 ? (
                             <div className="flex flex-col items-center justify-center min-h-[24rem] p-8 text-center space-y-4">
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <Search className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    <HugeiconsIcon icon={Search01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                 </div>
                                 <div className="space-y-2">
                                     <h3 className="text-xl font-black tracking-tight text-foreground/70">No screening records found</h3>
@@ -415,7 +416,7 @@ const ViewRecordsPage: React.FC = () => {
                                                                         className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
                                                                         onClick={() => setDeleteModal({ open: true, id: r.id })}
                                                                     >
-                                                                        <Trash2 className="h-4 w-4" />
+                                                                        <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                                     </Button>
                                                                 )}
                                                             </div>
@@ -432,7 +433,7 @@ const ViewRecordsPage: React.FC = () => {
                                 <div className="p-4 bg-muted/20 border-t flex items-center justify-between no-print">
                                     <div className="flex items-center gap-4">
                                         <p className="text-sm font-bold text-muted-foreground">
-                                            Total Results: <span className="text-foreground">{recordsData.total}</span>
+                                            Total: <span className="text-foreground">{recordsData.total}</span>
                                         </p>
                                         <div className="h-4 w-px bg-border" />
                                         <p className="text-sm font-bold text-muted-foreground">
@@ -448,7 +449,7 @@ const ViewRecordsPage: React.FC = () => {
                                             disabled={currentPage === 1 || loading}
                                             onClick={() => handlePageChange(currentPage - 1)}
                                         >
-                                            <ChevronLeft className="mr-2 h-4 w-4" /> Previous
+                                            <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
                                         </Button>
                                         <Button 
                                             variant="outline" 
@@ -457,7 +458,7 @@ const ViewRecordsPage: React.FC = () => {
                                             disabled={currentPage === recordsData.pages || loading}
                                             onClick={() => handlePageChange(currentPage + 1)}
                                         >
-                                            Next <ChevronRight className="ml-2 h-4 w-4" />
+                                            Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
                                         </Button>
                                     </div>
                                 </div>

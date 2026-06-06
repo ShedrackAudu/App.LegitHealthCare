@@ -1,8 +1,11 @@
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
+
 :root {
   --table-border-color: #000;
   --report-text: #000;
   --report-brand-red: #d32f2f;
   --report-brand-teal: #00897b;
+  --font-sans: 'Open Sans', ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 @media screen {
@@ -16,8 +19,12 @@
     }
 }
 
+.a4-page,
+.a4-page * {
+    font-family: var(--font-sans), sans-serif !important;
+}
+
 .a4-page {
-    font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
     width: 210mm;
     min-height: 297mm;
     padding: 8mm 12mm 8mm 12mm;
@@ -36,21 +43,86 @@
     }
     body {
         margin: 0;
+        padding: 0;
         -webkit-print-color-adjust: exact;
         print-color-adjust: exact;
         background: transparent;
     }
-    .no-print {
+    
+    /* Hide all main layout chrome elements and utilities on print */
+    aside,
+    nav,
+    header,
+    .no-print,
+    .react-hot-toast-container,
+    #root > div > div:first-child,
+    .mt-8.no-print.w-full {
         display: none !important;
     }
+
+    /* Hide other non-printable components under body but keep print content */
+    body * {
+        visibility: hidden !important;
+    }
+    .print-container,
+    .print-container *,
+    .a4-page,
+    .a4-page * {
+        visibility: visible !important;
+    }
+
+    /* Reset full-screen height and overflow on root/wrapper containers for print flow */
+    html, body, #root,
+    #root > div.h-screen.w-screen.overflow-hidden,
+    #root > div.h-screen.w-screen.overflow-hidden > div.flex-1.min-h-0 {
+        height: auto !important;
+        width: auto !important;
+        overflow: visible !important;
+        position: static !important;
+        display: block !important;
+    }
+
+    .flex.flex-col.h-full.w-full.bg-background,
+    .h-full.bg-background.flex,
+    .flex.flex-1.overflow-hidden,
+    .flex.flex-col.flex-1.overflow-hidden,
+    main.flex-1 {
+        height: auto !important;
+        width: auto !important;
+        overflow: visible !important;
+        position: static !important;
+        display: block !important;
+        padding: 0 !important;
+        margin: 0 !important;
+    }
+
+    /* Force print container to span page full size and remove visual borders/shadows */
+    .print-container {
+        position: absolute !important;
+        left: 0 !important;
+        top: 0 !important;
+        width: 210mm !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        border: none !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    /* Fit A4 pages edge-to-edge precisely */
     .a4-page {
-        margin: 0 auto !important;
-        box-shadow: none;
+        margin: 0 !important;
+        padding: 8mm 12mm 8mm 12mm !important;
+        border: none !important;
+        box-shadow: none !important;
         width: 210mm !important;
         height: 297mm !important;
         page-break-after: always !important;
-        overflow: hidden;
+        overflow: hidden !important;
+        background: white !important;
+        box-sizing: border-box !important;
     }
+
     .a4-page:last-child {
         page-break-after: avoid !important;
     }

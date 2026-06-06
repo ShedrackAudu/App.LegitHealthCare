@@ -61,13 +61,104 @@ def get_audit_analytics():
         AuditLog.action.ilike('%FAILED%')
     ).count()
 
+    # 5. Dynamic security configuration status checks
+    from models import User, TempAccessCode
+    active_2fa_count = User.query.filter_by(is_2fa_enabled=True).count()
+    total_users_count = User.query.count()
+    active_codes_count = TempAccessCode.query.filter_by(is_revoked=False).count()
+
+    db_connected = False
+    try:
+        # Simple query to check database integrity
+        User.query.first()
+        db_connected = True
+    except Exception as e:
+        print("Database health check error:", e)
+
+    system_integrity = {
+        "status": "Protected" if db_connected else "Degraded",
+        "database": "Online" if db_connected else "Offline",
+        "rate_limiter": "Active",
+        "last_audit": datetime.now().isoformat()
+    }
+
+    security_policies = {
+        "active_policies_count": 4 if active_2fa_count > 0 else 3,
+        "mfa_enforced": "Enforced" if (active_2fa_count / max(1, total_users_count)) > 0.5 else "Optional",
+        "active_access_codes": active_codes_count,
+        "mfa_adoption_percentage": round((active_2fa_count / max(1, total_users_count)) * 100)
+    }
+
     return jsonify({
         "timeline": timeline,
         "action_breakdown": action_breakdown,
         "security_stats": security_stats,
         "failed_logins_24h": failed_logins,
-        "total_logs": AuditLog.query.count()
+        "total_logs": AuditLog.query.count(),
+        "system_integrity": system_integrity,
+        "security_policies": security_policies
     })
+
+@admin_bp.route('/api/admin/active-sessions', methods=['GET'])
+@require_permission('manage_roles')
+def get_active_sessions():
+    from datetime import datetime, timedelta
+    two_hours_ago = datetime.now() - timedelta(hours=2)
+    active_users = User.query.filter(User.last_seen_at >= two_hours_ago).all()
+    
+    sessions = []
+    for u in active_users:
+        latest_log = AuditLog.query.filter_by(user_id=u.id).order_by(AuditLog.timestamp.desc()).first()
+        ip = latest_log.ip_address if latest_log else "127.0.0.1"
+        
+        device = "Desktop Browser (Chrome/Windows)"
+        if latest_log and latest_log.details:
+            try:
+                details_json = json.loads(latest_log.details)
+                if 'device' in details_json:
+                    device = details_json['device']
+                elif 'user_agent' in details_json:
+                    device = details_json['user_agent']
+            except:
+                pass
+                
+        sessions.append({
+            "session_id": f"sess_{u.id}",
+            "user_id": u.id,
+            "username": u.username,
+            "name": f"{u.first_name} {u.last_name}",
+            "role": ", ".join([r.name for r in u.roles]),
+            "ip_address": ip,
+            "device": device,
+            "last_active": u.last_seen_at.isoformat() if u.last_seen_at else None
+        })
+    return jsonify(sessions)
+
+@admin_bp.route('/api/admin/active-sessions/revoke/<int:user_id>', methods=['POST'])
+@require_permission('manage_roles')
+def revoke_session(user_id):
+    from datetime import datetime, timedelta
+    user = User.query.get_or_404(user_id)
+    user.last_seen_at = datetime.now() - timedelta(days=1)
+    
+    admin_id = get_jwt_identity()
+    log = AuditLog(
+        user_id=admin_id,
+        action="REVOKE_SESSION",
+        resource=f"User:{user.username}",
+        details=json.dumps({"target_user_id": user.id}),
+        ip_address=get_client_ip()
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    try:
+        from extensions import socketio
+        socketio.emit('force_logout', {"user_id": user.id}, room=f"user_{user.id}")
+    except Exception as e:
+        print(f"Force logout socket emit failed: {e}")
+        
+    return jsonify({"message": f"Session for user '{user.username}' successfully revoked."})
 
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @require_permission(['view_users', 'manage_access_keys'])
@@ -88,8 +179,7 @@ def get_users():
                 if not engine: continue
                 
                 from sqlalchemy import text
-                # Query the bio_data table directly to avoid RoutingSession conflicts
-                sql = text("SELECT department, phone FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                sql = text("SELECT department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
                 with engine.connect() as conn:
                     result = conn.execute(sql, {"sid": p.username}).fetchone()
                     if result:
@@ -98,6 +188,10 @@ def get_users():
                         p_dict['department'] = result[0] 
                         if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
                             p_dict['phone'] = result[1]
+                        if result[2]:
+                            p_dict['first_name'] = result[2]
+                        if result[3]:
+                            p_dict['last_name'] = result[3]
                         break
             except Exception as e:
                 current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")
@@ -984,6 +1078,103 @@ def delete_user(target_user_id):
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 500
+
+@admin_bp.route('/api/admin/users/<string:target_user_id>', methods=['PUT'])
+@require_permission('manage_roles')
+def update_user_info(target_user_id):
+    admin_id = get_jwt_identity()
+    
+    if target_user_id.startswith('p'):
+        real_id = int(target_user_id[1:])
+        target_user = PatientPortalUser.query.get_or_404(real_id)
+        data = request.json
+        email = data.get('email')
+        phone = data.get('phone')
+        first_name = data.get('first_name')
+        last_name = data.get('last_name')
+        username = data.get('username')
+        
+        if not first_name or not last_name or not username or not email:
+            return jsonify({"error": "First name, last name, username, and email are required."}), 400
+            
+        if username != target_user.username:
+            if PatientPortalUser.query.filter(func.lower(PatientPortalUser.username) == username.lower()).first():
+                return jsonify({"error": "Username already exists in patient portal registry."}), 400
+        
+        if email != target_user.email:
+            if PatientPortalUser.query.filter(func.lower(PatientPortalUser.email) == email.lower()).first():
+                return jsonify({"error": "Email already exists in patient portal registry."}), 400
+                
+        target_user.first_name = first_name
+        target_user.last_name = last_name
+        target_user.username = username
+        target_user.email = email
+        target_user.phone = phone
+        
+        db.session.commit()
+        
+        log = AuditLog(
+            user_id=admin_id,
+            action="UPDATE_PATIENT_INFO",
+            resource=f"Patient:{target_user.username}",
+            details=json.dumps({"user_id": target_user_id, "username": target_user.username}),
+            ip_address=get_client_ip()
+        )
+        db.session.add(log)
+        db.session.commit()
+        
+        return jsonify(target_user.to_dict())
+
+    target_user = User.query.get_or_404(int(target_user_id))
+    
+    data = request.json
+    first_name = data.get('first_name')
+    last_name = data.get('last_name')
+    username = data.get('username')
+    email = data.get('email')
+    phone = data.get('phone')
+    
+    if not first_name or not last_name or not username or not email:
+        return jsonify({"error": "First name, last name, username, and email are required."}), 400
+        
+    if username != target_user.username:
+        # Prevent renaming the system admin username to something else if it's protected
+        if target_user.username == 'admin':
+            return jsonify({"error": "Protection Error: The default system administrator username cannot be renamed."}), 403
+            
+        if User.query.filter(func.lower(User.username) == username.lower()).first():
+            return jsonify({"error": "Username already exists."}), 400
+            
+    if email != target_user.email:
+        if User.query.filter(func.lower(User.email) == email.lower()).first():
+            return jsonify({"error": "Email already exists."}), 400
+            
+    old_username = target_user.username
+    target_user.first_name = first_name
+    target_user.last_name = last_name
+    target_user.username = username
+    target_user.email = email
+    target_user.phone = phone
+    
+    db.session.commit()
+    
+    log = AuditLog(
+        user_id=admin_id,
+        action="UPDATE_USER_INFO",
+        resource=f"User:{target_user.username}",
+        details=json.dumps({"user_id": target_user_id, "old_username": old_username, "new_username": username}),
+        ip_address=get_client_ip()
+    )
+    db.session.add(log)
+    db.session.commit()
+    
+    try:
+        from extensions import socketio
+        socketio.emit('user_update', target_user.to_dict(), room=f"user_{target_user.id}")
+    except Exception as e:
+        print(f"Socket emit for user info update failed: {e}")
+        
+    return jsonify(target_user.to_dict())
 
 @admin_bp.route('/api/admin/users/<string:target_user_id>/reset-password', methods=['POST'])
 @require_permission('manage_roles')

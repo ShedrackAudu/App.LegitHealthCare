@@ -1,6 +1,7 @@
 alembic
 annotated-types
 anyio
+APScheduler
 bcrypt
 bidict
 blinker
@@ -65,3 +66,4 @@ sendgrid
 pandas
 openpyxl
 xlsxwriter
+reportlab

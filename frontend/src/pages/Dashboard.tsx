@@ -2,34 +2,35 @@ import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { AnimatePresence, motion } from 'framer-motion';
-import { 
-  ChevronRight,
-  Stethoscope,
-  UserCog,
-  UserPlus,
-  FlaskConical,
-  ShieldCheck,
-  Database,
-  Activity,
-  Users,
-  User,
-  History,
-  Key,
-  Clock,
-  ClipboardList,
-  Settings2,
-  Edit3,
-  Check,
-  Download,
-  Smartphone,
-  X,
-  Package,
-  Calendar,
-  FileText,
-  Bot,
-  Palette,
-  Trash2
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  ArrowRight01Icon,
+  StethoscopeIcon,
+  UserSettings01Icon,
+  UserAdd01Icon,
+  Chemistry02Icon,
+  Shield01Icon,
+  Database02Icon,
+  Activity01Icon,
+  UserGroupIcon,
+  UserIcon,
+  Key01Icon,
+  Clock01Icon,
+  ClipboardIcon,
+  Settings02Icon,
+  Download01Icon,
+  SmartPhone01Icon,
+  Cancel01Icon,
+  PackageIcon,
+  Calendar03Icon,
+  Note01Icon,
+  MachineRobotIcon,
+  PaintBrush01Icon,
+  Delete02Icon,
+  VolumeHighIcon,
+  FastWindIcon,
+  FavouriteIcon
+} from '@hugeicons/core-free-icons';
 import { BarChart, Bar, XAxis, YAxis, Tooltip, ResponsiveContainer, Cell, PieChart, Pie, Legend } from 'recharts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -45,7 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
-import { Loader2 } from 'lucide-react';
+// Removed Loader2 lucide-react import
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 
@@ -53,7 +54,7 @@ const quickActions = [
   { 
     title: 'Registration', 
     description: 'Intake new patients and update bio-data.',
-    icon: UserPlus, 
+    icon: UserAdd01Icon, 
     path: '/registration',
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     permission: 'registration'
@@ -61,7 +62,7 @@ const quickActions = [
   { 
     title: 'Consultation', 
     description: 'Enter clinical assessments and recommendations.',
-    icon: Stethoscope, 
+    icon: StethoscopeIcon, 
     path: '/consultation',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'consultation'
@@ -69,7 +70,7 @@ const quickActions = [
   { 
     title: 'Test Results', 
     description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
-    icon: FlaskConical, 
+    icon: Chemistry02Icon, 
     path: '/tests',
     color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
     permission: 'lab_entry'
@@ -77,7 +78,7 @@ const quickActions = [
   { 
     title: 'Director Review', 
     description: 'Final clinical assessment & record validation.',
-    icon: ShieldCheck, 
+    icon: Shield01Icon, 
     path: '/director',
     color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     permission: 'director_review'
@@ -85,7 +86,7 @@ const quickActions = [
   { 
     title: 'Patient Report', 
     description: 'Generate and export individual patient reports.',
-    icon: User, 
+    icon: UserIcon, 
     path: '/patient-report',
     color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     permission: 'view_records'
@@ -93,7 +94,7 @@ const quickActions = [
   { 
     title: 'Screening Matrix', 
     description: 'Search and review detailed clinical findings.',
-    icon: Database, 
+    icon: Database02Icon, 
     path: '/view-records',
     color: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
     permission: 'view_records'
@@ -101,7 +102,7 @@ const quickActions = [
   { 
     title: 'Patient Directory', 
     description: 'Access complete registry of registered patients.',
-    icon: Users, 
+    icon: UserGroupIcon, 
     path: '/view-patients',
     color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
     permission: 'view_patients'
@@ -109,7 +110,7 @@ const quickActions = [
   { 
     title: 'Appointments', 
     description: 'Manage clinic schedule and patient bookings.',
-    icon: Calendar, 
+    icon: Calendar03Icon, 
     path: '/appointments',
     color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
     permission: 'manage_appointments'
@@ -117,7 +118,7 @@ const quickActions = [
   { 
     title: 'Inventory', 
     description: 'Track clinical supplies and stock levels.',
-    icon: Package, 
+    icon: PackageIcon, 
     path: '/inventory',
     color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
     permission: 'view_inventory'
@@ -125,7 +126,7 @@ const quickActions = [
   { 
     title: 'Messaging', 
     description: 'Internal communication & staff coordination.',
-    icon: Activity, 
+    icon: Activity01Icon, 
     path: '/messages',
     color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
     permission: 'messaging'
@@ -136,7 +137,7 @@ const adminActions = [
   { 
     title: 'Security Center', 
     description: 'Monitor system-wide activity and security analytics.',
-    icon: Activity, 
+    icon: Activity01Icon, 
     path: '/security-analytics',
     color: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
     permission: 'manage_roles'
@@ -144,7 +145,7 @@ const adminActions = [
   { 
     title: 'User Management', 
     description: 'Manage system users, roles, and account security.',
-    icon: UserCog, 
+    icon: UserSettings01Icon, 
     path: '/user-management',
     color: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
     permission: 'view_users'
@@ -152,7 +153,7 @@ const adminActions = [
   { 
     title: 'Role Configuration', 
     description: 'Configure access control and role assignments.',
-    icon: ShieldCheck, 
+    icon: Shield01Icon, 
     path: '/roles-permissions',
     color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
     permission: 'manage_roles'
@@ -160,7 +161,7 @@ const adminActions = [
   { 
     title: 'Audit Trails', 
     description: 'Monitor system-wide activity and security events.',
-    icon: FileText, 
+    icon: Note01Icon, 
     path: '/audit-logs',
     color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
     permission: 'view_audit_logs'
@@ -168,7 +169,7 @@ const adminActions = [
   { 
     title: 'Data Management', 
     description: 'Export records and screening data to Excel.',
-    icon: Database, 
+    icon: Database02Icon, 
     path: '/data-management',
     color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
     permission: 'download_data'
@@ -176,7 +177,7 @@ const adminActions = [
   { 
     title: 'Access Keys', 
     description: 'Generate temporary security entrance codes.',
-    icon: Key, 
+    icon: Key01Icon, 
     path: '/admin/access-keys',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_access_keys'
@@ -184,7 +185,7 @@ const adminActions = [
   { 
     title: 'AI Integration', 
     description: 'Configure AI agents and medical parameters.',
-    icon: Bot, 
+    icon: MachineRobotIcon, 
     path: '/ai-integration',
     color: 'bg-primary/10 text-primary border-primary/20',
     permission: 'manage_ai'
@@ -192,7 +193,7 @@ const adminActions = [
   { 
     title: 'System Branding', 
     description: 'Customize clinic logos, names, and visual assets.',
-    icon: Palette, 
+    icon: PaintBrush01Icon, 
     path: '/system-branding',
     color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
     permission: 'manage_branding'
@@ -200,12 +201,30 @@ const adminActions = [
   { 
     title: 'System Settings', 
     description: 'Manage clinical departments and system configurations.',
-    icon: Settings2, 
+    icon: Settings02Icon, 
     path: '/system-config',
     color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     permission: 'manage_departments'
   },
 ];
+
+const LiveClock: React.FC = () => {
+  const [time, setTime] = React.useState(new Date());
+
+  React.useEffect(() => {
+    const timer = setInterval(() => {
+      setTime(new Date());
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  return (
+    <span className="flex items-center gap-1.5 font-bold transition-all">
+      <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5 text-primary" />
+      {time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
+    </span>
+  );
+};
 
 const Dashboard: React.FC = () => {
   const navigate = useNavigate();
@@ -413,13 +432,16 @@ const Dashboard: React.FC = () => {
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
+            <p className="text-xs text-muted-foreground/80 mt-2">
+              <LiveClock />
+            </p>
           </div>
           <div className="flex items-center gap-3 bg-card border rounded-xl p-2 md:p-3 md:px-5 w-full md:w-auto justify-start md:justify-end">
              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${
                 serverConnected === null ? 'bg-muted text-muted-foreground' : 
                 serverConnected ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
              }`}>
-                <Activity className={`w-5 h-5 md:w-6 md:h-6 ${serverConnected === null ? 'animate-pulse' : serverConnected ? 'animate-pulse' : ''}`} />
+                <HugeiconsIcon icon={Activity01Icon} className={`w-5 h-5 md:w-6 md:h-6 ${serverConnected === null ? 'animate-pulse' : serverConnected ? 'animate-pulse' : ''}`} />
              </div>
              <div className="text-left md:text-right min-w-0">
                 <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
@@ -462,15 +484,15 @@ const Dashboard: React.FC = () => {
                   className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
                   aria-label="Dismiss"
                 >
-                  <X className="h-4 w-4" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
                 </button>
                 <div className="absolute -right-6 -bottom-6 w-28 h-28 text-primary/[0.06] pointer-events-none">
-                  <Smartphone className="w-full h-full" />
+                  <HugeiconsIcon icon={SmartPhone01Icon} className="w-full h-full" />
                 </div>
                 <div className="relative z-10 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
                     <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
-                      <Download className="h-5 w-5 text-primary" />
+                      <HugeiconsIcon icon={Download01Icon} className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                       <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
@@ -483,7 +505,7 @@ const Dashboard: React.FC = () => {
                     onClick={handlePwaInstall}
                     className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider active:scale-95 transition-all gap-2"
                   >
-                    <Download className="h-3.5 w-3.5" />
+                    <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
                     Install Now
                   </Button>
                 </div>
@@ -510,7 +532,7 @@ const Dashboard: React.FC = () => {
                 >
                   <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
                     <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
-                      <action.icon className="w-4.5 h-4.5" />
+                      <HugeiconsIcon icon={action.icon} className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
                       <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
@@ -522,7 +544,7 @@ const Dashboard: React.FC = () => {
                   <CardContent className="p-3.5 pt-0 mt-auto">
                     <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
                       <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
-                      <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                      <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </div>
                   </CardContent>
                 </Card>
@@ -555,7 +577,7 @@ const Dashboard: React.FC = () => {
                   >
                     <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
                       <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
-                        <action.icon className="w-4.5 h-4.5" />
+                        <HugeiconsIcon icon={action.icon} className="w-4.5 h-4.5" />
                       </div>
                       <div className="min-w-0">
                         <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
@@ -567,7 +589,7 @@ const Dashboard: React.FC = () => {
                     <CardContent className="p-3.5 pt-0 mt-auto">
                       <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
                         <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
-                        <ChevronRight className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                        <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
                     </CardContent>
                   </Card>
@@ -587,37 +609,44 @@ const Dashboard: React.FC = () => {
             </Button>
           </div>
           
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {[
-              { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: Stethoscope },
-              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: Activity },
-              { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-amber-500/20', icon: Activity },
-              { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: Activity }
+              { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
+              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: VolumeHighIcon },
+              { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: FastWindIcon },
+              { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: FavouriteIcon }
             ].map((dept) => (
               <Card 
                 key={dept.id} 
-                className="group cursor-pointer transition-all border hover:border-primary/30 overflow-hidden bg-card/60 backdrop-blur-sm relative"
+                className="group cursor-pointer transition-all duration-300 border border-border/80 hover:border-primary/30 overflow-hidden bg-card/45 backdrop-blur-sm relative"
                 onClick={() => fetchQueueList(dept.label)}
               >
-                <CardHeader className="p-4 pb-0 flex flex-row items-center justify-between space-y-0">
-                  <div className={`p-2 rounded-lg ${dept.color}`}>
-                    <dept.icon className="h-4 w-4" />
+                <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative z-10">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
+                      <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="text-xs sm:text-sm font-bold tracking-tight text-foreground truncate">{dept.label}</h4>
+                      <div className="flex items-center gap-1.5 mt-0.5">
+                        <span className="relative flex h-1.5 w-1.5 shrink-0">
+                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-primary/70' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
+                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-primary' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                        </span>
+                        <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/80">Waiting</span>
+                      </div>
+                    </div>
                   </div>
-                  <Badge variant="outline" className={`${dept.color} font-black text-[10px]`}>
-                    QUEUED
-                  </Badge>
-                </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <h3 className="text-2xl sm:text-3xl font-black tracking-tighter">
-                    {queueStats?.[dept.id] || 0}
-                  </h3>
-                  <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground mt-1">
-                    {dept.label} Waiting
-                  </p>
-                  <div className="mt-3 flex items-center gap-1 text-[10px] font-bold text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                    View Patients <ChevronRight className="h-3 w-3" />
+                  <div className="flex items-center gap-2 shrink-0">
+                    <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
+                      {queueStats?.[dept.id] || 0}
+                    </span>
+                    <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors">
+                      <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    </div>
                   </div>
                 </CardContent>
+                <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
               </Card>
             ))}
           </div>
@@ -626,9 +655,9 @@ const Dashboard: React.FC = () => {
         {/* Recent Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
             <Card className="lg:col-span-2 border">
-                <CardHeader className="pb-2">
+                <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
-                        <Activity className="h-5 w-5 text-primary" />
+                        <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 text-primary" />
                         System Statistics
                     </CardTitle>
                     <CardDescription>Performance Overview for {activeSection} - {activeYear}</CardDescription>
@@ -638,14 +667,14 @@ const Dashboard: React.FC = () => {
                         {/* Summary Metrics */}
                         <div className="grid grid-cols-2 gap-4">
                             {[
-                                { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: Users, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                                { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity, color: 'text-primary', bg: 'bg-primary/10' }
+                                { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: UserGroupIcon, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                                { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity01Icon, color: 'text-primary', bg: 'bg-primary/10' }
                             ].map((s) => (
                                 <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border border-transparent hover:border-primary/10 transition-all group/stat cursor-default overflow-hidden relative">
                                     <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
                                     <div className="flex items-center gap-2 mb-2 relative z-10">
                                         <div className={`p-1.5 rounded-lg ${s.bg}`}>
-                                            <s.icon className={`h-4 w-4 ${s.color}`} />
+                                            <HugeiconsIcon icon={s.icon} className={`h-4 w-4 ${s.color}`} />
                                         </div>
                                         <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
                                     </div>
@@ -746,9 +775,9 @@ const Dashboard: React.FC = () => {
             </Card>
 
             <Card className="border">
-                <CardHeader>
+                <CardHeader className="pb-4">
                     <CardTitle className="flex items-center gap-2">
-                        <User className="h-5 w-5 text-primary" />
+                        <HugeiconsIcon icon={UserIcon} className="h-5 w-5 text-primary" />
                         Recent Registrations
                     </CardTitle>
                     <CardDescription>Latest patients added</CardDescription>
@@ -789,7 +818,7 @@ const Dashboard: React.FC = () => {
                 <DialogHeader className="text-left">
                     <div className="flex items-center gap-3 mb-2 text-left">
                         <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                            <ClipboardList className="w-6 h-6" />
+                            <HugeiconsIcon icon={ClipboardIcon} className="w-6 h-6" />
                         </div>
                         <div>
                             <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">{selectedDept} Queue</DialogTitle>
@@ -818,17 +847,16 @@ const Dashboard: React.FC = () => {
                                             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0">
                                                 <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
                                                 
-                                                <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
-                                                    {/* ID & Time: stacked on mobile, row on desktop */}
+                                                <div className="flex items-center justify-between gap-3 mt-0.5 w-full">                                                    {/* ID & Time: stacked on mobile, row on desktop */}
                                                     <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
                                                         <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
                                                         <span className="hidden sm:inline text-muted-foreground/60">•</span>
                                                         <span className="font-medium flex items-center gap-1">
-                                                            <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                                            <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-muted-foreground/60" />
                                                             {getRelativeTime(entry.created_at)}
                                                         </span>
                                                     </div>
-
+ 
                                                     {/* Mobile-only delete button beside stacked ID/time */}
                                                     <div className="flex sm:hidden items-center gap-1.5 shrink-0">
                                                         {hasPermission('delete_from_queue') && (
@@ -839,14 +867,14 @@ const Dashboard: React.FC = () => {
                                                                 onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
                                                                 title="Remove from queue"
                                                             >
-                                                                <Trash2 className="w-3 h-3" />
+                                                                <HugeiconsIcon icon={Delete02Icon} className="w-3 h-3" />
                                                             </Button>
                                                         )}
                                                     </div>
                                                 </div>
                                             </div>
                                         </div>
-
+ 
                                         {/* Desktop-only delete button centered vertically inside the card */}
                                         <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                                             {hasPermission('delete_from_queue') && (
@@ -857,7 +885,7 @@ const Dashboard: React.FC = () => {
                                                     onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
                                                     title="Remove from queue"
                                                 >
-                                                    <Trash2 className="w-3.5 h-3.5" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
                                                 </Button>
                                             )}
                                         </div>
@@ -866,7 +894,7 @@ const Dashboard: React.FC = () => {
                             </div>
                         ) : (
                             <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                                <ClipboardList className="h-12 w-12 mb-4 text-muted-foreground" />
+                                <HugeiconsIcon icon={ClipboardIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
                                 <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Queue is Empty</p>
                                 <p className="text-xs text-muted-foreground mt-1">No patients are waiting in this department.</p>
                             </div>

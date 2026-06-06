@@ -3,14 +3,25 @@ import { Dialog, DialogContent } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
-import { X, Mail, Phone, Bot, ShieldCheck, CheckCheck, Activity, Globe } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  Cancel01Icon, 
+  Mail01Icon, 
+  CallIcon, 
+  Building02Icon, 
+  Shield01Icon, 
+  CheckmarkCircle02Icon, 
+  Activity01Icon, 
+  GlobeIcon, 
+  Calendar03Icon 
+} from '@hugeicons/core-free-icons';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 
 export const ProfileInfoItem = ({ label, value, icon: Icon, isLink = false }: any) => (
   <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/10 transition-colors">
     <div className="p-2 bg-background rounded-lg text-primary shadow-sm mt-0.5">
-      <Icon className="h-4 w-4" />
+      <HugeiconsIcon icon={Icon} className="h-4 w-4" />
     </div>
     <div className="flex-1 min-w-0">
       <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground leading-tight">{label}</p>
@@ -38,7 +49,7 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
             className="absolute top-4 right-4 text-white hover:bg-white/20 rounded-full h-8 w-8"
             onClick={() => onOpenChange(false)}
           >
-            <X className="h-4 w-4" />
+            <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
           </Button>
         </div>
         
@@ -74,32 +85,32 @@ export const UserProfileDialog = ({ userProfile, isOpen, onOpenChange }: any) =>
           </div>
 
           <div className="mt-8 space-y-3">
-             <div className="grid grid-cols-2 gap-3">
-               <ProfileInfoItem label="Email" value={userProfile.email} icon={Mail} isLink />
-               <ProfileInfoItem label="Phone" value={userProfile.phone} icon={Phone} />
-             </div>
-             
-             {userProfile.user_type === 'patient' && (
-               <>
-                 <div className="grid grid-cols-2 gap-3">
-                   <ProfileInfoItem label="Gender" value={userProfile.gender} icon={Activity} />
-                   <ProfileInfoItem label="Age" value={userProfile.age ? `${userProfile.age} yrs` : null} icon={Activity} />
-                 </div>
-                 <div className="grid grid-cols-2 gap-3">
-                   <ProfileInfoItem label="Race" value={userProfile.race} icon={ShieldCheck} />
-                   <ProfileInfoItem label="Nationality" value={userProfile.nationality} icon={Globe} />
-                 </div>
-               </>
-             )}
-
-             <div className="grid grid-cols-2 gap-3">
-                <ProfileInfoItem label="Department" value={userProfile.department} icon={Bot} />
-                <ProfileInfoItem label="Joined" value={format(new Date(userProfile.created_at || new Date()), 'MMM yyyy')} icon={ShieldCheck} />
-             </div>
-
-             <div className="grid grid-cols-2 gap-3">
-               <ProfileInfoItem label="Status" value={userProfile.is_verified ? "Verified" : "Unverified"} icon={CheckCheck} />
-             </div>
+              <div className="grid grid-cols-2 gap-3">
+                <ProfileInfoItem label="Email" value={userProfile.email} icon={Mail01Icon} isLink />
+                <ProfileInfoItem label="Phone" value={userProfile.phone} icon={CallIcon} />
+              </div>
+              
+              {userProfile.user_type === 'patient' && (
+                <>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ProfileInfoItem label="Gender" value={userProfile.gender} icon={Activity01Icon} />
+                    <ProfileInfoItem label="Age" value={userProfile.age ? `${userProfile.age} yrs` : null} icon={Activity01Icon} />
+                  </div>
+                  <div className="grid grid-cols-2 gap-3">
+                    <ProfileInfoItem label="Race" value={userProfile.race} icon={Shield01Icon} />
+                    <ProfileInfoItem label="Nationality" value={userProfile.nationality} icon={GlobeIcon} />
+                  </div>
+                </>
+              )}
+ 
+              <div className="grid grid-cols-2 gap-3">
+                 <ProfileInfoItem label="Department" value={userProfile.department} icon={Building02Icon} />
+                 <ProfileInfoItem label="Joined" value={format(new Date(userProfile.created_at || new Date()), 'MMM yyyy')} icon={Calendar03Icon} />
+              </div>
+ 
+              <div className="grid grid-cols-2 gap-3">
+                <ProfileInfoItem label="Status" value={userProfile.is_verified ? "Verified" : "Unverified"} icon={CheckmarkCircle02Icon} />
+              </div>
           </div>
         </div>
       </DialogContent>

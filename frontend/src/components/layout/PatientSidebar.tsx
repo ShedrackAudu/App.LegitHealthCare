@@ -1,16 +1,17 @@
 import React, { useState, useEffect } from 'react';
 import { NavLink } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  LayoutDashboard,
-  FileText,
-  User,
-  ChevronLeft,
-  ChevronRight,
-  Building2,
-  Calendar,
-  MessageSquare,
-  Activity
-} from 'lucide-react';
+  DashboardSquare02Icon,
+  Note01Icon,
+  UserIcon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon,
+  Building02Icon,
+  Calendar03Icon,
+  Comment01Icon,
+  Activity01Icon
+} from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { useAppContext } from '@/context/AppContext';
@@ -19,16 +20,16 @@ import { SafeImage } from '@/components/common/SafeImage';
 interface SidebarItem {
   title: string;
   path: string;
-  icon: React.ElementType;
+  icon: any;
 }
 
 const patientItems: SidebarItem[] = [
-  { title: 'Dashboard', path: '/patient/dashboard', icon: LayoutDashboard },
-  { title: 'Medical Report', path: '/patient/records', icon: FileText },
-  { title: 'Technical Files', path: '/patient/files', icon: Activity },
-  { title: 'Appointments', path: '/patient/appointments', icon: Calendar },
-  { title: 'Contact Us', path: '/patient/contact', icon: MessageSquare },
-  { title: 'Profile', path: '/patient/account', icon: User },
+  { title: 'Dashboard', path: '/patient/dashboard', icon: DashboardSquare02Icon },
+  { title: 'Medical Report', path: '/patient/records', icon: Note01Icon },
+  { title: 'Technical Files', path: '/patient/files', icon: Activity01Icon },
+  { title: 'Appointments', path: '/patient/appointments', icon: Calendar03Icon },
+  { title: 'Contact Us', path: '/patient/contact', icon: Comment01Icon },
+  { title: 'Profile', path: '/patient/account', icon: UserIcon },
 ];
 
 export const PatientSidebar: React.FC = () => {
@@ -67,7 +68,7 @@ export const PatientSidebar: React.FC = () => {
   return (
     <aside
       className={cn(
-        "h-screen border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
+        "h-full border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
       )}
     >
@@ -82,7 +83,7 @@ export const PatientSidebar: React.FC = () => {
             />
           ) : (
             <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2">
-              <Building2 className="h-5 w-5 shrink-0" />
+              <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
               {branding?.clinic_name || 'LEGIT HC'}
             </div>
           )
@@ -95,7 +96,7 @@ export const PatientSidebar: React.FC = () => {
             />
           ) : (
             <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center">
-              <Building2 className="h-5 w-5 shrink-0" />
+              <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
             </div>
           )
         )}
@@ -115,7 +116,7 @@ export const PatientSidebar: React.FC = () => {
                   : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
               )}
             >
-              <item.icon className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
+              <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
               <span className={cn(
                 "font-semibold transition-opacity duration-300 whitespace-nowrap",
                 isCollapsed ? "opacity-0 invisible w-0" : "opacity-100 visible"
@@ -140,7 +141,7 @@ export const PatientSidebar: React.FC = () => {
             className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}
+            {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5" /> : <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5" />}
           </Button>
         </div>
       </div>

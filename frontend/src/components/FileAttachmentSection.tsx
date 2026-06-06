@@ -1,18 +1,17 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  FileText, 
-  Upload, 
-  Eye, 
-  Trash2, 
-  Loader2, 
-  ExternalLink,
-  Download,
-  FileIcon,
-  X,
-  FileUp,
-  AlertCircle,
-  Activity
-} from 'lucide-react';
+  Note01Icon, 
+  Upload01Icon, 
+  EyeIcon, 
+  Delete02Icon, 
+  Loading03Icon, 
+  ArrowUpRight01Icon,
+  Download01Icon,
+  Cancel01Icon,
+  AlertCircleIcon,
+  Activity01Icon
+} from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { toast } from 'react-hot-toast';
@@ -166,7 +165,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
       {!compact && (
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-bold flex items-center gap-2 text-foreground">
-            <FileText className="h-4 w-4 text-primary" />
+            <HugeiconsIcon icon={Note01Icon} className="h-4 w-4 text-primary" />
             {department ? `${department} Technical Reports` : "All Technical Attachments"}
           </h3>
         </div>
@@ -199,7 +198,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             )}>
               {uploading ? (
                 <div className={cn("flex items-center gap-1.5", !compact && "flex-col py-2")}>
-                  <Loader2 className={cn("animate-spin text-primary", compact ? "h-4 w-4" : "h-10 w-10")} />
+                  <HugeiconsIcon icon={Loading03Icon} className={cn("animate-spin text-primary", compact ? "h-4 w-4" : "h-10 w-10")} />
                   <p className="text-[9px] font-black uppercase tracking-widest text-primary animate-pulse">...</p>
                 </div>
               ) : (
@@ -209,7 +208,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                     compact ? "h-6 w-6" : "h-12 w-12",
                     isDragging ? "bg-primary text-white scale-110" : "bg-primary/10 text-primary group-hover:scale-110"
                   )}>
-                    {compact ? <Upload className="h-3 w-3" /> : <FileUp className="h-6 w-6" />}
+                    {compact ? <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" /> : <HugeiconsIcon icon={Upload01Icon} className="h-6 w-6" />}
                   </div>
                   {!compact ? (
                     <div>
@@ -255,7 +254,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                       "rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0 border border-rose-500/10 group-hover:bg-rose-500 group-hover:text-white transition-colors",
                       compact ? "h-6 w-6" : "h-10 w-10"
                     )}>
-                      <Activity className={compact ? "h-3 w-3" : "h-5 w-5"} />
+                      <HugeiconsIcon icon={Activity01Icon} className={compact ? "h-3 w-3" : "h-5 w-5"} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <p className={cn("font-bold truncate text-foreground", compact ? "text-[9px]" : "text-sm")} title={file.filename}>
@@ -282,7 +281,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                          className={cn("text-indigo-500 hover:bg-indigo-500/10", compact ? "h-5 w-5" : "h-8 w-8")} 
                          title="Download File"
                        >
-                         <Download className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
+                         <HugeiconsIcon icon={Download01Icon} className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
                        </Button>
                      </a>
                     )}
@@ -298,14 +297,14 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                       }}
                       title="View Inline"
                     >
-                      <Eye className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
+                      <HugeiconsIcon icon={EyeIcon} className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
                     </Button>
                     {compact && (
-                      <a href={getFileUrl(file.file_path)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
-                        <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-muted" title="Open in New Tab">
-                          <ExternalLink className="h-2.5 w-2.5" />
-                        </Button>
-                      </a>
+                       <a href={getFileUrl(file.file_path)} target="_blank" rel="noopener noreferrer" onClick={(e) => e.stopPropagation()}>
+                         <Button type="button" size="icon" variant="ghost" className="h-5 w-5 hover:bg-muted" title="Open in New Tab">
+                           <HugeiconsIcon icon={ArrowUpRight01Icon} className="h-2.5 w-2.5" />
+                         </Button>
+                       </a>
                     )}
                     {allowUpload && (
                       <Button 
@@ -320,7 +319,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                         }}
                         title="Delete"
                       >
-                        <Trash2 className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
+                        <HugeiconsIcon icon={Delete02Icon} className={compact ? "h-2.5 w-2.5" : "h-4 w-4"} />
                       </Button>
                     )}
                   </div>
@@ -348,7 +347,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
           <DialogHeader className="p-3 sm:p-4 border-b bg-muted/30 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shrink-0 relative">
             <div className="flex items-center gap-3 min-w-0 pr-8 sm:pr-0">
               <div className="h-9 w-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 border border-primary/20">
-                <Activity className="h-4 w-4 text-primary" />
+                <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4 text-primary" />
               </div>
               <div className="min-w-0 text-left">
                 <DialogTitle className="text-[11px] sm:text-sm font-black uppercase tracking-tight text-foreground truncate block text-left">
@@ -363,7 +362,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             {allowDownload && (
                  <a href={getFileUrl(selectedFile?.file_path)} download={selectedFile?.filename} className="w-full sm:w-auto">
                    <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 h-8 text-[9px] sm:text-[10px] font-black uppercase border-2 shadow-sm bg-background/50">
-                     <Download className="h-3 w-3 text-primary" /> Download Report
+                     <HugeiconsIcon icon={Download01Icon} className="h-3 w-3 text-primary" /> Download Report
                    </Button>
                  </a>
             )}

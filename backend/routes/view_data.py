@@ -1,6 +1,8 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
+import zipfile
+import io
 from models import (
     db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
@@ -11,6 +13,7 @@ import uuid
 
 from sqlalchemy import func
 from datetime import datetime
+from zoneinfo import ZoneInfo
 from decorators import require_permission
 from utils.ip import get_client_ip
 from utils.progress_utils import calculate_report_progress
@@ -217,6 +220,8 @@ def search_patients():
 
 def get_bind():
     context = request.headers.get('X-Company-Context', '').lower()
+    if not context:
+        context = request.args.get('company', '').lower()
     return context if context in ['dcp', 'dct'] else None
 
 @view_data_bp.route('/patients/all', methods=['GET'])
@@ -584,6 +589,283 @@ def delete_screening_record(id):
     db.session.commit()
     return jsonify({"message": "Screening record and all associated diagnostics removed"}), 200
 
+def _get_report_data_dict(staff_id, year, bind, patient, yearly):
+    # Initialize basic info
+    bio_info = {
+        "staff_id": patient.staff_id,
+        "patient_id": yearly.patient_id if yearly else "N/A",
+        "first_name": patient.first_name,
+        "middle_name": patient.middle_name,
+        "last_name": patient.last_name,
+        "full_name": f"{patient.first_name} {patient.middle_name or ''} {patient.last_name}",
+        "email": patient.email,
+        "phone": patient.phone,
+        "dob": patient.dob.strftime('%d/%m/%Y') if hasattr(patient.dob, 'strftime') else (str(patient.dob) if patient.dob else "N/A"),
+        "age": patient.age,
+        "gender": patient.gender,
+        "nationality": patient.nationality,
+        "department": patient.department,
+        "passport_image": patient.passport_image,
+        "screening_year": year
+    }
+    
+    # Initialize results containers
+    results = {
+        "consultation": {},
+        "fbc": {},
+        "kft": {},
+        "lipid": {},
+        "lft": {},
+        "special": {},
+        "director": {}
+    }
+    
+    c = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if c:
+        results["consultation"] = {
+            "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
+            "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
+            "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
+            "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
+            "psa": c.psa, "psa_remark": c.psa_remark,
+            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
+            "chronic_cough": c.chronic_cough, "chronic_chest_pain": c.chronic_chest_pain,
+            "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
+            "jaundice": c.jaundice, "murmur": c.murmur, "dm": c.dm_status, "htn": c.htn_status,
+            "hs": c.hs_status, "breast_remark": c.breast_remark, "other_assessments": c.other_assessments,
+            "remarks": c.other_remarks
+        }
+    
+    f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if f:
+        results["fbc"] = {
+            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
+            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
+        }
+    
+    k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if k:
+        results["kft"] = {
+            "potassium": k.potassium, "sodium": k.sodium, "hco3": k.hco3,
+            "chloride": k.chloride, "remark": k.kft_remark, "bicarbonate": k.bicarbonate_ca
+        }
+    
+    li = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if li:
+        results["lipid"] = {
+            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl,
+            "remark": li.lp_remark
+        }
+    
+    lf = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if lf:
+        results["lft"] = {
+            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
+            "urea": lf.urea, "creatinine": lf.creatinine,
+            "remark": lf.lft_remark
+        }
+    
+    s = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if s:
+        results["special"] = {
+            "ecg": s.ecg_result, "ecg_remark": s.ecg_remark, 
+            "spirometry": s.spirometry_result, "spirometry_remark": s.spirometry_remark,
+            "audiometry": s.audiometry_result, "audiometry_remark": s.audiometry_remark,
+            "weight": s.weight, "height": s.height
+        }
+
+    d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
+    if d:
+        results["director"] = {
+            "assessment": d.overall_assessment,
+            "comment_one": d.comment_one,
+            "comment_two": d.comment_two,
+            "comment_three": d.comment_three,
+            "comment_four": d.comment_four,
+            "lab_remark": d.overall_lab_remark,
+            "hx_pe": d.assessment_hx_pe,
+            "other_remarks": d.other_remarks,
+            "other_assessments": d.other_assessments,
+            "dm_status": d.dm_status,
+            "htn_status": d.htn_status,
+            "bp": d.bp,
+            "pulse": d.pulse,
+            "spo2": d.spo2,
+            "hs_status": d.hs_status,
+            "breast_exam": d.breast_exam,
+            "breast_remark": d.breast_remark,
+            "breast_others": d.breast_others,
+            "abdomen": d.abdomen,
+            "abdomen_others": d.abdomen_others,
+            "psa": d.psa,
+            "psa_remark": d.psa_remark,
+            "fbs": d.fbs,
+            "rbs": d.rbs,
+            "fbs_rbs_remark": d.fbs_rbs_remark,
+            "ua_result": d.ua_result,
+            "ua_remark": d.ua_remark,
+            "ua_remark_others": d.ua_remark_others,
+            "luts": d.luts,
+            "chronic_cough": d.chronic_cough,
+            "chronic_chest_pain": d.chronic_chest_pain,
+            "chest_infection": d.chest_infection,
+            "heart_dx": d.heart_dx,
+            "palor": d.palor,
+            "jaundice": d.jaundice,
+            "murmur": d.murmur,
+            "chest_status": d.chest_status
+        }
+    
+    # Determine Timing
+    reg_date_time = patient.created_at.isoformat() if patient.created_at else None
+    report_date_time = d.first_submitted_at.isoformat() if (d and getattr(d, 'first_submitted_at', None)) else (d.created_at.isoformat() if d else None)
+    
+    # QR Verification Logic
+    verification = ReportVerification.query.filter_by(staff_id=staff_id, screening_year=year, section=bind).first()
+    if not verification:
+        verification = ReportVerification(
+            staff_id=staff_id,
+            screening_year=year,
+            section=bind,
+            verification_code=uuid.uuid4().hex
+        )
+        db.session.add(verification)
+        db.session.commit()
+        
+    # App Branding Templates
+    branding = AppBranding.query.first()
+    branding_data = branding.to_dict() if branding else {}
+    
+    return {
+        "bio": bio_info,
+        "results": results,
+        "verification_url": f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify/{verification.verification_code}",
+        "verification_code": verification.verification_code,
+        "timing": {
+            "reg_date_time": reg_date_time,
+            "report_date_time": report_date_time,
+            "gen_date_time": datetime.now().isoformat()
+        },
+        "branding": branding_data
+    }
+
+@view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
+@jwt_required()
+def bulk_download_reports():
+    from models import SystemConfig
+    download_config = SystemConfig.query.get('bulk_report_download_enabled')
+    if download_config and download_config.value.lower() != 'true':
+        return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
+
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Authentication required"}), 401
+
+    from models import StaffUser
+    
+    is_authorized = False
+    try:
+        user_id = int(user_id_str)
+    except ValueError:
+        user_id = -1
+        
+    requester_staff = StaffUser.query.get(user_id)
+    if requester_staff:
+        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+            is_authorized = True
+            
+    if not is_authorized:
+        return jsonify({"error": "Access denied. You do not have permission to perform bulk downloads."}), 403
+
+    bind = get_bind()
+    if not bind: return jsonify({"error": "Invalid context"}), 400
+
+    range_str = request.args.get('range', '').strip()
+    if not range_str:
+        return jsonify({"error": "Range parameter is required (e.g. 1-100)"}), 400
+
+    year_param = request.args.get('year')
+    year = int(year_param) if year_param else datetime.now().year
+
+    # Parse range (e.g. 1-100)
+    try:
+        if '-' in range_str:
+            start_parts, end_parts = range_str.split('-', 1)
+            start_id = int(start_parts.strip())
+            end_id = int(end_parts.strip())
+        else:
+            start_id = int(range_str)
+            end_id = start_id
+    except ValueError:
+        return jsonify({"error": "Invalid range format. Use numbers or start-end range (e.g., 1-100)"}), 400
+
+    if start_id > end_id:
+        start_id, end_id = end_id, start_id
+
+    # Fetch all ScreeningYearBioData for this year
+    yearly_records = ScreeningYearBioData.query.filter_by(screening_year=year).all()
+
+    matching_records = []
+    engine = db.engines[bind]
+
+    for yr in yearly_records:
+        pid_str = yr.patient_id
+        try:
+            # Strip non-numeric chars if any (though usually numeric)
+            pid_int = int(''.join(filter(str.isdigit, pid_str)))
+        except ValueError:
+            continue
+
+        if start_id <= pid_int <= end_id:
+            # Check condition 2: Does not have email address
+            bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
+            email = bio.email if bio else None
+            if not email or not email.strip():
+                # Check condition 1: Report is 100% complete
+                percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
+                if percentage == 100:
+                    matching_records.append((yr, bio))
+
+    if not matching_records:
+        return jsonify({"error": "No completed reports matching the conditions found in the specified range."}), 404
+
+    # Create ZIP file in memory
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+        from utils.report_utils import generate_patient_report_pdf
+        for yr, bio in matching_records:
+            report_data = _get_report_data_dict(yr.staff_id, year, bind, bio, yr)
+            pdf_bytes = generate_patient_report_pdf(report_data)
+            
+            # Construct a clean filename
+            first_name = (bio.first_name or '').strip().replace(' ', '_')
+            last_name = (bio.last_name or '').strip().replace(' ', '_')
+            filename = f"LHCSL_{year}_{bind.upper()}_PID{yr.patient_id}_{first_name}_{last_name}.pdf"
+            zip_file.writestr(filename, pdf_bytes)
+
+    zip_buffer.seek(0)
+    
+    # Audit Log
+    try:
+        audit = AuditLog(
+            user_id=user_id,
+            action='Bulk Download Reports',
+            resource=f"Range:{range_str}:Year:{year}",
+            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, no email) in range {range_str} for year {year}.",
+            ip_address=get_client_ip()
+        )
+        db.session.add(audit)
+        db.session.commit()
+    except Exception:
+        pass
+
+    return send_file(
+        zip_buffer,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"Bulk_Reports_{bind.upper()}_{year}_{range_str}.zip"
+    )
+
 @view_data_bp.route('/patient-report/<string:staff_id>/<int:year>', methods=['GET'])
 @jwt_required()
 def get_patient_report(staff_id, year):
@@ -637,126 +919,8 @@ def get_patient_report(staff_id, year):
     if not yearly:
         return jsonify({"error": "Clinical data not found for the selected year"}), 404
     
-    # Initialize basic info
-    bio_info = {
-        "staff_id": patient.staff_id,
-        "patient_id": yearly.patient_id if yearly else "N/A",
-        "first_name": patient.first_name,
-        "middle_name": patient.middle_name,
-        "last_name": patient.last_name,
-        "full_name": f"{patient.first_name} {patient.middle_name or ''} {patient.last_name}",
-        "email": patient.email,
-        "phone": patient.phone,
-        "dob": patient.dob.strftime('%d/%m/%Y') if hasattr(patient.dob, 'strftime') else (str(patient.dob) if patient.dob else "N/A"),
-        "age": patient.age,
-        "gender": patient.gender,
-        "nationality": patient.nationality,
-        "department": patient.department,
-        "passport_image": patient.passport_image,
-        "screening_year": year
-    }
-    
-    # Initialize results containers
-    results = {
-        "consultation": {},
-        "fbc": {},
-        "kft": {},
-        "lipid": {},
-        "lft": {},
-        "special": {},
-        "director": {}
-    }
-    
-    c = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if c:
-        results["consultation"] = {
-            "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
-            "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
-            "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
-            "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
-            "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others
-        }
-    
-    f = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if f:
-        results["fbc"] = {
-            "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
-            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
-        }
-    
-    k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if k:
-        results["kft"] = {
-            "potassium": k.potassium, "sodium": k.sodium, "hco3": k.hco3,
-            "chloride": k.chloride, "remark": k.kft_remark
-        }
-    
-    li = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if li:
-        results["lipid"] = {
-            "tcho": li.total_cholesterol, "tg": li.triglycerides, "hdl": li.hdl, "ldl": li.ldl,
-            "remark": li.lp_remark
-        }
-    
-    lf = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if lf:
-        results["lft"] = {
-            "ast": lf.ast, "alt": lf.alt, "alp": lf.alp, "tb": lf.tb, "cb": lf.cb,
-            "urea": lf.urea, "creatinine": lf.creatinine,
-            "remark": lf.lft_remark
-        }
-    
-    s = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if s:
-        results["special"] = {
-            "ecg": s.ecg_result, "spirometry": s.spirometry_result, "audiometry": s.audiometry_result
-        }
-
-    d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
-    if d:
-        results["director"] = {
-            "assessment": d.overall_assessment,
-            "comment_one": d.comment_one,
-            "comment_two": d.comment_two,
-            "comment_three": d.comment_three,
-            "comment_four": d.comment_four,
-            "lab_remark": d.overall_lab_remark,
-            "hx_pe": d.assessment_hx_pe
-        }
-    
-    # Determine Timing
-    reg_date_time = patient.created_at.isoformat() if patient.created_at else None
-    report_date_time = d.first_submitted_at.isoformat() if (d and getattr(d, 'first_submitted_at', None)) else (d.created_at.isoformat() if d else None)
-    
-    # QR Verification Logic
-    verification = ReportVerification.query.filter_by(staff_id=staff_id, screening_year=year, section=bind).first()
-    if not verification:
-        verification = ReportVerification(
-            staff_id=staff_id,
-            screening_year=year,
-            section=bind,
-            verification_code=uuid.uuid4().hex
-        )
-        db.session.add(verification)
-        db.session.commit()
-        
-    # App Branding Templates
-    branding = AppBranding.query.first()
-    branding_data = branding.to_dict() if branding else {}
-    
-    return jsonify({
-        "bio": bio_info,
-        "results": results,
-        "verification_url": f"{os.getenv('FRONTEND_URL', 'http://localhost:5173')}/verify/{verification.verification_code}",
-        "verification_code": verification.verification_code,
-        "timing": {
-            "reg_date_time": reg_date_time,
-            "report_date_time": report_date_time,
-            "gen_date_time": datetime.now().isoformat()
-        },
-        "branding": branding_data
-    }), 200
+    report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+    return jsonify(report_data), 200
 
 @view_data_bp.route('/public/verify/<token>', methods=['GET'])
 def verify_report(token):
@@ -787,6 +951,108 @@ def verify_report(token):
         "section": verification.section.upper(),
         "generated_at": verification.generated_at.isoformat()
     }), 200
+
+@view_data_bp.route('/public/verify/<token>/pdf', methods=['GET'])
+def verify_report_pdf(token):
+    try:
+        verification = ReportVerification.query.filter_by(verification_code=token).first()
+        if not verification:
+            return jsonify({"error": "Invalid or forged report signature."}), 404
+            
+        # Dynamically route model queries to the correct database (DCP/DCT)
+        request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
+        
+        from sqlalchemy import func
+        from models import BioData, ScreeningYearBioData
+        from utils.report_utils import generate_patient_report_pdf
+        
+        staff_id = verification.staff_id
+        year = verification.screening_year
+        bind = verification.section.lower()
+        
+        patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
+        if not patient:
+            return jsonify({"error": "Patient profile not found in this section."}), 404
+            
+        yearly = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
+            ScreeningYearBioData.screening_year == year
+        ).first()
+        
+        if not yearly:
+            return jsonify({"error": "Clinical data not found for the verified year."}), 404
+            
+        report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+        pdf_bytes = generate_patient_report_pdf(report_data)
+        
+        # Create bytes buffer to send
+        pdf_buffer = io.BytesIO(pdf_bytes)
+        
+        first_name = (patient.first_name or '').strip().replace(' ', '_')
+        last_name = (patient.last_name or '').strip().replace(' ', '_')
+        filename = f"LHCSL_{year}_{bind.upper()}_Verified_Report_{first_name}_{last_name}.pdf"
+        
+        return send_file(
+            pdf_buffer,
+            mimetype='application/pdf',
+            as_attachment=False,
+            download_name=filename
+        )
+    except Exception as e:
+        print(f"Error generating verified PDF: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to generate report copy: {str(e)}"}), 500
+
+
+@view_data_bp.route('/public/verify/<token>/report-data', methods=['GET'])
+def public_verify_report_data(token):
+    try:
+        verification = ReportVerification.query.filter_by(verification_code=token).first()
+        if not verification:
+            return jsonify({"error": "Invalid or forged report signature."}), 404
+            
+        # Dynamically route model queries to the correct database (DCP/DCT)
+        request.environ['HTTP_X_COMPANY_CONTEXT'] = verification.section.lower()
+        
+        from sqlalchemy import func
+        from models import BioData, ScreeningYearBioData
+        
+        staff_id = verification.staff_id
+        year = verification.screening_year
+        bind = verification.section.lower()
+        
+        patient = BioData.query.filter(func.lower(BioData.staff_id) == staff_id.lower()).first()
+        if not patient:
+            return jsonify({"error": "Patient profile not found in this section."}), 404
+            
+        yearly = ScreeningYearBioData.query.filter(
+            func.lower(ScreeningYearBioData.staff_id) == staff_id.lower(),
+            ScreeningYearBioData.screening_year == year
+        ).first()
+        
+        if not yearly:
+            return jsonify({"error": "Clinical data not found for the verified year."}), 404
+            
+        report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+        
+        # Add basic patient summary for frontend compatibility
+        report_data['selected_patient'] = {
+            'first_name': patient.first_name,
+            'middle_name': patient.middle_name,
+            'last_name': patient.last_name,
+            'patient_id': yearly.patient_id,
+            'staff_id': patient.staff_id,
+            'department': patient.department
+        }
+        
+        return jsonify(report_data), 200
+    except Exception as e:
+        print(f"Error fetching public verification report data: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": f"Failed to retrieve report data: {str(e)}"}), 500
+
 
 @view_data_bp.route('/dashboard/stats', methods=['GET'])
 @require_permission('view_dashboard')
@@ -829,7 +1095,7 @@ def get_dashboard_stats():
             "patient_id": r.patient_id,
             "first_name": r.first_name,
             "last_name": r.last_name,
-            "created_at": r.created_at.isoformat() if r.created_at else None
+            "created_at": r.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat() if r.created_at else None
         } for r in recent],
         "registration_stats": {
             "total_comprehensive": total_comprehensive,

@@ -44,6 +44,11 @@ def init_socket_handlers(socketio):
         # Join global user-specific room for notifications
         join_room(f"user_{user_id}")
         
+        # Secure staff events room joining
+        portal = decoded_token.get('portal', 'staff')
+        if portal == 'staff':
+            join_room('staff_events')
+        
         # Broadcast presence change
         emit('user_presence', {'user_id': user_id, 'status': 'online'}, broadcast=True)
         print(f"User {user_id} securely connected with SID {sid}")

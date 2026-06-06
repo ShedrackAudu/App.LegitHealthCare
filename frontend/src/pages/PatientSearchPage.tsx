@@ -1,6 +1,16 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Search, ArrowRight, User, AlertCircle, Building2, HelpCircle, ShieldCheck } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  Search01Icon, 
+  ArrowRight01Icon, 
+  UserIcon, 
+  AlertCircleIcon, 
+  Building02Icon, 
+  HelpCircleIcon, 
+  Shield01Icon,
+  CheckmarkCircle02Icon
+} from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -81,7 +91,7 @@ const PatientSearchPage = () => {
               />
             ) : (
               <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-primary/10 border-2 border-primary/20 shadow-xl shadow-primary/10 group">
-                <Building2 className="w-10 h-10 text-primary group-hover:scale-110 transition-transform duration-500" />
+                <HugeiconsIcon icon={Building02Icon} className="w-10 h-10 text-primary group-hover:scale-110 transition-transform duration-500" />
               </div>
             )}
           </div>
@@ -93,7 +103,7 @@ const PatientSearchPage = () => {
           <div className="relative group">
             <div className="absolute -inset-1 bg-gradient-to-r from-primary/30 to-blue-500/30 rounded-2xl blur opacity-25 group-focus-within:opacity-100 transition duration-500" />
             <div className="relative">
-              <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input
                 placeholder="Enter Staff ID (e.g., STF-001)"
                 className="h-16 pl-12 pr-4 text-lg border-2 rounded-2xl focus-visible:ring-primary/20 focus-visible:border-primary transition-all bg-card/50 backdrop-blur-xl"
@@ -107,23 +117,9 @@ const PatientSearchPage = () => {
           <Button 
             type="submit" 
             className="w-full h-16 text-xl font-bold rounded-2xl shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 transition-all"
-            disabled={loading}
+            loading={loading}
           >
-            {loading ? (
-              <span className="flex items-center gap-2">
-                <motion.div
-                  animate={{ rotate: 360 }}
-                  transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-                >
-                  <Search className="w-6 h-6" />
-                </motion.div>
-                Searching...
-              </span>
-            ) : (
-              <span className="flex items-center gap-2">
-                Search Records <ArrowRight className="w-6 h-6" />
-              </span>
-            )}
+            Search Records {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="w-6 h-6" />}
           </Button>
         </form>
 
@@ -145,11 +141,11 @@ const PatientSearchPage = () => {
                 <CardHeader className="pb-2">
                   <div className="flex items-center gap-3 mb-2">
                     <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
-                        <User className="w-5 h-5" />
+                        <HugeiconsIcon icon={UserIcon} className="w-5 h-5" />
                     </div>
                     <div>
                       <CardTitle className="text-primary dark:text-primary text-sm flex items-center gap-1.5 font-black uppercase tracking-wider">
-                        <CheckCircle2 className="w-4 h-4" /> Account Found
+                        <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-4 h-4" /> Account Found
                       </CardTitle>
                       <CardDescription className="text-lg font-black text-foreground">
                         {patientData.first_name} {patientData.middle_name ? patientData.middle_name + ' ' : ''}{patientData.last_name}
@@ -178,7 +174,7 @@ const PatientSearchPage = () => {
                   </div>
 
                   <p className="text-muted-foreground text-[10px] flex items-center gap-2 italic">
-                    <HelpCircle className="w-3 h-3" /> 
+                    <HugeiconsIcon icon={HelpCircleIcon} className="w-3 h-3" /> 
                     Not you? Please notify an IT admin to correct your records.
                   </p>
                 </CardContent>
@@ -187,7 +183,7 @@ const PatientSearchPage = () => {
                     onClick={handleProceed}
                     className="w-full h-14 bg-primary hover:bg-primary0 text-white font-bold rounded-2xl shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
                   >
-                    Proceed with Registration <ArrowRight className="ml-2 w-5 h-5" />
+                    Proceed with Registration <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 w-5 h-5" />
                   </Button>
                 </CardFooter>
               </Card>
@@ -204,7 +200,7 @@ const PatientSearchPage = () => {
               <Card className="border-2 border-destructive/20 bg-destructive/5 backdrop-blur-xl">
                 <CardHeader>
                   <CardTitle className="text-destructive flex items-center gap-2">
-                    <AlertCircle className="w-5 h-5" /> Record Not Found
+                    <HugeiconsIcon icon={AlertCircleIcon} className="w-5 h-5" /> Record Not Found
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -231,7 +227,7 @@ const PatientSearchPage = () => {
               <Card className="border-2 border-primary/20 bg-primary/5 backdrop-blur-xl">
                 <CardHeader className="text-center">
                   <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-2 text-primary">
-                      <ShieldCheck className="w-6 h-6" />
+                      <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
                   </div>
                   <CardTitle className="text-xl font-bold">Account Already Exists</CardTitle>
                 </CardHeader>
@@ -263,9 +259,5 @@ const PatientSearchPage = () => {
     </div>
   );
 };
-
-const CheckCircle2 = ({ className }: { className?: string }) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><path d="m9 12 2 2 4-4"/></svg>
-)
 
 export default PatientSearchPage;

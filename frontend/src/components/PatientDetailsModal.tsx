@@ -4,16 +4,16 @@ import {
   DialogContent,
 } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-    User, 
-    Phone, 
-    Mail, 
-    Calendar, 
-    Briefcase, 
-    Hash, 
-    CheckCircle2,
-    X
-} from "lucide-react";
+    UserIcon, 
+    CallIcon, 
+    Mail01Icon, 
+    Calendar03Icon, 
+    Briefcase01Icon, 
+    CheckmarkCircle02Icon,
+    Cancel01Icon
+} from "@hugeicons/core-free-icons";
 import { Separator } from "@/components/ui/separator";
 import { motion, AnimatePresence, type Variants } from "framer-motion";
 import { useAppContext } from '@/context/AppContext';
@@ -59,7 +59,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
     >
       <div className="absolute inset-0 bg-gradient-to-br from-primary/5 to-transparent opacity-0 group-hover:opacity-100 transition-opacity" />
       <div className={`relative p-1.5 rounded-lg bg-background border shadow-inner transition-all shrink-0 ${colorClass}`}>
-        <Icon className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+        <HugeiconsIcon icon={Icon} className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
       </div>
       <div className="relative space-y-0 overflow-hidden">
         <p className="text-[6px] sm:text-[8px] font-black uppercase tracking-[0.1em] text-muted-foreground/60 truncate">
@@ -93,7 +93,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   onClick={onClose}
                   className="absolute top-3 right-3 z-50 p-1.5 rounded-full bg-black/10 hover:bg-black/20 text-white transition-all backdrop-blur-md"
                 >
-                  <X className="w-4 h-4" />
+                  <HugeiconsIcon icon={Cancel01Icon} className="w-4 h-4" />
                 </button>
               </div>
 
@@ -149,14 +149,14 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                   {/* Information Grid - ALL 2-columns */}
                   <div className="grid grid-cols-2 gap-2 sm:gap-2.5">
                       <div className="col-span-2">
-                        <DetailItem icon={Mail} label="Official Email" value={patient.email} />
+                        <DetailItem icon={Mail01Icon} label="Official Email" value={patient.email} />
                       </div>
                       
-                      <DetailItem icon={Phone} label="Primary Phone" value={patient.phone} />
-                      <DetailItem icon={Calendar} label="System Joined" value="Apr 2026" />
+                      <DetailItem icon={CallIcon} label="Primary Phone" value={patient.phone} />
+                      <DetailItem icon={Calendar03Icon} label="System Joined" value="Apr 2026" />
                       
-                      <DetailItem icon={Briefcase} label="Institutional Department" value={patient.department} />
-                      <DetailItem icon={CheckCircle2} label="Security Status" value="Verified" />
+                      <DetailItem icon={Briefcase01Icon} label="Institutional Department" value={patient.department} />
+                      <DetailItem icon={CheckmarkCircle02Icon} label="Security Status" value="Verified" />
                   </div>
 
                   {/* Bio-Metric Metrics (Secondary Grid) */}
@@ -190,7 +190,7 @@ export const PatientDetailsModal: React.FC<PatientDetailsModalProps> = ({
                     className="pt-4 sm:pt-6 flex flex-col sm:flex-row gap-3 sm:justify-between items-center border-t border-muted/50"
                   >
                       <div className="flex items-center gap-2.5 px-4 py-1.5 rounded-full bg-muted/20 border border-transparent">
-                          <CheckCircle2 className="w-3.5 h-3.5 text-primary" />
+                          <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-3.5 h-3.5 text-primary" />
                           <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground/70">Verified Audit Session</p>
                       </div>
                       <p className="text-[9px] font-black uppercase tracking-[0.3em] text-muted-foreground/30">

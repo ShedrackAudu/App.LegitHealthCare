@@ -4,23 +4,23 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Clock, 
-  Loader2,
-  AlertCircle,
-  Calendar,
-  User,
-  Building2,
-  Mail,
-  Phone,
-  Globe,
-  CheckCircle2,
-  Search,
-  RefreshCw,
-  MoreVertical,
-  Check,
-  Trash2
-} from 'lucide-react';
+  Clock01Icon, 
+  Loading03Icon,
+  AlertCircleIcon,
+  Calendar03Icon,
+  UserIcon,
+  Building02Icon,
+  Mail01Icon,
+  CallIcon,
+  GlobeIcon,
+  CheckmarkCircle02Icon,
+  Search01Icon,
+  ReloadIcon,
+  MoreVerticalIcon,
+  Delete02Icon
+} from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -85,7 +85,7 @@ interface Appointment {
 const BioItem = ({ label, value, icon: Icon }: any) => (
     <div className="flex items-start gap-3 p-3 rounded-xl bg-muted/30 border border-transparent hover:border-primary/20 transition-all overflow-hidden w-full min-w-0">
         <div className="mt-1 p-1.5 rounded-lg bg-background border shadow-sm text-primary shrink-0">
-            <Icon className="h-4 w-4" />
+            <HugeiconsIcon icon={Icon} className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
             <p className="text-[10px] uppercase tracking-widest font-black text-muted-foreground leading-none mb-1 truncate">{label}</p>
@@ -251,9 +251,9 @@ const AppointmentsPage = () => {
         
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                <Calendar className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                <HugeiconsIcon icon={Calendar03Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
                 <h1 className="text-base sm:text-2xl font-black tracking-tight">Appointments Booking</h1>
@@ -284,22 +284,23 @@ const AppointmentsPage = () => {
                         <CardHeader className="bg-primary/5 border-b-2 border-primary/10 pb-6">
                             <div className="flex items-center gap-4">
                                 <div className="h-12 w-12 rounded-2xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg">
-                                    <User className="h-7 w-7" />
+                                    <HugeiconsIcon icon={UserIcon} className="h-7 w-7" />
                                 </div>
                                 <div>
                                     <CardTitle className="text-xl font-black leading-none">{patient.first_name} {patient.last_name}</CardTitle>
-                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">{patient.staff_id}</CardDescription>
+                                    <CardDescription className="text-xs font-bold uppercase mt-1 text-primary/70">Staff ID: {patient.staff_id} • PID: {patient.patient_id || 'N/A'}</CardDescription>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-6 space-y-3">
-                            <BioItem label="DEPARTMENT" value={patient.department} icon={Building2} />
-                            <BioItem label="GENDER" value={patient.gender} icon={User} />
-                            <BioItem label="DATE OF BIRTH" value={patient.dob} icon={Calendar} />
-                            <BioItem label="AGE" value={`${patient.age} Yrs`} icon={User} />
-                            <BioItem label="CONTACT" value={patient.phone} icon={Phone} />
-                            <BioItem label="EMAIL" value={patient.email} icon={Mail} />
-                            <BioItem label="NATIONALITY" value={patient.nationality} icon={Globe} />
+                            <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} icon={UserIcon} />
+                            <BioItem label="DEPARTMENT" value={patient.department} icon={Building02Icon} />
+                            <BioItem label="GENDER" value={patient.gender} icon={UserIcon} />
+                            <BioItem label="DATE OF BIRTH" value={patient.dob} icon={Calendar03Icon} />
+                            <BioItem label="AGE" value={`${patient.age} Yrs`} icon={UserIcon} />
+                            <BioItem label="CONTACT" value={patient.phone} icon={CallIcon} />
+                            <BioItem label="EMAIL" value={patient.email} icon={Mail01Icon} />
+                            <BioItem label="NATIONALITY" value={patient.nationality} icon={GlobeIcon} />
                         </CardContent>
                     </Card>
                 </div>
@@ -309,7 +310,7 @@ const AppointmentsPage = () => {
                     <Card className="border-2 shadow-2xl rounded-3xl overflow-hidden hover:border-primary/30 transition-colors border-primary/10">
                         <CardHeader className="p-8 pb-4">
                             <div className="flex items-center gap-3 text-primary mb-2">
-                                <Clock className="h-6 w-6" />
+                                <HugeiconsIcon icon={Clock01Icon} className="h-6 w-6" />
                                 <span className="text-xs font-black uppercase tracking-widest">Appointment Scheduler</span>
                             </div>
                             <CardTitle className="text-2xl sm:text-3xl font-black">Book New Appointment</CardTitle>
@@ -320,7 +321,7 @@ const AppointmentsPage = () => {
                                 <div className="space-y-2">
                                     <Label className="text-sm font-black uppercase tracking-tight text-muted-foreground ml-1">Appointment Date <span className="text-red-500">*</span></Label>
                                     <div className="relative group">
-                                        <Calendar className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
+                                        <HugeiconsIcon icon={Calendar03Icon} className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors z-10" />
                                         <Input 
                                             type="date"
                                             min={today}
@@ -330,7 +331,7 @@ const AppointmentsPage = () => {
                                     </div>
                                     {errors.appointment_date && (
                                         <p className="text-xs text-red-500 font-bold flex items-center gap-1.5 ml-1">
-                                            <AlertCircle className="h-3.5 w-3.5" />
+                                            <HugeiconsIcon icon={AlertCircleIcon} className="h-3.5 w-3.5" />
                                             {errors.appointment_date.message}
                                         </p>
                                     )}
@@ -340,12 +341,12 @@ const AppointmentsPage = () => {
                                 <div className="space-y-4">
                                     <Label className="text-sm font-black uppercase tracking-tight text-muted-foreground ml-1">
                                         Select Time Slot <span className="text-red-500">*</span>
-                                        {fetchingSlots && <Loader2 className="inline ml-2 h-3 w-3 animate-spin text-primary" />}
+                                        {fetchingSlots && <HugeiconsIcon icon={Loading03Icon} className="inline ml-2 h-3 w-3 animate-spin text-primary" />}
                                     </Label>
                                     
                                     {!selectedDate ? (
                                         <div className="p-10 rounded-3xl bg-muted/20 border-2 border-dashed flex flex-col items-center justify-center text-muted-foreground">
-                                            <Clock className="w-10 h-10 mb-2 opacity-20" />
+                                            <HugeiconsIcon icon={Clock01Icon} className="w-10 h-10 mb-2 opacity-20" />
                                             <p className="text-xs font-bold uppercase tracking-widest">Select Date to See Availability</p>
                                         </div>
                                     ) : (
@@ -379,7 +380,7 @@ const AppointmentsPage = () => {
                                     )}
                                     {errors.time_slot && (
                                         <p className="text-xs text-red-500 font-bold flex items-center gap-1.5 ml-1">
-                                            <AlertCircle className="h-3.5 w-3.5" />
+                                            <HugeiconsIcon icon={AlertCircleIcon} className="h-3.5 w-3.5" />
                                             {errors.time_slot.message}
                                         </p>
                                     )}
@@ -395,7 +396,7 @@ const AppointmentsPage = () => {
                                     <div className="flex justify-between items-center ml-1">
                                         {errors.reason && (
                                             <p className="text-xs text-red-500 font-bold flex items-center gap-1.5">
-                                                <AlertCircle className="h-3.5 w-3.5" />
+                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-3.5 w-3.5" />
                                                 {errors.reason.message}
                                             </p>
                                         )}
@@ -408,27 +409,19 @@ const AppointmentsPage = () => {
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
-                                disabled={isBooking || !canManage}
+                                loading={isBooking}
+                                disabled={!canManage}
                                 className={`w-full h-14 sm:h-16 rounded-2xl text-sm sm:text-xl font-black gap-2 sm:gap-3 shadow-xl hover:scale-[1.01] active:scale-[0.99] transition-all bg-primary shadow-primary/20 ${!canManage ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                             >
-                                {isBooking ? (
+                                {canManage ? (
                                     <>
-                                        <Loader2 className="h-6 w-6 animate-spin" />
-                                        Processing...
+                                        {!isBooking && <HugeiconsIcon icon={Calendar03Icon} className="h-5 w-5 sm:h-6 sm:w-6" />}
+                                        Schedule Appointment
                                     </>
                                 ) : (
                                     <>
-                                        {canManage ? (
-                                            <>
-                                                <Calendar className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                Schedule Appointment
-                                            </>
-                                        ) : (
-                                            <>
-                                                <AlertCircle className="h-5 w-5 sm:h-6 sm:w-6" />
-                                                Permission Required to Schedule
-                                            </>
-                                        )}
+                                        <HugeiconsIcon icon={AlertCircleIcon} className="h-5 w-5 sm:h-6 sm:w-6" />
+                                        Permission Required to Schedule
                                     </>
                                 )}
                             </Button>
@@ -460,7 +453,7 @@ const AppointmentsPage = () => {
 
                         <div className="flex items-center gap-2 w-full lg:w-auto">
                             <div className="relative flex-1 lg:w-64">
-                                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                                 <Input 
                                     placeholder="Search by name or ID..."
                                     className="pl-9 h-12 rounded-2xl border-2 focus:ring-primary/10 font-bold"
@@ -469,7 +462,7 @@ const AppointmentsPage = () => {
                                 />
                             </div>
                             <Button variant="outline" size="icon" onClick={fetchAppointments} disabled={fetchingAppointments} className="h-12 w-12 rounded-2xl border-2 shadow-sm">
-                                <RefreshCw className={`h-5 w-5 ${fetchingAppointments ? 'animate-spin' : ''}`} />
+                                <HugeiconsIcon icon={ReloadIcon} className={`h-5 w-5 ${fetchingAppointments ? 'animate-spin' : ''}`} />
                             </Button>
                         </div>
                     </div>
@@ -496,23 +489,23 @@ const AppointmentsPage = () => {
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-2">
-                                                        <MoreVertical className="h-5 w-5" />
+                                                        <HugeiconsIcon icon={MoreVerticalIcon} className="h-5 w-5" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-56 rounded-2xl border-2 shadow-2xl p-2">
                                                     <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-3 py-2">Manage</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem className="flex items-center gap-3 cursor-pointer focus:bg-green-50 focus:text-green-600 font-bold text-sm py-3 rounded-xl" onClick={() => handleMarkAsCompleted(app.id)}>
-                                                        <CheckCircle2 className="h-4 w-4" />
+                                                        <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />
                                                         Mark as Completed
                                                     </DropdownMenuItem>
                                                     <DropdownMenuItem className="flex items-center gap-3 cursor-pointer font-bold text-sm py-3 rounded-xl" onClick={() => app.phone && window.open(`tel:${app.phone}`)}>
-                                                        <Phone className="h-4 w-4" />
+                                                        <HugeiconsIcon icon={CallIcon} className="h-4 w-4" />
                                                         Call Patient
                                                     </DropdownMenuItem>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem className="flex items-center gap-3 cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700 font-bold text-sm py-3 rounded-xl" onClick={() => { setAppointmentToDelete(app.id); setIsDeleteModalOpen(true); }}>
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                         Delete
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -521,8 +514,8 @@ const AppointmentsPage = () => {
                                         <div className="grid grid-cols-3 gap-3">
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Schedule</p>
-                                                <p className="text-xs font-black flex items-center gap-1.5"><Calendar className="h-3 w-3 text-primary" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
-                                                <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5"><Clock className="h-3 w-3" />{app.time_slot.split(' - ')[0]}</p>
+                                                <p className="text-xs font-black flex items-center gap-1.5"><HugeiconsIcon icon={Calendar03Icon} className="h-3 w-3 text-primary" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                                                <p className="text-[10px] font-bold text-muted-foreground flex items-center gap-1.5"><HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />{app.time_slot.split(' - ')[0]}</p>
                                             </div>
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Status</p>
@@ -580,11 +573,11 @@ const AppointmentsPage = () => {
                                                     <TableCell className="py-4">
                                                         <div className="space-y-1">
                                                             <div className="flex items-center gap-1.5 text-xs font-bold">
-                                                                <Calendar className="h-3.5 w-3.5 text-primary" />
+                                                                <HugeiconsIcon icon={Calendar03Icon} className="h-3.5 w-3.5 text-primary" />
                                                                 {new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                             </div>
                                                             <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground">
-                                                                <Clock className="h-3.5 w-3.5" />
+                                                                <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
                                                                 {app.time_slot}
                                                             </div>
                                                         </div>
@@ -620,7 +613,7 @@ const AppointmentsPage = () => {
                                                         <DropdownMenu>
                                                             <DropdownMenuTrigger asChild>
                                                                 <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                                                                    <MoreVertical className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
                                                                 </Button>
                                                             </DropdownMenuTrigger>
                                                             <DropdownMenuContent align="end" className="w-48 rounded-xl border-2 shadow-xl">
@@ -630,7 +623,7 @@ const AppointmentsPage = () => {
                                                                     className="flex items-center gap-2 cursor-pointer focus:bg-green-50 focus:text-green-600 font-bold text-xs py-2.5 rounded-lg transition-all"
                                                                     onClick={() => handleMarkAsCompleted(app.id)}
                                                                 >
-                                                                    <CheckCircle2 className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />
                                                                     Mark as Completed
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuItem 
@@ -640,7 +633,7 @@ const AppointmentsPage = () => {
                                                                         else toast.error("Phone number not available");
                                                                     }}
                                                                 >
-                                                                    <Phone className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={CallIcon} className="h-4 w-4" />
                                                                     Call Patient
                                                                 </DropdownMenuItem>
                                                                 <DropdownMenuSeparator />
@@ -651,7 +644,7 @@ const AppointmentsPage = () => {
                                                                         setIsDeleteModalOpen(true);
                                                                     }}
                                                                 >
-                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                                     Delete Appointment
                                                                 </DropdownMenuItem>
                                                             </DropdownMenuContent>
@@ -687,14 +680,14 @@ const AppointmentsPage = () => {
                                             <DropdownMenu>
                                                 <DropdownMenuTrigger asChild>
                                                     <Button variant="outline" size="icon" className="h-10 w-10 rounded-xl border-2">
-                                                        <MoreVertical className="h-5 w-5" />
+                                                        <HugeiconsIcon icon={MoreVerticalIcon} className="h-5 w-5" />
                                                     </Button>
                                                 </DropdownMenuTrigger>
                                                 <DropdownMenuContent align="end" className="w-56 rounded-2xl border-2 shadow-2xl p-2">
                                                     <DropdownMenuLabel className="text-[10px] font-black uppercase tracking-widest text-muted-foreground px-3 py-2">Manage Completed</DropdownMenuLabel>
                                                     <DropdownMenuSeparator />
                                                     <DropdownMenuItem className="flex items-center gap-3 cursor-pointer text-red-600 focus:bg-red-50 focus:text-red-700 font-bold text-sm py-3 rounded-xl" onClick={() => { setAppointmentToDelete(app.id); setIsDeleteModalOpen(true); }}>
-                                                        <Trash2 className="h-4 w-4" />
+                                                        <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                         Delete Record
                                                     </DropdownMenuItem>
                                                 </DropdownMenuContent>
@@ -703,7 +696,7 @@ const AppointmentsPage = () => {
                                         <div className="grid grid-cols-3 gap-3">
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Completed On</p>
-                                                <p className="text-xs font-black flex items-center gap-1.5 text-muted-foreground"><Calendar className="h-3 w-3" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                                                <p className="text-xs font-black flex items-center gap-1.5 text-muted-foreground"><HugeiconsIcon icon={Calendar03Icon} className="h-3 w-3" />{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
                                             </div>
                                             <div className="p-3 bg-muted/30 rounded-xl space-y-1">
                                                 <p className="text-[9px] font-black uppercase text-muted-foreground tracking-widest">Status</p>
@@ -760,11 +753,11 @@ const AppointmentsPage = () => {
                                                 <TableCell className="py-4">
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-1.5 text-xs font-bold text-muted-foreground">
-                                                            <Calendar className="h-3.5 w-3.5" />
+                                                            <HugeiconsIcon icon={Calendar03Icon} className="h-3.5 w-3.5" />
                                                             {new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                         </div>
                                                         <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground/60">
-                                                            <Clock className="h-3.5 w-3.5" />
+                                                            <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
                                                             {app.time_slot}
                                                         </div>
                                                     </div>
@@ -802,7 +795,7 @@ const AppointmentsPage = () => {
                                                     <DropdownMenu>
                                                         <DropdownMenuTrigger asChild>
                                                             <Button variant="ghost" size="icon" className="h-8 w-8 rounded-lg">
-                                                                <MoreVertical className="h-4 w-4" />
+                                                                <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
                                                             </Button>
                                                         </DropdownMenuTrigger>
                                                         <DropdownMenuContent align="end" className="w-48 rounded-xl border-2 shadow-xl">
@@ -815,7 +808,7 @@ const AppointmentsPage = () => {
                                                                     setIsDeleteModalOpen(true);
                                                                 }}
                                                             >
-                                                                <Trash2 className="h-4 w-4" />
+                                                                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                                 Delete Record
                                                             </DropdownMenuItem>
                                                         </DropdownMenuContent>

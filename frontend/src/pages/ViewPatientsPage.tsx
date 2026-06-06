@@ -1,13 +1,16 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Users, 
-  Edit, 
-  Trash2, 
-  Loader2,
-  Plus,
-  Eye
-} from 'lucide-react';
+  UserGroupIcon, 
+  Edit02Icon, 
+  Delete02Icon, 
+  Loading03Icon,
+  PlusSignIcon,
+  EyeIcon,
+  ArrowLeft01Icon,
+  ArrowRight01Icon
+} from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { PatientDetailsModal } from '@/components/PatientDetailsModal';
@@ -35,7 +38,7 @@ const ViewPatientsPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [perPage] = useState(10);
+    const [perPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
     
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
@@ -105,9 +108,9 @@ const ViewPatientsPage: React.FC = () => {
             <div className="space-y-6 animate-in fade-in duration-500">
                 {/* Unified Search Header style matching Director Review */}
                 <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                            <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight">Patient Directory</h1>
@@ -139,14 +142,14 @@ const ViewPatientsPage: React.FC = () => {
                                 Total: {totalItems} Patients
                             </Badge>
                         </div>
-                        <Button variant="outline" size="sm" className="font-bold gap-2" onClick={() => navigate('/registration')}>
-                            <Plus className="h-4 w-4" /> Add Patient
+                        <Button variant="outline" size="sm" className="hidden sm:flex font-bold gap-2" onClick={() => navigate('/registration')}>
+                            <HugeiconsIcon icon={PlusSignIcon} className="h-4 w-4" /> Add Patient
                         </Button>
                     </div>
                     <CardContent className="p-0">
                         {loading && patients.length === 0 ? (
                             <div className="flex flex-col items-center justify-center p-20 space-y-4">
-                                <Loader2 className="h-12 w-12 animate-spin text-primary" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
                                 <p className="text-muted-foreground font-bold animate-pulse uppercase tracking-[0.2em] text-xs">Loading Directory...</p>
                             </div>
                         ) : (
@@ -175,7 +178,7 @@ const ViewPatientsPage: React.FC = () => {
                                                 <TableCell colSpan={13} className="h-[28rem] border-0">
                                                     <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
                                                         <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                                            <Users className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                                            <HugeiconsIcon icon={UserGroupIcon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                                                         </div>
                                                         <div className="space-y-2">
                                                             <h3 className="text-xl font-black tracking-tight text-foreground/70">Directory Empty</h3>
@@ -248,7 +251,7 @@ const ViewPatientsPage: React.FC = () => {
                                                                 className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/5"
                                                                 onClick={() => handlePatientClick(p)}
                                                             >
-                                                                <Eye className="h-4 w-4" />
+                                                                <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />
                                                             </Button>
                                                             {user?.permissions?.includes('edit_patient') && (
                                                                 <Button 
@@ -257,7 +260,7 @@ const ViewPatientsPage: React.FC = () => {
                                                                     className="h-8 w-8 p-0 text-primary hover:text-primary hover:bg-primary/10"
                                                                     onClick={() => navigate(`/registration?edit=${p.staff_id}`)}
                                                                 >
-                                                                    <Edit className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={Edit02Icon} className="h-4 w-4" />
                                                                 </Button>
                                                             )}
                                                             {user?.permissions?.includes('delete_patient') && (
@@ -267,7 +270,7 @@ const ViewPatientsPage: React.FC = () => {
                                                                     className="h-8 w-8 p-0 text-destructive hover:text-destructive hover:bg-destructive/10"
                                                                     onClick={() => setDeleteModal({ open: true, staffId: p.staff_id })}
                                                                 >
-                                                                    <Trash2 className="h-4 w-4" />
+                                                                    <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -294,7 +297,7 @@ const ViewPatientsPage: React.FC = () => {
                                 onClick={() => fetchPatients(searchQuery, page - 1)}
                                 className="font-bold border-2"
                             >
-                                Previous
+                                <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
                             </Button>
                             <Button 
                                 variant="outline" 
@@ -303,7 +306,7 @@ const ViewPatientsPage: React.FC = () => {
                                 onClick={() => fetchPatients(searchQuery, page + 1)}
                                 className="font-bold border-2"
                             >
-                                Next
+                                Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
                             </Button>
                         </div>
                     </div>

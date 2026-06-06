@@ -1,30 +1,32 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Activity, 
-  Save, 
-  Loader2, 
-  Heart, 
-  Wind, 
-  ChevronRight,
-  FlaskConical,
-  Brain,
-  ClipboardList,
-  Volume2,
-  ArrowLeft,
-  Search,
-  Users,
-  Clock3,
-  Download,
-  UploadCloud,
-  FileSpreadsheet,
-  Info,
-  CheckCircle2,
-  XCircle,
-  AlertCircle,
-  Trash2
-} from 'lucide-react';
+  Activity01Icon, 
+  FloppyDiskIcon, 
+  Loading03Icon, 
+  FavouriteIcon, 
+  FastWindIcon, 
+  ArrowRight01Icon,
+  Chemistry02Icon,
+  Brain02Icon,
+  ClipboardIcon,
+  VolumeHighIcon,
+  ArrowLeft01Icon,
+  Search01Icon,
+  UserGroupIcon,
+  UserIcon,
+  Clock01Icon,
+  Download01Icon,
+  CloudUploadIcon,
+  Xls01Icon,
+  InformationCircleIcon,
+  CheckmarkCircle02Icon,
+  CancelCircleIcon,
+  AlertCircleIcon,
+  Delete02Icon
+} from '@hugeicons/core-free-icons';
 import { 
   Dialog, 
   DialogContent, 
@@ -47,12 +49,18 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
 import { toast as hotToast } from 'react-hot-toast';
 import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+
+const toTitleCase = (str: string): string => {
+    if (!str) return '';
+    return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+};
 
 const TempAccessCountdown = () => {
     const { user } = useAppContext();
@@ -92,7 +100,7 @@ const TempAccessCountdown = () => {
 
     return (
         <div className="mt-2 flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-orange-600 animate-pulse bg-orange-100/50 px-3 py-1 rounded-full w-fit">
-            <Clock3 className="h-3 w-3" />
+            <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
             Temporary Access: {mins}:{secs < 10 ? `0${secs}` : secs} Remaining
         </div>
     );
@@ -317,37 +325,50 @@ const TestResultsPage: React.FC = () => {
         return (
             <MainLayout>
                 <div className="space-y-8 animate-in fade-in duration-500">
-                    <div className="text-center space-y-2">
-                        <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-primary">Diagnostic Test Results</h1>
-                        <p className="text-muted-foreground text-lg">Select a test type to record or view patient results.</p>
+                    <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
+                        <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
+                            <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
+                                <HugeiconsIcon icon={Chemistry02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            </div>
+                            <div>
+                                <h1 className="text-base sm:text-2xl font-black tracking-tight">Diagnostic Test Results</h1>
+                                <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">Session: {activeYear} • {activeSection}</p>
+                            </div>
+                        </div>
+                        <div className="text-xs sm:text-sm text-muted-foreground font-bold flex items-center bg-muted/30 px-4 py-2 rounded-xl border-2 self-start xl:self-auto">
+                            Select a test type below to record or view patient results.
+                        </div>
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
                         {[
-                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity, color: 'text-orange-500', bg: 'bg-orange-500/10', permission: 'lab_essential_diagnostics' },
-                            { id: 'fbc', title: 'Full Blood Count', icon: FlaskConical, color: 'text-rose-500', bg: 'bg-rose-500/10', permission: 'lab_fbc' },
-                            { id: 'kft', title: 'Kidney Function Test', icon: Activity, color: 'text-blue-500', bg: 'bg-blue-500/10', permission: 'lab_kft' },
-                            { id: 'lipid', title: 'Lipid Profile', icon: Brain, color: 'text-amber-500', bg: 'bg-amber-500/10', permission: 'lab_lipid' },
-                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardList, color: 'text-primary', bg: 'bg-primary/10', permission: 'lab_lft' },
-                            { id: 'ecg', title: 'ECG Analysis', icon: Heart, color: 'text-red-500', bg: 'bg-red-500/10', permission: 'lab_ecg' },
-                            { id: 'spirometry', title: 'Spirometry', icon: Wind, color: 'text-sky-500', bg: 'bg-sky-500/10', permission: 'lab_spirometry' },
-                            { id: 'audiometry', title: 'Audiometry', icon: Volume2, color: 'text-purple-500', bg: 'bg-purple-500/10', permission: 'lab_audiometry' },
+                            { id: 'routine', title: 'Essential Diagnostics', icon: Activity01Icon, color: 'text-orange-500', bg: 'bg-orange-500/8 dark:bg-orange-500/10', hoverBg: 'group-hover:bg-orange-500/15', border: 'hover:border-orange-500/30' },
+                            { id: 'fbc', title: 'Full Blood Count', icon: Chemistry02Icon, color: 'text-rose-500', bg: 'bg-rose-500/8 dark:bg-rose-500/10', hoverBg: 'group-hover:bg-rose-500/15', border: 'hover:border-rose-500/30' },
+                            { id: 'kft', title: 'Kidney Function Test', icon: Activity01Icon, color: 'text-blue-500', bg: 'bg-blue-500/8 dark:bg-blue-500/10', hoverBg: 'group-hover:bg-blue-500/15', border: 'hover:border-blue-500/30' },
+                            { id: 'lipid', title: 'Lipid Profile', icon: Brain02Icon, color: 'text-amber-500', bg: 'bg-amber-500/8 dark:bg-amber-500/10', hoverBg: 'group-hover:bg-amber-500/15', border: 'hover:border-amber-500/30' },
+                            { id: 'lft', title: 'Liver Function Test', icon: ClipboardIcon, color: 'text-primary', bg: 'bg-primary/8 dark:bg-primary/10', hoverBg: 'group-hover:bg-primary/15', border: 'hover:border-primary/30' },
+                            { id: 'ecg', title: 'ECG Analysis', icon: FavouriteIcon, color: 'text-red-500', bg: 'bg-red-500/8 dark:bg-red-500/10', hoverBg: 'group-hover:bg-red-500/15', border: 'hover:border-red-500/30' },
+                            { id: 'spirometry', title: 'Spirometry', icon: FastWindIcon, color: 'text-sky-500', bg: 'bg-sky-500/8 dark:bg-sky-500/10', hoverBg: 'group-hover:bg-sky-500/15', border: 'hover:border-sky-500/30' },
+                            { id: 'audiometry', title: 'Audiometry', icon: VolumeHighIcon, color: 'text-purple-500', bg: 'bg-purple-500/8 dark:bg-purple-500/10', hoverBg: 'group-hover:bg-purple-500/15', border: 'hover:border-purple-500/30' },
                         ].map((test) => (
                             <Card 
                                 key={test.id} 
-                                className="group cursor-pointer hover:shadow-2xl transition-all duration-300 border-2 hover:border-primary/50"
+                                className={`group cursor-pointer hover:shadow-lg transition-all duration-300 border border-border/80 ${test.border} bg-card/65 backdrop-blur-sm relative overflow-hidden`}
                                 onClick={() => navigate(`/tests/${test.id}`)}
                             >
-                                <CardContent className="p-4 sm:p-6 flex items-center gap-3 sm:gap-4">
-                                    <div className={`p-2.5 sm:p-4 rounded-2xl ${test.bg} ${test.color} transition-transform group-hover:scale-110`}>
-                                        <test.icon className="h-6 w-6 sm:h-8 sm:w-8" />
+                                <CardContent className="p-3.5 sm:p-4 flex items-center gap-3 relative z-10">
+                                    <div className={`p-2.5 rounded-xl ${test.bg} ${test.color} ${test.hoverBg} transition-all duration-300 group-hover:scale-105 shrink-0`}>
+                                        <HugeiconsIcon icon={test.icon} className="h-5.5 w-5.5" />
                                     </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-base sm:text-xl font-bold">{test.title}</h3>
-                                        <p className="text-[10px] sm:text-sm text-muted-foreground">Record diagnostic findings</p>
+                                    <div className="flex-1 min-w-0">
+                                        <h3 className="text-sm sm:text-base font-bold tracking-tight text-foreground truncate group-hover:text-primary transition-colors">{test.title}</h3>
+                                        <p className="text-[10px] sm:text-xs text-muted-foreground font-medium truncate mt-0.5">Record diagnostics</p>
                                     </div>
-                                    <ChevronRight className="h-5 w-5 sm:h-6 sm:w-6 text-muted-foreground group-hover:text-primary transition-colors" />
+                                    <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors shrink-0">
+                                        <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                                    </div>
                                 </CardContent>
+                                <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
                             </Card>
                         ))}
                     </div>
@@ -359,17 +380,35 @@ const TestResultsPage: React.FC = () => {
     return (
         <MainLayout>
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <Button variant="ghost" onClick={() => navigate('/tests')} className="gap-2 -ml-2">
-                    <ArrowLeft className="h-4 w-4" /> Back to Test Selection
-                </Button>
+                {patient ? (
+                    <Button 
+                        variant="outline" 
+                        onClick={() => {
+                            setPatient(null);
+                            setSearchId('');
+                            setSearchResults([]);
+                        }} 
+                        className="gap-2 border-2 rounded-xl font-bold"
+                    >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to search
+                    </Button>
+                ) : (
+                    <Button 
+                        variant="outline" 
+                        onClick={() => navigate('/tests')} 
+                        className="gap-2 border-2 rounded-xl font-bold"
+                    >
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" /> Back to Test Selection
+                    </Button>
+                )}
 
                 {!patient ? (
                     <div className="space-y-8 animate-in slide-in-from-bottom-4 duration-500">
                         {/* Top Search Bar Style from Consultation */}
                         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                            <div className="flex items-center gap-3">
+                            <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
                                 <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-                                    <FlaskConical className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                                    <HugeiconsIcon icon={Chemistry02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                                 </div>
                                 <div>
                                     <h1 className="text-base sm:text-2xl font-black tracking-tight capitalize">{selectedTest?.replace('_', ' ')} Record</h1>
@@ -387,7 +426,7 @@ const TestResultsPage: React.FC = () => {
                                         <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
                                             <div className="flex items-center gap-2.5">
                                                 <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                                    <Users className="h-4 w-4" />
+                                                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
                                                 </div>
                                                 <div>
                                                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
@@ -399,7 +438,7 @@ const TestResultsPage: React.FC = () => {
                                                 </div>
                                             </div>
                                             <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                VIEW <ChevronRight className="h-3 w-3" />
+                                                VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
                                             </div>
                                         </CardContent>
                                     </Card>
@@ -427,7 +466,7 @@ const TestResultsPage: React.FC = () => {
                                             </label>
                                         </div>
                                         <div className="flex items-center gap-2 flex-1 px-2 h-11">
-                                            <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+                                            <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-muted-foreground shrink-0" />
                                             <Input
                                                 placeholder={searchByPid ? "Search Patient ID (PID)..." : "Search Staff ID or Name..."}
                                                 value={searchId}
@@ -441,7 +480,7 @@ const TestResultsPage: React.FC = () => {
                                             disabled={searching || !searchId.trim()}
                                             className="bg-primary hover:bg-primary/90 shadow-lg px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                                         >
-                                            {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Profile'}
+                                            {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : 'Load Profile'}
                                         </Button>
 
                                         {/* Search Results Card */}
@@ -483,7 +522,7 @@ const TestResultsPage: React.FC = () => {
                                                                     </div>
                                                                 </div>
                                                                 <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
-                                                                    Select <ChevronRight className="ml-1 h-3 w-3" />
+                                                                    Select <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1 h-3 w-3" />
                                                                 </Button>
                                                             </div>
                                                         </li>
@@ -499,12 +538,18 @@ const TestResultsPage: React.FC = () => {
                         <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                             <div className="text-center space-y-2">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4">
-                                    <Activity className="w-8 h-8 text-muted-foreground/50" />
+                                    <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-muted-foreground/50" />
                                 </div>
                                 <p className="text-muted-foreground font-bold text-lg italic tracking-tight">Enter a Patient ID to begin recording {selectedTest?.toUpperCase()} results.</p>
                                 <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">Context: {activeSection} Clinic • {activeYear}</p>
                             </div>
                         </Card>
+
+                        <BulkAIRemarksSection 
+                            testType={selectedTest} 
+                            activeYear={activeYear} 
+                            activeSection={activeSection} 
+                        />
                     </div>
                 ) : (
                     <TestFormContainer 
@@ -535,7 +580,7 @@ const TestResultsPage: React.FC = () => {
                     <DialogHeader className="text-left">
                         <div className="flex items-center gap-3 mb-2 text-left">
                             <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                                <Users className="w-6 h-6" />
+                                <HugeiconsIcon icon={UserGroupIcon} className="w-6 h-6" />
                             </div>
                             <div>
                                 <DialogTitle className="text-lg sm:text-xl font-black tracking-tight uppercase">{selectedQueueDept} Queue</DialogTitle>
@@ -548,7 +593,7 @@ const TestResultsPage: React.FC = () => {
                         <ScrollArea className="h-[400px] px-1">
                             {loadingQueue ? (
                                 <div className="flex items-center justify-center h-full">
-                                    <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                                 </div>
                             ) : queueEntries.length > 0 ? (
                                 <div className="space-y-3">
@@ -574,7 +619,7 @@ const TestResultsPage: React.FC = () => {
                                                             <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
                                                             <span className="hidden sm:inline text-muted-foreground/60">•</span>
                                                             <span className="font-medium flex items-center gap-1">
-                                                                <Clock3 className="w-3 h-3 text-muted-foreground/60" />
+                                                                <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-muted-foreground/60" />
                                                                 {getRelativeTime(entry.created_at)}
                                                             </span>
                                                         </div>
@@ -590,7 +635,7 @@ const TestResultsPage: React.FC = () => {
                                                                     setIsQueueModalOpen(false);
                                                                 }}
                                                             >
-                                                                Proceed <ChevronRight className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                                Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
                                                             </Button>
                                                             {hasPermission('delete_from_queue') && (
                                                                 <Button 
@@ -600,7 +645,7 @@ const TestResultsPage: React.FC = () => {
                                                                     onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
                                                                     title="Remove from queue"
                                                                 >
-                                                                    <Trash2 className="w-3 h-3" />
+                                                                    <HugeiconsIcon icon={Delete02Icon} className="w-3 h-3" />
                                                                 </Button>
                                                             )}
                                                         </div>
@@ -619,7 +664,7 @@ const TestResultsPage: React.FC = () => {
                                                         setIsQueueModalOpen(false);
                                                     }}
                                                 >
-                                                    Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
+                                                    Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                                                 </Button>
                                                 {hasPermission('delete_from_queue') && (
                                                     <Button 
@@ -629,7 +674,7 @@ const TestResultsPage: React.FC = () => {
                                                         onClick={() => handleDeleteQueueEntry(selectedQueueDept, entry.staff_id)}
                                                         title="Remove from queue"
                                                     >
-                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                        <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
                                                     </Button>
                                                 )}
                                             </div>
@@ -638,7 +683,7 @@ const TestResultsPage: React.FC = () => {
                                 </div>
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                                    <Users className="h-12 w-12 mb-4 text-muted-foreground" />
+                                    <HugeiconsIcon icon={UserGroupIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
                                     <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Queue is Empty</p>
                                     <p className="text-xs text-muted-foreground mt-1">No patients are waiting for this test.</p>
                                 </div>
@@ -758,7 +803,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                 <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div className="flex items-center gap-3">
                         <div className="p-2 bg-primary/20 rounded-xl shrink-0">
-                            <UploadCloud className="h-5 w-5 text-primary" />
+                            <HugeiconsIcon icon={CloudUploadIcon} className="h-5 w-5 text-primary" />
                         </div>
                         <div>
                             <CardTitle className="text-lg font-black tracking-tight uppercase leading-none">Bulk Result Upload</CardTitle>
@@ -771,7 +816,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                         onClick={handleDownloadTemplate}
                         className="w-full sm:w-auto gap-2 font-black text-[10px] uppercase border-primary/30 hover:bg-primary/10 transition-colors h-9"
                     >
-                        <Download className="h-3.5 w-3.5" /> Download Template
+                        <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" /> Download Template
                     </Button>
                 </div>
             </CardHeader>
@@ -780,7 +825,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                     <div className="space-y-4">
                         <div className="flex items-start gap-4 p-4 rounded-2xl bg-muted/50 border-2 border-dashed border-primary/20">
                             <div className="p-2 bg-amber-500/10 rounded-xl">
-                                <Info className="h-5 w-5 text-amber-600" />
+                                <HugeiconsIcon icon={InformationCircleIcon} className="h-5 w-5 text-amber-600" />
                             </div>
                             <div className="space-y-1">
                                 <h4 className="font-black text-sm uppercase tracking-tight">Instructions</h4>
@@ -810,12 +855,12 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             >
                                 {uploading ? (
                                     <>
-                                        <Loader2 className="h-8 w-8 animate-spin text-primary mb-2" />
+                                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary mb-2" />
                                         <p className="text-sm font-bold animate-pulse">Processing Batch Data...</p>
                                     </>
                                 ) : (
                                     <>
-                                        <FileSpreadsheet className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
+                                        <HugeiconsIcon icon={Xls01Icon} className="h-8 w-8 text-muted-foreground group-hover:text-primary transition-colors mb-2" />
                                         <p className="text-sm font-bold text-muted-foreground group-hover:text-primary transition-colors">Click to Select Excel File</p>
                                         <p className="text-[10px] text-muted-foreground uppercase font-black mt-1">Only .xlsx supported</p>
                                     </>
@@ -833,14 +878,14 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                                     <div className="grid grid-cols-2 gap-3">
                                         <div className="p-3 bg-primary/10 rounded-xl border border-primary/20">
                                             <div className="flex items-center gap-2 text-primary mb-1">
-                                                <CheckCircle2 className="h-4 w-4" />
+                                                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Success</span>
                                             </div>
                                             <p className="text-2xl font-black text-primary">{uploadResult.success_count}</p>
                                         </div>
                                         <div className="p-3 bg-rose-500/10 rounded-xl border border-rose-500/20">
                                             <div className="flex items-center gap-2 text-rose-600 mb-1">
-                                                <XCircle className="h-4 w-4" />
+                                                <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4" />
                                                 <span className="text-[10px] font-black uppercase">Skipped</span>
                                             </div>
                                             <p className="text-2xl font-black text-rose-700">{uploadResult.skip_count}</p>
@@ -850,7 +895,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                                     {uploadResult.errors && uploadResult.errors.length > 0 && (
                                         <div className="space-y-2">
                                             <div className="flex items-center gap-2 text-amber-600">
-                                                <AlertCircle className="h-3 w-3" />
+                                                <HugeiconsIcon icon={AlertCircleIcon} className="h-3 w-3" />
                                                 <span className="text-[9px] font-black uppercase italic">Processing Notes</span>
                                             </div>
                                             <ScrollArea className="h-[120px] rounded-lg bg-muted/50 p-2 border">
@@ -868,7 +913,7 @@ const BulkUploadSection = ({ testType, activeYear, activeSection }: any) => {
                             ) : (
                                 <div className="flex flex-col items-center justify-center h-48 text-center px-6">
                                     <div className="w-12 h-12 rounded-full bg-muted/50 flex items-center justify-center mb-3">
-                                        <Search className="h-6 w-6 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Search01Icon} className="h-6 w-6 text-muted-foreground/30" />
                                     </div>
                                     <p className="text-xs font-bold text-muted-foreground/50 italic">No upload data available. Upload a file to view a detailed summary of the processed results.</p>
                                 </div>
@@ -908,8 +953,19 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         setLoading(true);
         try {
             const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
+            
+            let payload = { ...data };
+            if (testType === 'audiometry') {
+                if (payload.audiometry_result) {
+                    payload.audiometry_result = toTitleCase(payload.audiometry_result);
+                }
+                if (payload.audiometry_remark) {
+                    payload.audiometry_remark = toTitleCase(payload.audiometry_remark);
+                }
+            }
+
             await axios.post(`/api/tests/save-test/${type}`, {
-                ...data,
+                ...payload,
                 staff_id: patient.staff_id,
                 screening_year: activeYear,
                 current_test_type: testType
@@ -928,7 +984,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
         return (
             <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
                 <div className="flex flex-col items-center gap-4">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" />
                     <p className="text-sm font-bold text-muted-foreground animate-pulse">Fetching existing records...</p>
                 </div>
             </Card>
@@ -937,15 +993,30 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 
     return (
         <div className="space-y-6">
-            {/* BioData Header */}
-            <Card className="border-2 border-primary/20 shadow-md bg-primary/5 overflow-hidden">
-                <CardContent className="p-6">
-                    <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-                        <BioItem label="Staff ID" value={patient.staff_id} className="font-bold text-primary" />
-                        <BioItem label="First Name" value={patient.first_name} />
-                        <BioItem label="Last Name" value={patient.last_name} />
-                        <BioItem label="Age" value={patient.age} />
-                        <BioItem label="Department" value={patient.department} />
+            <Card className="border-2 border-primary/20 shadow-lg bg-primary/[0.02] overflow-hidden">
+                <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                    {/* Passport Avatar */}
+                    <div className="w-16 h-16 rounded-xl border border-primary/20 overflow-hidden bg-card shrink-0 shadow-sm flex items-center justify-center">
+                        {patient.passport_image ? (
+                            <img 
+                                src={patient.passport_image.startsWith('http') || patient.passport_image.startsWith('blob') || patient.passport_image.startsWith('data') ? patient.passport_image : `${(window as any).API_BASE_URL}${patient.passport_image}`} 
+                                alt="Passport" 
+                                className="w-full h-full object-cover"
+                            />
+                        ) : (
+                            <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary/40" />
+                        )}
+                    </div>
+
+                    <div className="flex-1 grid grid-cols-2 lg:grid-cols-7 gap-4 w-full">
+                        <div className="lg:col-span-2">
+                            <BioItem label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
+                        </div>
+                        <BioItem label="STAFF ID" value={patient.staff_id} />
+                        <BioItem label="PATIENT ID" value={patient.patient_id || 'N/A'} />
+                        <BioItem label="AGE" value={`${patient.age} Yrs`} />
+                        <BioItem label="GENDER" value={patient.gender || 'N/A'} />
+                        <BioItem label="DEPARTMENT" value={patient.department} />
                     </div>
                 </CardContent>
             </Card>
@@ -971,9 +1042,9 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 };
 
 const BioItem = ({ label, value, className }: any) => (
-    <div className="space-y-1">
-        <p className="text-[10px] uppercase tracking-widest font-bold text-muted-foreground">{label}</p>
-        <p className={`text-base truncate ${className}`}>{value}</p>
+    <div className="space-y-0.5 sm:space-y-1">
+        <p className="text-[9px] sm:text-[10px] uppercase tracking-[0.2em] font-black text-muted-foreground/60 leading-none">{label}</p>
+        <p className={`font-black text-base sm:text-lg text-primary tracking-tight truncate leading-tight ${className || ''}`}>{value}</p>
     </div>
 );
 
@@ -1008,8 +1079,8 @@ const FBCForm = ({ onSubmit, loading, initialData }: any) => {
                 </div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save FBC Results</>}
                 </Button>
             </div>
         </form>
@@ -1050,8 +1121,8 @@ const KFTForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>KFT Remark</Label><Input {...register('kft_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save KFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1091,8 +1162,8 @@ const LipidForm = ({ onSubmit, loading, initialData }: any) => {
                 <div className="space-y-2"><Label>LP Remark</Label><Input {...register('lp_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Lipid Results</>}
                 </Button>
             </div>
         </form>
@@ -1110,20 +1181,20 @@ const LFTForm = ({ onSubmit, loading, initialData }: any) => {
     return (
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
             <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2"><Label>AST <span className="text-rose-500">*</span></Label><Input {...register('ast', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>AST</Label><Input {...register('ast')} type="number" step="any" placeholder="0.00" /></div>
                 <div className="space-y-2"><Label>ALT <span className="text-rose-500">*</span></Label><Input {...register('alt', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>ALP <span className="text-rose-500">*</span></Label><Input {...register('alp', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>TB <span className="text-rose-500">*</span></Label><Input {...register('tb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label>CB <span className="text-rose-500">*</span></Label><Input {...register('cb', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA <span className="text-rose-500">*</span></Label><Input {...register('urea', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
-                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE <span className="text-rose-500">*</span></Label><Input {...register('creatinine', { required: true })} type="number" step="any" placeholder="0.00" required /></div>
+                <div className="space-y-2"><Label>ALP</Label><Input {...register('alp')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label>TB</Label><Input {...register('tb')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label>CB</Label><Input {...register('cb')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">UREA</Label><Input {...register('urea')} type="number" step="any" placeholder="0.00" /></div>
+                <div className="space-y-2"><Label className="whitespace-nowrap truncate block">CREATININE - CRE</Label><Input {...register('creatinine')} type="number" step="any" placeholder="0.00" /></div>
             </div>
             <div className="grid grid-cols-1 gap-4">
                 <div className="space-y-2"><Label>LFT Remark</Label><Input {...register('lft_remark')} /></div>
             </div>
             <div className="flex justify-center sm:justify-end pt-6">
-                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save LFT Results</>}
                 </Button>
             </div>
         </form>
@@ -1151,8 +1222,8 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
                     <div className="w-full sm:w-[320px] shrink-0">
                         <FileAttachmentSection staffId={staffId} year={year} department="Spirometry" compact={true} allowDownload={false} />
                     </div>
-                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                        {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Spirometry Results</>}
                     </Button>
                 </div>
             </form>
@@ -1161,7 +1232,7 @@ const SpirometryForm = ({ onSubmit, loading, initialData, staffId, year }: any) 
 };
 
 const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }: any) => {
-    const { register, handleSubmit, reset } = useForm({
+    const { register, handleSubmit, reset, setValue } = useForm({
         defaultValues: initialData
     });
 
@@ -1175,8 +1246,34 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
         <div className="space-y-12">
             <form onSubmit={handleSubmit(onSubmit)} className="space-y-6">
                 <div className="grid grid-cols-2 md:grid-cols-2 gap-4">
-                    <div className="space-y-2"><Label>Result <span className="text-rose-500">*</span></Label><Input {...register(resultKey, { required: true })} required /></div>
-                    <div className="space-y-2"><Label>Remark <span className="text-rose-500">*</span></Label><Input {...register(remarkKey, { required: true })} required /></div>
+                    <div className="space-y-2">
+                        <Label>Result <span className="text-rose-500">*</span></Label>
+                        <Input 
+                            {...register(resultKey, { 
+                                required: true,
+                                onBlur: (e) => {
+                                    if (test === 'Audiometry') {
+                                        setValue(resultKey, toTitleCase(e.target.value));
+                                    }
+                                }
+                            })} 
+                            required 
+                        />
+                    </div>
+                    <div className="space-y-2">
+                        <Label>Remark <span className="text-rose-500">*</span></Label>
+                        <Input 
+                            {...register(remarkKey, { 
+                                required: true,
+                                onBlur: (e) => {
+                                    if (test === 'Audiometry') {
+                                        setValue(remarkKey, toTitleCase(e.target.value));
+                                    }
+                                }
+                            })} 
+                            required 
+                        />
+                    </div>
                 </div>
                 <div className="flex flex-col sm:flex-row items-center justify-between pt-4 gap-6">
                     <div className="w-full sm:w-[320px] shrink-0">
@@ -1184,8 +1281,8 @@ const SimpleTestForm = ({ onSubmit, loading, test, initialData, staffId, year }:
                             <FileAttachmentSection staffId={staffId} year={year} department={test} compact={true} allowDownload={false} />
                         )}
                     </div>
-                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
+                    <Button type="submit" className="w-full sm:w-auto h-11 px-6 sm:px-12 font-bold shadow-lg" loading={loading}>
+                        {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save {test} Results</>}
                     </Button>
                 </div>
             </form>
@@ -1252,7 +1349,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
         <form onSubmit={handleSubmit(onSubmit)} className="space-y-8">
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Prostate-Specific Antigen (PSA)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -1286,7 +1383,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Glucose (FBS/RBS)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Glucose (FBS/RBS)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
@@ -1316,7 +1413,7 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
 
             <div className="space-y-4">
                 <h3 className="text-xs font-black uppercase tracking-widest text-primary border-b pb-2 flex items-center gap-2">
-                    <Activity className="h-4 w-4" /> Urine Analysis (U/A)
+                    <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4" /> Urine Analysis (U/A)
                 </h3>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                     <div className="space-y-2">
@@ -1353,11 +1450,121 @@ const RoutineForm = ({ onSubmit, loading, initialData }: any) => {
             </div>
 
             <div className="flex justify-center sm:justify-end pt-8">
-                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" disabled={loading}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Save className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
+                <Button type="submit" className="w-full sm:w-auto h-12 px-12 font-black text-base shadow-xl shadow-primary/20" loading={loading}>
+                    {!loading && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Save Essential Results</>}
                 </Button>
             </div>
         </form>
+    );
+};
+
+const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
+    const [range, setRange] = useState('');
+    const [override, setOverride] = useState(false);
+    const [loading, setLoading] = useState(false);
+    const [result, setResult] = useState<any>(null);
+
+    const handleSubmit = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!range.trim()) {
+            toast.error("Please enter a Patient ID range (e.g. 1-50)");
+            return;
+        }
+        setLoading(true);
+        setResult(null);
+        try {
+            const resp = await axios.post(`/api/tests/bulk-ai-remarks/${testType}`, 
+                { range: range.trim(), screening_year: activeYear, override },
+                { headers: { 'X-Company-Context': activeSection } }
+            );
+            setResult(resp.data);
+            toast.success("Bulk AI remarks generation completed!");
+        } catch (err: any) {
+            console.error(err);
+            toast.error(err.response?.data?.error || "Failed to generate bulk AI remarks");
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    if (!['fbc', 'kft', 'lipid', 'lft'].includes(testType || '')) return null;
+
+    return (
+        <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md mt-6">
+            <CardHeader className="p-6 pb-4">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 self-start">
+                        <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6" />
+                    </div>
+                    <div>
+                        <CardTitle className="text-lg font-black tracking-tight text-left">Bulk AI Remarks Generator</CardTitle>
+                        <p className="text-xs text-muted-foreground text-left">Generate AI remarks for a serial range of patient IDs concurrently.</p>
+                    </div>
+                </div>
+            </CardHeader>
+            <CardContent className="p-6 pt-0 space-y-4">
+                <form onSubmit={handleSubmit} className="space-y-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-end gap-4">
+                        <div className="flex-1 space-y-2">
+                            <Label htmlFor="bulk-range" className="text-xs font-bold uppercase tracking-wider text-slate-500">Patient ID Range</Label>
+                            <Input 
+                                id="bulk-range"
+                                placeholder="e.g. 1-50 or LHCSL2026DCP001-LHCSL2026DCP050"
+                                value={range}
+                                onChange={(e) => setRange(e.target.value)}
+                                disabled={loading}
+                                className="h-11 rounded-xl font-semibold border-2"
+                            />
+                        </div>
+                        <Button 
+                            type="submit" 
+                            disabled={loading || !range.trim()}
+                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                        >
+                            {loading ? (
+                                <>
+                                    <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
+                                    Processing AI...
+                                </>
+                            ) : 'Generate Remarks'}
+                        </Button>
+                    </div>
+                    <div className="flex items-center space-x-2 pt-1">
+                        <Checkbox 
+                            id="override-remarks" 
+                            checked={override} 
+                            onCheckedChange={(checked: boolean) => setOverride(checked)}
+                            disabled={loading}
+                        />
+                        <Label htmlFor="override-remarks" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                            Override existing remarks
+                        </Label>
+                    </div>
+                </form>
+
+                {result && (
+                    <div className="p-4 bg-muted/30 border rounded-xl space-y-2 text-sm animate-in fade-in duration-300">
+                        <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-wider">
+                            <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Succeeded: {result.processed_count}</span>
+                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed: {result.error_count}</span>
+                        </div>
+                        {result.errors && result.errors.length > 0 && (
+                            <div className="space-y-1.5 pt-2">
+                                <p className="font-bold text-xs text-rose-500 uppercase tracking-widest">Failed IDs details:</p>
+                                <div className="max-h-28 overflow-y-auto divide-y border rounded-lg bg-background text-xs font-medium">
+                                    {result.errors.map((err: any, idx: number) => (
+                                        <div key={idx} className="p-2 flex justify-between gap-4">
+                                            <span className="font-bold uppercase text-slate-600 shrink-0">{err.patient_id}</span>
+                                            <span className="text-slate-500 italic text-right truncate">{err.error}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </CardContent>
+        </Card>
     );
 };
 

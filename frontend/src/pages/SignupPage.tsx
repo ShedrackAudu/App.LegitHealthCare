@@ -11,11 +11,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Activity, Loader2, User, Phone, Mail, Lock, ShieldCheck, 
-  AtSign, Eye, EyeOff, CheckCircle2, X, Search, Building2, 
-  HelpCircle, Calendar, ArrowLeft 
-} from 'lucide-react';
+  Activity01Icon, Loading03Icon, UserIcon, CallIcon, Mail01Icon, LockIcon, Shield01Icon, 
+  EyeIcon, ViewOffIcon, CheckmarkCircle02Icon, Cancel01Icon, Search01Icon, Building02Icon, 
+  Calendar03Icon, ArrowLeft01Icon 
+} from '@hugeicons/core-free-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'react-hot-toast';
 
@@ -322,7 +323,7 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20 registration-page">
+    <div className="h-[100dvh] overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20 registration-page">
       {/* Left Side: Branding & Visuals (Consistent with Login) */}
       <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 
@@ -353,12 +354,12 @@ const SignupPage: React.FC = () => {
                   fallbackText={branding?.clinic_name}
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                   <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
-                      <Activity className="w-7 h-7 text-white" />
-                   </div>
-                   <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
-                </div>
+                 <div className="flex items-center gap-2">
+                    <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
+                       <HugeiconsIcon icon={Activity01Icon} className="w-7 h-7 text-white" />
+                    </div>
+                    <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
+                 </div>
             )}
           </Link>
 
@@ -391,7 +392,7 @@ const SignupPage: React.FC = () => {
                  {branding?.logo_light ? (
                     <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
-                    <Activity className="w-12 h-12 text-primary" />
+                    <HugeiconsIcon icon={Activity01Icon} className="w-12 h-12 text-primary" />
                  )}
              </Link>
              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
@@ -414,9 +415,9 @@ const SignupPage: React.FC = () => {
                         <div className="absolute inset-0 bg-[repeating-linear-gradient(45deg,transparent,transparent_10px,rgba(220,38,38,0.03)_10px,rgba(220,38,38,0.03)_20px)] pointer-events-none"></div>
 
                         <div className="relative bg-destructive/10 p-5 rounded-2xl ring-4 ring-destructive/5 mb-2">
-                          <ShieldCheck className="w-12 h-12 text-destructive animate-pulse" strokeWidth={2.5} />
+                          <HugeiconsIcon icon={Shield01Icon} className="w-12 h-12 text-destructive animate-pulse" />
                           <div className="absolute -top-2 -right-2 bg-destructive w-5 h-5 rounded-full border-4 border-background flex items-center justify-center">
-                            <Lock className="w-2.5 h-2.5 text-white" />
+                            <HugeiconsIcon icon={LockIcon} className="w-2.5 h-2.5 text-white" />
                           </div>
                         </div>
                         
@@ -447,14 +448,14 @@ const SignupPage: React.FC = () => {
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">First Name</Label>
                       <div className="relative group">
                         <Input placeholder="John" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('first_name')} disabled={loading} />
-                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <HugeiconsIcon icon={UserIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Last Name</Label>
                       <div className="relative group">
                         <Input placeholder="Doe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('last_name')} disabled={loading} />
-                        <User className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <HugeiconsIcon icon={UserIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
                   </div>
@@ -463,7 +464,7 @@ const SignupPage: React.FC = () => {
                     <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Username</Label>
                     <div className="relative group">
                       <Input placeholder="johndoe" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('username')} disabled={loading} />
-                      <AtSign className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <HugeiconsIcon icon={UserIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
                   </div>
 
@@ -472,14 +473,14 @@ const SignupPage: React.FC = () => {
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone</Label>
                       <div className="relative group">
                         <Input placeholder="080..." className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('phone')} disabled={loading} />
-                        <Phone className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <HugeiconsIcon icon={CallIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
                     <div className="space-y-1">
                       <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email</Label>
                       <div className="relative group">
                         <Input type="email" placeholder="john@email.com" className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('email')} disabled={loading} />
-                        <Mail className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <HugeiconsIcon icon={Mail01Icon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                     </div>
                   </div>
@@ -492,8 +493,8 @@ const SignupPage: React.FC = () => {
                         </div>
                         <div className="relative group">
                           <Input type={showPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('password')} disabled={loading} />
-                          <Lock className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+                          <HugeiconsIcon icon={LockIcon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                          <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3.5 text-muted-foreground">{showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
                         </div>
                       </div>
                       <div className="space-y-1">
@@ -503,16 +504,16 @@ const SignupPage: React.FC = () => {
                         </div>
                         <div className="relative group">
                           <Input type={showConfirmPassword ? "text" : "password"} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" {...register('confirm_password')} disabled={loading} />
-                          <ShieldCheck className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
-                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none">{showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}</button>
+                          <HugeiconsIcon icon={Shield01Icon} className="absolute left-3.5 top-3.5 h-5 w-5 text-muted-foreground" />
+                          <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none">{showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}</button>
                         </div>
                       </div>
                     </div>
 
 
 
-                    <Button type="submit" className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={loading || !isStaffSignupEnabled}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Create Staff Account'}
+                    <Button type="submit" loading={loading} className="w-full h-12 rounded-2xl font-black uppercase tracking-widest mt-4 shadow-xl shadow-primary/20" disabled={!isStaffSignupEnabled}>
+                      Create Staff Account
                     </Button>
                   </form>
                 ) : (
@@ -528,7 +529,7 @@ const SignupPage: React.FC = () => {
                         >
                           <div className="text-left space-y-1">
                              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
-                               <Mail className="w-6 h-6" />
+                               <HugeiconsIcon icon={Mail01Icon} className="w-6 h-6" />
                              </div>
                              <div className="flex items-center gap-2">
                                <h3 className="text-xl font-black tracking-tight leading-none">Verify Account</h3>
@@ -557,9 +558,10 @@ const SignupPage: React.FC = () => {
                             <Button 
                               type="submit"
                               className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-                              disabled={verifyLoading || otp.length < 6}
+                              loading={verifyLoading}
+                              disabled={otp.length < 6}
                             >
-                              {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Continue'}
+                              Verify & Continue
                             </Button>
                           </div>
 
@@ -579,7 +581,7 @@ const SignupPage: React.FC = () => {
                               onClick={() => setStaffStep('form')} 
                               className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                             >
-                               <ArrowLeft className="w-3 h-3" /> Back to Signup Form
+                               <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Back to Signup Form
                             </button>
                           </div>
                         </motion.form>
@@ -591,7 +593,7 @@ const SignupPage: React.FC = () => {
                            className="flex flex-col items-start py-6 space-y-4"
                          >
                            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
-                             <CheckCircle2 className="w-10 h-10" />
+                             <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-10 h-10" />
                            </div>
                            <div className="text-left space-y-1">
                              <h3 className="text-2xl font-black text-primary tracking-tight">Verified!</h3>
@@ -611,7 +613,7 @@ const SignupPage: React.FC = () => {
                   <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                     <div className="bg-primary/5 border-2 border-primary/10 p-5 rounded-2xl flex items-start gap-4">
                       <div className="bg-primary/20 p-2.5 rounded-xl">
-                        <Search className="w-6 h-6 text-primary" />
+                        <HugeiconsIcon icon={Search01Icon} className="w-6 h-6 text-primary" />
                       </div>
                       <div>
                         <h4 className="text-sm font-black uppercase tracking-tight">Record Finder</h4>
@@ -630,12 +632,12 @@ const SignupPage: React.FC = () => {
                             onChange={(e) => setPatientStaffId(e.target.value.replace(/\D/g, ''))}
                             inputMode="numeric"
                           />
-                          <Building2 className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={Building02Icon} className="absolute left-5 top-1/2 -translate-y-1/2 w-6 h-6 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                       </div>
                       
-                      <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" disabled={searchLoading}>
-                        {searchLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Find My Records'}
+                      <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20 group" loading={searchLoading}>
+                        Find My Records
                       </Button>
                     </form>
 
@@ -643,7 +645,7 @@ const SignupPage: React.FC = () => {
                       <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="pt-1">
                          <div className="bg-rose-500/10 border border-rose-500/20 rounded-xl p-3 flex items-start gap-3">
                             <div className="w-8 h-8 rounded-lg bg-rose-500/20 flex items-center justify-center text-rose-500 shrink-0">
-                               <ShieldCheck className="w-5 h-5" />
+                               <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
                             </div>
                             <div className="flex-1 min-w-0">
                                <h4 className="text-[11px] font-black uppercase tracking-wider text-rose-500">Account Found</h4>
@@ -682,7 +684,7 @@ const SignupPage: React.FC = () => {
                       <div className="p-3 sm:p-4 grid grid-cols-2 gap-x-4 gap-y-2 sm:gap-4 bg-muted/10 border-t border-primary/5">
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Building2 className="w-3 h-3" />
+                              <HugeiconsIcon icon={Building02Icon} className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Department</Label>
                             </div>
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.department || 'N/A'}</p>
@@ -690,7 +692,7 @@ const SignupPage: React.FC = () => {
 
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <User className="w-3 h-3" />
+                              <HugeiconsIcon icon={UserIcon} className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Gender</Label>
                             </div>
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.gender || 'N/A'}</p>
@@ -698,7 +700,7 @@ const SignupPage: React.FC = () => {
 
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <Calendar className="w-3 h-3" />
+                              <HugeiconsIcon icon={Calendar03Icon} className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Date of Birth</Label>
                             </div>
                             <p className="text-xs font-black text-foreground pl-4.5">{patientData?.dob || 'N/A'}</p>
@@ -706,7 +708,7 @@ const SignupPage: React.FC = () => {
 
                         <div className="flex flex-col gap-0.5 sm:gap-1.5">
                             <div className="flex items-center gap-1.5 text-muted-foreground">
-                              <ShieldCheck className="w-3 h-3" />
+                              <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3" />
                               <Label className="text-[9px] font-black uppercase tracking-widest">Record Status</Label>
                             </div>
                             <div className="pl-4.5 flex items-center gap-1.5">
@@ -723,14 +725,14 @@ const SignupPage: React.FC = () => {
                             <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Phone Number</Label>
                             <div className="relative group">
                               <Input value={claimData.phone} onChange={e => setClaimData({...claimData, phone: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20 font-bold" />
-                              <Phone className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <HugeiconsIcon icon={CallIcon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                             </div>
                          </div>
                          <div className="space-y-1">
                             <Label className="text-[10px] font-black uppercase text-muted-foreground tracking-widest ml-1">Email Address</Label>
                             <div className="relative group">
                               <Input type="email" value={claimData.email} onChange={e => setClaimData({...claimData, email: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                              <Mail className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <HugeiconsIcon icon={Mail01Icon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                             </div>
                          </div>
                       </div>
@@ -743,9 +745,9 @@ const SignupPage: React.FC = () => {
                             </div>
                             <div className="relative group">
                               <Input type={showPassword ? "text" : "password"} value={claimData.password} onChange={e => setClaimData({...claimData, password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                              <Lock className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <HugeiconsIcon icon={LockIcon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                               <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                                {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
                               </button>
                             </div>
                          </div>
@@ -756,9 +758,9 @@ const SignupPage: React.FC = () => {
                             </div>
                             <div className="relative group">
                               <Input type={showConfirmPassword ? "text" : "password"} value={claimData.confirm_password} onChange={e => setClaimData({...claimData, confirm_password: e.target.value})} className="h-12 pl-10 rounded-2xl border-2 bg-muted/20" />
-                              <ShieldCheck className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
+                              <HugeiconsIcon icon={Shield01Icon} className="absolute left-3.5 top-3.5 h-4 w-4 text-muted-foreground" />
                               <button type="button" onClick={() => setShowConfirmPassword(!showConfirmPassword)} className="absolute right-3 top-3 text-muted-foreground">
-                                {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                                {showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-4 w-4" /> : <HugeiconsIcon icon={EyeIcon} className="h-4 w-4" />}
                               </button>
                             </div>
                          </div>
@@ -767,8 +769,8 @@ const SignupPage: React.FC = () => {
 
                     </div>
 
-                    <Button type="submit" className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20" disabled={loading}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Claim Account'}
+                    <Button type="submit" loading={loading} className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20">
+                      Claim Account
                     </Button>
                     
                     <button type="button" onClick={() => {setPatientStep('search'); setPatientStaffId('');}} className="w-full text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors">
@@ -788,7 +790,7 @@ const SignupPage: React.FC = () => {
                         >
                           <div className="text-left space-y-1">
                              <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary mb-2">
-                               <Mail className="w-6 h-6" />
+                               <HugeiconsIcon icon={Mail01Icon} className="w-6 h-6" />
                              </div>
                              <div className="flex items-center gap-2">
                                <h3 className="text-xl font-black tracking-tight leading-none">Check Your Email</h3>
@@ -817,9 +819,10 @@ const SignupPage: React.FC = () => {
                             <Button 
                               type="submit"
                               className="w-full h-14 rounded-2xl font-black uppercase tracking-widest shadow-xl shadow-primary/20"
-                              disabled={verifyLoading || otp.length < 6}
+                              loading={verifyLoading}
+                              disabled={otp.length < 6}
                             >
-                              {verifyLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Verify & Finish'}
+                              Verify & Finish
                             </Button>
                           </div>
 
@@ -839,7 +842,7 @@ const SignupPage: React.FC = () => {
                               onClick={() => setPatientStep('claim')} 
                               className="text-[10px] font-black uppercase tracking-widest text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
                             >
-                               <ArrowLeft className="w-3 h-3" /> Change Profile Email / Password
+                               <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Change Profile Email / Password
                             </button>
                           </div>
                         </motion.form>
@@ -851,7 +854,7 @@ const SignupPage: React.FC = () => {
                            className="flex flex-col items-start py-6 space-y-4"
                          >
                            <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center text-white shadow-xl shadow-primary/20">
-                             <CheckCircle2 className="w-10 h-10" />
+                             <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-10 h-10" />
                            </div>
                            <div className="text-left space-y-1">
                              <h3 className="text-2xl font-black text-primary tracking-tight">Identity Verified!</h3>
@@ -872,7 +875,7 @@ const SignupPage: React.FC = () => {
             <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                  <ArrowLeft className="w-4.5 h-4.5" />
+                  <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4.5 h-4.5" />
                 </div>
                 <div className="text-left">
                   <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Already have an account?</p>

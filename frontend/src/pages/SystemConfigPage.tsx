@@ -5,8 +5,27 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Trash2, Building2, Globe, Users, Plus, Loader2, Settings2, Mail, Save, Server, Eye, EyeOff, ShieldCheck, Stethoscope, RotateCcw, Megaphone } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Delete02Icon,
+  Hospital02Icon,
+  GlobeIcon,
+  UserGroupIcon,
+  PlusSignIcon,
+  Loading03Icon,
+  Settings02Icon,
+  Mail01Icon,
+  FloppyDiskIcon,
+  ServerStack01Icon,
+  EyeIcon,
+  ViewOffIcon,
+  Shield01Icon,
+  StethoscopeIcon,
+  ReloadIcon,
+  Megaphone01Icon
+} from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -39,7 +58,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
         <Card className="col-span-1 border-2 shadow-lg h-fit overflow-hidden border-primary/10">
             <CardHeader className="bg-primary/5 border-b pb-4">
                 <CardTitle className="text-lg flex items-center gap-2">
-                    <Plus className="h-5 w-5 text-primary" />
+                    <HugeiconsIcon icon={PlusSignIcon} className="h-5 w-5 text-primary" />
                     Add New
                 </CardTitle>
                 <CardDescription>{description}</CardDescription>
@@ -59,9 +78,11 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                     <Button
                         onClick={() => handleAdd(type)}
                         className="w-full h-11 font-bold shadow-md hover:scale-[1.02] active:scale-[0.98] transition-all"
-                        disabled={adding || !newItemName.trim()}
+                        loading={adding}
+                        disabled={!newItemName.trim()}
                     >
-                        {adding ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Plus className="mr-2 h-5 w-5" /> Add {title.slice(0, -1)}</>}
+                        {!adding && <HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" />}
+                        Add {title.slice(0, -1)}
                     </Button>
                 </div>
             </CardContent>
@@ -71,7 +92,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             <CardHeader className="bg-muted/30 border-b pb-4 flex flex-row items-center justify-between">
                 <div className="flex items-center gap-3">
                     <div className="p-2 bg-primary/10 rounded-lg">
-                        <Icon className="h-5 w-5 text-primary" />
+                        <HugeiconsIcon icon={Icon} className="h-5 w-5 text-primary" />
                     </div>
                     <div>
                         <CardTitle className="text-lg">Existing {title}</CardTitle>
@@ -85,11 +106,11 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             <CardContent className="p-0">
                 {loading ? (
                     <div className="h-64 flex items-center justify-center">
-                        <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                     </div>
                 ) : items.length === 0 ? (
                     <div className="h-64 flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-4">
-                        <Icon className="h-16 w-16" />
+                        <HugeiconsIcon icon={Icon} className="h-16 w-16" />
                         <p className="text-xl font-bold">No items found</p>
                     </div>
                 ) : (
@@ -103,7 +124,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                                     className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200"
                                     onClick={() => onDeleteRequest(type, item.id, item.name)}
                                 >
-                                    <Trash2 className="h-4 w-4" />
+                                    <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                 </Button>
                             </div>
                         ))}
@@ -116,6 +137,8 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
 
 const SystemConfigPage: React.FC = () => {
     const { activeSection, user } = useAppContext();
+    const { hasPermission } = usePermissions();
+    const canManageMaintenance = hasPermission('system_maintenance');
     const [departments, setDepartments] = useState<ConfigItem[]>([]);
     const [races, setRaces] = useState<ConfigItem[]>([]);
     const [nationalities, setNationalities] = useState<ConfigItem[]>([]);
@@ -155,6 +178,9 @@ const SystemConfigPage: React.FC = () => {
 
     const [maintenanceSaving, setMaintenanceSaving] = useState(false);
     const [staffSignupEnabled, setStaffSignupEnabled] = useState(true);
+    const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
+    const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
+    const [bulkReportDownloadEnabled, setBulkReportDownloadEnabled] = useState(true);
     const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
@@ -238,6 +264,15 @@ const SystemConfigPage: React.FC = () => {
             });
             if (response.data.staff_signup_enabled !== undefined) {
                 setStaffSignupEnabled(response.data.staff_signup_enabled === 'true');
+            }
+            if (response.data.ai_fbc_remarks_enabled !== undefined) {
+                setAiFbcRemarksEnabled(response.data.ai_fbc_remarks_enabled === 'true');
+            }
+            if (response.data.bulk_ai_review_enabled !== undefined) {
+                setBulkAiReviewEnabled(response.data.bulk_ai_review_enabled === 'true');
+            }
+            if (response.data.bulk_report_download_enabled !== undefined) {
+                setBulkReportDownloadEnabled(response.data.bulk_report_download_enabled === 'true');
             }
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
@@ -335,7 +370,7 @@ const SystemConfigPage: React.FC = () => {
         try {
             await axios.post('/api/email/settings', emailSettings);
             
-            // Save contact branding as well (using JSON for text-only update)
+            // FloppyDiskIcon contact branding as well (using JSON for text-only update)
             await axios.post('/api/branding', {
                 email: contactSettings.email,
                 phone: contactSettings.phone,
@@ -468,6 +503,72 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleToggleAiFbcRemarks = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !aiFbcRemarksEnabled;
+            await axios.post('/api/admin/config', 
+                { ai_fbc_remarks_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setAiFbcRemarksEnabled(newValue);
+            toast.success(`Lab tests AI remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Lab tests AI remarks setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+ 
+    const handleToggleBulkAiReview = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !bulkAiReviewEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_ai_review_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkAiReviewEnabled(newValue);
+            toast.success(`Bulk AI review generator has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk AI review generator setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
+    const handleToggleBulkReportDownload = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !bulkReportDownloadEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_report_download_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkReportDownloadEnabled(newValue);
+            toast.success(`Bulk report download has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk report download setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
     const handleSaveDefaultTheme = async (themeValue: 'light' | 'dark') => {
         setMaintenanceSaving(true);
         try {
@@ -502,9 +603,9 @@ const SystemConfigPage: React.FC = () => {
         <MainLayout>
             <div className="max-w-6xl mx-auto space-y-8 pb-10">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <Settings2 className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={Settings02Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">System Configuration</h1>
@@ -516,33 +617,33 @@ const SystemConfigPage: React.FC = () => {
                 </div>
 
                 <Tabs defaultValue="departments" className="w-full space-y-6">
-                    <TabsList className="flex flex-wrap w-full h-auto min-h-[64px] p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
-                        <TabsTrigger value="departments" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Building2 className="h-4 w-4" />
+                    <TabsList className="grid grid-cols-2 md:flex md:flex-wrap gap-1 w-full h-auto p-1.5 bg-muted/50 rounded-2xl border-2 shadow-sm border-muted overflow-hidden">
+                        <TabsTrigger value="departments" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={Hospital02Icon} className="h-4 w-4" />
                             Departments
                         </TabsTrigger>
-                        <TabsTrigger value="races" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Users className="h-4 w-4" />
+                        <TabsTrigger value="races" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
                             Races / Cont.
                         </TabsTrigger>
-                        <TabsTrigger value="nationalities" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Globe className="h-4 w-4" />
+                        <TabsTrigger value="nationalities" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={GlobeIcon} className="h-4 w-4" />
                             Nationalities
                         </TabsTrigger>
-                        <TabsTrigger value="email" className="flex-1 min-w-[150px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Mail className="h-4 w-4" />
+                        <TabsTrigger value="email" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />
                             Email & Contacts
                         </TabsTrigger>
-                        <TabsTrigger value="doctor" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Stethoscope className="h-4 w-4" />
+                        <TabsTrigger value="doctor" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={StethoscopeIcon} className="h-4 w-4" />
                             Doctor
                         </TabsTrigger>
-                        <TabsTrigger value="settings" className="flex-1 min-w-[100px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <Settings2 className="h-4 w-4" />
+                        <TabsTrigger value="settings" className="w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={Settings02Icon} className="h-4 w-4" />
                             Settings
                         </TabsTrigger>
-                        <TabsTrigger value="maintenance" className="flex-1 min-w-[120px] rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
-                            <RotateCcw className="h-4 w-4" />
+                        <TabsTrigger value="maintenance" className="col-span-2 md:col-span-1 w-full md:w-auto md:flex-1 rounded-xl font-black data-[state=active]:bg-primary data-[state=active]:text-primary-foreground data-[state=active]:shadow-md transition-all gap-1.5 h-11 text-[10px] uppercase tracking-tight">
+                            <HugeiconsIcon icon={ReloadIcon} className="h-4 w-4" />
                             Maintenance
                         </TabsTrigger>
                     </TabsList>
@@ -553,7 +654,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure department options for patient registration."
                             items={departments}
                             type="departments"
-                            icon={Building2}
+                            icon={Hospital02Icon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -569,7 +670,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure race/continent options for patient registration."
                             items={races}
                             type="races"
-                            icon={Users}
+                            icon={UserGroupIcon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -585,7 +686,7 @@ const SystemConfigPage: React.FC = () => {
                             description="Configure nationality options for patient registration."
                             items={nationalities}
                             type="nationalities"
-                            icon={Globe}
+                            icon={GlobeIcon}
                             newItemName={newItemName}
                             setNewItemName={setNewItemName}
                             handleAdd={handleAdd}
@@ -598,7 +699,7 @@ const SystemConfigPage: React.FC = () => {
                     <TabsContent value="email">
                         {emailLoading ? (
                             <div className="h-64 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -607,15 +708,15 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <Server className="h-5 w-5 text-primary" />
-                                                    SMTP Server Settings
+                                                    <HugeiconsIcon icon={ServerStack01Icon} className="h-5 w-5 text-primary" />
+                                                    SMTP ServerStack01Icon Settings
                                                 </CardTitle>
                                                 <CardDescription>Configure how the system connects to your email provider.</CardDescription>
                                             </CardHeader>
                                             <CardContent className="pt-6 space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP Server</Label>
+                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP ServerStack01Icon</Label>
                                                         <Input
                                                             className="h-11 font-bold border-2 focus-visible:ring-primary"
                                                             value={emailSettings.MAIL_SERVER}
@@ -674,7 +775,7 @@ const SystemConfigPage: React.FC = () => {
                                                             onClick={() => setShowPassword(!showPassword)}
                                                             className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
                                                         >
-                                                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                                                            {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
                                                         </button>
                                                     </div>
                                                 </div>
@@ -684,7 +785,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <Mail className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={Mail01Icon} className="h-5 w-5 text-primary" />
                                                     Patient Portal Contacts
                                                 </CardTitle>
                                                 <CardDescription>Configure contact details displayed on the Patient Portal 'Contact Us' page.</CardDescription>
@@ -726,7 +827,7 @@ const SystemConfigPage: React.FC = () => {
                                         <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
-                                                    <ShieldCheck className="h-5 w-5 text-primary" />
+                                                    <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-primary" />
                                                     Clinical Administration
                                                 </CardTitle>
                                                 <CardDescription>Configure administrative roles and clinical oversight.</CardDescription>
@@ -748,12 +849,12 @@ const SystemConfigPage: React.FC = () => {
                                         <div className="flex justify-end gap-3 pt-4">
                                             <Button
                                                 type="submit"
-                                                disabled={emailSaving}
+                                                loading={emailSaving}
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {emailSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                                                {emailSaving ? 'Saving...' : 'Save Configuration'}
+                                                {!emailSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                Save Configuration
                                             </Button>
                                         </div>
                                     </form>
@@ -763,7 +864,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg h-fit border-primary/10">
                                         <CardHeader className="bg-primary/5 border-b pb-4">
                                             <CardTitle className="text-sm font-black uppercase tracking-widest flex items-center gap-2 text-primary">
-                                                <Mail className="h-4 w-4" />
+                                                <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />
                                                 Test Connection
                                             </CardTitle>
                                         </CardHeader>
@@ -782,17 +883,17 @@ const SystemConfigPage: React.FC = () => {
                                                 variant="secondary"
                                                 className="w-full font-bold h-10 border-2 hover:bg-primary hover:text-white transition-all"
                                                 onClick={handleTestEmail}
-                                                disabled={testing}
+                                                loading={testing}
                                             >
-                                                {testing ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
-                                                {testing ? 'Sending...' : 'Send Test Email'}
+                                                {!testing && <HugeiconsIcon icon={Mail01Icon} className="mr-2 h-4 w-4" />}
+                                                Send Test Email
                                             </Button>
                                         </CardContent>
                                     </Card>
 
                                     <div className="bg-amber-500/10 border-2 border-amber-500/20 p-4 rounded-xl flex items-start gap-3">
                                         <div className="p-2 bg-amber-500/20 rounded-lg text-amber-600">
-                                            <Server className="h-5 w-5" />
+                                            <HugeiconsIcon icon={ServerStack01Icon} className="h-5 w-5" />
                                         </div>
                                         <div>
                                             <h4 className="font-bold text-amber-900 text-[10px] uppercase tracking-wider text-amber-600">Security Note</h4>
@@ -810,7 +911,7 @@ const SystemConfigPage: React.FC = () => {
                     <TabsContent value="doctor">
                         {brandingLoading ? (
                             <div className="h-64 flex items-center justify-center">
-                                <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                             </div>
                         ) : (
                             <form onSubmit={handleSaveBranding} className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -818,7 +919,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
                                         <CardHeader className="bg-primary/5 border-b pb-4">
                                             <CardTitle className="text-lg flex items-center gap-2">
-                                                <Stethoscope className="h-5 w-5 text-primary" />
+                                                <HugeiconsIcon icon={StethoscopeIcon} className="h-5 w-5 text-primary" />
                                                 Clinical Signature
                                             </CardTitle>
                                             <CardDescription>Configure the doctor's name and post for report signatures.</CardDescription>
@@ -848,7 +949,7 @@ const SystemConfigPage: React.FC = () => {
                                     <Card className="border-2 shadow-lg overflow-hidden border-blue-500/10">
                                         <CardHeader className="bg-blue-500/5 border-b pb-4">
                                             <CardTitle className="text-lg flex items-center gap-2">
-                                                <Eye className="h-5 w-5 text-blue-500" />
+                                                <HugeiconsIcon icon={EyeIcon} className="h-5 w-5 text-blue-500" />
                                                 Live Preview
                                             </CardTitle>
                                             <CardDescription>How the signature will appear on patient reports.</CardDescription>
@@ -867,12 +968,12 @@ const SystemConfigPage: React.FC = () => {
                                 <div className="flex justify-end pt-4">
                                     <Button
                                         type="submit"
-                                        disabled={brandingSaving}
+                                        loading={brandingSaving}
                                         size="lg"
                                         className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                     >
-                                        {brandingSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                                        {brandingSaving ? 'Saving...' : 'Update Clinical Identity'}
+                                        {!brandingSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                        Update Clinical Identity
                                     </Button>
                                 </div>
                             </form>
@@ -884,9 +985,9 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <Settings2 className="h-6 w-6 text-primary" />
+                                            <HugeiconsIcon icon={Settings02Icon} className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-primary font-black">System Settings</CardTitle>
@@ -894,32 +995,152 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8 space-y-6">
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                <CardContent className="p-4 sm:p-6 md:p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Staff Portal Registration</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
                                                 When disabled, new staff members will not be able to create accounts. This is useful during system-wide maintenance or locked recruitment periods.
                                             </p>
                                         </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className={`w-3 h-3 rounded-full ${staffSignupEnabled ? 'bg-primary animate-pulse' : 'bg-destructive'}`} />
-                                            <span className="text-xs font-black uppercase tracking-widest min-w-[80px]">
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${staffSignupEnabled ? 'text-primary' : 'text-rose-500'}`}>
                                                 {staffSignupEnabled ? 'Enabled' : 'Disabled'}
                                             </span>
-                                            <Button 
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
                                                 onClick={handleToggleSignup}
-                                                disabled={maintenanceSaving}
-                                                variant={staffSignupEnabled ? "outline" : "default"}
-                                                size="sm"
-                                                className="font-bold"
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    staffSignupEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
                                             >
-                                                {maintenanceSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : (staffSignupEnabled ? 'Disable Signup' : 'Enable Signup')}
-                                            </Button>
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        staffSignupEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            staffSignupEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
                                         </div>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Lab Tests AI Remarks Generation</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) and Lipid Profile results using AI in the background and writes a brief summary to the remark fields.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${aiFbcRemarksEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {aiFbcRemarksEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleAiFbcRemarks}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Bulk AI Review Generator</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Enable or disable the Bulk AI Review Generator feature on the Director Review landing page.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkAiReviewEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {bulkAiReviewEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleBulkAiReview}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    bulkAiReviewEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                 )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Bulk Report Download</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Enable or disable the Bulk Report PDF Download feature on the Patient Report landing page.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkReportDownloadEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {bulkReportDownloadEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleBulkReportDownload}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    bulkReportDownloadEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        bulkReportDownloadEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            bulkReportDownloadEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -930,7 +1151,7 @@ const SystemConfigPage: React.FC = () => {
                                             <div className="flex gap-2">
                                                 <Button 
                                                     onClick={() => handleSaveDefaultTheme('light')}
-                                                    disabled={maintenanceSaving}
+                                                    disabled={maintenanceSaving || !canManageMaintenance}
                                                     variant={defaultThemeSetting === 'light' ? "default" : "outline"}
                                                     size="sm"
                                                     className="font-bold"
@@ -939,7 +1160,7 @@ const SystemConfigPage: React.FC = () => {
                                                 </Button>
                                                 <Button 
                                                     onClick={() => handleSaveDefaultTheme('dark')}
-                                                    disabled={maintenanceSaving}
+                                                    disabled={maintenanceSaving || !canManageMaintenance}
                                                     variant={defaultThemeSetting === 'dark' ? "default" : "outline"}
                                                     size="sm"
                                                     className="font-bold"
@@ -956,9 +1177,9 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-primary/20 relative overflow-hidden group mt-6">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <Megaphone className="h-6 w-6 text-primary" />
+                                            <HugeiconsIcon icon={Megaphone01Icon} className="h-6 w-6 text-primary" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-primary font-black">System Announcement Ticker</CardTitle>
@@ -966,9 +1187,9 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8">
+                                <CardContent className="p-4 sm:p-6 md:p-8">
                                     <form onSubmit={handleSaveTicker} className="space-y-6">
-                                        <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02] mb-4">
+                                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02] mb-4">
                                             <div className="space-y-1">
                                                 <h4 className="font-bold text-lg text-foreground">Enable Announcement Ticker</h4>
                                                 <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -982,6 +1203,7 @@ const SystemConfigPage: React.FC = () => {
                                                 </span>
                                                 <button
                                                     type="button"
+                                                    disabled={!canManageMaintenance}
                                                     onClick={() => setTickerEnabled(!tickerEnabled)}
                                                     className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 ${tickerEnabled ? 'bg-primary' : 'bg-muted'}`}
                                                 >
@@ -997,6 +1219,7 @@ const SystemConfigPage: React.FC = () => {
                                                 onChange={(e) => setTickerMessage(e.target.value)}
                                                 placeholder="Type your system-wide announcement message here..."
                                                 rows={3}
+                                                disabled={!canManageMaintenance}
                                                 className="flex min-h-[80px] w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                                             />
                                         </div>
@@ -1006,6 +1229,7 @@ const SystemConfigPage: React.FC = () => {
                                             <select
                                                 value={tickerIcon}
                                                 onChange={(e) => setTickerIcon(e.target.value as any)}
+                                                disabled={!canManageMaintenance}
                                                 className="h-11 w-full rounded-xl border-2 border-primary/20 bg-background px-3 py-2 text-sm font-semibold focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary border-primary/20"
                                             >
                                                 <option value="info">Information ℹ️</option>
@@ -1019,12 +1243,13 @@ const SystemConfigPage: React.FC = () => {
                                         <div className="flex justify-end pt-4">
                                             <Button
                                                 type="submit"
-                                                disabled={tickerSaving}
+                                                loading={tickerSaving}
+                                                disabled={tickerSaving || !canManageMaintenance}
                                                 size="lg"
                                                 className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
                                             >
-                                                {tickerSaving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Save className="mr-2 h-5 w-5" />}
-                                                {tickerSaving ? 'Saving...' : 'Save Announcement'}
+                                                {!tickerSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                Save Announcement
                                             </Button>
                                         </div>
                                     </form>
@@ -1038,9 +1263,9 @@ const SystemConfigPage: React.FC = () => {
                             <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
-                                    <div className="flex items-center gap-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
                                         <div className="p-3 bg-destructive/10 rounded-2xl">
-                                            <RotateCcw className="h-6 w-6 text-destructive" />
+                                            <HugeiconsIcon icon={ReloadIcon} className="h-6 w-6 text-destructive" />
                                         </div>
                                         <div>
                                             <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
@@ -1048,8 +1273,8 @@ const SystemConfigPage: React.FC = () => {
                                         </div>
                                     </div>
                                 </CardHeader>
-                                <CardContent className="p-8 space-y-6">
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                <CardContent className="p-4 sm:p-6 md:p-8 space-y-6">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Reset Daily Patient Queues</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1063,17 +1288,18 @@ const SystemConfigPage: React.FC = () => {
                                                 description: 'Are you sure you want to reset all daily patient queue counts to zero? This action cannot be undone.',
                                                 actionType: 'queue'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'queue'} 
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'queue') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'queue' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <RotateCcw className="mr-2 h-5 w-5" />}
-                                            Reset Queue Counts to 0
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'queue') && <HugeiconsIcon icon={ReloadIcon} className="mr-2 h-5 w-5" />}
+                                            Reset
                                         </Button>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Clear System Audit Logs</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1087,17 +1313,18 @@ const SystemConfigPage: React.FC = () => {
                                                 description: 'Are you sure you want to permanently delete all system audit logs? This action is irreversible.',
                                                 actionType: 'audit'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'audit'} 
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'audit') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'audit' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
-                                            Clear Audit Trail
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'audit') && <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
+                                            Clear
                                         </Button>
                                     </div>
 
-                                    <div className="flex flex-col md:flex-row items-center justify-between gap-6 p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Clear Patient Directory Data</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
@@ -1111,13 +1338,14 @@ const SystemConfigPage: React.FC = () => {
                                                 description: `Are you sure you want to permanently delete all patient bio-data for the active context? This action is irreversible.`,
                                                 actionType: 'biodata'
                                             })} 
-                                            disabled={maintenanceSaving} 
+                                            loading={maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata'} 
+                                            disabled={(maintenanceSaving && confirmMaintenanceModal.actionType !== 'biodata') || !canManageMaintenance}
                                             variant="destructive" 
                                             size="lg" 
                                             className="font-bold shadow-lg shadow-destructive/20 shrink-0 h-12 px-8"
                                         >
-                                            {maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata' ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : <Trash2 className="mr-2 h-5 w-5" />}
-                                            Clear Patient Directory
+                                            {!(maintenanceSaving && confirmMaintenanceModal.actionType === 'biodata') && <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" />}
+                                            Clear
                                         </Button>
                                     </div>
                                 </CardContent>

@@ -494,7 +494,7 @@ class EmailService:
         </html>
         """
     @staticmethod
-    def get_registration_success_template(first_name, year, clinic_name, app_url, logo_url=None):
+    def get_registration_success_template(first_name, year, clinic_name, app_url, logo_url=None, is_reminder=False):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 80px; height: 80px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="height: 80px; margin-bottom: 20px;"></div>'
         
         # Signup URL for patients to claim account
@@ -504,6 +504,41 @@ class EmailService:
         e_first_name = escape(first_name)
         e_year = escape(year)
         e_clinic_name = escape(clinic_name)
+
+        # Conditional content based on whether this is a reminder or initial registration email
+        if is_reminder:
+            header_title = "Account Verification Reminder"
+            intro_text = f"""
+                We noticed that your patient account for the <strong>{e_year} medical screening program</strong> is still pending verification.
+            """
+            detail_text = """
+                Your screening data and medical records are ready and waiting for you. To access your results and track your health information, 
+                you need to complete your account setup by verifying your email address.
+            """
+            cta_text = """
+                Please click the button below to complete your account verification. If you have already started the process, 
+                simply log in and follow the on-screen instructions to finish:
+            """
+            cta_button_label = "Complete Account Setup"
+            followup_text = """
+                If you have already verified your account, please disregard this email. 
+                You will continue to receive weekly reminders until your account is fully activated.
+            """
+        else:
+            header_title = "Registration Successful"
+            intro_text = f"""
+                We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.
+            """
+            detail_text = """
+                Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.
+            """
+            cta_text = """
+                In the meantime, kindly click the button below to create or claim your patient account. This will allow you to track your personal data and monitor the progress of your screening report:
+            """
+            cta_button_label = "Create Patient Account"
+            followup_text = """
+                You will receive a follow-up email once your report is ready.
+            """
         
         return f"""
         <!DOCTYPE html>
@@ -537,30 +572,30 @@ class EmailService:
                     </div>
                     
                     <div class="header-bar">
-                        <h1>Registration Successful</h1>
+                        <h1>{header_title}</h1>
                     </div>
                     
                     <div class="content">
                         <div class="greeting">Dear {e_first_name},</div>
                         
                         <div class="body-text">
-                            We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.
+                            {intro_text}
                         </div>
                         
                         <div class="body-text">
-                            Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.
+                            {detail_text}
                         </div>
                         
                         <div class="body-text">
-                            In the meantime, kindly click the button below to create or claim your patient account. This will allow you to track your personal data and monitor the progress of your screening report:
+                            {cta_text}
                         </div>
                         
                         <div class="cta-container">
-                            <a href="{signup_url}" class="cta-button">Create Patient Account</a>
+                            <a href="{signup_url}" class="cta-button">{cta_button_label}</a>
                         </div>
                         
                         <div class="body-text">
-                            You will receive a follow-up email once your report is ready.
+                            {followup_text}
                         </div>
                         
                         <div class="body-text">

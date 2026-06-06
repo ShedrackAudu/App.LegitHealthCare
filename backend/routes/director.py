@@ -19,37 +19,42 @@ def get_patient_history(staff_id):
     if not screening_year:
         return jsonify({"error": "Year is required"}), 400
         
+    try:
+        year_int = int(screening_year)
+    except ValueError:
+        return jsonify({"error": "Invalid screening year format"}), 400
+        
     # Gather all results
     history = {}
     
     # 1. Consultation
-    consult = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    consult = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if consult:
         history['consultation'] = {c.name: getattr(consult, c.name) for c in consult.__table__.columns}
         
     # 2. Lab Results
-    fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if fbc:
         history['fbc'] = {c.name: getattr(fbc, c.name) for c in fbc.__table__.columns}
         
-    kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if kft:
         history['kft'] = {c.name: getattr(kft, c.name) for c in kft.__table__.columns}
         
-    lipid = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    lipid = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if lipid:
         history['lipid'] = {c.name: getattr(lipid, c.name) for c in lipid.__table__.columns}
         
-    lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if lft:
         history['lft'] = {c.name: getattr(lft, c.name) for c in lft.__table__.columns}
         
-    special = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    special = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if special:
         history['special'] = {c.name: getattr(special, c.name) for c in special.__table__.columns}
         
     # 3. Existing Director Review
-    review = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+    review = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
     if review:
         history['review'] = {c.name: getattr(review, c.name) for c in review.__table__.columns}
         
@@ -67,6 +72,11 @@ def save_director_review():
     
     if not staff_id or not screening_year:
         return jsonify({"error": "Staff ID and Screening Year are required"}), 400
+        
+    try:
+        year_int = int(screening_year)
+    except ValueError:
+        return jsonify({"error": "Invalid screening year format"}), 400
         
     # 1. Define sets of fields for each model to handle bidirectional sync
     model_configs = [
@@ -125,9 +135,9 @@ def save_director_review():
             mappings = config.get('mappings', {})
             
             # Find or create record
-            record = model.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+            record = model.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
             if not record:
-                record = model(staff_id=staff_id, screening_year=int(screening_year))
+                record = model(staff_id=staff_id, screening_year=year_int)
                 if model == DirectorReview:
                     record.first_submitted_at = datetime.now()
                 db.session.add(record)

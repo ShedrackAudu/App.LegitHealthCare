@@ -1,7 +1,14 @@
+import os
+import time
+
+# Set default timezone to WAT (Africa/Lagos)
+os.environ['TZ'] = 'Africa/Lagos'
+if hasattr(time, 'tzset'):
+    time.tzset()
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS, cross_origin
 from datetime import datetime, timedelta
-import os
 import json
 from dotenv import load_dotenv
 
@@ -31,7 +38,7 @@ if 'http://localhost:5173' in frontend_urls and 'http://localhost:5174' not in f
 from flask_cors import CORS
 CORS(app, resources={r"/*": {"origins": frontend_urls}}, supports_credentials=True)
 
-socketio.init_app(app, cors_allowed_origins=frontend_urls)
+socketio.init_app(app, cors_allowed_origins=frontend_urls, ping_timeout=60, ping_interval=25)
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -222,6 +229,22 @@ def get_default_theme():
     # Default to 'light' if not set
     theme = config.value if config else 'light'
     return jsonify({"default_theme": theme}), 200
+
+@app.route('/api/config/bulk-ai-review-status', methods=['GET'])
+def get_bulk_ai_review_status():
+    from models import SystemConfig
+    config = SystemConfig.query.get('bulk_ai_review_enabled')
+    # Default to true if not set
+    is_enabled = config.value.lower() == 'true' if config else True
+    return jsonify({"bulk_ai_review_enabled": is_enabled}), 200
+
+@app.route('/api/config/bulk-report-download-status', methods=['GET'])
+def get_bulk_report_download_status():
+    from models import SystemConfig
+    config = SystemConfig.query.get('bulk_report_download_enabled')
+    # Default to true if not set
+    is_enabled = config.value.lower() == 'true' if config else True
+    return jsonify({"bulk_report_download_enabled": is_enabled}), 200
 
 @app.route('/api/config/ticker', methods=['GET'])
 def get_ticker_config():
@@ -679,7 +702,15 @@ def login_2fa():
         
     return jsonify({"error": "Invalid 2FA code"}), 401
 @app.route('/api/logout', methods=['POST'])
+@jwt_required(optional=True)
 def logout():
+    from datetime import datetime, timedelta
+    user_id = get_jwt_identity()
+    if user_id:
+        user = User.query.get(user_id)
+        if user:
+            user.last_seen_at = datetime.now() - timedelta(days=1)
+            db.session.commit()
     response = jsonify({"message": "Logout complete"})
     unset_jwt_cookies(response)
     return response, 200
@@ -691,6 +722,12 @@ with app.app_context():
         setup_system(app, purge=False)
     except Exception as e:
         app.logger.error(f"Error initializing system: {e}")
+
+    try:
+        from utils.scheduler import init_scheduler
+        init_scheduler(app)
+    except Exception as e:
+        app.logger.error(f"Error starting scheduler: {e}")
 
 if __name__ == '__main__':
     is_debug = os.getenv('FLASK_DEBUG', 'False').lower() == 'true'

@@ -1,5 +1,6 @@
 import toast, { Toaster, resolveValue } from 'react-hot-toast';
-import { CheckCircle2, AlertCircle, Info, X, Loader2, MessageSquare } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { CheckmarkCircle02Icon, AlertCircleIcon, Loading03Icon, InformationCircleIcon, Comment01Icon, Cancel01Icon } from '@hugeicons/core-free-icons';
 
 export const CustomToaster = () => {
   return (
@@ -54,11 +55,11 @@ export const CustomToaster = () => {
                       t.type === 'error' ? 'bg-rose-500/10 text-rose-500' : 
                       'bg-primary/10 text-primary'
                   }`}>
-                      {t.type === 'success' && <CheckCircle2 className="h-6 w-6" />}
-                      {t.type === 'error' && <AlertCircle className="h-6 w-6" />}
-                      {t.type === 'loading' && <Loader2 className="h-6 w-6 animate-spin" />}
-                      {t.type === 'blank' && !isMessage && <Info className="h-6 w-6" />}
-                      {isMessage && <MessageSquare className="h-6 w-6" />}
+                      {t.type === 'success' && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-6 w-6" />}
+                      {t.type === 'error' && <HugeiconsIcon icon={AlertCircleIcon} className="h-6 w-6" />}
+                      {t.type === 'loading' && <HugeiconsIcon icon={Loading03Icon} className="h-6 w-6 animate-spin" />}
+                      {t.type === 'blank' && !isMessage && <HugeiconsIcon icon={InformationCircleIcon} className="h-6 w-6" />}
+                      {isMessage && <HugeiconsIcon icon={Comment01Icon} className="h-6 w-6" />}
                   </div>
                 </div>
                 <div className="flex-1 min-w-0">
@@ -82,7 +83,7 @@ export const CustomToaster = () => {
                 }}
                 className="w-14 flex items-center justify-center text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors focus:outline-none group/close"
               >
-                <X className="h-5 w-5 transition-transform group-hover/close:rotate-90" />
+                <HugeiconsIcon icon={Cancel01Icon} className="h-5 w-5 transition-transform group-hover/close:rotate-90" />
               </button>
             </div>
           </div>

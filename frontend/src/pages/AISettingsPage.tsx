@@ -6,7 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Checkbox } from '@/components/ui/checkbox';
-import { Bot, Save, Loader2, Key, Settings2, FileText, Activity, Trash2 } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  MachineRobotIcon, 
+  FloppyDiskIcon, 
+  Loading03Icon, 
+  LockKeyIcon, 
+  File01Icon, 
+  Activity01Icon, 
+  Delete02Icon 
+} from '@hugeicons/core-free-icons';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
@@ -19,6 +28,8 @@ const PARAMETERS = [
     { id: 'Spirometry', label: 'Spirometry' },
     { id: 'Audiometry', label: 'Audiometry' },
     { id: 'ECG', label: 'ECG (Electrocardiogram)' },
+    { id: 'Weight', label: 'Weight' },
+    { id: 'Height', label: 'Height' },
 ];
 
 const CONSULTATION_PARAMETERS = [
@@ -34,6 +45,7 @@ const CONSULTATION_PARAMETERS = [
     { id: 'Consultation:psa', label: 'PSA Result & Remark' },
     { id: 'Consultation:sugar', label: 'Blood Sugar (FBS/RBS)' },
     { id: 'Consultation:urinalysis', label: 'Urinalysis Result' },
+    { id: 'Consultation:ua_remark_others', label: 'U/A Remark Others' },
     { id: 'Consultation:dm_status', label: 'Diabetes Status' },
     { id: 'Consultation:htn_status', label: 'Hypertension Status' },
     { id: 'Consultation:bp', label: 'Blood Pressure' },
@@ -41,7 +53,9 @@ const CONSULTATION_PARAMETERS = [
     { id: 'Consultation:spo2', label: 'SPO2 (Saturation)' },
     { id: 'Consultation:hs_status', label: 'Heart Sounds (S3, S4)' },
     { id: 'Consultation:breast', label: 'Breast Exam' },
+    { id: 'Consultation:breast_others', label: 'Breast Others' },
     { id: 'Consultation:abdomen', label: 'Abdominal Exam' },
+    { id: 'Consultation:abdomen_others', label: 'Abdomen Others' },
     { id: 'Consultation:hx_pe', label: 'H&P Assessment' },
     { id: 'Consultation:other_assessments', label: 'Other Assessments' },
     { id: 'Consultation:overall_lab', label: 'Overall Lab Remark' },
@@ -123,15 +137,15 @@ export const AISettingsPage = () => {
         }));
     };
 
-    if (loading) return <MainLayout><div className="flex justify-center py-20"><Loader2 className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>;
+    if (loading) return <MainLayout><div className="flex justify-center py-20"><HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>;
 
     return (
         <MainLayout>
             <div className="max-w-4xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 shadow-xl border-blue-500/10 mb-8 transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-blue-500/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <Bot className="text-blue-600 h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={MachineRobotIcon} className="text-blue-600 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">AI Director Insights</h1>
@@ -149,7 +163,7 @@ export const AISettingsPage = () => {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -z-10 pointer-events-none"></div>
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Key className="h-6 w-6 text-blue-500" />
+                                <HugeiconsIcon icon={LockKeyIcon} className="h-6 w-6 text-blue-500" />
                                 Connection Details
                             </CardTitle>
                         </CardHeader>
@@ -187,7 +201,7 @@ export const AISettingsPage = () => {
                     <Card className="border-2 shadow-xl shadow-primary/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Activity className="h-6 w-6 text-primary" />
+                                <HugeiconsIcon icon={Activity01Icon} className="h-6 w-6 text-primary" />
                                 Medical Parameters Context
                             </CardTitle>
                             <CardDescription className="text-md">
@@ -249,7 +263,7 @@ export const AISettingsPage = () => {
                     <Card className="border-2 shadow-xl shadow-purple-500/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <FileText className="h-6 w-6 text-purple-500" />
+                                <HugeiconsIcon icon={File01Icon} className="h-6 w-6 text-purple-500" />
                                 Prompt Formatting & Instructions
                             </CardTitle>
                         </CardHeader>
@@ -285,7 +299,7 @@ export const AISettingsPage = () => {
                     <Card className="border-2 shadow-xl shadow-amber-500/5 relative overflow-hidden">
                         <CardHeader className="border-b bg-muted/5 p-6">
                             <CardTitle className="text-xl flex items-center gap-2">
-                                <Bot className="h-6 w-6 text-amber-500" />
+                                <HugeiconsIcon icon={MachineRobotIcon} className="h-6 w-6 text-amber-500" />
                                 Sample Expert Comments
                             </CardTitle>
                             <CardDescription>
@@ -335,7 +349,7 @@ export const AISettingsPage = () => {
                                             className="h-8 w-8 p-0 text-destructive opacity-0 group-hover:opacity-100 transition-opacity shrink-0"
                                             onClick={() => setSettings(prev => ({...prev, sample_comments: prev.sample_comments.filter((_, i) => i !== idx)}))}
                                         >
-                                            <Trash2 className="h-4 w-4" />
+                                            <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                         </Button>
                                     </div>
                                 ))}
@@ -352,10 +366,10 @@ export const AISettingsPage = () => {
                         <Button 
                             type="submit" 
                             size="lg" 
-                            disabled={saving}
+                            loading={saving}
                             className="bg-blue-600 hover:bg-blue-700 text-white font-bold h-14 px-12 shadow-xl shadow-blue-500/20 rounded-xl text-lg w-full md:w-auto"
                         >
-                            {saving ? <Loader2 className="mr-3 h-6 w-6 animate-spin" /> : <Save className="mr-3 h-6 w-6" />}
+                            {!saving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-3 h-6 w-6" />}
                             Save AI Configuration
                         </Button>
                     </div>

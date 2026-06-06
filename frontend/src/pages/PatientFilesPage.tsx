@@ -1,7 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { FileText, Calendar, Filter, Search } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { 
+  Loading03Icon, 
+  AlertCircleIcon, 
+  Activity01Icon, 
+  Calendar03Icon, 
+  File01Icon 
+} from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { FileAttachmentSection } from '@/components/FileAttachmentSection';
 import { 
@@ -13,14 +20,6 @@ import {
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import api from '@/lib/api';
-import { 
-  Loader2, 
-  ChevronRight, 
-  ShieldCheck,
-  AlertCircle,
-  Download,
-  Activity
-} from 'lucide-react';
 import { toast } from 'react-hot-toast';
 
 const PatientFilesPage: React.FC = () => {
@@ -59,7 +58,7 @@ const PatientFilesPage: React.FC = () => {
                             <div className="flex flex-col gap-3">
                                 <div className="flex items-center gap-3">
                                     <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-                                        <Activity className="h-5 w-5 sm:h-6 sm:w-6" />
+                                        <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 sm:h-6 sm:w-6" />
                                     </div>
                                     <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Technical Reports</CardTitle>
                                 </div>
@@ -72,7 +71,7 @@ const PatientFilesPage: React.FC = () => {
                                 <div className="w-full sm:w-44">
                                     <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears}>
                                         <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
-                                            <Calendar className="mr-2 h-3.5 w-3.5 text-primary" />
+                                            <HugeiconsIcon icon={Calendar03Icon} className="mr-2 h-3.5 w-3.5 text-primary" />
                                             <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
                                         </SelectTrigger>
                                         <SelectContent className="rounded-xl font-bold">
@@ -94,7 +93,7 @@ const PatientFilesPage: React.FC = () => {
                 {!selectedYear && !fetchingYears ? (
                     <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-border/40 text-center px-6 py-12 space-y-4 shadow-inner">
                         <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2">
-                            <FileText className="h-10 w-10 text-muted-foreground/30" />
+                            <HugeiconsIcon icon={File01Icon} className="h-10 w-10 text-muted-foreground/30" />
                         </div>
                         <div className="space-y-2">
                             <h3 className="text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">No History Found</h3>
@@ -105,7 +104,7 @@ const PatientFilesPage: React.FC = () => {
                     </div>
                 ) : fetchingYears ? (
                     <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20 p-8 shadow-inner">
-                        <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                        <HugeiconsIcon icon={Loading03Icon} className="h-16 w-16 animate-spin text-primary" />
                         <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse mt-6">Syncing Records...</p>
                     </div>
                 ) : (
@@ -126,7 +125,7 @@ const PatientFilesPage: React.FC = () => {
                         <Card className="bg-primary/5 border-primary/10 border-2 rounded-2xl">
                             <CardContent className="p-6 flex items-start gap-4">
                                 <div className="h-10 w-10 rounded-xl bg-primary/20 flex items-center justify-center shrink-0">
-                                    <AlertCircle className="h-5 w-5 text-primary" />
+                                    <HugeiconsIcon icon={AlertCircleIcon} className="h-5 w-5 text-primary" />
                                 </div>
                                 <div className="space-y-1">
                                     <p className="text-sm font-black text-primary uppercase tracking-tight">Understanding Technical Files</p>

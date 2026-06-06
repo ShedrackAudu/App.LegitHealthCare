@@ -1,14 +1,14 @@
 import React, { useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { 
-  ShieldAlert, 
-  Key, 
-  Send, 
-  ChevronLeft, 
-  Loader2, 
-  ShieldCheck
-} from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import {
+  Shield01Icon,
+  Key01Icon,
+  SentIcon,
+  ArrowLeft01Icon,
+  Loading03Icon
+} from '@hugeicons/core-free-icons';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { Button } from '@/components/ui/button';
@@ -96,7 +96,7 @@ const AccessDeniedPage: React.FC = () => {
                                     transition={{ duration: 3, repeat: Infinity }}
                                     className="p-3 bg-rose-500/5 rounded-xl border border-rose-500/10 shadow-lg shadow-rose-950/20"
                                 >
-                                    <ShieldAlert className="w-8 h-8 text-rose-500" />
+                                    <HugeiconsIcon icon={Shield01Icon} className="w-8 h-8 text-rose-500" />
                                 </motion.div>
                             </div>
                             <CardTitle className="text-2xl font-bold tracking-tight text-foreground">
@@ -121,17 +121,11 @@ const AccessDeniedPage: React.FC = () => {
                                {!requestSent ? (
                                     <Button 
                                         onClick={handleRequestAccess}
-                                        disabled={isRequesting}
+                                        loading={isRequesting}
                                         className="w-full h-11 text-xs font-bold bg-rose-600 hover:bg-rose-700 text-white shadow-lg shadow-rose-900/40 rounded-lg transition-all hover:scale-[1.01] active:scale-[0.98] border-none"
                                     >
-                                        {isRequesting ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : (
-                                            <span className="flex items-center gap-2.5">
-                                                <Send className="w-4 h-4" />
-                                                Request Entrance Key
-                                            </span>
-                                        )}
+                                        {!isRequesting && <HugeiconsIcon icon={SentIcon} className="w-4 h-4 mr-2.5" />}
+                                        Request Entrance Key
                                     </Button>
                                ) : (
                                     <motion.div 
@@ -140,7 +134,7 @@ const AccessDeniedPage: React.FC = () => {
                                         className="bg-emerald-500/5 border border-emerald-500/10 rounded-lg p-3 text-center"
                                     >
                                         <p className="text-emerald-500 text-[10px] font-bold flex items-center justify-center gap-2 uppercase tracking-widest">
-                                            <ShieldCheck className="w-3.5 h-3.5" /> Request Dispatched
+                                            <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> Request Dispatched
                                         </p>
                                     </motion.div>
                                )}
@@ -156,7 +150,7 @@ const AccessDeniedPage: React.FC = () => {
 
                                 <form onSubmit={handleVerifyCode} className="space-y-2.5">
                                     <div className="relative group">
-                                        <Key className="absolute left-3.5 top-3 w-4.5 h-4.5 text-rose-500/40 group-focus-within:text-rose-500 transition-colors" />
+                                        <HugeiconsIcon icon={Key01Icon} className="absolute left-3.5 top-3 w-4.5 h-4.5 text-rose-500/40 group-focus-within:text-rose-500 transition-colors" />
                                         <Input 
                                             value={accessCode}
                                             onChange={e => setAccessCode(e.target.value.toUpperCase())}
@@ -168,10 +162,11 @@ const AccessDeniedPage: React.FC = () => {
                                     </div>
                                     <Button 
                                         type="submit" 
-                                        disabled={isVerifying || accessCode.length < 4}
+                                        loading={isVerifying}
+                                        disabled={accessCode.length < 4}
                                         className="w-full h-11 bg-primary/90 hover:bg-primary text-[11px] font-bold rounded-lg shadow-lg shadow-primary/10 transition-all border-none"
                                     >
-                                        {isVerifying ? <Loader2 className="w-4 h-4 animate-spin" /> : "Verify & Unlock Access"}
+                                        Verify & Unlock Access
                                     </Button>
                                 </form>
                             </div>
@@ -184,7 +179,7 @@ const AccessDeniedPage: React.FC = () => {
                                 onClick={() => navigate('/dashboard')}
                                 className="text-muted-foreground hover:text-rose-500 font-semibold text-[9px] gap-1.5 rounded-lg h-8"
                             >
-                                <ChevronLeft className="w-3.5 h-3.5" />
+                                <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" />
                                 Return to Dashboard
                             </Button>
                         </CardFooter>

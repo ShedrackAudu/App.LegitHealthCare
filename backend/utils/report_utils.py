@@ -263,59 +263,64 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     # header row
     lab_rows = [
         [th('INVESTIGATION'), th('PARAMETER'), th('RESULT'), th('REF. VALUE'), th('UNIT'), th('REMARK')],
+        
         # Blood Sugar
-        [td('Blood Sugar', True), td('Fasting Blood Sugar'), td(consult.get('fbs')),
-         td('70-110'), td('mg/dL'), td(consult.get('sugar_remark'))],
-        ['', td('Random Blood Sugar'), td(consult.get('rbs')), td('70-140'), td('mg/dL'), ''],
+        [td('Blood Sugar', True), td('FBS'), td(consult.get('fbs')), td('70-99'), td('ml/dL'), td(consult.get('sugar_remark'))],
+        ['', td('RBS'), td(consult.get('rbs')), td('&lt;200'), td('ml/dL'), ''],
+        
         # FBC
-        [td('Full Blood Count', True), td('PCV'), td(fbc.get('pcv')),
-         td('M:40-52 F:36-48'), td('%'), td(fbc.get('remark'))],
-        ['', td('WBC'), td(fbc.get('wbc')), td('4.0-10.0'), td('x10^9/L'), ''],
-        ['', td('PLT'), td(fbc.get('plt')), td('150-400'), td('x10^9/L'), ''],
-        ['', td('HGB'), td(fbc.get('hgb')), td('M:13-17 F:12-15'), td('g/dL'), ''],
-        # KFT
-        [td('Kidney Function', True), td('Potassium'), td(kft.get('potassium')),
-         td('3.5-5.1'), td('mmol/L'), td(kft.get('remark'))],
+        [td('FBC', True), td('PCV'), td(fbc.get('pcv')), td('34-53.9'), td('%'), td(fbc.get('remark'))],
+        ['', td('WBC'), td(fbc.get('wbc')), td('3-11'), td('x109/L'), ''],
+        ['', td('Lymphocryte'), td(fbc.get('lymp_percent')), td('19.1-48'), td('%'), ''],
+        ['', td('Neutrophil'), td(fbc.get('gra_percent')), td('43.6-73.3'), td('%'), ''],
+        ['', td('Mixed'), td(fbc.get('mid_percent')), td('4.5-12.1'), td('%'), ''],
+        ['', td('Platelets'), td(fbc.get('plt')), td('100-450'), td('x109/L'), ''],
+        
+        # Kidney Function
+        [td('Kidney Function', True), td('Potassium'), td(kft.get('potassium')), td('3.5-5.0'), td('mmol/L'), td(kft.get('remark'))],
         ['', td('Sodium'), td(kft.get('sodium')), td('135-145'), td('mmol/L'), ''],
-        ['', td('Chloride'), td(kft.get('chloride')), td('98-107'), td('mmol/L'), ''],
-        ['', td('Urea'), td(lft.get('urea')), td('10-50'), td('mg/dL'), ''],
-        ['', td('Creatinine'), td(lft.get('creatinine')), td('0.6-1.2'), td('mg/dL'), ''],
-        # Lipid
-        [td('Lipid Profile', True), td('Total Cholesterol'), td(lipid.get('tcho')),
-         td('&lt;200'), td('mg/dL'), td(lipid.get('remark'))],
-        ['', td('Triglycerides'), td(lipid.get('tg')), td('max 150'), td('mg/dL'), ''],
-        ['', td('HDL-c'), td(lipid.get('hdl')), td('min 40'), td('mg/dL'), ''],
-        ['', td('LDL-c'), td(lipid.get('ldl')), td('max 130'), td('mg/dL'), ''],
-        # LFT
-        [td('Liver Function', True), td('AST'), td(lft.get('ast')),
-         td('0-46'), td('U/L'), td(lft.get('remark'))],
+        ['', td('Chloride'), td(kft.get('chloride')), td('97-107'), td('mmol/L'), ''],
+        ['', td('Bicarbonate'), td(kft.get('hco3')), td('20-31'), td('mmol/L'), ''],
+        ['', td('Urea'), td(lft.get('urea')), td('2.5-9.33'), td('mmol/L'), ''],
+        ['', td('Cretinine'), td(lft.get('creatinine')), td('Male: 80-133<br/>Female: 62-115'), td('umol/L<br/>umol/L'), ''],
+        
+        # Lipid Profile
+        [td('Lipid Profile', True), td('Total Cholesterol'), td(lipid.get('tcho')), td('&lt;200'), td('mg/dL'), td(lipid.get('remark'))],
+        ['', td('Trigracerides'), td(lipid.get('tg')), td('Male: &lt;150<br/>Female: &lt;150'), td('mg/dL<br/>mg/dL'), ''],
+        ['', td('HDL-c'), td(lipid.get('hdl')), td('Male: =&gt;40<br/>Female: =&gt;40'), td('mg/dL<br/>mg/dL'), ''],
+        ['', td('LDL-c'), td(lipid.get('ldl')), td('&lt;130'), td('mg/dL'), ''],
+        
+        # Liver Function
+        [td('Liver Function', True), td('AST'), td(lft.get('ast')), td('0-46'), td('U/L'), td(lft.get('remark'))],
         ['', td('ALT'), td(lft.get('alt')), td('0-49'), td('U/L'), ''],
-        ['', td('ALP'), td(lft.get('alp')), td('M:80-306 F:64-306'), td('U/L'), ''],
+        ['', td('ALP'), td(lft.get('alp')), td('Male: 80-306<br/>Female: 64-306'), td('U/L<br/>U/L'), ''],
         ['', td('TB'), td(lft.get('tb')), td('0-1.2'), td('mg/dL'), ''],
         ['', td('CB'), td(lft.get('cb')), td('0-0.4'), td('mg/dL'), ''],
-    ]
-    # UA & PSA
-    lab_rows += [
-        [td('Urine Analysis', True), td('Sugar & Protein'), td(consult.get('ua_result')),
-         td('NA'), td(''), td(consult.get('ua_remark'))],
-        [td('PSA', True), td('PSA'), td(consult.get('psa')),
-         td('NA'), td(''), td(consult.get('psa_remark'))],
+        
+        # Urine Analysis
+        [td('Urine Analysis', True), td('Sugar & Protein'), td(consult.get('ua_result')), td('NA'), td(''), td(consult.get('ua_remark'))],
+        
+        # PSA
+        [td('PSA', True), td('PSA'), td(consult.get('psa')), td('NA'), td(''), td(consult.get('psa_remark'))]
     ]
 
     SPAN_DEFS = [
-        # Blood Sugar (Rows 1-2)
-        ('SPAN', (5,1), (5,2)),
-        # FBC (Rows 3-6)
-        ('SPAN', (5,3), (5,6)),
-        # KFT (Rows 7-11)
-        ('SPAN', (5,7), (5,11)),
-        # Lipid (Rows 12-15)
-        ('SPAN', (5,12), (5,15)),
-        # LFT (Rows 16-20)
-        ('SPAN', (5,16), (5,20)),
+        # Investigation name column spans
+        ('SPAN', (0,1), (0,2)),   # Blood Sugar
+        ('SPAN', (0,3), (0,8)),   # FBC
+        ('SPAN', (0,9), (0,14)),  # Kidney Function
+        ('SPAN', (0,15), (0,18)), # Lipid Profile
+        ('SPAN', (0,19), (0,23)), # Liver Function
+
+        # Remark column spans
+        ('SPAN', (5,1), (5,2)),   # Blood Sugar Remark
+        ('SPAN', (5,3), (5,8)),   # FBC Remark
+        ('SPAN', (5,9), (5,14)),  # Kidney Function Remark
+        ('SPAN', (5,15), (5,18)), # Lipid Profile Remark
+        ('SPAN', (5,19), (5,23)), # Liver Function Remark
     ]
 
-    group_borders = [2, 6, 11, 15, 20, 22]  # rows after which a border appears
+    group_borders = [2, 8, 14, 18, 23, 24]  # rows after which a border appears
 
     lab_ts = TableStyle([
         ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
@@ -411,10 +416,12 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     story.extend(section_title('CLINICAL AND LABORATORY FINDINGS'))
 
     # Clinical findings table
+    hx_pe_val = director.get('hx_pe') or consult.get('hx_pe')
+    lab_remark_val = director.get('lab_remark') or consult.get('lab_remark')
     clin_rows = [
         [th('S/N'), th('INVESTIGATION'), th('RESULT')],
-        [td('1.'), td('Relevant History and Physical Exam:'), td(consult.get('hx_pe'))],
-        [td('2.'), td('Relevant Laboratory Investigations:'), td(consult.get('lab_remark'))],
+        [td('1.'), td('Relevant History and Physical Exam:'), td(hx_pe_val)],
+        [td('2.'), td('Relevant Laboratory Investigations:'), td(lab_remark_val)],
         [td('3.'), td('Electrocardiogram (ECG Findings):'), td(special.get('ecg'))],
         [td('4.'), td('Spirometry (Lung Function Test):'), td(special.get('spirometry'))],
         [td('5.'), td('Audiometry (Hearing Test):'), td(special.get('audiometry'))],

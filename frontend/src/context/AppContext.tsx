@@ -167,6 +167,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         }
       });
 
+      newSocket.on('force_logout', () => {
+        toast.error("Your session has been revoked by an administrator.", { id: 'session_revoked' });
+        setUser(null);
+        setTimeout(() => {
+          window.location.href = '/login?reason=session_revoked';
+        }, 1500);
+      });
+
       // Initial fetch for unread count
       axios.get('/api/messages/conversations').then(resp => {
         const total = resp.data.reduce((acc: number, c: any) => acc + (c.unread_count || 0), 0);
@@ -233,9 +241,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
       timeoutId = setTimeout(() => {
-        setUser(null);
-        localStorage.removeItem('user');
-        window.location.href = '/login?reason=inactivity';
+        axios.post('/api/logout').catch(() => {}).finally(() => {
+          setUser(null);
+          localStorage.removeItem('user');
+          window.location.href = '/login?reason=inactivity';
+        });
       }, 10 * 60 * 1000); // 10 minutes
     };
 
@@ -308,6 +318,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   useEffect(() => {
     fetchBranding();
   }, [fetchBranding]);
+
+  // Periodic check for PWA updates in production (checks every 5 minutes)
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      const interval = setInterval(() => {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.update().catch(err => console.warn("PWA Service Worker update check failed:", err));
+        });
+      }, 5 * 60 * 1000);
+      return () => clearInterval(interval);
+    }
+  }, []);
 
   return (
     <AppContext.Provider value={{ 

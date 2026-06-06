@@ -3,22 +3,23 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Controller } from 'react-hook-form';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  User,
-  ChevronDown,
-  Users,
-  Clock,
-  ChevronRight,
-  Loader2,
-  Stethoscope,
-  FileText,
-  ClipboardList,
-  Activity,
-  Heart,
-  Thermometer,
-  Save,
-  Trash2
-} from 'lucide-react';
+  UserIcon,
+  ArrowDown01Icon,
+  UserGroupIcon,
+  Clock01Icon,
+  ArrowRight01Icon,
+  Loading03Icon,
+  StethoscopeIcon,
+  Note01Icon,
+  ClipboardIcon,
+  Activity01Icon,
+  FavouriteIcon,
+  ThermometerIcon,
+  FloppyDiskIcon,
+  Delete02Icon
+} from '@hugeicons/core-free-icons';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PatientSearch } from '@/components/PatientSearch';
 import { toast } from 'react-hot-toast';
@@ -159,7 +160,7 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button type="button" className="p-1 hover:bg-muted rounded-md transition-colors">
-              <ChevronDown className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
+              <HugeiconsIcon icon={ArrowDown01Icon} className="h-5 w-5 text-muted-foreground transition-transform group-hover:scale-110" />
             </button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="z-[150]">
@@ -436,9 +437,9 @@ const ConsultationPage: React.FC = () => {
       <div className="space-y-6">
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
-              <Stethoscope className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={StethoscopeIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight">Doctor's Consultation</h1>
@@ -454,7 +455,7 @@ const ConsultationPage: React.FC = () => {
               <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
                 <div className="flex items-center gap-2.5">
                   <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <Users className="h-4 w-4" />
+                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
                   </div>
                   <div>
                     <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
@@ -462,7 +463,7 @@ const ConsultationPage: React.FC = () => {
                   </div>
                 </div>
                 <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-10 transition-opacity">
-                  VIEW <ChevronRight className="h-3 w-3" />
+                  VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
                 </div>
               </CardContent>
             </Card>
@@ -488,7 +489,7 @@ const ConsultationPage: React.FC = () => {
           <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 mt-8 p-6">
             <div className="text-center space-y-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
-                <User className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6 sm:w-8 sm:h-8 text-muted-foreground/50" />
               </div>
               <p className="text-muted-foreground font-bold text-base sm:text-lg italic px-4 leading-snug">
                 Enter a Patient ID to begin consultation.
@@ -514,19 +515,20 @@ const ConsultationPage: React.FC = () => {
                       className="w-full h-full object-cover"
                     />
                   ) : (
-                    <User className="h-8 w-8 text-primary/40" />
+                    <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary/40" />
                   )}
                 </div>
 
                 {/* Bio Grid */}
-                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-7 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
-                  <PatientInfo label="STAFF ID" value={patient.staff_id} />
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
                   <div className="lg:col-span-2">
                     <PatientInfo label="NAME" value={`${patient.first_name} ${patient.last_name}`} />
                   </div>
+                  <PatientInfo label="STAFF ID" value={patient.staff_id} />
+                  <PatientInfo label="PATIENT ID" value={patient.patient_id || 'N/A'} />
                   <PatientInfo label="AGE" value={`${patient.age} Yrs`} />
-                  <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <PatientInfo label="GENDER" value={patient.gender} />
+                  <PatientInfo label="DEPARTMENT" value={patient.department} />
                   <div className="col-span-full lg:col-span-1 border-t lg:border-t-0 lg:border-l pt-3 lg:pt-0 pl-0 lg:pl-4 border-primary/10">
                     <PatientInfo label="CONSULTED BY" value={patient.consultation?.consulted_by_name || 'NOT CONSULTED'} />
                   </div>
@@ -537,11 +539,11 @@ const ConsultationPage: React.FC = () => {
             <div className="space-y-6 pb-24">
               <Card className="border-2 shadow-2xl relative overflow-hidden">
                 <div className="absolute top-0 right-0 p-8 opacity-5 pointer-events-none">
-                  <FileText className="h-32 w-32" />
+                  <HugeiconsIcon icon={Note01Icon} className="h-32 w-32" />
                 </div>
                 <CardHeader className="border-b bg-muted/5 py-4">
                   <CardTitle className="text-xl flex items-center gap-2">
-                    <ClipboardList className="h-6 w-6 text-primary" />
+                    <HugeiconsIcon icon={ClipboardIcon} className="h-6 w-6 text-primary" />
                     Clinical Findings & Assessments
                   </CardTitle>
                 </CardHeader>
@@ -579,7 +581,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
                         </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
+                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
                       </div>
                     </div>
 
@@ -587,16 +589,16 @@ const ConsultationPage: React.FC = () => {
                       <h3 className="text-sm font-black uppercase tracking-widest text-primary border-b pb-2">Vital Signs & Core Metrics</h3>
                       <div className="grid grid-cols-2 sm:grid-cols-3 gap-6">
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Activity className="h-4 w-4 text-primary" /> B.P (mm/Hg) <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><HugeiconsIcon icon={Activity01Icon} className="h-4 w-4 text-primary" /> B.P (mm/Hg) <span className="text-red-500">*</span></Label>
                             <Input {...register('bp')} className="h-12" />
                           {errors.bp && <p className="text-xs text-destructive">{errors.bp.message}</p>}
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Heart className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><HugeiconsIcon icon={FavouriteIcon} className="h-4 w-4 text-rose-500" /> Pulse (b/m) <span className="text-red-500">*</span></Label>
                           <Input {...register('pulse')} className="h-12" />
                         </div>
                         <div className="space-y-2">
-                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><Thermometer className="h-4 w-4 text-blue-500" /> SPO2 (%) <span className="text-red-500">*</span></Label>
+                          <Label className="font-bold flex items-center gap-2 whitespace-nowrap truncate"><HugeiconsIcon icon={ThermometerIcon} className="h-4 w-4 text-blue-500" /> SPO2 (%) <span className="text-red-500">*</span></Label>
                           <Input {...register('spo2')} className="h-12" />
                         </div>
                       </div>
@@ -633,10 +635,10 @@ const ConsultationPage: React.FC = () => {
 
                     <div className="pt-6 border-t flex flex-col sm:flex-row justify-end gap-3 sm:gap-4">
                       <Button type="button" variant="outline" size="lg" className="w-full sm:w-auto px-10 h-12 font-bold order-2 sm:order-1" onClick={() => setPatient(null)}>Discard</Button>
-                      <Button type="submit" size="lg" className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2" disabled={saving}>
-                        {saving ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
+                      <Button type="submit" size="lg" loading={saving} className="w-full sm:w-auto bg-primary hover:bg-primary0 px-10 sm:px-16 h-12 font-bold text-base sm:text-lg shadow-xl shadow-primary/20 order-1 sm:order-2">
+                        {!saving && (
                           <div className="flex items-center justify-center whitespace-nowrap">
-                             <Save className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
+                             <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> Submit Findings
                           </div>
                         )}
                       </Button>
@@ -648,13 +650,12 @@ const ConsultationPage: React.FC = () => {
           </div>
         )}
       </div>
-
       <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
         <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
           <DialogHeader className="text-left">
             <div className="flex items-center gap-3 mb-2 text-left">
               <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
-                <Users className="w-6 h-6" />
+                <HugeiconsIcon icon={UserGroupIcon} className="w-6 h-6" />
               </div>
               <div>
                 <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Consultation Queue</DialogTitle>
@@ -662,12 +663,12 @@ const ConsultationPage: React.FC = () => {
               </div>
             </div>
           </DialogHeader>
-
+ 
           <div className="relative mt-2">
             <ScrollArea className="h-[400px] px-1">
               {loadingQueue ? (
                 <div className="flex items-center justify-center h-full">
-                  <Loader2 className="h-8 w-8 animate-spin text-primary/50" />
+                  <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
                 </div>
               ) : queueEntries.length > 0 ? (
                 <div className="space-y-3">
@@ -688,16 +689,15 @@ const ConsultationPage: React.FC = () => {
                           <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
                           
                           <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
-                            {/* ID & Time: stacked on mobile, row on desktop */}
-                            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
+                            {/* ID & Time: stacked on mobile, row on desktop */}                            <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
                               <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
                               <span className="hidden sm:inline text-muted-foreground/60">•</span>
                               <span className="font-medium flex items-center gap-1">
-                                <Clock className="w-3 h-3 text-muted-foreground/60" />
+                                <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-muted-foreground/60" />
                                 {getRelativeTime(entry.created_at)}
                               </span>
                             </div>
-
+ 
                             {/* Mobile-only action buttons beside stacked ID/time */}
                             <div className="flex sm:hidden items-center gap-1.5 shrink-0">
                               <Button
@@ -709,7 +709,7 @@ const ConsultationPage: React.FC = () => {
                                   setIsQueueModalOpen(false);
                                 }}
                               >
-                                Proceed <ChevronRight className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
+                                Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-2.5 h-2.5 ml-0.5 group-hover/btn:translate-x-0.5 transition-transform" />
                               </Button>
                               {hasPermission('delete_from_queue') && (
                                 <Button
@@ -719,14 +719,14 @@ const ConsultationPage: React.FC = () => {
                                   onClick={() => handleDeleteQueueEntry(entry.staff_id)}
                                   title="Remove from queue"
                                 >
-                                  <Trash2 className="w-3 h-3" />
+                                  <HugeiconsIcon icon={Delete02Icon} className="w-3 h-3" />
                                 </Button>
                               )}
                             </div>
                           </div>
                         </div>
                       </div>
-
+ 
                       {/* Desktop-only action buttons centered vertically inside the card */}
                       <div className="hidden sm:flex items-center gap-1.5 shrink-0">
                         <Button
@@ -738,7 +738,7 @@ const ConsultationPage: React.FC = () => {
                             setIsQueueModalOpen(false);
                           }}
                         >
-                          Proceed <ChevronRight className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
+                          Proceed <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3 ml-1 group-hover/btn:translate-x-0.5 transition-transform" />
                         </Button>
                         {hasPermission('delete_from_queue') && (
                           <Button
@@ -748,7 +748,7 @@ const ConsultationPage: React.FC = () => {
                             onClick={() => handleDeleteQueueEntry(entry.staff_id)}
                             title="Remove from queue"
                           >
-                            <Trash2 className="w-3.5 h-3.5" />
+                            <HugeiconsIcon icon={Delete02Icon} className="w-3.5 h-3.5" />
                           </Button>
                         )}
                       </div>
@@ -757,7 +757,7 @@ const ConsultationPage: React.FC = () => {
                 </div>
               ) : (
                 <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
-                  <Users className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <HugeiconsIcon icon={UserGroupIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
                   <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">Queue Empty</p>
                   <p className="text-xs text-muted-foreground mt-1">No patients are in the consultation queue.</p>
                 </div>

@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
+from zoneinfo import ZoneInfo
 from decorators import require_permission
 from flask_jwt_extended import get_jwt_identity, get_jwt
 
@@ -21,16 +22,16 @@ def get_queue_counts():
 
     # Get counts per department, joined with ScreeningYearBioData to ensure they are in the matrix
     counts = db.session.query(
-        func.trim(QueueEntry.department), 
+        QueueEntry.department, 
         func.count(QueueEntry.id)
     ).join(
         ScreeningYearBioData, 
-        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) & 
+        (QueueEntry.staff_id == ScreeningYearBioData.staff_id) & 
         (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
     ).filter(
         QueueEntry.screening_year == year, 
         QueueEntry.status == 'Waiting'
-    ).group_by(func.trim(QueueEntry.department)).all()
+    ).group_by(QueueEntry.department).all()
     
     result = {
         "consultation": 0,
@@ -100,7 +101,7 @@ def get_department_queue(department):
         QueueEntry, ScreeningYearBioData
     ).join(
         ScreeningYearBioData,
-        (func.trim(QueueEntry.staff_id) == func.trim(ScreeningYearBioData.staff_id)) &
+        (QueueEntry.staff_id == ScreeningYearBioData.staff_id) &
         (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
     ).filter(
         QueueEntry.department == target_dept,
@@ -114,7 +115,7 @@ def get_department_queue(department):
             "staff_id": e.staff_id,
             "first_name": bio.first_name,
             "last_name": bio.last_name,
-            "created_at": e.created_at.isoformat(),
+            "created_at": e.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
             "queue_number": e.queue_number
         })
 
@@ -212,7 +213,7 @@ def delete_patient_from_queue(department, staff_id):
 
     # Find the QueueEntry
     entry = QueueEntry.query.filter(
-        func.trim(QueueEntry.staff_id) == func.trim(staff_id),
+        QueueEntry.staff_id == staff_id.strip(),
         QueueEntry.screening_year == int(year),
         QueueEntry.department == target_dept,
         QueueEntry.status == 'Waiting'

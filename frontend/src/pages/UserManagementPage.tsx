@@ -15,27 +15,26 @@ import {
 } from '@/components/ui/dialog';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Label } from '@/components/ui/label';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Users,
-  Search,
-  UserCog,
-  Shield,
-  Mail,
-  Phone,
-  MoreVertical,
-  CheckCircle2,
-  XCircle,
-  ShieldCheck,
-  Key,
-  Calendar,
-  RefreshCw,
-  X,
-  Loader2,
-  Lock,
-  Building2,
-  Copy,
-  Check
-} from 'lucide-react';
+  UserGroupIcon,
+  Search01Icon,
+  UserSettings01Icon,
+  Shield01Icon,
+  Mail01Icon,
+  CallIcon,
+  MoreVerticalIcon,
+  CheckmarkCircle02Icon,
+  CancelCircleIcon,
+  LockKeyIcon,
+  Calendar03Icon,
+  ReloadIcon,
+  Cancel01Icon,
+  Loading03Icon,
+  LockIcon,
+  Hospital02Icon,
+  Copy01Icon
+} from '@hugeicons/core-free-icons';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import {
   Table,
@@ -93,6 +92,14 @@ const UserManagementPage: React.FC = () => {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
+  const [isEditInfoModalOpen, setIsEditInfoModalOpen] = useState(false);
+  const [editUserInfo, setEditUserInfo] = useState({
+    first_name: '',
+    last_name: '',
+    username: '',
+    email: '',
+    phone: ''
+  });
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -244,6 +251,15 @@ const UserManagementPage: React.FC = () => {
       setIsResetModalOpen(true);
     } else if (action === 'deactivate') {
       setConfirmDeactivation({ open: true, user: u });
+    } else if (action === 'edit_info') {
+      setEditUserInfo({
+        first_name: u.first_name,
+        last_name: u.last_name,
+        username: u.username,
+        email: u.email,
+        phone: u.phone
+      });
+      setIsEditInfoModalOpen(true);
     }
   };
 
@@ -269,6 +285,26 @@ const UserManagementPage: React.FC = () => {
     } catch (err) {
       console.error("Update failed:", err);
       toast.error("Failed to update roles");
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveInfo = async () => {
+    if (!selectedUser) return;
+    if (!editUserInfo.first_name || !editUserInfo.last_name || !editUserInfo.username || !editUserInfo.email) {
+      toast.error("Please fill all required fields");
+      return;
+    }
+    setSaving(true);
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      await axios.put(`/api/admin/users/${selectedUser.id}`, editUserInfo, { headers });
+      toast.success("User account information updated successfully");
+      setIsEditInfoModalOpen(false);
+      fetchData();
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to update account information");
     } finally {
       setSaving(false);
     }
@@ -335,9 +371,9 @@ const UserManagementPage: React.FC = () => {
     <MainLayout>
       <div className="space-y-6 animate-in fade-in duration-500">
         <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
-              <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+              <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
             </div>
             <div>
               <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground">User Management</h1>
@@ -348,7 +384,7 @@ const UserManagementPage: React.FC = () => {
           </div>
           <div className="flex items-center gap-3 w-full lg:w-auto">
             <Button variant="outline" size="sm" onClick={fetchData} className="flex-1 lg:flex-none gap-2 h-10 rounded-xl border-2 font-bold transition-all hover:bg-primary/5">
-              <RefreshCw className={loading ? "h-4 w-4 animate-spin text-primary" : "h-4 w-4 text-primary"} />
+              <HugeiconsIcon icon={ReloadIcon} className={loading ? "h-4 w-4 animate-spin text-primary" : "h-4 w-4 text-primary"} />
               Reload
             </Button>
             {((activeTab === 'staff' && canManageStaff) || (activeTab === 'patient' && canManagePatients)) && (
@@ -357,7 +393,7 @@ const UserManagementPage: React.FC = () => {
                 className="flex-1 lg:flex-none gap-2 h-10 rounded-xl font-black shadow-lg shadow-primary/20 px-6" 
                 onClick={() => activeTab === 'staff' ? setIsAddModalOpen(true) : setIsAddPatientModalOpen(true)}
               >
-                {activeTab === 'staff' ? <UserCog className="h-4 w-4" /> : <Users className="h-4 w-4" />}
+                {activeTab === 'staff' ? <HugeiconsIcon icon={UserSettings01Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />}
                 {activeTab === 'staff' ? 'Add User' : 'Add Patient'}
               </Button>
             )}
@@ -380,13 +416,13 @@ const UserManagementPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2 text-primary">
-                      <Users className="h-5 w-5" />
+                      <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Staff Directory
                     </CardTitle>
                     <CardDescription>Filtering {filteredUsers.filter(u => !u.roles.includes('Patient')).length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <Search className="ml-1 h-4 w-4 text-muted-foreground" />
+                    <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search staff..."
                       className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
@@ -415,13 +451,13 @@ const UserManagementPage: React.FC = () => {
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                   <div className="space-y-1">
                     <CardTitle className="flex items-center gap-2 text-primary">
-                      <Users className="h-5 w-5" />
+                      <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Patient Registry
                     </CardTitle>
                     <CardDescription>Filtering {filteredUsers.filter(u => u.roles.includes('Patient')).length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <Search className="ml-1 h-4 w-4 text-muted-foreground" />
+                    <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
                     <Input
                       placeholder="Search patients..."
                       className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
@@ -466,7 +502,7 @@ const UserManagementPage: React.FC = () => {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-primary flex items-center justify-center text-white shadow-lg shadow-primary/20">
-                      <Shield className="h-6 w-6" />
+                      <HugeiconsIcon icon={Shield01Icon} className="h-6 w-6" />
                     </div>
                     <div>
                       <h2 className="text-xl font-black tracking-tight">Configure User Roles</h2>
@@ -474,7 +510,7 @@ const UserManagementPage: React.FC = () => {
                     </div>
                   </div>
                   <Button variant="ghost" size="icon" onClick={() => setIsEditModalOpen(false)} className="rounded-full">
-                    <X className="h-5 w-5" />
+                    <HugeiconsIcon icon={Cancel01Icon} className="h-5 w-5" />
                   </Button>
                 </div>
               </div>
@@ -517,7 +553,7 @@ const UserManagementPage: React.FC = () => {
                           </div>
                         </div>
                         {userRolesInput.includes(role.name) && (
-                          <ShieldCheck className="h-5 w-5 text-primary animate-in zoom-in" />
+                          <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-primary animate-in zoom-in" />
                         )}
                       </div>
                     ))}
@@ -525,7 +561,7 @@ const UserManagementPage: React.FC = () => {
                 </div>
 
                 <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-4 flex gap-3">
-                  <Shield className="h-5 w-5 text-amber-500 shrink-0" />
+                  <HugeiconsIcon icon={Shield01Icon} className="h-5 w-5 text-amber-500 shrink-0" />
                   <p className="text-[10px] text-amber-700 leading-relaxed font-bold italic uppercase tracking-wider">
                     Warning: Changing roles will immediately affect the user's permissions and system access level. Use caution when assigning administrative roles.
                   </p>
@@ -536,10 +572,10 @@ const UserManagementPage: React.FC = () => {
                 <Button variant="ghost" onClick={() => setIsEditModalOpen(false)} className="font-bold">Cancel</Button>
                 <Button
                   onClick={handleSaveRoles}
-                  disabled={saving}
+                  loading={saving}
                   className="gap-2 px-8 font-black shadow-lg shadow-primary/20"
                 >
-                  {saving ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                  {!saving && <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />}
                   Apply Access Rules
                 </Button>
               </div>
@@ -551,7 +587,7 @@ const UserManagementPage: React.FC = () => {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Key className="h-5 w-5 text-primary" />
+              <HugeiconsIcon icon={LockKeyIcon} className="h-5 w-5 text-primary" />
               Administrative Password Reset
             </DialogTitle>
             <DialogDescription>
@@ -588,8 +624,8 @@ const UserManagementPage: React.FC = () => {
                 <div className="absolute right-3 top-2.5">
                   {confirmPassword && (
                     newPassword === confirmPassword ?
-                      <CheckCircle2 className="h-5 w-5 text-primary animate-in zoom-in duration-300" /> :
-                      <X className="h-5 w-5 text-rose-500 animate-in zoom-in duration-300" />
+                      <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-5 w-5 text-primary animate-in zoom-in duration-300" /> :
+                      <HugeiconsIcon icon={Cancel01Icon} className="h-5 w-5 text-rose-500 animate-in zoom-in duration-300" />
                   )}
                 </div>
               </div>
@@ -603,10 +639,90 @@ const UserManagementPage: React.FC = () => {
             <Button
               onClick={handleResetPassword}
               className="font-bold"
-              disabled={isSubmitting || !newPassword || newPassword !== confirmPassword}
+              loading={isSubmitting}
+              disabled={!newPassword || newPassword !== confirmPassword}
             >
-              {isSubmitting ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <ShieldCheck className="h-4 w-4 mr-2" />}
+              {!isSubmitting && <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 mr-2" />}
               Apply New Password
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={isEditInfoModalOpen} onOpenChange={setIsEditInfoModalOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 text-primary" />
+              Edit Account Information
+            </DialogTitle>
+            <DialogDescription>
+              Update the account profile information for <strong>@{selectedUser?.username}</strong>.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-first-name">First Name</Label>
+                <Input
+                  id="edit-first-name"
+                  placeholder="John"
+                  value={editUserInfo.first_name}
+                  onChange={(e) => setEditUserInfo({ ...editUserInfo, first_name: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-last-name">Last Name</Label>
+                <Input
+                  id="edit-last-name"
+                  placeholder="Doe"
+                  value={editUserInfo.last_name}
+                  onChange={(e) => setEditUserInfo({ ...editUserInfo, last_name: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-username">Username</Label>
+              <Input
+                id="edit-username"
+                placeholder="jdoe"
+                value={editUserInfo.username}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, username: e.target.value })}
+                disabled={selectedUser?.username === 'admin'}
+              />
+              {selectedUser?.username === 'admin' && (
+                <p className="text-[10px] text-rose-500 font-bold italic">The default system administrator username cannot be renamed.</p>
+              )}
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-email">Email Address</Label>
+              <Input
+                id="edit-email"
+                type="email"
+                placeholder="john.doe@legit-healthcare.com"
+                value={editUserInfo.email}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, email: e.target.value })}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-phone">Phone Number</Label>
+              <Input
+                id="edit-phone"
+                placeholder="+234..."
+                value={editUserInfo.phone}
+                onChange={(e) => setEditUserInfo({ ...editUserInfo, phone: e.target.value })}
+              />
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditInfoModalOpen(false)}>Cancel</Button>
+            <Button
+              onClick={handleSaveInfo}
+              className="font-bold"
+              loading={saving}
+            >
+              {!saving && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4 mr-2" />}
+              Save Changes
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -623,7 +739,7 @@ const UserManagementPage: React.FC = () => {
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <UserCog className="h-5 w-5 text-primary" />
+              <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 text-primary" />
               Onboard New Staff
             </DialogTitle>
             <DialogDescription>
@@ -726,9 +842,9 @@ const UserManagementPage: React.FC = () => {
                   <Button
                     onClick={handleAddUser}
                     className="font-bold gap-2 shadow-lg shadow-primary/20"
-                    disabled={saving}
+                    loading={saving}
                   >
-                    {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {!saving && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
                     Create Account
                   </Button>
                 </div>
@@ -742,7 +858,7 @@ const UserManagementPage: React.FC = () => {
               >
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
-                    <CheckCircle2 className="h-10 w-10" />
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-10 w-10" />
                   </div>
                   <div>
                     <h3 className="text-xl font-black tracking-tight">Staff Account Ready!</h3>
@@ -756,7 +872,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-card p-4 rounded-xl border-2 flex items-center justify-between group">
                       <span className="font-black text-lg tracking-tight">{createdStaffData?.username}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(createdStaffData?.username)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Copy className="h-4 w-4" />
+                        <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -766,14 +882,14 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex items-center justify-between group">
                       <span className="font-black text-2xl tracking-[0.2em] text-primary">{generatedPassword}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(generatedPassword)} className="text-primary hover:bg-primary/10">
-                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 flex gap-3">
-                  <Mail className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
                     Credentials have been sent to <strong>{createdStaffData?.email}</strong>. The user must change their password on first login.
                   </p>
@@ -800,7 +916,7 @@ const UserManagementPage: React.FC = () => {
         <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Users className="h-5 w-5 text-primary" />
+              <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5 text-primary" />
               Onboard Patient Portal
             </DialogTitle>
             <DialogDescription>
@@ -818,7 +934,7 @@ const UserManagementPage: React.FC = () => {
                 className="space-y-4 py-4"
               >
                 <div className="bg-primary/5 border-2 border-primary/10 p-4 rounded-2xl flex items-start gap-3">
-                  <Search className="h-5 w-5 text-primary mt-0.5" />
+                  <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-primary mt-0.5" />
                   <p className="text-[11px] text-muted-foreground font-medium leading-relaxed">
                     Enter the patient's company issued <strong>Staff ID</strong> to locate their records and begin the onboarding process.
                   </p>
@@ -834,15 +950,16 @@ const UserManagementPage: React.FC = () => {
                       onKeyDown={(e) => e.key === 'Enter' && handlePatientSearch()}
                       autoFocus
                     />
-                    <Building2 className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                    <HugeiconsIcon icon={Hospital02Icon} className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   </div>
                 </div>
                 <Button 
                   onClick={handlePatientSearch} 
                   className="w-full h-12 rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20"
-                  disabled={onboardLoading || !searchStaffId.trim()}
+                  loading={onboardLoading}
+                  disabled={!searchStaffId.trim()}
                 >
-                  {onboardLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Locate Records"}
+                  Locate Records
                 </Button>
               </motion.div>
             )}
@@ -906,7 +1023,7 @@ const UserManagementPage: React.FC = () => {
                           className="h-12 pl-10 rounded-xl border-2 bg-muted/20 text-sm font-bold"
                           placeholder="email@example.com"
                         />
-                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                     <div className="space-y-2">
@@ -918,13 +1035,13 @@ const UserManagementPage: React.FC = () => {
                           className="h-12 pl-10 rounded-xl border-2 bg-muted/20 text-sm font-bold"
                           placeholder="080..."
                         />
-                        <Phone className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                        <HugeiconsIcon icon={CallIcon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                       </div>
                     </div>
                   </div>
 
                   <div className="bg-amber-500/5 border border-amber-500/20 p-3 rounded-xl flex gap-3">
-                    <Shield className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+                    <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
                     <p className="text-[9px] text-amber-700 font-bold italic uppercase tracking-wider leading-relaxed">
                       Administrative Action: A temporary password will be generated. The patient will be required to change it upon first login.
                     </p>
@@ -942,9 +1059,9 @@ const UserManagementPage: React.FC = () => {
                     <Button 
                       type="submit" 
                       className="flex-[2] rounded-xl font-black uppercase tracking-widest shadow-lg shadow-primary/20"
-                      disabled={onboardLoading}
+                      loading={onboardLoading}
                     >
-                      {onboardLoading ? <Loader2 className="h-5 w-5 animate-spin" /> : "Create Account"}
+                      Create Account
                     </Button>
                   </div>
                 </form>
@@ -960,7 +1077,7 @@ const UserManagementPage: React.FC = () => {
               >
                 <div className="flex flex-col items-center text-center space-y-4">
                   <div className="w-20 h-20 bg-primary rounded-3xl flex items-center justify-center text-white shadow-2xl shadow-primary/30">
-                    <CheckCircle2 className="h-10 w-10" />
+                    <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-10 w-10" />
                   </div>
                   <div>
                     <h3 className="text-xl font-black tracking-tight">Onboarding Successful!</h3>
@@ -974,7 +1091,7 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-card p-4 rounded-xl border-2 flex items-center justify-between group">
                       <span className="font-black text-lg tracking-tight">{onboardPatientData?.staff_id}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(onboardPatientData?.staff_id)} className="opacity-0 group-hover:opacity-100 transition-opacity">
-                        <Copy className="h-4 w-4" />
+                        <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
@@ -984,14 +1101,14 @@ const UserManagementPage: React.FC = () => {
                     <div className="bg-primary/5 p-4 rounded-xl border-2 border-primary/20 flex items-center justify-between group">
                       <span className="font-black text-2xl tracking-[0.2em] text-primary">{generatedPassword}</span>
                       <Button variant="ghost" size="icon" onClick={() => copyToClipboard(generatedPassword)} className="text-primary hover:bg-primary/10">
-                        {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
+                        {copied ? <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" /> : <HugeiconsIcon icon={Copy01Icon} className="h-4 w-4" />}
                       </Button>
                     </div>
                   </div>
                 </div>
 
                 <div className="bg-primary/5 p-4 rounded-xl border border-primary/10 flex gap-3">
-                  <Mail className="h-4 w-4 text-primary shrink-0 mt-0.5" />
+                  <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4 text-primary shrink-0 mt-0.5" />
                   <p className="text-[10px] text-muted-foreground font-bold leading-relaxed">
                     Credentials have been sent to <strong>{onboardPatientData?.email}</strong>. Please advise the patient to change their password immediately after login.
                   </p>
@@ -1059,7 +1176,7 @@ const UserTable: React.FC<{
           <TableRow>
             <TableCell colSpan={6} className="h-64 text-center">
               <div className="flex flex-col items-center gap-2">
-                <RefreshCw className="h-8 w-8 animate-spin text-primary/40" />
+                <HugeiconsIcon icon={ReloadIcon} className="h-8 w-8 animate-spin text-primary/40" />
                 <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Secure Directory...</p>
               </div>
             </TableCell>
@@ -1069,7 +1186,7 @@ const UserTable: React.FC<{
             <TableCell colSpan={6} className="h-96 border-0">
               <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                  <Search className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                  <HugeiconsIcon icon={Search01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
                 </div>
                 <div className="space-y-2">
                   <h3 className="text-xl font-black tracking-tight text-foreground/70">No Personnel Found</h3>
@@ -1107,11 +1224,11 @@ const UserTable: React.FC<{
               <TableCell>
                 <div className="space-y-1">
                   <div className="flex items-center gap-1.5 text-xs">
-                    <Mail className="h-3 w-3 text-muted-foreground" />
+                    <HugeiconsIcon icon={Mail01Icon} className="h-3 w-3 text-muted-foreground" />
                     <span className="truncate max-w-[150px]">{user.email}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
-                    <Phone className="h-3 w-3 text-muted-foreground" />
+                    <HugeiconsIcon icon={CallIcon} className="h-3 w-3 text-muted-foreground" />
                     <span>{user.phone}</span>
                   </div>
                 </div>
@@ -1145,12 +1262,12 @@ const UserTable: React.FC<{
                 <div className="flex items-center gap-2">
                   {user.is_verified ? (
                     <Badge variant="outline" className="bg-primary/10 text-primary border-primary/30 gap-1 pr-2 py-0.5">
-                      <CheckCircle2 className="h-3 w-3" />
+                      <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-3 w-3" />
                       Verified
                     </Badge>
                   ) : (
                     <Badge variant="outline" className="bg-rose-500/10 text-rose-500 border-rose-200 gap-1 pr-2 py-0.5">
-                      <XCircle className="h-3 w-3" />
+                      <HugeiconsIcon icon={CancelCircleIcon} className="h-3 w-3" />
                       Pending
                     </Badge>
                   )}
@@ -1161,18 +1278,22 @@ const UserTable: React.FC<{
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
                       <Button variant="ghost" size="icon" className="group-hover:bg-background">
-                        <MoreVertical className="h-4 w-4" />
+                        <HugeiconsIcon icon={MoreVerticalIcon} className="h-4 w-4" />
                       </Button>
                     </DropdownMenuTrigger>
                   <DropdownMenuContent align="end" className="w-48 border-2 shadow-2xl">
                     <DropdownMenuLabel>Actions for @{user.username}</DropdownMenuLabel>
                     <DropdownMenuSeparator />
                     <DropdownMenuItem onClick={() => handleAction('roles', user)} className="cursor-pointer gap-2">
-                      <ShieldCheck className="h-4 w-4" />
+                      <HugeiconsIcon icon={Shield01Icon} className="h-4 w-4" />
                       Edit Roles
                     </DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => handleAction('edit_info', user)} className="cursor-pointer gap-2">
+                      <HugeiconsIcon icon={UserSettings01Icon} className="h-4 w-4" />
+                      Edit Info
+                    </DropdownMenuItem>
                     <DropdownMenuItem onClick={() => handleAction('reset', user)} className="cursor-pointer gap-2">
-                      <Key className="h-4 w-4" />
+                      <HugeiconsIcon icon={LockKeyIcon} className="h-4 w-4" />
                       Reset Password
                     </DropdownMenuItem>
                     <DropdownMenuItem 
@@ -1182,7 +1303,7 @@ const UserTable: React.FC<{
                         setIsTimelineOpen(true);
                       }}
                     >
-                      <Calendar className="h-4 w-4" />
+                      <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />
                       View Timeline
                     </DropdownMenuItem>
                     <DropdownMenuSeparator />
@@ -1191,7 +1312,7 @@ const UserTable: React.FC<{
                       disabled={user.username === 'admin'}
                       className={`cursor-pointer gap-2 text-rose-500 focus:text-rose-500 focus:bg-rose-50 ${user.username === 'admin' ? 'opacity-30 cursor-not-allowed grayscale' : ''}`}
                     >
-                      <XCircle className="h-4 w-4" />
+                      <HugeiconsIcon icon={CancelCircleIcon} className="h-4 w-4" />
                       {user.username === 'admin' ? 'System Protected' : 'Deactivate Account'}
                     </DropdownMenuItem>
                   </DropdownMenuContent>

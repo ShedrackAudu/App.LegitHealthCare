@@ -3,27 +3,29 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useSearchParams, useNavigate } from 'react-router-dom';
 import * as z from 'zod';
+import { HugeiconsIcon } from '@hugeicons/react';
 import {
-  Users,
-  Search,
-  UserPlus,
-  Save,
-  Loader2,
-  Calendar,
-  Activity,
-  ClipboardList,
-  ArrowLeft,
-  X,
-  Trash2,
-  ChevronRight,
-  Camera,
-  Upload,
-  Eye,
-  Video,
-  ImagePlus,
-  SwitchCamera,
-  CircleDot
-} from 'lucide-react';
+  UserGroupIcon,
+  Search01Icon,
+  UserAdd01Icon,
+  FloppyDiskIcon,
+  Loading03Icon,
+  Calendar03Icon,
+  Activity01Icon,
+  ClipboardIcon,
+  ArrowLeft01Icon,
+  Cancel01Icon,
+  Delete02Icon,
+  ArrowRight01Icon,
+  Camera01Icon,
+  Upload01Icon,
+  EyeIcon,
+  Video01Icon,
+  ImageAdd01Icon,
+  CameraRotatedIcon,
+  CircleIcon,
+  UserIcon
+} from '@hugeicons/core-free-icons';
 import api from '@/lib/api';
 import { SearchableCombobox } from "@/components/ui/searchable-combobox";
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -38,14 +40,18 @@ import {
   DialogTitle, 
   DialogDescription 
 } from '@/components/ui/dialog';
+import { ScrollArea } from '@/components/ui/scroll-area';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 
-
+const toTitleCase = (str: string): string => {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, char => char.toUpperCase());
+};
 
 const RegistrationPage: React.FC = () => {
-  const { activeSection, activeYear } = useAppContext();
+  const { activeSection, activeYear, socket } = useAppContext();
   const [searchParams] = useSearchParams();
   const [isSelecting, setIsSelecting] = useState(false);
   const navigate = useNavigate();
@@ -84,8 +90,12 @@ const RegistrationPage: React.FC = () => {
   const [isSourceDialogOpen, setIsSourceDialogOpen] = useState(false);
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
+  const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
+  const [isDailyDialogOpen, setIsDailyDialogOpen] = useState(false);
+  const [isTargetHistoryDialogOpen, setIsTargetHistoryDialogOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
+  const [facingMode, setFacingMode] = useState<'user' | 'environment'>('user');
   const videoRef = useRef<HTMLVideoElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const streamRef = useRef<MediaStream | null>(null);
@@ -101,12 +111,16 @@ const RegistrationPage: React.FC = () => {
   }, []);
 
   // Start camera stream
-  const startCamera = useCallback(async () => {
+  const startCamera = useCallback(async (mode: 'user' | 'environment' = 'user') => {
     setCapturedImage(null);
     setCameraReady(false);
     try {
+      if (streamRef.current) {
+        streamRef.current.getTracks().forEach(track => track.stop());
+        streamRef.current = null;
+      }
       const stream = await navigator.mediaDevices.getUserMedia({
-        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: 'user' }
+        video: { width: { ideal: 640 }, height: { ideal: 640 }, facingMode: mode }
       });
       streamRef.current = stream;
       if (videoRef.current) {
@@ -121,6 +135,13 @@ const RegistrationPage: React.FC = () => {
       setIsCameraOpen(false);
     }
   }, []);
+
+  // Toggle front and back camera
+  const toggleCamera = useCallback(() => {
+    const nextMode = facingMode === 'user' ? 'environment' : 'user';
+    setFacingMode(nextMode);
+    startCamera(nextMode);
+  }, [facingMode, startCamera]);
 
   // Capture photo from video stream
   const capturePhoto = useCallback(() => {
@@ -274,6 +295,21 @@ const RegistrationPage: React.FC = () => {
   }, [activeSection, activeYear]);
 
   useEffect(() => {
+    if (!socket) return;
+    
+    const handlePatientRegistered = (data: any) => {
+      if (Number(data.screening_year) === Number(activeYear)) {
+        fetchStats();
+      }
+    };
+    
+    socket.on('patient_registered', handlePatientRegistered);
+    return () => {
+      socket.off('patient_registered', handlePatientRegistered);
+    };
+  }, [socket, activeYear, activeSection]);
+
+  useEffect(() => {
     const fetchConfigs = async () => {
       try {
         const [deptRes, raceRes, natRes] = await Promise.all([
@@ -424,11 +460,19 @@ const RegistrationPage: React.FC = () => {
         passportUrl = passportPreview;
       }
 
+      const transformedData = {
+        ...data,
+        first_name: toTitleCase(data.first_name),
+        middle_name: data.middle_name ? toTitleCase(data.middle_name) : '',
+        last_name: toTitleCase(data.last_name),
+        email: data.email ? data.email.toLowerCase().trim() : '',
+        dob: formattedDob,
+        passport_image: passportUrl
+      };
+
       if (isEditMode) {
         await api.put(`/api/patients/${editStaffId}`, {
-          ...data,
-          dob: formattedDob,
-          passport_image: passportUrl,
+          ...transformedData,
           screening_year: activeYear
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -437,9 +481,7 @@ const RegistrationPage: React.FC = () => {
         navigate('/view-patients');
       } else {
         await api.post('/register-patient', {
-          ...data,
-          dob: formattedDob,
-          passport_image: passportUrl,
+          ...transformedData,
           screening_year: Number(activeYear)
         }, {
           headers: { 'X-Company-Context': activeSection }
@@ -495,17 +537,17 @@ const RegistrationPage: React.FC = () => {
       <div className="space-y-6 registration-page">
         {/* Top Header & Search Area */}
         <div className="flex flex-col xl:flex-row justify-between items-stretch xl:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-          <div className="flex items-center gap-3">
+          <div className="flex flex-col items-start sm:flex-row sm:items-center gap-2 sm:gap-3">
             {isEditMode && (
               <Button variant="ghost" size="icon" onClick={() => navigate('/view-patients')} className="mr-2 hover:bg-primary/10 shrink-0">
-                <ArrowLeft className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 sm:h-5 sm:w-5 text-primary" />
               </Button>
             )}
             <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl">
               {isEditMode ? (
-                <Users className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                <HugeiconsIcon icon={UserGroupIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               ) : (
-                <UserPlus className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                <HugeiconsIcon icon={UserAdd01Icon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
               )}
             </div>
             <div>
@@ -522,7 +564,7 @@ const RegistrationPage: React.FC = () => {
             <div className="w-full lg:max-w-xl relative">
               <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-muted/30 p-2 rounded-xl border focus-within:border-primary/50 transition-all relative">
                 <div className="flex items-center gap-2 flex-1 px-2 h-11">
-                  <Search className="h-5 w-5 text-muted-foreground shrink-0" />
+                  <HugeiconsIcon icon={Search01Icon} className="h-5 w-5 text-muted-foreground shrink-0" />
                   <Input
                     className="border-0 bg-transparent focus-visible:ring-0 min-w-0 flex-1 text-base sm:text-lg font-bold h-full px-0"
                     placeholder="Search Staff ID or Name..."
@@ -536,7 +578,7 @@ const RegistrationPage: React.FC = () => {
                   disabled={searching || !searchId.trim()}
                   className="bg-primary hover:bg-primary/90 px-6 sm:px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                 >
-                  {searching ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
+                  {searching ? <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" /> : 'Load Data'}
                 </Button>
 
                 {/* Search Results Card */}
@@ -578,7 +620,7 @@ const RegistrationPage: React.FC = () => {
                               </div>
                             </div>
                             <Button size="sm" variant="ghost" className={`${activeSearchIndex === index ? 'opacity-100 bg-primary/20 text-primary' : 'opacity-0 group-hover:opacity-100'} h-8 px-2`}>
-                              Select <ChevronRight className="ml-1 h-3 w-3" />
+                              Select <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1 h-3 w-3" />
                             </Button>
                           </div>
                         </li>
@@ -592,324 +634,441 @@ const RegistrationPage: React.FC = () => {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <StatCard
             title="Total Registered"
             value={stats?.year_total?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-blue-600"
+            onClick={() => setIsDeptDialogOpen(true)}
           />
           <StatCard
             title="Registered Today"
             value={stats?.today?.toLocaleString() || '0'}
             sub={`${activeYear} Screening`}
-            icon={Activity}
+            icon={UserGroupIcon}
             color="text-primary"
+            onClick={() => setIsDailyDialogOpen(true)}
           />
           <StatCard
             title="Gender Mix"
-            value={stats ? `${Math.round((stats.males / (stats.year_total || 1)) * 100)}% Male` : '0% Male'}
+            value={stats ? `M: ${Math.round((stats.males / (stats.year_total || 1)) * 100)}% | F: ${Math.round((stats.females / (stats.year_total || 1)) * 100)}%` : 'M: 0% | F: 0%'}
             sub={`${stats?.males || 0} M / ${stats?.females || 0} F`}
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-indigo-600"
           />
           <StatCard
             title="Age Context"
             value={stats?.age_40_above?.toLocaleString() || '0'}
             sub="40 Years & Above"
-            icon={Activity}
+            icon={UserGroupIcon}
             color="text-amber-600"
           />
           <StatCard
             title="Youth Context"
             value={stats?.age_below_40?.toLocaleString() || '0'}
             sub="Below 40 Years"
-            icon={Users}
+            icon={UserGroupIcon}
             color="text-rose-600"
           />
           <StatCard
             title="Daily Target"
-            value="80%"
-            sub="Progress indicator"
-            icon={Activity}
+            value={stats ? `${Math.round(((stats.today || 0) / 80) * 100)}%` : '0%'}
+            sub={`${stats?.today || 0} / 80 Patients`}
+            icon={Activity01Icon}
             color="text-primary"
+            onClick={() => setIsTargetHistoryDialogOpen(true)}
           />
         </div>
 
         {/* Form Section */}
-        <Card className="border">
-          <CardHeader className="bg-primary/5 border-b py-4">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <ClipboardList className="h-5 w-5 text-primary" />
-              Bio-Data Information
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-6">
-            <form onSubmit={handleSubmit(onSubmit, (errs) => {
-              console.error("Form validation errors:", errs);
-              const fields = Object.keys(errs).map(f => f.replace('_', ' ')).join(', ');
-              toast.error(`Please fill or correct the following fields: ${fields}`);
-            })} className="space-y-6">
-              {/* Row 1: IDs & Passport Image */}
-              <div className="grid grid-cols-1 md:grid-cols-[auto_1fr_1fr] gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
+        <form onSubmit={handleSubmit(onSubmit, (errs) => {
+          console.error("Form validation errors:", errs);
+          const fields = Object.keys(errs).map(f => f.replace('_', ' ')).join(', ');
+          toast.error(`Please fill or correct the following fields: ${fields}`);
+        })} className="space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-6 items-start">
+            {/* Left Side: Passport Photo Card (Desktop Only) */}
+            <Card className="border hidden lg:block lg:col-span-1">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className="text-base font-bold flex items-center gap-2">
+                  <HugeiconsIcon icon={Camera01Icon} className="h-4.5 w-4.5 text-primary" />
+                  Passport Photo
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 flex flex-col items-center justify-center space-y-4">
                 {/* Passport Photo Uploader */}
-                <div className="flex flex-col items-center md:items-start justify-center space-y-2 border-b pb-4 md:border-b-0 md:pb-0 md:border-r md:pr-6 border-primary/10">
-                  <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
-                    <div 
-                      className="relative group w-20 h-20 rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
-                      onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
-                    >
-                      {passportPreview ? (
-                        <>
-                          <img 
-                            src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
-                            alt="Passport Preview" 
-                            className="w-full h-full object-cover"
-                          />
-                          <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-1">
-                            <div className="flex items-center gap-1">
-                              <button
-                                type="button"
-                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                                onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
-                                title="Preview"
-                              >
-                                <Eye className="text-white h-3 w-3" />
-                              </button>
-                              <button
-                                type="button"
-                                className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
-                                onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
-                                title="Change photo"
-                              >
-                                <Camera className="text-white h-3 w-3" />
-                              </button>
-                            </div>
+                <div className="p-1 rounded-[22px] border border-primary/30 bg-primary/5 hover:border-primary/50 transition-all duration-300 shadow-sm">
+                  <div 
+                    className="relative group w-32 h-[148px] rounded-2xl border border-dashed border-primary/20 overflow-hidden bg-card hover:border-primary transition-all flex items-center justify-center cursor-pointer shadow-inner"
+                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                  >
+                    {passportPreview ? (
+                      <>
+                        <img 
+                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                          alt="Passport Preview" 
+                          className="w-full h-full object-cover"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-2">
+                          <div className="flex items-center gap-2">
                             <button
                               type="button"
-                              className="p-1 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
-                              onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
-                              title="Remove photo"
+                              className="p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsPreviewOpen(true); }}
+                              title="Preview"
                             >
-                              <Trash2 className="text-white h-2.5 w-2.5" />
+                              <HugeiconsIcon icon={EyeIcon} className="text-white h-4 w-4" />
+                            </button>
+                            <button
+                              type="button"
+                              className="p-2 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                              onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                              title="Change photo"
+                            >
+                              <HugeiconsIcon icon={Camera01Icon} className="text-white h-4 w-4" />
                             </button>
                           </div>
-                        </>
-                      ) : (
-                        <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
-                          <ImagePlus className="h-4 w-4 mb-1" />
-                          <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-full bg-red-500/60 hover:bg-red-500/90 backdrop-blur-sm transition-all"
+                            onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                            title="Remove photo"
+                          >
+                            <HugeiconsIcon icon={Delete02Icon} className="text-white h-3.5 w-3.5" />
+                          </button>
                         </div>
-                      )}
-                    </div>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-4 text-muted-foreground group-hover:text-primary transition-colors">
+                        <HugeiconsIcon icon={ImageAdd01Icon} className="h-8 w-8 mb-2" />
+                        <span className="text-[10px] font-black uppercase tracking-wider">Add Photo</span>
+                      </div>
+                    )}
                   </div>
-                  {/* Hidden file input */}
-                  <input 
-                    ref={fileInputRef}
-                    type="file" 
-                    accept="image/*" 
-                    className="hidden"
-                    onChange={(e) => {
-                      const file = e.target.files?.[0];
-                      if (file) {
-                        setPassportFile(file);
-                        setPassportPreview(URL.createObjectURL(file));
-                      }
-                      if (e.target) e.target.value = '';
-                    }}
-                  />
                 </div>
+                {/* Hidden file input */}
+                <input 
+                  ref={fileInputRef}
+                  type="file" 
+                  accept="image/*" 
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setPassportFile(file);
+                      setPassportPreview(URL.createObjectURL(file));
+                    }
+                    if (e.target) e.target.value = '';
+                  }}
+                />
+                <p className="text-xs text-muted-foreground text-center">
+                  Upload a clear passport photo or take one using your camera.
+                </p>
+              </CardContent>
+            </Card>
 
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
-                  <Input
-                    {...register('staff_id', { required: true })}
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
-                    placeholder="e.g. 123456"
-                    inputMode="numeric"
-                    required
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '');
-                      e.target.value = val;
-                      register('staff_id').onChange(e);
-                    }}
-                    disabled={isEditMode}
-                  />
-                  {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
-                </div>
-                <div className="space-y-2">
-                  <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
-                  <Input 
-                    {...register('patient_id', { required: !isEditMode })} 
-                    className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
-                    placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
-                    inputMode="numeric"
-                    required={!isEditMode}
-                    onChange={(e) => {
-                      const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
-                      e.target.value = val;
-                      register('patient_id').onChange(e);
-                    }}
-                  />
-                  {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
-                </div>
-              </div>
-
-              {/* Main Form Fields: 4 per row */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-                <div className="space-y-2">
-                  <Label>First Name <span className="text-rose-500">*</span></Label>
-                  <Input {...register('first_name', { required: true })} placeholder="First Name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Middle Name</Label>
-                  <Input {...register('middle_name')} placeholder="Middle Name" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Last Name <span className="text-rose-500">*</span></Label>
-                  <Input {...register('last_name', { required: true })} placeholder="Last Name" required />
-                </div>
-                <div className="space-y-2">
-                  <Label>Department <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="department"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={departments}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Department..."
-                      />
+            {/* Right Side: Bio-Data Information Card */}
+            <Card className="border lg:col-span-3">
+              <CardHeader className="bg-primary/5 border-b py-4">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <HugeiconsIcon icon={ClipboardIcon} className="h-5 w-5 text-primary" />
+                  Bio-Data Information
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-6 space-y-6">
+                {/* Mobile-only Portrait/Avatar Photo Uploader */}
+                <div className="lg:hidden flex flex-col items-center justify-center pb-6 border-b border-dashed mb-4">
+                  <div 
+                    className="relative group w-24 h-[110px] rounded-full border border-dashed border-primary/30 bg-primary/5 hover:border-primary transition-all duration-300 shadow-sm flex items-center justify-center cursor-pointer"
+                    onClick={() => { if (!passportPreview) setIsSourceDialogOpen(true); }}
+                  >
+                    {passportPreview ? (
+                      <>
+                        <img 
+                          src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`} 
+                          alt="Passport Preview" 
+                          className="w-full h-full object-cover rounded-full"
+                        />
+                        <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center rounded-full">
+                          <button
+                            type="button"
+                            className="p-1.5 rounded-full bg-white/20 hover:bg-white/40 backdrop-blur-sm transition-all"
+                            onClick={(e) => { e.stopPropagation(); setIsSourceDialogOpen(true); }}
+                            title="Change photo"
+                          >
+                            <HugeiconsIcon icon={Camera01Icon} className="text-white h-4 w-4" />
+                          </button>
+                        </div>
+                        {/* Remove Photo button */}
+                        <button
+                          type="button"
+                          className="absolute -top-1 -right-1 p-1.5 rounded-full bg-red-500 hover:bg-red-600 text-white shadow-md transition-all z-10"
+                          onClick={(e) => { e.stopPropagation(); setPassportFile(null); setPassportPreview(''); }}
+                          title="Remove photo"
+                        >
+                          <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
+                        </button>
+                      </>
+                    ) : (
+                      <div className="flex flex-col items-center justify-center text-center p-2 text-muted-foreground group-hover:text-primary transition-colors">
+                        <HugeiconsIcon icon={UserIcon} className="h-7 w-7 mb-0.5 opacity-70" />
+                        <span className="text-[8px] font-black uppercase tracking-wider">Add Photo</span>
+                        
+                        {/* Camera badge */}
+                        <div className="absolute bottom-0 right-0 bg-primary text-primary-foreground p-1 rounded-full shadow-md border border-background">
+                          <HugeiconsIcon icon={Camera01Icon} className="h-3 w-3" />
+                        </div>
+                      </div>
                     )}
-                  />
+                  </div>
+                  <span className="text-[11px] text-muted-foreground mt-2 font-semibold">Tap to add passport photo</span>
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Gender <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="gender"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={["Female", "Male"]}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Gender..."
-                      />
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Date of Birth <span className="text-rose-500">*</span></Label>
-                  <div className="relative group">
+                {/* Row 1: IDs (Staff & Patient ID) */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 p-4 bg-muted/20 rounded-xl border border-dashed mb-6 items-center">
+                  <div className="space-y-2">
+                    <Label className="text-primary font-bold">Staff ID <span className="text-rose-500">*</span></Label>
                     <Input
-                      type="text"
-                      {...register('dob', { required: true })}
-                      placeholder="DD/MM/YYYY"
-                      className="pr-12"
+                      {...register('staff_id', { required: true })}
+                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider disabled:bg-muted/50"
+                      placeholder="e.g. 123456"
+                      inputMode="numeric"
                       required
                       onChange={(e) => {
-                        let val = e.target.value.replace(/\D/g, '');
-                        if (val.length > 8) val = val.slice(0, 8);
-                        if (val.length > 4) {
-                          val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
-                        } else if (val.length > 2) {
-                          val = `${val.slice(0, 2)}/${val.slice(2)}`;
-                        }
+                        const val = e.target.value.replace(/\D/g, '');
                         e.target.value = val;
-                        register('dob').onChange(e);
+                        register('staff_id').onChange(e);
+                      }}
+                      disabled={isEditMode}
+                    />
+                    {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
+                    <Input 
+                      {...register('patient_id', { required: !isEditMode })} 
+                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
+                      placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
+                      inputMode="numeric"
+                      required={!isEditMode}
+                      onChange={(e) => {
+                        const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
+                        e.target.value = val;
+                        register('patient_id').onChange(e);
                       }}
                     />
-                    <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
-                      <Calendar className="h-5 w-5 text-primary" />
-                    </div>
-                    <input
-                      type="date"
-                      className="absolute right-0 top-0 bottom-0 w-12 opacity-0 cursor-pointer z-50"
-                      onChange={(e) => {
-                        const val = e.target.value;
-                        if (val) {
-                          const [y, m, d] = val.split('-');
-                          setValue('dob', `${d}/${m}/${y}`, { shouldValidate: true });
-                        }
+                    {errors.patient_id && <p className="text-xs text-destructive">{errors.patient_id.message}</p>}
+                  </div>
+                </div>
+
+                {/* Main Form Fields: 4 per row */}
+                <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+                  <div className="space-y-2">
+                    <Label>First Name <span className="text-rose-500">*</span></Label>
+                    <Input 
+                      {...register('first_name', { required: true })} 
+                      placeholder="First Name" 
+                      required 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('first_name', formatted, { shouldValidate: true });
+                        register('first_name').onBlur(e);
                       }}
                     />
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label>Age</Label>
-                  <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Phone No. <span className="text-rose-500">*</span></Label>
-                  <Input {...register('phone', { required: true })} placeholder="+234..." required />
-                </div>
+                  <div className="space-y-2">
+                    <Label>Middle Name</Label>
+                    <Input 
+                      {...register('middle_name')} 
+                      placeholder="Middle Name" 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('middle_name', formatted, { shouldValidate: true });
+                        register('middle_name').onBlur(e);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Last Name <span className="text-rose-500">*</span></Label>
+                    <Input 
+                      {...register('last_name', { required: true })} 
+                      placeholder="Last Name" 
+                      required 
+                      onBlur={(e) => {
+                        const formatted = toTitleCase(e.target.value);
+                        setValue('last_name', formatted, { shouldValidate: true });
+                        register('last_name').onBlur(e);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Department <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="department"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={departments}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Department..."
+                        />
+                      )}
+                    />
+                  </div>
 
-                <div className="space-y-2">
-                  <Label>Email Address</Label>
-                  <Input type="email" {...register('email')} placeholder="email@example.com" />
-                </div>
-                <div className="space-y-2">
-                  <Label>Race <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="race"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={races}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Race..."
+                  <div className="space-y-2">
+                    <Label>Gender <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="gender"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={["Female", "Male"]}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Gender..."
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Date of Birth <span className="text-rose-500">*</span></Label>
+                    <div className="relative group">
+                      <Input
+                        type="text"
+                        {...register('dob', { required: true })}
+                        placeholder="DD/MM/YYYY"
+                        className="pr-12"
+                        required
+                        onChange={(e) => {
+                          let val = e.target.value.replace(/\D/g, '');
+                          if (val.length > 8) val = val.slice(0, 8);
+                          if (val.length > 4) {
+                            val = `${val.slice(0, 2)}/${val.slice(2, 4)}/${val.slice(4)}`;
+                          } else if (val.length > 2) {
+                            val = `${val.slice(0, 2)}/${val.slice(2)}`;
+                          }
+                          e.target.value = val;
+                          register('dob').onChange(e);
+                        }}
                       />
-                    )}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Nationality <span className="text-rose-500">*</span></Label>
-                  <Controller
-                    name="nationality"
-                    control={control}
-                    render={({ field }) => (
-                      <SearchableCombobox
-                        options={nationalities}
-                        value={field.value || ''}
-                        onChange={field.onChange}
-                        placeholder="Select Nationality..."
+                      <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 pointer-events-none z-10">
+                        <HugeiconsIcon icon={Calendar03Icon} className="h-5 w-5 text-primary" />
+                      </div>
+                      <input
+                        type="date"
+                        className="absolute right-0 top-0 bottom-0 w-12 opacity-0 cursor-pointer z-50"
+                        onChange={(e) => {
+                          const val = e.target.value;
+                          if (val) {
+                            const [y, m, d] = val.split('-');
+                            setValue('dob', `${d}/${m}/${y}`, { shouldValidate: true });
+                          }
+                        }}
                       />
-                    )}
-                  />
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Age</Label>
+                    <Input type="number" {...register('age')} readOnly className="bg-muted/30 font-bold text-primary" />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Phone No. <span className="text-rose-500">*</span></Label>
+                    <Input 
+                      {...register('phone', { required: true })} 
+                      placeholder="+234..." 
+                      required 
+                      maxLength={14}
+                      onChange={(e) => {
+                        let val = e.target.value;
+                        if (val.length > 14) {
+                          val = val.slice(0, 14);
+                        }
+                        e.target.value = val;
+                        register('phone').onChange(e);
+                      }}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Email Address</Label>
+                    <Input 
+                      type="email" 
+                      {...register('email')} 
+                      placeholder="email@example.com" 
+                      onChange={(e) => {
+                        e.target.value = e.target.value.toLowerCase();
+                        register('email').onChange(e);
+                      }}
+                      onBlur={(e) => {
+                        const formatted = e.target.value.toLowerCase().trim();
+                        setValue('email', formatted, { shouldValidate: true });
+                        register('email').onBlur(e);
+                      }}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Race <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="race"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={races}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Race..."
+                        />
+                      )}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Nationality <span className="text-rose-500">*</span></Label>
+                    <Controller
+                      name="nationality"
+                      control={control}
+                      render={({ field }) => (
+                        <SearchableCombobox
+                          options={nationalities}
+                          value={field.value || ''}
+                          onChange={field.onChange}
+                          placeholder="Select Nationality..."
+                        />
+                      )}
+                    />
+                  </div>
                 </div>
 
-              </div>
-
-              <div className="pt-4 border-t flex flex-wrap justify-end gap-3">
-                {!isEditMode && (
-                  <Button
-                    type="button"
-                    variant="outline"
-                    size="lg"
-                    className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
-                    onClick={() => setIsClearDialogOpen(true)}
-                  >
-                    <Trash2 className="mr-2 h-5 w-5" /> Clear Form
-                  </Button>
-                )}
-                {isEditMode && (
-                  <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
-                    <X className="mr-2 h-5 w-5" /> Cancel
-                  </Button>
-                )}
-                <Button type="submit" size="lg" className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg" disabled={loading}>
-                  {loading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : (
-                    <><Save className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Save Registration'}</>
+                <div className="pt-4 border-t flex flex-wrap justify-end gap-3">
+                  {!isEditMode && (
+                    <Button
+                      type="button"
+                      variant="outline"
+                      size="lg"
+                      className="h-12 px-8 font-bold text-destructive border-destructive/20 hover:bg-destructive/10 hover:text-destructive hover:border-destructive/40 transition-all"
+                      onClick={() => setIsClearDialogOpen(true)}
+                    >
+                      <HugeiconsIcon icon={Delete02Icon} className="mr-2 h-5 w-5" /> Clear Form
+                    </Button>
                   )}
-                </Button>
-              </div>
-            </form>
-          </CardContent>
-        </Card>
+                  {isEditMode && (
+                    <Button type="button" variant="outline" size="lg" className="h-12 px-8 font-bold" onClick={() => navigate('/view-patients')}>
+                      <HugeiconsIcon icon={Cancel01Icon} className="mr-2 h-5 w-5" /> Cancel
+                    </Button>
+                  )}
+                  <Button type="submit" size="lg" loading={loading} className="w-full sm:w-auto h-12 px-10 font-black text-base sm:text-lg">
+                    {!loading && (
+                      <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5 shrink-0" /> {isEditMode ? 'Update Profile' : 'Register Patient'}</>
+                    )}
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </form>
       </div>
 
       {/* Clear Form Confirmation Dialog */}
@@ -917,7 +1076,7 @@ const RegistrationPage: React.FC = () => {
         <DialogContent className="sm:max-w-[400px] p-0 overflow-hidden border registration-dialog">
           <div className="p-6 pt-8 flex flex-col items-center text-center">
             <div className="w-16 h-16 rounded-full bg-destructive/10 flex items-center justify-center text-destructive mb-4 animate-in zoom-in duration-300">
-                <Trash2 className="w-8 h-8" />
+                <HugeiconsIcon icon={Delete02Icon} className="w-8 h-8" />
             </div>
             
             <DialogHeader className="space-y-2 flex flex-col items-center text-center sm:text-center">
@@ -970,13 +1129,13 @@ const RegistrationPage: React.FC = () => {
               }}
             >
               <div className="p-3 rounded-xl bg-blue-500/10 text-blue-500 group-hover:bg-blue-500/20 transition-colors">
-                <Upload className="h-5 w-5" />
+                <HugeiconsIcon icon={Upload01Icon} className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-bold text-sm">Upload File</p>
                 <p className="text-xs text-muted-foreground">Choose from your device</p>
               </div>
-              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
             <button
               type="button"
@@ -987,25 +1146,24 @@ const RegistrationPage: React.FC = () => {
               }}
             >
               <div className="p-3 rounded-xl bg-emerald-500/10 text-emerald-500 group-hover:bg-emerald-500/20 transition-colors">
-                <Camera className="h-5 w-5" />
+                <HugeiconsIcon icon={Camera01Icon} className="h-5 w-5" />
               </div>
               <div>
                 <p className="font-bold text-sm">Use Camera</p>
                 <p className="text-xs text-muted-foreground">Capture with webcam</p>
               </div>
-              <ChevronRight className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
+              <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4 ml-auto text-muted-foreground group-hover:text-primary transition-colors" />
             </button>
           </div>
         </DialogContent>
       </Dialog>
 
-      {/* Camera Capture Dialog */}
-      <Dialog open={isCameraOpen} onOpenChange={(open) => { if (!open) { stopCamera(); setCapturedImage(null); } setIsCameraOpen(open); }}>
+      <Dialog open={isCameraOpen} onOpenChange={(open) => { if (!open) { stopCamera(); setCapturedImage(null); setFacingMode('user'); } setIsCameraOpen(open); }}>
         <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border-0 shadow-2xl">
           <div className="p-4 pb-2">
             <DialogHeader>
               <DialogTitle className="text-lg font-black tracking-tight text-center flex items-center justify-center gap-2">
-                <Video className="h-5 w-5 text-emerald-500" />
+                <HugeiconsIcon icon={Video01Icon} className="h-5 w-5 text-emerald-500" />
                 Camera Capture
               </DialogTitle>
               <DialogDescription className="text-center text-sm text-muted-foreground">Position your face in the frame and capture</DialogDescription>
@@ -1020,13 +1178,24 @@ const RegistrationPage: React.FC = () => {
                   autoPlay
                   playsInline
                   muted
-                  className="w-full h-full object-cover mirror"
-                  style={{ transform: 'scaleX(-1)' }}
+                  className="w-full h-full object-cover"
+                  style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }}
                   onLoadedMetadata={() => { videoRef.current?.play(); setCameraReady(true); }}
                 />
+                {/* Switch Camera Button (Front/Back) */}
+                {cameraReady && (
+                  <button
+                    type="button"
+                    onClick={toggleCamera}
+                    className="absolute top-3 right-3 flex items-center justify-center bg-black/60 hover:bg-black/80 backdrop-blur-sm rounded-full p-2 text-white border border-white/20 transition-all active:scale-95 z-10"
+                    title="Switch Camera"
+                  >
+                    <HugeiconsIcon icon={CameraRotatedIcon} className="h-5 w-5 text-white" />
+                  </button>
+                )}
                 {!cameraReady && (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 text-white gap-3">
-                    <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-emerald-400" />
                     <span className="text-sm font-medium">Starting camera...</span>
                   </div>
                 )}
@@ -1045,7 +1214,7 @@ const RegistrationPage: React.FC = () => {
                 )}
               </>
             ) : (
-              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" style={{ transform: 'scaleX(-1)' }} />
+              <img src={capturedImage} alt="Captured" className="w-full h-full object-cover" style={{ transform: facingMode === 'user' ? 'scaleX(-1)' : 'none' }} />
             )}
           </div>
 
@@ -1055,23 +1224,14 @@ const RegistrationPage: React.FC = () => {
           <div className="flex items-center justify-center gap-3 p-4">
             {!capturedImage ? (
               <>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  className="font-bold"
-                  onClick={() => { stopCamera(); setCapturedImage(null); setIsCameraOpen(false); }}
-                >
-                  Cancel
-                </Button>
                 {!cameraReady && (
                   <Button
                     type="button"
                     size="sm"
                     className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
-                    onClick={startCamera}
+                    onClick={() => startCamera(facingMode)}
                   >
-                    <Video className="h-4 w-4" />
+                    <HugeiconsIcon icon={Video01Icon} className="h-4 w-4" />
                     Start Camera
                   </Button>
                 )}
@@ -1083,7 +1243,7 @@ const RegistrationPage: React.FC = () => {
                     onClick={capturePhoto}
                     title="Capture Photo"
                   >
-                    <CircleDot className="h-6 w-6" />
+                    <HugeiconsIcon icon={CircleIcon} className="h-6 w-6" />
                   </Button>
                 )}
               </>
@@ -1094,9 +1254,9 @@ const RegistrationPage: React.FC = () => {
                   variant="outline"
                   size="sm"
                   className="font-bold gap-2"
-                  onClick={() => { setCapturedImage(null); startCamera(); }}
+                  onClick={() => { setCapturedImage(null); startCamera(facingMode); }}
                 >
-                  <SwitchCamera className="h-4 w-4" />
+                  <HugeiconsIcon icon={CameraRotatedIcon} className="h-4 w-4" />
                   Retake
                 </Button>
                 <Button
@@ -1105,7 +1265,7 @@ const RegistrationPage: React.FC = () => {
                   className="font-bold bg-emerald-600 hover:bg-emerald-700 text-white gap-2"
                   onClick={useCapturedPhoto}
                 >
-                  <Save className="h-4 w-4" />
+                  <HugeiconsIcon icon={FloppyDiskIcon} className="h-4 w-4" />
                   Use Photo
                 </Button>
               </>
@@ -1138,7 +1298,7 @@ const RegistrationPage: React.FC = () => {
               className="font-bold gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white"
               onClick={() => { setIsPreviewOpen(false); setIsSourceDialogOpen(true); }}
             >
-              <Camera className="h-4 w-4" />
+              <HugeiconsIcon icon={Camera01Icon} className="h-4 w-4" />
               Change Photo
             </Button>
             <Button
@@ -1153,22 +1313,215 @@ const RegistrationPage: React.FC = () => {
           </div>
         </DialogContent>
       </Dialog>
+      {/* Department Breakdown Dialog */}
+      <Dialog open={isDeptDialogOpen} onOpenChange={setIsDeptDialogOpen}>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={UserGroupIcon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Department Breakdown</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Registered staff counts by department for {activeYear} ({activeSection?.toUpperCase()})
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.department_stats && stats.department_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.department_stats.map((dept: any, index: number) => {
+                    const total = stats.year_total || 1;
+                    const percentage = Math.round((dept.count / total) * 100);
+                    return (
+                      <div key={index} className="space-y-1.5 p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-foreground capitalize">{dept.department}</span>
+                          <span className="font-black text-primary">{dept.count.toLocaleString()} ({percentage}%)</span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div 
+                            className="bg-primary h-full rounded-full transition-all duration-500" 
+                            style={{ width: `${percentage}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={UserGroupIcon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No department statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsDeptDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Daily Breakdown Dialog */}
+      <Dialog open={isDailyDialogOpen} onOpenChange={setIsDailyDialogOpen}>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={Calendar03Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Daily Registration Breakdown</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Registered patients by day for {activeYear} ({activeSection?.toUpperCase()})
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.daily_stats.map((day: any, index: number) => {
+                    const dateFormatted = day.date && day.date !== 'Unknown' 
+                      ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                      : 'Unknown Date';
+                    return (
+                      <div key={index} className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3">
+                        <span className="font-bold text-sm text-foreground">{dateFormatted}</span>
+                        <span className="font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full text-xs shrink-0">
+                          {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
+                        </span>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={Calendar03Icon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No daily statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsDailyDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Daily Target History Dialog */}
+      <Dialog open={isTargetHistoryDialogOpen} onOpenChange={setIsTargetHistoryDialogOpen}>
+        <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={Activity01Icon} className="w-6 h-6" />
+              </div>
+              <div>
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">Daily Target History</DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  Daily screening target metrics (Target: 80 Patients/day)
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] px-1">
+              {stats?.daily_stats && stats.daily_stats.length > 0 ? (
+                <div className="space-y-3">
+                  {stats.daily_stats.map((day: any, index: number) => {
+                    const dateFormatted = day.date && day.date !== 'Unknown' 
+                      ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
+                      : 'Unknown Date';
+                    const percentage = Math.round((day.count / 80) * 100);
+                    const barWidth = Math.min(percentage, 100);
+                    
+                    // Harmonious colors based on target achievements
+                    let progressColor = 'bg-rose-500';
+                    if (percentage >= 100) progressColor = 'bg-emerald-500';
+                    else if (percentage >= 75) progressColor = 'bg-primary';
+                    else if (percentage >= 50) progressColor = 'bg-amber-500';
+
+                    return (
+                      <div key={index} className="space-y-2.5 p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-bold text-foreground">{dateFormatted}</span>
+                          <span className="font-black text-foreground">
+                            {percentage}% <span className="text-xs text-muted-foreground font-medium">({day.count}/80)</span>
+                          </span>
+                        </div>
+                        <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                          <div 
+                            className={`${progressColor} h-full rounded-full transition-all duration-500`} 
+                            style={{ width: `${barWidth}%` }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="flex flex-col items-center justify-center h-full text-center p-8 opacity-50">
+                  <HugeiconsIcon icon={Activity01Icon} className="h-12 w-12 mb-4 text-muted-foreground" />
+                  <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Data</p>
+                  <p className="text-xs text-muted-foreground mt-1">No target history statistics available for this period.</p>
+                </div>
+              )}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end">
+            <Button
+              variant="ghost"
+              onClick={() => setIsTargetHistoryDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </MainLayout>
   );
 };
 
-const StatCard = ({ title, value, sub, icon: Icon, color }: any) => (
-  <Card className="border transition-all overflow-hidden">
-    <CardContent className="p-2 sm:p-4 flex items-center gap-2 sm:gap-4 h-full">
-      <div className={`p-2 sm:p-3 rounded-xl bg-muted/50 ${color} shrink-0`}>
-        <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
+const StatCard = ({ title, value, sub, icon: Icon, color, onClick }: any) => (
+  <Card 
+    className={`border transition-all overflow-hidden relative ${onClick ? 'cursor-pointer hover:border-primary/45 hover:bg-primary/5 hover:scale-[1.02] active:scale-[0.98]' : ''}`}
+    onClick={onClick}
+  >
+    <CardContent className="py-2 px-2.5 flex flex-col justify-center gap-1 h-full min-h-[52px]">
+      <div className="flex items-center gap-1.5">
+        <HugeiconsIcon icon={Icon} className={`h-3 w-3 ${color} shrink-0`} />
+        <p className="text-[9px] sm:text-[10px] font-bold text-muted-foreground uppercase tracking-wider leading-none truncate">{title}</p>
       </div>
-      <div className="min-w-0">
-        <p className="text-[10px] sm:text-xs font-bold text-muted-foreground uppercase tracking-wider truncate">{title}</p>
-        <div className="flex flex-col sm:flex-row sm:items-baseline sm:gap-2">
-          <h3 className="text-sm sm:text-2xl font-black truncate">{value}</h3>
-          {sub && <span className="text-[9px] sm:text-[10px] font-medium text-muted-foreground truncate opacity-80">{sub}</span>}
-        </div>
+      <div className="flex flex-col gap-0.5 mt-0.5">
+        <h3 className="text-xs sm:text-sm font-black leading-tight whitespace-nowrap">{value}</h3>
+        {sub && <p className="text-[8px] sm:text-[9px] font-medium text-muted-foreground leading-none opacity-85 text-right w-full">{sub}</p>}
       </div>
     </CardContent>
   </Card>

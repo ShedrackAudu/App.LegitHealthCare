@@ -9,7 +9,8 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
-import { Eye, EyeOff, Loader2, Lock, User, Activity, ArrowLeft } from 'lucide-react';
+import { HugeiconsIcon } from '@hugeicons/react';
+import { EyeIcon, ViewOffIcon, Loading03Icon, LockIcon, UserIcon, Activity01Icon, ArrowLeft01Icon } from '@hugeicons/core-free-icons';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from 'react-hot-toast';
 
@@ -290,7 +291,7 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="h-screen overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
+    <div className="h-[100dvh] overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20">
       {/* Left Side: Branding & Visuals */}
       <div className="hidden lg:flex relative overflow-hidden group h-full">
         {/* Background Image with Parallax-like effect */}
@@ -325,12 +326,12 @@ const LoginPage = () => {
                   fallbackText={branding?.clinic_name}
                 />
               ) : (
-                <div className="flex items-center gap-2">
-                   <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
-                      <Activity className="w-7 h-7 text-white" />
-                   </div>
-                   <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
-                </div>
+                  <div className="flex items-center gap-2">
+                     <div className="w-12 h-12 bg-white/20 backdrop-blur-xl rounded-2xl flex items-center justify-center border border-white/30">
+                        <HugeiconsIcon icon={Activity01Icon} className="w-7 h-7 text-white" />
+                     </div>
+                     <span className="text-2xl sm:text-3xl font-black tracking-tighter uppercase">{branding?.clinic_name || 'Legit HealthCare'}</span>
+                  </div>
             )}
           </Link>
 
@@ -364,7 +365,7 @@ const LoginPage = () => {
                  {branding?.logo_light ? (
                     <SafeImage src={`${(window as any).API_BASE_URL}${branding.logo_light}`} alt="Logo" className="h-12 w-auto object-contain" fallbackText={branding?.clinic_name} />
                  ) : (
-                    <Activity className="w-12 h-12 text-primary" />
+                    <HugeiconsIcon icon={Activity01Icon} className="w-12 h-12 text-primary" />
                  )}
              </Link>
              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
@@ -386,7 +387,7 @@ const LoginPage = () => {
           {isForceReset ? (
             <div className="space-y-6 animate-in slide-in-from-bottom-4 duration-500">
                <div className="bg-primary/5 border-2 border-primary/10 rounded-2xl p-4 flex gap-3">
-                  <Lock className="h-5 w-5 text-primary shrink-0 mt-1" />
+                  <HugeiconsIcon icon={LockIcon} className="h-5 w-5 text-primary shrink-0 mt-1" />
                   <p className="text-[10px] text-primary/80 leading-relaxed font-bold uppercase tracking-wider">
                      Hello {user?.first_name}, for your security, please replace your temporary password with a permanent one.
                   </p>
@@ -407,7 +408,7 @@ const LoginPage = () => {
                           onChange={(e) => setForceResetData({ ...forceResetData, newPassword: e.target.value })}
                           disabled={loading} 
                       />
-                      <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <HugeiconsIcon icon={LockIcon} className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
                   </div>
 
@@ -425,12 +426,12 @@ const LoginPage = () => {
                           onChange={(e) => setForceResetData({ ...forceResetData, confirmPassword: e.target.value })}
                           disabled={loading} 
                       />
-                      <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                      <HugeiconsIcon icon={LockIcon} className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                     </div>
                   </div>
 
-                  <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
-                    {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Harden Account'}
+                  <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={!forceResetData.newPassword || forceResetData.newPassword !== forceResetData.confirmPassword}>
+                    Harden Account
                   </Button>
                </form>
             </div>
@@ -456,7 +457,7 @@ const LoginPage = () => {
                               {...register('identity')} 
                               disabled={loading} 
                           />
-                          <User className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={UserIcon} className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                         {errors.identity && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.identity.message}</p>}
                       </div>
@@ -474,14 +475,14 @@ const LoginPage = () => {
                               {...register('password')} 
                               disabled={loading} 
                           />
-                          <Lock className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={LockIcon} className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                           <button
                             type="button"
                             onClick={() => setShowPassword(!showPassword)}
                             className="absolute right-4 top-4.5 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
                             disabled={loading}
                           >
-                            {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                            {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="h-5 w-5" /> : <HugeiconsIcon icon={EyeIcon} className="h-5 w-5" />}
                           </button>
                         </div>
                         {errors.password && <p className="text-[10px] text-destructive font-black ml-1 uppercase">{errors.password.message}</p>}
@@ -497,8 +498,8 @@ const LoginPage = () => {
                         </button>
                       </div>
 
-                      <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all" disabled={loading}>
-                        {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Log In'}
+                      <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20 hover:scale-[1.02] active:scale-[0.98] transition-all">
+                        Log In
                       </Button>
                     </>
                   ) : (
@@ -521,8 +522,8 @@ const LoginPage = () => {
                           <Button type="button" variant="outline" className="w-1/3 h-12 rounded-2xl font-black uppercase text-[10px] tracking-widest border-2" onClick={() => {setRequires2FA(false); setTotpCode(''); setError(null);}} disabled={loading}>
                               Cancel
                           </Button>
-                          <Button type="submit" className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest" disabled={loading}>
-                            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify'}
+                          <Button type="submit" loading={loading} className="w-2/3 h-12 rounded-2xl font-black uppercase tracking-widest">
+                            Verify
                           </Button>
                       </div>
                     </div>
@@ -550,12 +551,12 @@ const LoginPage = () => {
                             onChange={(e) => setIdentifier(e.target.value)}
                             disabled={loading} 
                         />
-                        <User className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                        <HugeiconsIcon icon={UserIcon} className="absolute left-4 top-4.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                       </div>
                       <p className="text-[10px] text-muted-foreground font-medium px-2">Enter your registered details to receive an OTP.</p>
                     </div>
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify Identity'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20">
+                      Verify Identity
                     </Button>
                     <button 
                         type="button" 
@@ -565,7 +566,7 @@ const LoginPage = () => {
                       <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <ArrowLeft className="w-4.5 h-4.5" />
+                            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4.5 h-4.5" />
                           </div>
                           <div className="text-left">
                             <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
@@ -593,8 +594,8 @@ const LoginPage = () => {
                           disabled={loading} 
                       />
                     </div>
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || otp.length < 6}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Confirm OTP'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={otp.length < 6}>
+                      Confirm OTP
                     </Button>
                     <button 
                         type="button" 
@@ -623,7 +624,7 @@ const LoginPage = () => {
                               onChange={(e) => setResetPassword(e.target.value)}
                               disabled={loading} 
                           />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={LockIcon} className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                       </div>
 
@@ -641,13 +642,13 @@ const LoginPage = () => {
                               onChange={(e) => setConfirmPassword(e.target.value)}
                               disabled={loading} 
                           />
-                          <Lock className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={LockIcon} className="absolute left-4 top-3.5 h-5 w-5 text-muted-foreground group-focus-within:text-primary transition-colors" />
                         </div>
                       </div>
                     </div>
                     
-                    <Button type="submit" className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={loading || !resetPassword || resetPassword !== confirmPassword}>
-                      {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Verify & Finish'}
+                    <Button type="submit" loading={loading} className="w-full h-14 text-sm font-black uppercase tracking-widest rounded-2xl shadow-xl shadow-primary/20" disabled={!resetPassword || resetPassword !== confirmPassword}>
+                      Verify & Finish
                     </Button>
                     <button 
                         type="button" 
@@ -657,7 +658,7 @@ const LoginPage = () => {
                       <div className="border border-primary/20 hover:border-primary/40 bg-primary/5 hover:bg-primary/10 transition-all rounded-xl p-2.5 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                           <div className="w-9 h-9 rounded-lg bg-primary/20 flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
-                            <ArrowLeft className="w-4.5 h-4.5" />
+                            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-4.5 h-4.5" />
                           </div>
                           <div className="text-left">
                             <p className="text-[9px] font-black text-primary/70 uppercase tracking-widest leading-none mb-0.5">Changed your mind?</p>
@@ -682,7 +683,7 @@ const LoginPage = () => {
                         className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-blue-500/20 bg-blue-500/5 hover:border-blue-500/50 hover:bg-blue-500/10 transition-all group shadow-sm"
                     >
                         <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                          <Activity className="w-4 h-4 text-blue-500" />
+                          <HugeiconsIcon icon={Activity01Icon} className="w-4 h-4 text-blue-500" />
                         </div>
                         <div className="space-y-0.5">
                           <span className="block text-[10px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400 leading-none">Clinical Staff</span>
@@ -694,7 +695,7 @@ const LoginPage = () => {
                         className="flex flex-row items-center text-left gap-3 p-3 rounded-xl border-2 border-emerald-500/20 bg-emerald-500/5 hover:border-emerald-500/50 hover:bg-emerald-500/10 transition-all group shadow-sm"
                     >
                         <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center group-hover:scale-105 transition-transform shrink-0">
-                          <User className="w-4 h-4 text-emerald-500" />
+                          <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="space-y-0.5">
                           <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none">Patient</span>

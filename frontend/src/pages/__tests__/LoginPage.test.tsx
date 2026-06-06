@@ -36,8 +36,8 @@ describe('LoginPage', () => {
 
   it('renders login form correctly', () => {
     renderLoginPage();
-    expect(screen.getByText('Login')).toBeDefined();
-    expect(screen.getByPlaceholderText('Enter your credentials')).toBeDefined();
+    expect(screen.getByText('Sign In')).toBeDefined();
+    expect(screen.getByPlaceholderText('Staff ID, Username, Email or Phone')).toBeDefined();
     expect(screen.getByPlaceholderText('••••••••')).toBeDefined();
   });
 
@@ -53,7 +53,7 @@ describe('LoginPage', () => {
     renderLoginPage();
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText('Enter your credentials'), 'teststaff');
+    await user.type(screen.getByPlaceholderText('Staff ID, Username, Email or Phone'), 'teststaff');
     await user.type(screen.getByPlaceholderText('••••••••'), 'password123');
     await user.click(screen.getByRole('button', { name: /log in/i }));
 
@@ -61,7 +61,7 @@ describe('LoginPage', () => {
       expect(mockedAxios.post).toHaveBeenCalledWith('/login', {
         identity: 'teststaff',
         password: 'password123',
-        portal: 'staff'
+        portal: 'auto'
       });
       expect(mockUserContext.setUser).toHaveBeenCalledWith(mockUser);
     });
@@ -78,7 +78,7 @@ describe('LoginPage', () => {
     renderLoginPage();
 
     const user = userEvent.setup();
-    await user.type(screen.getByPlaceholderText('Enter your credentials'), 'wronguser');
+    await user.type(screen.getByPlaceholderText('Staff ID, Username, Email or Phone'), 'wronguser');
     await user.type(screen.getByPlaceholderText('••••••••'), 'wrongpass');
     await user.click(screen.getByRole('button', { name: /log in/i }));
 

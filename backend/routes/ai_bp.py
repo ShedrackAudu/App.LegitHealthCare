@@ -1,6 +1,7 @@
 from flask import Blueprint, request, jsonify
 from models import db, AISettings, BioData, ConsultationData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, AuditLog
 from openai import OpenAI
+import openai
 from decorators import require_permission
 import json
 import traceback
@@ -118,7 +119,6 @@ def generate_overview():
         
         selected_params = json.loads(settings.medical_parameters) if settings.medical_parameters else []
         
-        # Depending on selected params, we inject available data
         consultation_fields = {
             "Consultation:luts": ("LUTS", consultation.luts),
             "Consultation:chronic_cough": ("Chronic Cough", consultation.chronic_cough),
@@ -131,15 +131,18 @@ def generate_overview():
             "Consultation:chest_status": ("Chest Status", consultation.chest_status),
             "Consultation:psa": ("PSA", f"{consultation.psa} (Remark: {consultation.psa_remark})"),
             "Consultation:sugar": ("Blood Sugar", f"FBS: {consultation.fbs}, RBS: {consultation.rbs} (Remark: {consultation.sugar_remark})"),
-            "Consultation:urinalysis": ("Urinalysis", f"Result: {consultation.ua_result} (Remark: {consultation.ua_remark}, Others: {consultation.ua_remark_others})"),
+            "Consultation:urinalysis": ("Urinalysis Result", f"{consultation.ua_result} (Remark: {consultation.ua_remark})"),
+            "Consultation:ua_remark_others": ("U/A Remark Others", consultation.ua_remark_others),
             "Consultation:dm_status": ("Diabetes Status", consultation.dm_status),
             "Consultation:htn_status": ("Hypertension Status", consultation.htn_status),
             "Consultation:bp": ("Blood Pressure", consultation.bp),
             "Consultation:pulse": ("Pulse Rate", consultation.pulse),
             "Consultation:spo2": ("SPO2", consultation.spo2),
             "Consultation:hs_status": ("Heart Sounds", consultation.hs_status),
-            "Consultation:breast": ("Breast Exam", f"{consultation.breast_exam} (Remark: {consultation.breast_remark}, Others: {consultation.breast_others})"),
-            "Consultation:abdomen": ("Abdomen", f"{consultation.abdomen} (Others: {consultation.abdomen_others})"),
+            "Consultation:breast": ("Breast Exam", f"{consultation.breast_exam} (Remark: {consultation.breast_remark})"),
+            "Consultation:breast_others": ("Breast Others", consultation.breast_others),
+            "Consultation:abdomen": ("Abdomen", consultation.abdomen),
+            "Consultation:abdomen_others": ("Abdomen Others", consultation.abdomen_others),
             "Consultation:hx_pe": ("H&P Assessment", consultation.assessment_hx_pe),
             "Consultation:other_assessments": ("Other Assessments", consultation.other_assessments),
             "Consultation:overall_lab": ("Overall Lab Remark", consultation.overall_lab_remark),
@@ -166,15 +169,18 @@ def generate_overview():
         if "KFT" in selected_params:
             kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if kft:
+                lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+                urea_val = lft.urea if lft else 'N/A'
+                creat_val = lft.creatinine if lft else 'N/A'
                 context_parts.append(f"--- KFT Results ---")
-                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}")
+                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}, Urea: {urea_val}, Creatinine: {creat_val}")
                 context_parts.append(f"Remark: {kft.kft_remark}")
 
         if "LFT" in selected_params:
             lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if lft:
                 context_parts.append(f"--- LFT Results ---")
-                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}, Urea: {lft.urea}, Creatinine: {lft.creatinine}")
+                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}")
                 context_parts.append(f"Remark: {lft.lft_remark}")
 
         if "Lipid Profile" in selected_params:
@@ -184,16 +190,20 @@ def generate_overview():
                 context_parts.append(f"Total Chol: {lp.total_cholesterol}, Triglycerides: {lp.triglycerides}, HDL: {lp.hdl}, LDL: {lp.ldl}")
                 context_parts.append(f"Remark: {lp.lp_remark}")
 
-        if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry"]):
+        if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry", "Weight", "Height"]):
             spec = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if spec:
-                context_parts.append(f"--- Special Tests ---")
+                context_parts.append(f"--- Special Tests & Vitals ---")
                 if "ECG" in selected_params:
                     context_parts.append(f"ECG: {spec.ecg_result} (Remark: {spec.ecg_remark})")
                 if "Spirometry" in selected_params:
                     context_parts.append(f"Spiro: {spec.spirometry_result} (Remark: {spec.spirometry_remark})")
                 if "Audiometry" in selected_params:
                     context_parts.append(f"Audio: {spec.audiometry_result} (Remark: {spec.audiometry_remark})")
+                if "Weight" in selected_params:
+                    context_parts.append(f"Weight: {spec.weight} kg")
+                if "Height" in selected_params:
+                    context_parts.append(f"Height: {spec.height} m")
             
         # (Other tests like FBC, LFT, ECG would be fetched here if requested and available)
         
@@ -249,6 +259,12 @@ def generate_overview():
             "comments": comments[:4]
         }), 200
         
+    except openai.AuthenticationError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked on the OpenAI Platform. Please update your API credentials in the AI Configuration menu."}), 401
+    except openai.RateLimitError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation and that a valid API key is currently provisioned."}), 402
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500

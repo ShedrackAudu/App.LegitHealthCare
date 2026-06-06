@@ -4,11 +4,23 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Brush, Upload, Loader2, Image as ImageIcon, RotateCcw, Trash2, 
-  Facebook, Twitter, Instagram, Linkedin, Youtube, Globe, Link as LinkIcon,
-  MessageCircle, Music2
-} from 'lucide-react';
+  BrushIcon, 
+  Upload01Icon, 
+  Loading03Icon, 
+  Image01Icon, 
+  Delete02Icon, 
+  Facebook02Icon, 
+  NewTwitterIcon, 
+  InstagramIcon, 
+  Linkedin02Icon, 
+  YoutubeIcon, 
+  GlobeIcon, 
+  WhatsappIcon, 
+  TiktokIcon, 
+  Link01Icon 
+} from '@hugeicons/core-free-icons';
 import { useAppContext } from '@/context/AppContext';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -153,22 +165,22 @@ const BrandingSettingsPage: React.FC = () => {
 
     const getSocialIcon = (label: string) => {
         const l = label.toLowerCase();
-        if (l.includes('facebook')) return Facebook;
-        if (l.includes('twitter') || l.includes('x')) return Twitter;
-        if (l.includes('instagram')) return Instagram;
-        if (l.includes('linkedin')) return Linkedin;
-        if (l.includes('youtube')) return Youtube;
-        if (l.includes('globe') || l.includes('web')) return Globe;
-        if (l.includes('whatsapp')) return MessageCircle;
-        if (l.includes('tiktok')) return Music2;
-        return LinkIcon;
+        if (l.includes('facebook')) return Facebook02Icon;
+        if (l.includes('twitter') || l.includes('x')) return NewTwitterIcon;
+        if (l.includes('instagram')) return InstagramIcon;
+        if (l.includes('linkedin')) return Linkedin02Icon;
+        if (l.includes('youtube')) return YoutubeIcon;
+        if (l.includes('globe') || l.includes('web')) return GlobeIcon;
+        if (l.includes('whatsapp')) return WhatsappIcon;
+        if (l.includes('tiktok')) return TiktokIcon;
+        return Link01Icon;
     };
 
     if (loading) {
         return (
             <MainLayout>
                 <div className="h-full w-full flex items-center justify-center">
-                    <Loader2 className="h-10 w-10 animate-spin text-primary opacity-50" />
+                    <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary opacity-50" />
                 </div>
             </MainLayout>
         );
@@ -178,9 +190,9 @@ const BrandingSettingsPage: React.FC = () => {
         <MainLayout>
             <div className="max-w-7xl mx-auto space-y-6">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all">
-                    <div className="flex items-center gap-3">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-purple-500/10 rounded-xl sm:rounded-2xl shrink-0">
-                            <Brush className="text-purple-600 h-5 w-5 sm:h-8 sm:w-8" />
+                            <HugeiconsIcon icon={BrushIcon} className="text-purple-600 h-5 w-5 sm:h-8 sm:w-8" />
                         </div>
                         <div>
                             <h1 className="text-base sm:text-2xl font-black tracking-tight leading-tight">Clinic Branding</h1>
@@ -246,17 +258,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="logo-light" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {logoLight ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="logo-light" type="file" accept="image/*" className="hidden" onChange={(e) => setLogoLight(e.target.files?.[0] || null)} />
@@ -284,17 +296,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-white/20 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-white/20 mb-2" />
                                                 <span className="text-[10px] text-white/20 italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="logo-dark" className="absolute bottom-2 bg-white text-black px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {logoDark ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="logo-dark" type="file" accept="image/*" className="hidden" onChange={(e) => setLogoDark(e.target.files?.[0] || null)} />
@@ -319,17 +331,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="favicon" className="absolute bottom-2 border-2 shadow-sm px-3 py-1 rounded-lg font-bold text-[10px] hover:bg-muted transition-colors cursor-pointer flex items-center gap-1 bg-background">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {favicon ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="favicon" type="file" accept=".ico,.png,.jpg,.svg" className="hidden" onChange={(e) => setFavicon(e.target.files?.[0] || null)} />
@@ -353,17 +365,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="auth-bg" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {authBrandingImage ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="auth-bg" type="file" accept="image/*" className="hidden" onChange={(e) => setAuthBrandingImage(e.target.files?.[0] || null)} />
@@ -387,17 +399,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="auth-logo" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {authLogo ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="auth-logo" type="file" accept="image/*" className="hidden" onChange={(e) => setAuthLogo(e.target.files?.[0] || null)} />
@@ -468,7 +480,7 @@ const BrandingSettingsPage: React.FC = () => {
                                     {socialLinks.map((link, idx) => (
                                         <div key={idx} className="flex items-center justify-between p-2 rounded-lg bg-muted/20 border text-xs group">
                                             <div className="flex items-center gap-2">
-                                                {React.createElement(getSocialIcon(link.label), { className: "h-3.5 w-3.5 text-primary" })}
+                                                <HugeiconsIcon icon={getSocialIcon(link.label)} className="h-3.5 w-3.5 text-primary" />
                                                 <span className="font-bold">{link.label}:</span>
                                                 <span className="text-primary underline truncate max-w-[150px]">{link.value}</span>
                                             </div>
@@ -479,7 +491,7 @@ const BrandingSettingsPage: React.FC = () => {
                                                 onClick={() => setSocialLinks(socialLinks.filter((_, i) => i !== idx))}
                                                 className="h-6 w-6 text-destructive opacity-0 group-hover:opacity-100 transition-opacity"
                                             >
-                                                <Trash2 className="h-3 w-3" />
+                                                <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                             </Button>
                                         </div>
                                     ))}
@@ -513,11 +525,11 @@ const BrandingSettingsPage: React.FC = () => {
                                                 })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                             </button>
                                         </>
                                     ) : (
-                                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-1" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-1" type="file" className="hidden" onChange={e => setHeroImage1(e.target.files?.[0] || null)} />
@@ -542,11 +554,11 @@ const BrandingSettingsPage: React.FC = () => {
                                                 })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                             </button>
                                         </>
                                     ) : (
-                                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-2" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-2" type="file" className="hidden" onChange={e => setHeroImage2(e.target.files?.[0] || null)} />
@@ -571,11 +583,11 @@ const BrandingSettingsPage: React.FC = () => {
                                                 })}
                                                 className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover/box:opacity-100 transition-opacity shadow-xl"
                                             >
-                                                <Trash2 className="h-4 w-4" />
+                                                <HugeiconsIcon icon={Delete02Icon} className="h-4 w-4" />
                                             </button>
                                         </>
                                     ) : (
-                                        <ImageIcon className="h-8 w-8 text-muted-foreground/30" />
+                                        <HugeiconsIcon icon={Image01Icon} className="h-8 w-8 text-muted-foreground/30" />
                                     )}
                                     <Label htmlFor="hero-team" className="absolute bottom-2 bg-primary text-primary-foreground px-2 py-1 rounded text-[10px] font-bold cursor-pointer">Change</Label>
                                     <input id="hero-team" type="file" className="hidden" onChange={e => setHeroImageTeam(e.target.files?.[0] || null)} />
@@ -609,17 +621,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="header-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {headerImage ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="header-image" type="file" accept="image/*" className="hidden" onChange={(e) => setHeaderImage(e.target.files?.[0] || null)} />
@@ -644,17 +656,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="footer-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {footerImage ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="footer-image" type="file" accept="image/*" className="hidden" onChange={(e) => setFooterImage(e.target.files?.[0] || null)} />
@@ -679,17 +691,17 @@ const BrandingSettingsPage: React.FC = () => {
                                                     })}
                                                     className="absolute top-2 right-2 p-1 bg-destructive text-destructive-foreground rounded-full opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg"
                                                 >
-                                                    <Trash2 className="h-3 w-3" />
+                                                    <HugeiconsIcon icon={Delete02Icon} className="h-3 w-3" />
                                                 </button>
                                             </div>
                                         ) : (
                                             <div className="flex flex-col items-center">
-                                                <ImageIcon className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                                                <HugeiconsIcon icon={Image01Icon} className="h-6 w-6 text-muted-foreground/30 mb-2" />
                                                 <span className="text-[10px] text-muted-foreground italic">No image selected</span>
                                             </div>
                                         )}
                                         <Label htmlFor="signature-image" className="absolute bottom-2 bg-primary text-primary-foreground px-3 py-1 rounded-lg font-bold text-[10px] hover:opacity-90 transition-opacity cursor-pointer flex items-center gap-1">
-                                            <Upload className="h-3 w-3" />
+                                            <HugeiconsIcon icon={Upload01Icon} className="h-3 w-3" />
                                             {signatureImage ? 'Ready' : 'Upload'}
                                         </Label>
                                         <input id="signature-image" type="file" accept="image/*" className="hidden" onChange={(e) => setSignatureImage(e.target.files?.[0] || null)} />
@@ -703,10 +715,11 @@ const BrandingSettingsPage: React.FC = () => {
                     <div className="flex justify-end pt-6 border-t mt-8">
                         <Button 
                             type="submit"
-                            disabled={saving}
+                            loading={saving}
                             size="lg" 
                             className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-12 shadow-xl shadow-primary/20 rounded-xl"
-                        >    {saving ? 'Saving Application Branding...' : 'Save Appearance Changes'}
+                        >
+                            Save Appearance Changes
                         </Button>
                     </div>
                 </form>

@@ -46,11 +46,14 @@ class RoutingSession(Session):
         try:
             # 2. Check for dynamic context (e.g., 'X-Company-Context' header)
             if request:
-                context = request.headers.get('X-Company-Context', '').lower()
+                context = request.environ.get('HTTP_X_COMPANY_CONTEXT', '')
+                if not context:
+                    context = request.headers.get('X-Company-Context', '')
                 # Fallback to query parameter for browser-initiated requests
                 # (iframe, img, a tags cannot send custom headers)
                 if not context:
-                    context = request.args.get('company', '').lower()
+                    context = request.args.get('company', '')
+                context = context.lower()
                 if context in _db.engines:
                     return _db.engines[context]
         except:
@@ -175,6 +178,7 @@ class PatientPortalUser(db.Model):
     otp_expiry = db.Column(db.DateTime, nullable=True)
     is_verified = db.Column(db.Boolean, default=False)
     must_reset_password = db.Column(db.Boolean, default=False)
+    last_reminder_sent = db.Column(db.DateTime, nullable=True)
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
@@ -188,6 +192,8 @@ class PatientPortalUser(db.Model):
     def to_dict(self):
         # Dynamically find the section (DCP/DCT) by checking both clinical databases
         section = None
+        first_name = self.first_name
+        last_name = self.last_name
         from flask import current_app
         from sqlalchemy import text
         
@@ -195,19 +201,23 @@ class PatientPortalUser(db.Model):
             try:
                 engine = db.engines.get(bind_key)
                 if not engine: continue
-                sql = text("SELECT staff_id FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                sql = text("SELECT first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
                 with engine.connect() as conn:
                     result = conn.execute(sql, {"sid": self.username}).fetchone()
                     if result:
                         section = bind_key.upper()
+                        if result[0]:
+                            first_name = result[0]
+                        if result[1]:
+                            last_name = result[1]
                         break
             except:
                 continue
 
         return {
             "id": self.id,
-            "first_name": self.first_name,
-            "last_name": self.last_name,
+            "first_name": first_name,
+            "last_name": last_name,
             "username": self.username,
             "email": self.email,
             "phone": self.phone,
@@ -436,18 +446,18 @@ class ScreeningYearBioData(db.Model):
 class QueueEntry(db.Model):
     __tablename__ = 'queue_entries'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
-    department = db.Column(db.String(50), nullable=False) # Consultation, Audiometry, Spirometry, ECG
-    status = db.Column(db.String(20), default='Waiting') # Waiting, Completed
+    staff_id = db.Column(db.String(50), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
+    department = db.Column(db.String(50), nullable=False, index=True) # Consultation, Audiometry, Spirometry, ECG
+    status = db.Column(db.String(20), default='Waiting', index=True) # Waiting, Completed
     created_at = db.Column(db.DateTime, default=datetime.now)
     queue_number = db.Column(db.Integer, nullable=True)
 
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     
     # Medical Fields
     luts = db.Column(db.String(10)) # Yes/No
@@ -490,8 +500,8 @@ class ConsultationData(db.Model):
 class FBCResult(db.Model):
     __tablename__ = 'fbc_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     pcv = db.Column(db.String(20))
     wbc = db.Column(db.String(20))
     plt = db.Column(db.String(20))
@@ -515,8 +525,8 @@ class FBCResult(db.Model):
 class KFTResult(db.Model):
     __tablename__ = 'kft_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     potassium = db.Column(db.String(20))
     sodium = db.Column(db.String(20))
     chloride = db.Column(db.String(20))
@@ -529,8 +539,8 @@ class KFTResult(db.Model):
 class LipidResult(db.Model):
     __tablename__ = 'lipid_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     total_cholesterol = db.Column(db.String(20))
     triglycerides = db.Column(db.String(20))
     hdl = db.Column(db.String(20))
@@ -542,8 +552,8 @@ class LipidResult(db.Model):
 class LFTResult(db.Model):
     __tablename__ = 'lft_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     ast = db.Column(db.String(20))
     alt = db.Column(db.String(20))
     alp = db.Column(db.String(20))
@@ -558,8 +568,8 @@ class LFTResult(db.Model):
 class SpecialTestsResult(db.Model):
     __tablename__ = 'special_tests_results'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     ecg_result = db.Column(db.String(255))
     ecg_remark = db.Column(db.Text)
     spirometry_result = db.Column(db.String(255))
@@ -575,8 +585,8 @@ class SpecialTestsResult(db.Model):
 class DirectorReview(db.Model):
     __tablename__ = 'director_reviews'
     id = db.Column(db.Integer, primary_key=True)
-    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False)
-    screening_year = db.Column(db.Integer, nullable=False)
+    staff_id = db.Column(db.String(50), db.ForeignKey('bio_data.staff_id'), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
     
     # Final Review Specific Fields
     dm_status = db.Column(db.String(50))
@@ -758,6 +768,61 @@ class AuditLog(db.Model):
                 kwargs['user_id'] = int(user_id)
             except (ValueError, TypeError):
                 kwargs['user_id'] = None
+
+        # Auto-detect device/user_agent from Flask request context
+        try:
+            from flask import has_request_context, request
+            if has_request_context():
+                details = kwargs.get('details')
+                details_data = {}
+                if details:
+                    try:
+                        details_data = json.loads(details)
+                    except:
+                        details_data = {"message": details}
+                else:
+                    details_data = {}
+
+                # Capture User Agent & Parse Platform/Browser
+                user_agent_str = request.headers.get('User-Agent', '')
+                platform = "Unknown OS"
+                browser = "Unknown Browser"
+                
+                if user_agent_str:
+                    ua_lower = user_agent_str.lower()
+                    # Detect OS
+                    if 'windows' in ua_lower:
+                        platform = 'Windows'
+                    elif 'macintosh' in ua_lower or 'mac os' in ua_lower:
+                        platform = 'macOS'
+                    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
+                        platform = 'iOS'
+                    elif 'android' in ua_lower:
+                        platform = 'Android'
+                    elif 'linux' in ua_lower:
+                        platform = 'Linux'
+                        
+                    # Detect Browser
+                    if 'edg/' in ua_lower or 'edge' in ua_lower:
+                        browser = 'Edge'
+                    elif 'opr/' in ua_lower or 'opera' in ua_lower:
+                        browser = 'Opera'
+                    elif 'chrome' in ua_lower or 'crios' in ua_lower:
+                        browser = 'Chrome'
+                    elif 'firefox' in ua_lower or 'fxios' in ua_lower:
+                        browser = 'Firefox'
+                    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
+                        browser = 'Safari'
+
+                details_data['device'] = {
+                    "platform": platform,
+                    "browser": browser,
+                    "user_agent": user_agent_str
+                }
+                kwargs['details'] = json.dumps(details_data)
+        except Exception:
+            pass
+
         super().__init__(*args, **kwargs)
 
     @validates('user_id')
@@ -836,13 +901,47 @@ class AuditLog(db.Model):
             except (ValueError, TypeError, json.JSONDecodeError):
                 details_data = {"message": self.details}
 
+        # Dynamic repair for existing records with "Unknown" device details
+        if 'device' in details_data and isinstance(details_data['device'], dict):
+            device = details_data['device']
+            ua_str = device.get('user_agent', '')
+            if (device.get('platform') == 'Unknown OS' or device.get('browser') == 'Unknown Browser') and ua_str:
+                ua_lower = ua_str.lower()
+                platform = device.get('platform')
+                browser = device.get('browser')
+                
+                if platform == 'Unknown OS':
+                    if 'windows' in ua_lower:
+                        platform = 'Windows'
+                    elif 'macintosh' in ua_lower or 'mac os' in ua_lower:
+                        platform = 'macOS'
+                    elif 'iphone' in ua_lower or 'ipad' in ua_lower:
+                        platform = 'iOS'
+                    elif 'android' in ua_lower:
+                        platform = 'Android'
+                    elif 'linux' in ua_lower:
+                        platform = 'Linux'
+                        
+                if browser == 'Unknown Browser':
+                    if 'edg/' in ua_lower or 'edge' in ua_lower:
+                        browser = 'Edge'
+                    elif 'opr/' in ua_lower or 'opera' in ua_lower:
+                        browser = 'Opera'
+                    elif 'chrome' in ua_lower or 'crios' in ua_lower:
+                        browser = 'Chrome'
+                    elif 'firefox' in ua_lower or 'fxios' in ua_lower:
+                        browser = 'Firefox'
+                    elif 'safari' in ua_lower and 'chrome' not in ua_lower:
+                        browser = 'Safari'
+                        
+                device['platform'] = platform
+                device['browser'] = browser
+
         user_name = "System"
-        if self.user:
-            user_name = f"{self.user.first_name} {self.user.last_name}"
-        elif self.user_id:
-            # Fallback check for Patient Portal users
-            portal = details_data.get('portal', 'staff')
-            if portal == 'patient':
+        portal = details_data.get('portal', 'staff')
+        
+        if portal == 'patient':
+            if self.user_id:
                 try:
                     # Look up in PatientPortalUser (which uses 'patients' bind)
                     patient = PatientPortalUser.query.get(self.user_id)
@@ -852,8 +951,19 @@ class AuditLog(db.Model):
                         user_name = f"Patient {self.user_id}"
                 except:
                     user_name = f"User {self.user_id}"
-            else:
-                user_name = f"User {self.user_id}"
+        else:
+            if self.user:
+                user_name = f"{self.user.first_name} {self.user.last_name}"
+            elif self.user_id:
+                try:
+                    # Fallback query StaffUser explicitly (handles flush/after_insert states)
+                    staff = StaffUser.query.get(self.user_id)
+                    if staff:
+                        user_name = f"{staff.first_name} {staff.last_name}"
+                    else:
+                        user_name = f"User {self.user_id}"
+                except:
+                    user_name = f"User {self.user_id}"
 
         return {
             "id": self.id,
@@ -1111,3 +1221,12 @@ def auto_assign_permission_to_admin(mapper, connection, target):
     except Exception:
         # Fail silently during initial setup if roles table isn't ready
         pass
+
+@event.listens_for(AuditLog, 'after_insert')
+def on_audit_log_insert(mapper, connection, target):
+    try:
+        from extensions import socketio
+        socketio.emit('new_audit_log', target.to_dict(), to='staff_events')
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")

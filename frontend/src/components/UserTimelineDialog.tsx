@@ -5,21 +5,22 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { HugeiconsIcon } from '@hugeicons/react';
 import { 
-  Calendar, 
-  Clock, 
-  Shield, 
-  Key, 
-  LogIn, 
-  LogOut, 
-  UserCog, 
-  AlertTriangle,
-  Mail,
-  Activity,
-  CheckCircle2,
-  X,
-  Loader2
-} from "lucide-react";
+  Calendar03Icon, 
+  Clock01Icon, 
+  Shield01Icon, 
+  LockKeyIcon, 
+  Login01Icon, 
+  Logout01Icon, 
+  UserSettings01Icon, 
+  Alert01Icon,
+  Mail01Icon,
+  Activity01Icon,
+  CheckmarkCircle02Icon,
+  Cancel01Icon,
+  Loading03Icon
+} from "@hugeicons/core-free-icons";
 import { motion, AnimatePresence } from "framer-motion";
 import axios from 'axios';
 import { format } from 'date-fns';
@@ -75,13 +76,13 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
 
   const getActionConfig = (action: string) => {
     const a = action.toUpperCase();
-    if (a.includes('LOGIN')) return { icon: LogIn, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' };
-    if (a.includes('LOGOUT')) return { icon: LogOut, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' };
-    if (a.includes('PASSWORD')) return { icon: Key, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
-    if (a.includes('ROLE') || a.includes('PERMISSION')) return { icon: Shield, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' };
-    if (a.includes('ONBOARD') || a.includes('CREATE')) return { icon: UserCog, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
-    if (a.includes('FAIL') || a.includes('ERROR')) return { icon: AlertTriangle, color: 'text-rose-600', bg: 'bg-rose-600/10', border: 'border-rose-600/20' };
-    return { icon: Activity, color: 'text-muted-foreground', bg: 'bg-muted/20', border: 'border-muted' };
+    if (a.includes('LOGIN')) return { icon: Login01Icon, color: 'text-emerald-500', bg: 'bg-emerald-500/10', border: 'border-emerald-500/20' };
+    if (a.includes('LOGOUT')) return { icon: Logout01Icon, color: 'text-rose-500', bg: 'bg-rose-500/10', border: 'border-rose-500/20' };
+    if (a.includes('PASSWORD')) return { icon: LockKeyIcon, color: 'text-amber-500', bg: 'bg-amber-500/10', border: 'border-amber-500/20' };
+    if (a.includes('ROLE') || a.includes('PERMISSION')) return { icon: Shield01Icon, color: 'text-primary', bg: 'bg-primary/10', border: 'border-primary/20' };
+    if (a.includes('ONBOARD') || a.includes('CREATE')) return { icon: UserSettings01Icon, color: 'text-blue-500', bg: 'bg-blue-500/10', border: 'border-blue-500/20' };
+    if (a.includes('FAIL') || a.includes('ERROR')) return { icon: Alert01Icon, color: 'text-rose-600', bg: 'bg-rose-600/10', border: 'border-rose-600/20' };
+    return { icon: Activity01Icon, color: 'text-muted-foreground', bg: 'bg-muted/20', border: 'border-muted' };
   };
 
   return (
@@ -91,7 +92,7 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
               <div className="p-3 bg-primary/10 rounded-2xl text-primary">
-                <Calendar className="h-6 w-6" />
+                <HugeiconsIcon icon={Calendar03Icon} className="h-6 w-6" />
               </div>
               <div>
                 <DialogTitle className="text-xl font-black tracking-tight">User Security Timeline</DialogTitle>
@@ -104,13 +105,13 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
         <div className="p-0">
           {loading ? (
             <div className="h-96 flex flex-col items-center justify-center gap-3">
-              <Loader2 className="h-10 w-10 animate-spin text-primary/40" />
+              <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/40" />
               <p className="text-muted-foreground font-black uppercase tracking-widest text-[10px]">Scanning Logs...</p>
             </div>
           ) : logs.length === 0 ? (
             <div className="h-96 flex flex-col items-center justify-center p-8 text-center space-y-4">
                 <div className="w-20 h-20 bg-muted/20 rounded-full flex items-center justify-center">
-                    <Activity className="h-10 w-10 text-muted-foreground/30" />
+                    <HugeiconsIcon icon={Activity01Icon} className="h-10 w-10 text-muted-foreground/30" />
                 </div>
                 <div>
                     <h3 className="text-lg font-black text-foreground/70">No Records Found</h3>
@@ -133,7 +134,7 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
                     >
                       {/* Timeline Dot/Icon */}
                       <div className={`relative z-10 flex items-center justify-center h-10 w-10 rounded-xl border-2 shadow-sm transition-all group-hover:scale-110 ${config.bg} ${config.border} ${config.color}`}>
-                        <Icon className="h-5 w-5" />
+                        <HugeiconsIcon icon={Icon} className="h-5 w-5" />
                       </div>
 
                       {/* Content */}
@@ -142,7 +143,7 @@ export const UserTimelineDialog: React.FC<UserTimelineDialogProps> = ({
                           <div className="space-y-0.5">
                             <h4 className="text-sm font-black tracking-tight uppercase">{log.action.replace(/_/g, ' ')}</h4>
                             <div className="flex items-center gap-2 text-[10px] text-muted-foreground font-bold">
-                              <Clock className="h-3 w-3" />
+                              <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
                               {format(new Date(log.timestamp), 'PPP p')}
                             </div>
                           </div>
