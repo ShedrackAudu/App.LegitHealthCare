@@ -147,7 +147,7 @@ const RadioField = ({ label, name, control }: any) => (
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, setValue, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
     <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} <span className="text-red-500">*</span></Label>
     <div className="relative group">
@@ -169,13 +169,17 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
                 key={opt}
                 className="font-bold"
                 onClick={() => {
-                  const event = {
-                    target: {
-                      name: props.name,
-                      value: opt
-                    }
-                  };
-                  props.onChange(event as any);
+                  if (setValue) {
+                    setValue(props.name, opt, { shouldDirty: true, shouldValidate: true });
+                  } else {
+                    const event = {
+                      target: {
+                        name: props.name,
+                        value: opt
+                      }
+                    };
+                    props.onChange(event as any);
+                  }
                 }}
               >
                 {opt}
@@ -581,7 +585,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
                         </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
-                        <ComboField {...register('assessment_hx_pe')} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} error={errors.assessment_hx_pe?.message} />
+                        <ComboField {...register('assessment_hx_pe')} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} error={errors.assessment_hx_pe?.message} setValue={setValue} />
                       </div>
                     </div>
 
@@ -609,8 +613,8 @@ const ConsultationPage: React.FC = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <SelectField name="psa" control={control} label="Prostate-Specific Antigen - PSA" options={['Negative', 'Not Applicable', 'Positive']} />
                         <SelectField name="psa_remark" control={control} label="PSA Remark" options={['Normal', 'Abnormal', 'Not Applicable']} />
-                        <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} />
-                        <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} error={errors.rbs?.message} />
+                        <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} setValue={setValue} />
+                        <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} error={errors.rbs?.message} setValue={setValue} />
                         <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                         <SelectField name="ua_result" control={control} label="Sugar & Protein - U/A" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                         <SelectField name="ua_remark" control={control} label="U/A Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />

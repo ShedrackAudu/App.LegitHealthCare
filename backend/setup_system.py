@@ -4,7 +4,7 @@ import sys
 # Add current directory to path
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from models import db, StaffUser, PatientPortalUser, Role, Permission
+from models import db, StaffUser, PatientPortalUser, Role, Permission, Race, Nationality, Department
 from init_rbac_data import init_rbac
 
 def setup_system(app, purge=False):
@@ -20,6 +20,10 @@ def setup_system(app, purge=False):
             StaffUser.query.delete()
             # Patient DB
             PatientPortalUser.query.delete()
+            # Config DB
+            Department.query.delete()
+            Race.query.delete()
+            Nationality.query.delete()
             db.session.commit()
 
         # 1. Initialize RBAC (Roles & Permissions)
@@ -56,6 +60,31 @@ def setup_system(app, purge=False):
 
         if admin_role and admin_role not in admin_user.roles:
             admin_user.roles.append(admin_role)
+
+        # 4. Seed default Departments, Races, and Nationalities if they do not exist
+        default_departments = [
+            'Cardiology', 'Diagnostics', 'General Medicine', 'Hematology', 
+            'Information Technology', 'Laboratory', 'Outpatient', 'Pediatrics', 
+            'Pharmacy', 'Radiology', 'Surgery', 'Urology', 'Administration', 'Human Resources'
+        ]
+        default_races = [
+            'African', 'Asian', 'Caucasian', 'Hispanic', 'Mixed', 'Other'
+        ]
+        default_nationalities = [
+            'Nigerian', 'American', 'British', 'Canadian', 'Ghanaian', 'Indian', 'South African', 'Other'
+        ]
+
+        for dept_name in default_departments:
+            if not Department.query.filter_by(name=dept_name).first():
+                db.session.add(Department(name=dept_name))
+        
+        for race_name in default_races:
+            if not Race.query.filter_by(name=race_name).first():
+                db.session.add(Race(name=race_name))
+                
+        for nat_name in default_nationalities:
+            if not Nationality.query.filter_by(name=nat_name).first():
+                db.session.add(Nationality(name=nat_name))
 
         db.session.commit()
         print(f"System setup complete for '{admin_user.username}'.")

@@ -95,7 +95,7 @@ const SelectField = ({ label, options, name, control, required = true }: any) =>
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, required = true, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, required = true, setValue, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
       <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
       <div className="relative group">
@@ -115,14 +115,17 @@ const ComboField = React.forwardRef(({ label, options, required = true, ...props
                   {options.map((opt: string) => (
                     <DropdownMenuItem 
                       key={opt} 
-                      onClick={(e) => {
-                        const container = e.currentTarget.closest('.relative');
-                        const input = container?.querySelector('input');
-                        if (input) {
-                            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
-                            nativeInputValueSetter?.call(input, opt);
-                            const event = new Event('input', { bubbles: true });
-                            input.dispatchEvent(event);
+                      onClick={() => {
+                        if (setValue) {
+                          setValue(props.name, opt, { shouldDirty: true, shouldValidate: true });
+                        } else {
+                          const event = {
+                              target: {
+                                  name: props.name,
+                                  value: opt
+                              }
+                          };
+                          props.onChange(event as any);
                         }
                       }}
                     >
@@ -483,8 +486,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
                              <SelectField name="psa" control={control} label="PSA RESULT" options={['Negative', 'Not Applicable', 'Positive']} />
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
-                             <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} />
-                             <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} />
+                              <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} setValue={setValue} />
+                             <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} setValue={setValue} />
                              <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
@@ -492,7 +495,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
-                             <ComboField {...register('assessment_hx_pe')} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
+                             <ComboField {...register('assessment_hx_pe')} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} setValue={setValue} />
                               <div className="space-y-1 col-span-full lg:col-span-4">
                                  <div className="flex items-center justify-between ml-1 mb-1">
                                     <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark</Label>
