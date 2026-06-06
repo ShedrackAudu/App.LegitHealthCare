@@ -115,14 +115,15 @@ const ComboField = React.forwardRef(({ label, options, required = true, ...props
                   {options.map((opt: string) => (
                     <DropdownMenuItem 
                       key={opt} 
-                      onClick={() => {
-                        const event = {
-                            target: {
-                                name: props.name,
-                                value: opt
-                            }
-                        };
-                        props.onChange(event as any);
+                      onClick={(e) => {
+                        const container = e.currentTarget.closest('.relative');
+                        const input = container?.querySelector('input');
+                        if (input) {
+                            const nativeInputValueSetter = Object.getOwnPropertyDescriptor(window.HTMLInputElement.prototype, "value")?.set;
+                            nativeInputValueSetter?.call(input, opt);
+                            const event = new Event('input', { bubbles: true });
+                            input.dispatchEvent(event);
+                        }
                       }}
                     >
                       {opt}
