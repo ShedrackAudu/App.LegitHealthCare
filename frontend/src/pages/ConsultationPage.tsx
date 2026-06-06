@@ -572,7 +572,7 @@ const ConsultationPage: React.FC = () => {
                         <RadioField name="palor" control={control} label="Palor" />
                         <RadioField name="jaundice" control={control} label="Jaundice" />
                         <RadioField name="murmur" control={control} label="Murmur" />
-                        <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
+                        <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clinically Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
                         <div className="space-y-1.5 lg:col-span-1">

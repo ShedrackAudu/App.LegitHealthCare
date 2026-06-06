@@ -181,8 +181,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     const { register, handleSubmit, setValue, watch, control, reset } = useForm({
         defaultValues: {
             ...radioDefaults,
-            ...history?.review,
             ...history?.consultation,
+            ...history?.review,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
@@ -209,8 +209,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
         reset({
             ...currentRadioDefaults,
-            ...history?.review,
             ...history?.consultation,
+            ...history?.review,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
@@ -696,8 +696,8 @@ const DirectorPage: React.FC = () => {
 
                 // 4. Submit save payload
                 const savePayload = {
-                    ...patientHistory?.review,
                     ...patientHistory?.consultation,
+                    ...patientHistory?.review,
                     ...patientHistory?.special,
                     ...patientHistory?.fbc,
                     ...patientHistory?.kft,
@@ -801,8 +801,8 @@ const DirectorPage: React.FC = () => {
 
                 // 4. Submit save payload
                 const savePayload = {
-                    ...patientHistory?.review,
                     ...patientHistory?.consultation,
+                    ...patientHistory?.review,
                     ...patientHistory?.special,
                     ...patientHistory?.fbc,
                     ...patientHistory?.kft,
