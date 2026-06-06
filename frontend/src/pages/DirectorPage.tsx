@@ -907,9 +907,9 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
+                    <div className="flex flex-col gap-8 mt-8">
                         {/* Single Patient Review Placeholder Card */}
-                        <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[22rem] bg-muted/5 p-8 text-center rounded-3xl">
+                        <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[16rem] bg-muted/5 p-8 text-center rounded-3xl">
                             <div className="space-y-4">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-110 duration-300">
                                     <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-muted-foreground/50" />
@@ -927,241 +927,243 @@ const DirectorPage: React.FC = () => {
                             </div>
                         </Card>
 
-                        {/* Bulk AI Review Generator Card */}
-                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
-                                <div className="space-y-4">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
-                                        </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
-                                                {!bulkAiEnabled && (
-                                                    <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
-                                                        Disabled
-                                                    </span>
-                                                )}
-                                            </div>
-                                            <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
-                                        </div>
-                                    </div>
-
-                                    <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
-                                        <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
-                                        <ul className="list-disc list-inside space-y-1 pl-1">
-                                            <li>Patient has been registered for the screening year.</li>
-                                            <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
-                                        </ul>
-                                    </div>
-
-                                    {!batchProcessing && batchProgress.total === 0 ? (
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bulk-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
-                                                <Input
-                                                    id="bulk-pid-range"
-                                                    placeholder="e.g. 1-100 or 25"
-                                                    value={batchStartId}
-                                                    onChange={(e) => setBatchStartId(e.target.value)}
-                                                    disabled={!bulkAiEnabled}
-                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
-                                                />
-                                                <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
-                                            </div>
-                                            <Button 
-                                                onClick={startBatchProcess}
-                                                disabled={!bulkAiEnabled}
-                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-                                            >
-                                                <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
-                                                Bulk Generate AI Reviews
-                                            </Button>
-                                        </div>
-                                    ) : (
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
-                                                    <p className="text-lg font-black mt-1 text-primary">{batchProgress.current} / {batchProgress.total}</p>
-                                                </div>
-                                                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
-                                                    <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchProgress.successCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
-                                                    <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchProgress.failCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
-                                                    <p className="text-lg font-black mt-1 text-foreground">
-                                                        {batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
-                                                <div 
-                                                    className="bg-primary h-full transition-all duration-300 rounded-full"
-                                                    style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
-                                                />
-                                            </div>
-
-                                            <div className="space-y-1">
-                                                <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
-                                                <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
-                                                    {batchLogs.map(log => (
-                                                        <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
-                                                            <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
-                                                            <span className="flex-1 text-left px-1 truncate">{log.message}</span>
-                                                            <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
-                                                                log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
-                                                                log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
-                                                                'bg-muted-foreground/10 text-muted-foreground'
-                                                            }`}>
-                                                                {log.status}
-                                                            </span>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            
-                                            {!batchProcessing && (
-                                                <Button 
-                                                    onClick={() => {
-                                                        setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
-                                                        setBatchLogs([]);
-                                                    }}
-                                                    variant="outline"
-                                                    className="w-full h-10 font-bold rounded-xl text-xs"
-                                                >
-                                                    Reset & Start Another Range
-                                                </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
-
-                            {/* Bulk AI Lab Remark Generator Card */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Bulk AI Review Generator Card */}
                             <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
-                                <div className="space-y-4">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="p-3 bg-indigo-500/10 rounded-2xl">
-                                            <HugeiconsIcon icon={SparklesIcon} className="text-indigo-500 h-6 w-6" />
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <div className="p-3 bg-primary/10 rounded-2xl">
+                                                <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
+                                                    {!bulkAiEnabled && (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                            Disabled
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
-                                                {!bulkAiEnabled && (
-                                                    <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
-                                                        Disabled
-                                                    </span>
+
+                                        <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                            <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
+                                            <ul className="list-disc list-inside space-y-1 pl-1">
+                                                <li>Patient has been registered for the screening year.</li>
+                                                <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
+                                            </ul>
+                                        </div>
+
+                                        {!batchProcessing && batchProgress.total === 0 ? (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="bulk-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                    <Input
+                                                        id="bulk-pid-range"
+                                                        placeholder="e.g. 1-100 or 25"
+                                                        value={batchStartId}
+                                                        onChange={(e) => setBatchStartId(e.target.value)}
+                                                        disabled={!bulkAiEnabled}
+                                                        className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
+                                                </div>
+                                                <Button 
+                                                    onClick={startBatchProcess}
+                                                    disabled={!bulkAiEnabled}
+                                                    className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                                >
+                                                    <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                    Bulk Generate AI Reviews
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                        <p className="text-lg font-black mt-1 text-primary">{batchProgress.current} / {batchProgress.total}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                        <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchProgress.successCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                        <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchProgress.failCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                        <p className="text-lg font-black mt-1 text-foreground">
+                                                            {batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                    <div 
+                                                        className="bg-primary h-full transition-all duration-300 rounded-full"
+                                                        style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                    <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                        {batchLogs.map(log => (
+                                                            <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                                <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                                <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                                <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                    log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                    log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                    'bg-muted-foreground/10 text-muted-foreground'
+                                                                }`}>
+                                                                    {log.status}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                {!batchProcessing && (
+                                                    <Button 
+                                                        onClick={() => {
+                                                            setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                            setBatchLogs([]);
+                                                        }}
+                                                        variant="outline"
+                                                        className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    >
+                                                        Reset & Start Another Range
+                                                    </Button>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground font-semibold">Generate AI Overall Lab Remarks in bulk</p>
-                                        </div>
+                                        )}
                                     </div>
+                                </Card>
 
-                                    <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground font-medium">
-                                        <p className="font-bold text-foreground">Generates remarks meeting these criteria:</p>
-                                        <ul className="list-disc list-inside space-y-1 pl-1">
-                                            <li>Patient is registered for the screening year.</li>
-                                            <li>Prior lab data (FBC, LFT, KFT, Lipids) exists.</li>
-                                        </ul>
-                                    </div>
-
-                                    {!batchLabProcessing && batchLabProgress.total === 0 ? (
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bulk-lab-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
-                                                <Input
-                                                    id="bulk-lab-pid-range"
-                                                    placeholder="e.g. 1-50 or 25"
-                                                    value={batchLabStartId}
-                                                    onChange={(e) => setBatchLabStartId(e.target.value)}
-                                                    disabled={!bulkAiEnabled}
-                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
-                                                />
-                                                <p className="text-[10px] text-muted-foreground italic">Specify range of Patient IDs to automatically generate and save Overall Lab Remarks.</p>
+                                {/* Bulk AI Lab Remark Generator Card */}
+                                <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                                <HugeiconsIcon icon={SparklesIcon} className="text-indigo-500 h-6 w-6" />
                                             </div>
-                                            <Button 
-                                                onClick={startBatchLabProcess}
-                                                disabled={!bulkAiEnabled}
-                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-                                            >
-                                                <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
-                                                Bulk Generate Lab Remarks
-                                            </Button>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
+                                                    {!bulkAiEnabled && (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                            Disabled
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground font-semibold">Generate AI Overall Lab Remarks in bulk</p>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
-                                                    <p className="text-lg font-black mt-1 text-primary">{batchLabProgress.current} / {batchLabProgress.total}</p>
-                                                </div>
-                                                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
-                                                    <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchLabProgress.successCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
-                                                    <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchLabProgress.failCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
-                                                    <p className="text-lg font-black mt-1 text-foreground">
-                                                        {batchLabProgress.total > 0 ? Math.round((batchLabProgress.current / batchLabProgress.total) * 100) : 0}%
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
-                                                <div 
-                                                    className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
-                                                    style={{ width: `${batchLabProgress.total > 0 ? (batchLabProgress.current / batchLabProgress.total) * 100 : 0}%` }}
-                                                />
-                                            </div>
 
-                                            <div className="space-y-1">
-                                                <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
-                                                <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
-                                                    {batchLabLogs.map(log => (
-                                                        <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
-                                                            <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
-                                                            <span className="flex-1 text-left px-1 truncate">{log.message}</span>
-                                                            <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
-                                                                log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
-                                                                log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
-                                                                'bg-muted-foreground/10 text-muted-foreground'
-                                                            }`}>
-                                                                {log.status}
-                                                            </span>
-                                                        </div>
-                                                    ))}
+                                        <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground font-medium">
+                                            <p className="font-bold text-foreground">Generates remarks meeting these criteria:</p>
+                                            <ul className="list-disc list-inside space-y-1 pl-1">
+                                                <li>Patient is registered for the screening year.</li>
+                                                <li>Prior lab data (FBC, LFT, KFT, Lipids) exists.</li>
+                                            </ul>
+                                        </div>
+
+                                        {!batchLabProcessing && batchLabProgress.total === 0 ? (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="bulk-lab-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                    <Input
+                                                        id="bulk-lab-pid-range"
+                                                        placeholder="e.g. 1-50 or 25"
+                                                        value={batchLabStartId}
+                                                        onChange={(e) => setBatchLabStartId(e.target.value)}
+                                                        disabled={!bulkAiEnabled}
+                                                        className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Specify range of Patient IDs to automatically generate and save Overall Lab Remarks.</p>
                                                 </div>
-                                            </div>
-                                            
-                                            {!batchLabProcessing && (
                                                 <Button 
-                                                    onClick={() => {
-                                                        setBatchLabProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
-                                                        setBatchLabLogs([]);
-                                                    }}
-                                                    variant="outline"
-                                                    className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    onClick={startBatchLabProcess}
+                                                    disabled={!bulkAiEnabled}
+                                                    className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                                                 >
-                                                    Reset & Start Another Range
+                                                    <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                    Bulk Generate Lab Remarks
                                                 </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                        <p className="text-lg font-black mt-1 text-primary">{batchLabProgress.current} / {batchLabProgress.total}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                        <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchLabProgress.successCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                        <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchLabProgress.failCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                        <p className="text-lg font-black mt-1 text-foreground">
+                                                            {batchLabProgress.total > 0 ? Math.round((batchLabProgress.current / batchLabProgress.total) * 100) : 0}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                    <div 
+                                                        className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
+                                                        style={{ width: `${batchLabProgress.total > 0 ? (batchLabProgress.current / batchLabProgress.total) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                    <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                        {batchLabLogs.map(log => (
+                                                            <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                                <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                                <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                                <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                    log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                    log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                    'bg-muted-foreground/10 text-muted-foreground'
+                                                                }`}>
+                                                                    {log.status}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                {!batchLabProcessing && (
+                                                    <Button 
+                                                        onClick={() => {
+                                                            setBatchLabProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                            setBatchLabLogs([]);
+                                                        }}
+                                                        variant="outline"
+                                                        className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    >
+                                                        Reset & Start Another Range
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Card>
+                        </div>
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">
