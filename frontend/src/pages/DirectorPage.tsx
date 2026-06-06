@@ -188,6 +188,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     });
 
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [generatingLabAI, setGeneratingLabAI] = useState(false);
 
     useEffect(() => {
         const currentHasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
@@ -275,6 +276,27 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
             toast.error(errorMsg);
         } finally {
             setGeneratingAI(false);
+        }
+    };
+
+    const handleAILabRemarkGenerate = async () => {
+        setGeneratingLabAI(true);
+        try {
+            const res = await axios.post('/api/ai/generate-lab-remark', {
+                staff_id: patient.staff_id,
+                screening_year: activeYear
+            }, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            if (res.data.overall_lab_remark) {
+                setValue('overall_lab_remark', res.data.overall_lab_remark);
+                toast.success("AI generated Overall Lab Remark successfully!");
+            }
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.error || "Failed to generate AI lab remark";
+            toast.error(errorMsg);
+        } finally {
+            setGeneratingLabAI(false);
         }
     };
 
@@ -470,10 +492,24 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
                              <ComboField {...register('assessment_hx_pe')} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
-                             <div className="space-y-1 col-span-full lg:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark</Label>
-                                <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
-                             </div>
+                              <div className="space-y-1 col-span-full lg:col-span-4">
+                                 <div className="flex items-center justify-between ml-1 mb-1">
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark</Label>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-[10px] font-black uppercase tracking-wider rounded-lg border-primary/20 hover:bg-primary/10 text-primary flex items-center gap-1.5"
+                                        onClick={handleAILabRemarkGenerate}
+                                        loading={generatingLabAI}
+                                        disabled={generatingAI}
+                                    >
+                                        <HugeiconsIcon icon={SparklesIcon} className="h-3 w-3" />
+                                        AI Generate
+                                    </Button>
+                                 </div>
+                                 <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
+                              </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t">
@@ -559,6 +595,12 @@ const DirectorPage: React.FC = () => {
     const [batchProcessing, setBatchProcessing] = useState(false);
     const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
     const [batchLogs, setBatchLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
+
+    // Batch AI Lab Remarks states
+    const [batchLabStartId, setBatchLabStartId] = useState('');
+    const [batchLabProcessing, setBatchLabProcessing] = useState(false);
+    const [batchLabProgress, setBatchLabProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
+    const [batchLabLogs, setBatchLabLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
 
     useEffect(() => {
         const fetchBulkAiStatus = async () => {
@@ -683,6 +725,108 @@ const DirectorPage: React.FC = () => {
         setBatchProcessing(false);
         toast.success("Batch processing completed!");
     };
+
+    const startBatchLabProcess = async () => {
+        const val = batchLabStartId.trim();
+        let start = 0;
+        let end = 0;
+        
+        if (val.includes('-')) {
+            const parts = val.split('-');
+            start = parseInt(parts[0]);
+            end = parseInt(parts[1]);
+        } else {
+            start = parseInt(val);
+            end = parseInt(val);
+        }
+        
+        if (isNaN(start) || isNaN(end) || start > end || start <= 0) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100 or 25).");
+            return;
+        }
+        
+        setBatchLabProcessing(true);
+        const total = end - start + 1;
+        setBatchLabProgress({ current: 0, total, successCount: 0, failCount: 0 });
+        
+        const initialLogs = [];
+        for (let i = start; i <= end; i++) {
+            initialLogs.push({ id: i, status: 'pending' as const, message: 'Queued' });
+        }
+        setBatchLabLogs(initialLogs);
+        
+        for (let i = start; i <= end; i++) {
+            setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
+            
+            try {
+                // 1. Resolve patient using PID
+                const pRes = await axios.get(`/patient/${i}?year=${activeYear}&strict=true&search_type=pid`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientData = pRes.data;
+                const staffId = patientData.staff_id;
+                
+                // 2. Fetch history
+                const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientHistory = hRes.data;
+
+                const review = patientHistory?.review;
+                const hasExistingLabRemark = review && review.overall_lab_remark && review.overall_lab_remark.trim();
+                
+                if (hasExistingLabRemark) {
+                    setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: 'Skipped: Overall lab remark already exists' } : log));
+                    setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                    continue;
+                }
+                
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Lab Remark...' } : log));
+
+                // 3. Generate AI Overall Lab Remark
+                const aiRes = await axios.post('/api/ai/generate-lab-remark', {
+                    staff_id: staffId,
+                    screening_year: activeYear
+                }, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                const generatedRemark = aiRes.data.overall_lab_remark || '';
+                
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Saving director review...' } : log));
+
+                // 4. Submit save payload
+                const savePayload = {
+                    ...patientHistory?.review,
+                    ...patientHistory?.consultation,
+                    ...patientHistory?.special,
+                    ...patientHistory?.fbc,
+                    ...patientHistory?.kft,
+                    ...patientHistory?.lipid,
+                    ...patientHistory?.lft,
+                    overall_lab_remark: generatedRemark,
+                    staff_id: staffId,
+                    screening_year: activeYear
+                };
+                
+                await axios.post('/api/director/save-director-review', savePayload, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                // Success log
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: `Completed: ${patientData.first_name} ${patientData.last_name}` } : log));
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                
+            } catch (err: any) {
+                const errMsg = err.response?.data?.error || err.message || "Failed to process";
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: errMsg } : log));
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, failCount: prev.failCount + 1 }));
+            }
+        }
+        
+        setBatchLabProcessing(false);
+        toast.success("Batch processing completed!");
+    };
     const selectPatient = (p: any) => {
         handleSearchWithId(p.staff_id, 'general');
     };
@@ -763,7 +907,7 @@ const DirectorPage: React.FC = () => {
                 </div>
 
                 {!patient ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mt-8">
                         {/* Single Patient Review Placeholder Card */}
                         <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[22rem] bg-muted/5 p-8 text-center rounded-3xl">
                             <div className="space-y-4">
@@ -889,6 +1033,124 @@ const DirectorPage: React.FC = () => {
                                                     onClick={() => {
                                                         setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
                                                         setBatchLogs([]);
+                                                    }}
+                                                    variant="outline"
+                                                    className="w-full h-10 font-bold rounded-xl text-xs"
+                                                >
+                                                    Reset & Start Another Range
+                                                </Button>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </Card>
+
+                            {/* Bulk AI Lab Remark Generator Card */}
+                            <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                                <div className="space-y-4">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                        <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                            <HugeiconsIcon icon={SparklesIcon} className="text-indigo-500 h-6 w-6" />
+                                        </div>
+                                        <div>
+                                            <div className="flex items-center gap-2">
+                                                <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
+                                                {!bulkAiEnabled && (
+                                                    <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                        Disabled
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className="text-xs text-muted-foreground font-semibold">Generate AI Overall Lab Remarks in bulk</p>
+                                        </div>
+                                    </div>
+
+                                    <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground font-medium">
+                                        <p className="font-bold text-foreground">Generates remarks meeting these criteria:</p>
+                                        <ul className="list-disc list-inside space-y-1 pl-1">
+                                            <li>Patient is registered for the screening year.</li>
+                                            <li>Prior lab data (FBC, LFT, KFT, Lipids) exists.</li>
+                                        </ul>
+                                    </div>
+
+                                    {!batchLabProcessing && batchLabProgress.total === 0 ? (
+                                        <div className="space-y-4">
+                                            <div className="space-y-2">
+                                                <Label htmlFor="bulk-lab-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                <Input
+                                                    id="bulk-lab-pid-range"
+                                                    placeholder="e.g. 1-50 or 25"
+                                                    value={batchLabStartId}
+                                                    onChange={(e) => setBatchLabStartId(e.target.value)}
+                                                    disabled={!bulkAiEnabled}
+                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                                />
+                                                <p className="text-[10px] text-muted-foreground italic">Specify range of Patient IDs to automatically generate and save Overall Lab Remarks.</p>
+                                            </div>
+                                            <Button 
+                                                onClick={startBatchLabProcess}
+                                                disabled={!bulkAiEnabled}
+                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                            >
+                                                <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                Bulk Generate Lab Remarks
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <div className="space-y-6">
+                                            <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                <div className="p-2 bg-muted/40 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                    <p className="text-lg font-black mt-1 text-primary">{batchLabProgress.current} / {batchLabProgress.total}</p>
+                                                </div>
+                                                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                    <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchLabProgress.successCount}</p>
+                                                </div>
+                                                <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                    <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchLabProgress.failCount}</p>
+                                                </div>
+                                                <div className="p-2 bg-muted/40 rounded-xl">
+                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                    <p className="text-lg font-black mt-1 text-foreground">
+                                                        {batchLabProgress.total > 0 ? Math.round((batchLabProgress.current / batchLabProgress.total) * 100) : 0}%
+                                                    </p>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                <div 
+                                                    className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
+                                                    style={{ width: `${batchLabProgress.total > 0 ? (batchLabProgress.current / batchLabProgress.total) * 100 : 0}%` }}
+                                                />
+                                            </div>
+
+                                            <div className="space-y-1">
+                                                <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                    {batchLabLogs.map(log => (
+                                                        <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                            <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                            <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                            <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                'bg-muted-foreground/10 text-muted-foreground'
+                                                            }`}>
+                                                                {log.status}
+                                                            </span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                            
+                                            {!batchLabProcessing && (
+                                                <Button 
+                                                    onClick={() => {
+                                                        setBatchLabProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                        setBatchLabLogs([]);
                                                     }}
                                                     variant="outline"
                                                     className="w-full h-10 font-bold rounded-xl text-xs"

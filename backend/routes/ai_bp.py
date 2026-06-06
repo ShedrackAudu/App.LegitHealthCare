@@ -268,3 +268,89 @@ def generate_overview():
     except Exception as e:
         traceback.print_exc()
         return jsonify({"error": str(e)}), 500
+
+@ai_bp.route('/generate-lab-remark', methods=['POST'])
+@require_permission('director_review')
+def generate_lab_remark():
+    try:
+        data = request.json
+        staff_id = data.get('staff_id')
+        screening_year = data.get('screening_year')
+        
+        if not staff_id or not screening_year:
+            return jsonify({"error": "Staff ID and Screening Year are required"}), 400
+            
+        settings = AISettings.query.first()
+        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        
+        if not api_key:
+            return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
+            
+        client = OpenAI(api_key=api_key)
+        
+        # Fetch Patient & Lab Data
+        patient = BioData.query.filter_by(staff_id=staff_id).first()
+        consultation = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+        fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+        lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+        kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+        lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
+        
+        # Build Context
+        context_parts = []
+        if patient:
+            context_parts.append(f"Patient Age: {patient.age or 'N/A'}, Gender: {patient.gender or 'N/A'}")
+        if fbc:
+            context_parts.append(f"FBC Remark: {fbc.fbc_remark or 'N/A'}")
+        if lft:
+            context_parts.append(f"LFT Remark: {lft.lft_remark or 'N/A'}")
+        if kft:
+            context_parts.append(f"KFT Remark: {kft.kft_remark or 'N/A'}")
+        if lp:
+            context_parts.append(f"Lipid Remark: {lp.lp_remark or 'N/A'}")
+        if consultation:
+            context_parts.append(f"FBS/RBS: FBS={consultation.fbs or 'N/A'}, RBS={consultation.rbs or 'N/A'} (Remark: {consultation.sugar_remark or 'N/A'})")
+            context_parts.append(f"Urinalysis: Result={consultation.ua_result or 'N/A'} (Remark: {consultation.ua_remark or 'N/A'})")
+            
+        full_context = "\n".join(context_parts)
+        if not context_parts:
+            return jsonify({"error": "No clinical data found to generate lab remark."}), 404
+            
+        system_content = (
+            "You are a consultant medical pathologist analyzing a patient's laboratory test remarks and values "
+            "to write a cohesive, comprehensive 'Overall Lab Remark'.\n"
+            "Analyze the provided findings (FBC, LFT, KFT, Lipid, Glucose/Sugar, Urinalysis).\n"
+            "Synthesize them into a single summary comment.\n"
+            "CRITICAL: The remark MUST be extremely concise, direct, and MUST NOT exceed 150 characters (including spaces). "
+            "Write ONLY the plain text remark. Do NOT wrap in quotes, brackets, or add conversational intros/outros."
+        )
+        
+        response = client.chat.completions.create(
+            model=settings.model_selection or "gpt-4o",
+            messages=[
+                {"role": "system", "content": system_content},
+                {"role": "user", "content": f"Lab Findings:\n{full_context}"}
+            ],
+            max_tokens=100
+        )
+        
+        remark = response.choices[0].message.content.strip()
+        if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
+            remark = remark[1:-1].strip()
+        if len(remark) > 150:
+            remark = remark[:147] + "..."
+            
+        return jsonify({
+            "message": "Overall Lab Remark generated successfully",
+            "overall_lab_remark": remark
+        }), 200
+        
+    except openai.AuthenticationError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked."}), 401
+    except openai.RateLimitError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded."}), 402
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": str(e)}), 500
