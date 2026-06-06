@@ -86,7 +86,7 @@ def update_settings():
         return jsonify({"error": str(e)}), 400
 
 @ai_bp.route('/generate', methods=['POST'])
-@require_permission('manage_ai')
+@require_permission('director_review')
 def generate_overview():
     try:
         data = request.json
