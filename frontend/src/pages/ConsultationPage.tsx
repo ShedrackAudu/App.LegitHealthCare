@@ -581,7 +581,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
                         </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
+                        <ComboField {...register('assessment_hx_pe')} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} error={errors.assessment_hx_pe?.message} />
                       </div>
                     </div>
 
