@@ -162,8 +162,21 @@ const RadioField = ({ label, name, control, required = true }: any) => (
 );
 
 const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, activeSection }: any) => {
+    const hasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
+    const radioDefaults = !hasConsultation ? {
+        luts: 'No',
+        chronic_cough: 'No',
+        chronic_chest_pain: 'No',
+        chest_infection: 'No',
+        heart_dx: 'No',
+        palor: 'No',
+        jaundice: 'No',
+        murmur: 'No'
+    } : {};
+
     const { register, handleSubmit, setValue, watch, control, reset } = useForm({
         defaultValues: {
+            ...radioDefaults,
             ...history?.review,
             ...history?.consultation,
             ...history?.special,
@@ -177,7 +190,20 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     const [generatingAI, setGeneratingAI] = useState(false);
 
     useEffect(() => {
+        const currentHasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
+        const currentRadioDefaults = !currentHasConsultation ? {
+            luts: 'No',
+            chronic_cough: 'No',
+            chronic_chest_pain: 'No',
+            chest_infection: 'No',
+            heart_dx: 'No',
+            palor: 'No',
+            jaundice: 'No',
+            murmur: 'No'
+        } : {};
+
         reset({
+            ...currentRadioDefaults,
             ...history?.review,
             ...history?.consultation,
             ...history?.special,
