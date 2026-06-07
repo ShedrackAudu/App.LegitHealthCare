@@ -36,7 +36,7 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 system_prompt = (
                     "You are a medical assistant analyzing patient Full Blood Count (FBC) results."
                     "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                    "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                    "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal."
                     "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
@@ -96,7 +96,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                 system_prompt = (
                     "You are a medical assistant analyzing patient Lipid Profile results."
                     "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                    "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                    "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal."
                     "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
@@ -661,7 +661,7 @@ def bulk_ai_remarks(test_type):
                     system_prompt = (
                         "You are a medical assistant analyzing patient Full Blood Count (FBC) results."
                         "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal."
                         "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
@@ -677,7 +677,7 @@ def bulk_ai_remarks(test_type):
                     system_prompt = (
                         "You are a medical assistant analyzing patient Lipid Profile results."
                         "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal."
                         "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
@@ -694,7 +694,7 @@ def bulk_ai_remarks(test_type):
                     system_prompt = (
                         "You are a medical assistant analyzing patient Liver Function Test (LFT) results."
                         "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. For example, if Conjugated Bilirubin (CB) is 0.35 mg/dL and the reference range is 0-0.4 mg/dL, it is NORMAL. Treat all values within the ranges as normal."
                         "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
@@ -715,7 +715,7 @@ def bulk_ai_remarks(test_type):
                     system_prompt = (
                         "You are a medical assistant analyzing patient Kidney Function Test (KFT) results."
                         "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "You MUST strictly adhere to the reference ranges provided in the user's input: do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range."
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal."
                         "Avoid mentioning the test type and anything about the ranges in the comments/remark."
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
