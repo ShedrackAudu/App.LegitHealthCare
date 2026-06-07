@@ -79,30 +79,34 @@ const SelectField = ({ label, options, name, control, required = true }: any) =>
       <Controller
         name={name}
         control={control}
-        render={({ field }) => (
-          <Select onValueChange={field.onChange} value={field.value}>
-            <SelectTrigger className="h-10 border rounded-md font-semibold">
-              <SelectValue placeholder={`Select ${label}...`} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((opt: string) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        rules={required ? { required: `${label} is required` } : undefined}
+        render={({ field, fieldState }) => (
+          <>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger className={`h-10 border rounded-md font-semibold ${fieldState.error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}>
+                <SelectValue placeholder={`Select ${label}...`} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((opt: string) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldState.error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{fieldState.error.message}</p>}
+          </>
         )}
       />
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, required = true, setValue, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, required = true, setValue, error, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
       <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
       <div className="relative group">
           <Input 
               ref={ref}
               {...props}
-              className="h-10 border rounded-md font-semibold pr-10" 
+              className={`h-10 border rounded-md font-semibold pr-10 ${error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
           />
           <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 cursor-pointer">
               <DropdownMenu>
@@ -136,6 +140,7 @@ const ComboField = React.forwardRef(({ label, options, required = true, setValue
               </DropdownMenu>
           </div>
       </div>
+      {error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{error.message}</p>}
   </div>
 ));
 
@@ -145,21 +150,25 @@ const RadioField = ({ label, name, control, required = true }: any) => (
     <Controller
       name={name}
       control={control}
-      render={({ field }) => (
-        <RadioGroup
-          onValueChange={field.onChange}
-          value={field.value}
-          className="flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />
-            <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer">Yes</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="No" id={`${name}-no`} className="text-rose-600 border-2" />
-            <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer">No</Label>
-          </div>
-        </RadioGroup>
+      rules={required ? { required: `${label} is required` } : undefined}
+      render={({ field, fieldState }) => (
+        <>
+          <RadioGroup
+            onValueChange={field.onChange}
+            value={field.value}
+            className={`flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all ${fieldState.error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />
+              <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer">Yes</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="No" id={`${name}-no`} className="text-rose-600 border-2" />
+              <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer">No</Label>
+            </div>
+          </RadioGroup>
+          {fieldState.error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{fieldState.error.message}</p>}
+        </>
       )}
     />
   </div>
@@ -178,7 +187,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
         murmur: 'No'
     } : {};
 
-    const { register, handleSubmit, setValue, watch, control, reset } = useForm({
+    const { register, handleSubmit, setValue, watch, control, reset, formState: { errors } } = useForm({
         defaultValues: {
             ...radioDefaults,
             ...history?.consultation,
@@ -219,7 +228,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
         });
     }, [history, reset]);
 
-    // Live calculation for KFT and Lipids
+    // Live calculation for KFT and Lipids, and PSA/Breast field sync
     useEffect(() => {
         const subscription = watch((value, { name }) => {
             // Urea -> Creatinine estimation (sample logic)
@@ -246,6 +255,48 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hdl)) {
                     const ldl = tcho - ((tg / 5) + hdl);
                     setValue('ldl', ldl.toFixed(2));
+                }
+            }
+
+            // PSA result/remark bidirectional sync
+            if (name === 'psa') {
+                if (value.psa === 'Not Applicable' && value.psa_remark !== 'Not Applicable') {
+                    setValue('psa_remark', 'Not Applicable', { shouldValidate: true });
+                } else if (value.psa === 'Negative' && value.psa_remark !== 'Normal') {
+                    setValue('psa_remark', 'Normal', { shouldValidate: true });
+                }
+            }
+            if (name === 'psa_remark') {
+                if (value.psa_remark === 'Not Applicable' && value.psa !== 'Not Applicable') {
+                    setValue('psa', 'Not Applicable', { shouldValidate: true });
+                }
+            }
+
+            // Breast exam/remark sync
+            if (name === 'breast_exam') {
+                if (value.breast_exam === 'Not Applicable' && value.breast_remark !== 'Not Applicable') {
+                    setValue('breast_remark', 'Not Applicable', { shouldValidate: true });
+                } else if (value.breast_exam === 'Normal' && value.breast_remark !== 'Normal') {
+                    setValue('breast_remark', 'Normal', { shouldValidate: true });
+                }
+            }
+
+            // FBS / RBS mutual exclusivity sync
+            if (name === 'fbs') {
+                if (value.fbs && !isNaN(parseFloat(value.fbs)) && value.rbs !== 'Not Applicable') {
+                    setValue('rbs', 'Not Applicable', { shouldValidate: true });
+                }
+            }
+            if (name === 'rbs') {
+                if (value.rbs && !isNaN(parseFloat(value.rbs)) && value.fbs !== 'Not Applicable') {
+                    setValue('fbs', 'Not Applicable', { shouldValidate: true });
+                }
+            }
+
+            // Urine Analysis result/remark sync
+            if (name === 'ua_result') {
+                if (value.ua_result === 'No Abnormality' && value.ua_remark !== 'Normal') {
+                    setValue('ua_remark', 'Normal', { shouldValidate: true });
                 }
             }
         });
@@ -423,7 +474,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                         ].map(f => (
                             <div key={f.id} className="space-y-1">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} {!f.optional && <span className="text-red-500">*</span>}</Label>
-                                <Input {...register(f.id, f.optional ? {} : { required: true })} className="h-9 text-sm" required={!f.optional} />
+                                <Input 
+                                    {...register(f.id, f.optional ? {} : { required: `${f.label} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.id] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.id] && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.id]?.message}</p>}
                             </div>
                         ))}
                     </div>
@@ -478,16 +533,28 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="md:col-span-1">
                                 <SelectField name="htn_status" control={control} label="HTN" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label>
+                                <Input {...register('bp', { required: 'B.P is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).bp ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).bp && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).bp.message}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label>
+                                <Input {...register('pulse', { required: 'PULSE is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).pulse ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).pulse && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).pulse.message}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label>
+                                <Input {...register('spo2', { required: 'SPO2 is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).spo2 ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).spo2 && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).spo2.message}</p>}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
                              <SelectField name="psa" control={control} label="PSA RESULT" options={['Negative', 'Not Applicable', 'Positive']} />
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
-                              <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} setValue={setValue} />
-                             <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} setValue={setValue} />
+                              <ComboField {...register('fbs', { required: 'FBS is required' })} label="FBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).fbs} />
+                             <ComboField {...register('rbs', { required: 'RBS is required' })} label="RBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).rbs} />
                              <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
@@ -495,7 +562,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
-                             <ComboField {...register('assessment_hx_pe')} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} setValue={setValue} />
+                             <ComboField {...register('assessment_hx_pe', { required: 'Assessment Hx & PE is required' })} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} setValue={setValue} error={(errors as any).assessment_hx_pe} />
                               <div className="space-y-1 col-span-full lg:col-span-4">
                                  <div className="flex items-center justify-between ml-1 mb-1">
                                     <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark</Label>
