@@ -281,7 +281,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         ['', td('Sodium'), td(kft.get('sodium')), td('135-145'), td('mmol/L'), ''],
         ['', td('Chloride'), td(kft.get('chloride')), td('97-107'), td('mmol/L'), ''],
         ['', td('Bicarbonate'), td(kft.get('hco3')), td('20-31'), td('mmol/L'), ''],
-        ['', td('Urea'), td(lft.get('urea')), td('2.5-9.33'), td('mmol/L'), ''],
+        ['', td('Urea'), td(lft.get('urea')), td('2.5-8.33'), td('mmol/L'), ''],
         ['', td('Cretinine'), td(lft.get('creatinine')), td('Male: 80-133<br/>Female: 62-115'), td('umol/L<br/>umol/L'), ''],
         
         # Lipid Profile

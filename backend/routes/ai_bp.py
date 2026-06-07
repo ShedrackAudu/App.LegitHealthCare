@@ -25,7 +25,11 @@ def get_settings():
         'response_format': settings.response_format,
         'api_key': settings.api_key or "",
         'model_selection': settings.model_selection,
-        'sample_comments': json.loads(settings.sample_comments) if settings.sample_comments else []
+        'sample_comments': json.loads(settings.sample_comments) if settings.sample_comments else [],
+        'prompt_fbc': settings.prompt_fbc,
+        'prompt_lipid': settings.prompt_lipid,
+        'prompt_lft': settings.prompt_lft,
+        'prompt_kft': settings.prompt_kft
     }), 200
 
 def update_env_file(key, value):
@@ -66,6 +70,10 @@ def update_settings():
         settings.medical_parameters = json.dumps(data.get('medical_parameters', []))
         settings.system_prompt = data.get('system_prompt', settings.system_prompt)
         settings.response_format = data.get('response_format', settings.response_format)
+        settings.prompt_fbc = data.get('prompt_fbc', settings.prompt_fbc)
+        settings.prompt_lipid = data.get('prompt_lipid', settings.prompt_lipid)
+        settings.prompt_lft = data.get('prompt_lft', settings.prompt_lft)
+        settings.prompt_kft = data.get('prompt_kft', settings.prompt_kft)
         
         new_api_key = data.get('api_key')
         if new_api_key:

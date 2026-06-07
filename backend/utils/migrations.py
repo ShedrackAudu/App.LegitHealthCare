@@ -174,5 +174,23 @@ def ensure_schema(app):
                             conn.commit()
                         app.logger.info(f"Successfully updated {name} schema for patient_users.")
 
+                # 10. Add test-specific prompt columns to ai_settings
+                if 'ai_settings' in inspector.get_table_names():
+                    columns = [c['name'] for c in inspector.get_columns('ai_settings')]
+                    with engine.connect() as conn:
+                        if 'prompt_fbc' not in columns:
+                            app.logger.info(f"Adding 'prompt_fbc' column to ai_settings table in {name} database...")
+                            conn.execute(text("ALTER TABLE ai_settings ADD COLUMN prompt_fbc TEXT"))
+                        if 'prompt_lipid' not in columns:
+                            app.logger.info(f"Adding 'prompt_lipid' column to ai_settings table in {name} database...")
+                            conn.execute(text("ALTER TABLE ai_settings ADD COLUMN prompt_lipid TEXT"))
+                        if 'prompt_lft' not in columns:
+                            app.logger.info(f"Adding 'prompt_lft' column to ai_settings table in {name} database...")
+                            conn.execute(text("ALTER TABLE ai_settings ADD COLUMN prompt_lft TEXT"))
+                        if 'prompt_kft' not in columns:
+                            app.logger.info(f"Adding 'prompt_kft' column to ai_settings table in {name} database...")
+                            conn.execute(text("ALTER TABLE ai_settings ADD COLUMN prompt_kft TEXT"))
+                        conn.commit()
+
             except Exception as e:
                 app.logger.error(f"Migration error for {name}: {e}")

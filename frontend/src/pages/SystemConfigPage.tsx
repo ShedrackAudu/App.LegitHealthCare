@@ -601,7 +601,7 @@ const SystemConfigPage: React.FC = () => {
     };
     return (
         <MainLayout>
-            <div className="max-w-6xl mx-auto space-y-8 pb-10">
+            <div className="w-full space-y-8 pb-10">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
@@ -1028,78 +1028,6 @@ const SystemConfigPage: React.FC = () => {
                                                         }`}
                                                     />
                                                 )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Lab Tests AI Remarks Generation</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) and Lipid Profile results using AI in the background and writes a brief summary to the remark fields.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
-                                            <span className={`text-xs font-black uppercase tracking-widest ${aiFbcRemarksEnabled ? 'text-primary' : 'text-rose-500'}`}>
-                                                {aiFbcRemarksEnabled ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                disabled={maintenanceSaving || !canManageMaintenance}
-                                                onClick={handleToggleAiFbcRemarks}
-                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                                                    aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
-                                                }`}
-                                            >
-                                                {maintenanceSaving ? (
-                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
-                                                        aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
-                                                    }`}>
-                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
-                                                    </span>
-                                                ) : (
-                                                    <span
-                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
-                                                            aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
-                                                        }`}
-                                                    />
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Bulk AI Review Generator</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                Enable or disable the Bulk AI Review Generator feature on the Director Review landing page.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
-                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkAiReviewEnabled ? 'text-primary' : 'text-rose-500'}`}>
-                                                {bulkAiReviewEnabled ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                disabled={maintenanceSaving || !canManageMaintenance}
-                                                onClick={handleToggleBulkAiReview}
-                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                                                    bulkAiReviewEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
-                                                }`}
-                                            >
-                                                {maintenanceSaving ? (
-                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
-                                                        bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
-                                                    }`}>
-                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
-                                                    </span>
-                                                ) : (
-                                                    <span
-                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
-                                                            bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
-                                                        }`}
-                                                    />
-                                                 )}
                                             </button>
                                         </div>
                                     </div>

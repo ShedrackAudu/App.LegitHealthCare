@@ -273,7 +273,7 @@ const PublicReportPage: React.FC = () => {
                             <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
                             <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
                             <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                            <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-9.33</td><td>mmol/L</td></tr>
+                            <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-8.33</td><td>mmol/L</td></tr>
                             <tr>
                                 <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
                                 <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
