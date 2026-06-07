@@ -228,80 +228,81 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
         });
     }, [history, reset]);
 
-    // Live calculation for KFT and Lipids, and PSA/Breast field sync
+    // Watch individual fields for calculations and sync logic
+    const total_cholesterol = watch('total_cholesterol');
+    const triglycerides = watch('triglycerides');
+    const hdl = watch('hdl');
+
+    const psa = watch('psa');
+    const psa_remark = watch('psa_remark');
+    const breast_exam = watch('breast_exam');
+    const breast_remark = watch('breast_remark');
+    const fbs = watch('fbs');
+    const rbs = watch('rbs');
+    const ua_result = watch('ua_result');
+    const ua_remark = watch('ua_remark');
+
+    // Live calculation for HDL and LDL
     useEffect(() => {
-        const subscription = watch((value, { name }) => {
-            // Urea -> Creatinine estimation (sample logic)
-            if (name === 'urea') {
-                const urea = parseFloat(value.urea);
-                if (!isNaN(urea)) {
-                    // Just example logic
-                }
-            }
+        const tcho = parseFloat(total_cholesterol);
+        if (!isNaN(tcho)) {
+            setValue('hdl', (tcho * 0.35).toFixed(2));
+        }
+    }, [total_cholesterol, setValue]);
 
-            // HDL: TCHO * 0.35
-            if (name === 'total_cholesterol') {
-                const tcho = parseFloat(value.total_cholesterol);
-                if (!isNaN(tcho)) {
-                    setValue('hdl', (tcho * 0.35).toFixed(2));
-                }
-            }
+    useEffect(() => {
+        const tcho = parseFloat(total_cholesterol);
+        const tg = parseFloat(triglycerides);
+        const hd = parseFloat(hdl);
+        if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hd)) {
+            const ldl = tcho - ((tg / 5) + hd);
+            setValue('ldl', ldl.toFixed(2));
+        }
+    }, [total_cholesterol, triglycerides, hdl, setValue]);
 
-            // LDL: TCHO - (TRIGLYCERIDES(TG)/5 + HDL)
-            if (name === 'total_cholesterol' || name === 'triglycerides' || name === 'hdl') {
-                const tcho = parseFloat(value.total_cholesterol);
-                const tg = parseFloat(value.triglycerides);
-                const hdl = parseFloat(value.hdl);
-                if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hdl)) {
-                    const ldl = tcho - ((tg / 5) + hdl);
-                    setValue('ldl', ldl.toFixed(2));
-                }
-            }
+    // PSA bidirectional sync
+    useEffect(() => {
+        if (psa === 'Not Applicable' && psa_remark !== 'Not Applicable') {
+            setValue('psa_remark', 'Not Applicable', { shouldValidate: true });
+        } else if (psa === 'Negative' && psa_remark !== 'Normal') {
+            setValue('psa_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [psa, setValue]);
 
-            // PSA result/remark bidirectional sync
-            if (name === 'psa') {
-                if (value.psa === 'Not Applicable' && value.psa_remark !== 'Not Applicable') {
-                    setValue('psa_remark', 'Not Applicable', { shouldValidate: true });
-                } else if (value.psa === 'Negative' && value.psa_remark !== 'Normal') {
-                    setValue('psa_remark', 'Normal', { shouldValidate: true });
-                }
-            }
-            if (name === 'psa_remark') {
-                if (value.psa_remark === 'Not Applicable' && value.psa !== 'Not Applicable') {
-                    setValue('psa', 'Not Applicable', { shouldValidate: true });
-                }
-            }
+    useEffect(() => {
+        if (psa_remark === 'Not Applicable' && psa !== 'Not Applicable') {
+            setValue('psa', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [psa_remark, setValue]);
 
-            // Breast exam/remark sync
-            if (name === 'breast_exam') {
-                if (value.breast_exam === 'Not Applicable' && value.breast_remark !== 'Not Applicable') {
-                    setValue('breast_remark', 'Not Applicable', { shouldValidate: true });
-                } else if (value.breast_exam === 'Normal' && value.breast_remark !== 'Normal') {
-                    setValue('breast_remark', 'Normal', { shouldValidate: true });
-                }
-            }
+    // Breast Exam sync
+    useEffect(() => {
+        if (breast_exam === 'Not Applicable' && breast_remark !== 'Not Applicable') {
+            setValue('breast_remark', 'Not Applicable', { shouldValidate: true });
+        } else if (breast_exam === 'Normal' && breast_remark !== 'Normal') {
+            setValue('breast_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [breast_exam, setValue]);
 
-            // FBS / RBS mutual exclusivity sync
-            if (name === 'fbs') {
-                if (value.fbs && !isNaN(parseFloat(value.fbs)) && value.rbs !== 'Not Applicable') {
-                    setValue('rbs', 'Not Applicable', { shouldValidate: true });
-                }
-            }
-            if (name === 'rbs') {
-                if (value.rbs && !isNaN(parseFloat(value.rbs)) && value.fbs !== 'Not Applicable') {
-                    setValue('fbs', 'Not Applicable', { shouldValidate: true });
-                }
-            }
+    // FBS / RBS mutual exclusivity sync
+    useEffect(() => {
+        if (fbs && !isNaN(parseFloat(fbs)) && rbs !== 'Not Applicable') {
+            setValue('rbs', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [fbs, setValue]);
 
-            // Urine Analysis result/remark sync
-            if (name === 'ua_result') {
-                if (value.ua_result === 'No Abnormality' && value.ua_remark !== 'Normal') {
-                    setValue('ua_remark', 'Normal', { shouldValidate: true });
-                }
-            }
-        });
-        return () => subscription.unsubscribe();
-    }, [watch, setValue]);
+    useEffect(() => {
+        if (rbs && !isNaN(parseFloat(rbs)) && fbs !== 'Not Applicable') {
+            setValue('fbs', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [rbs, setValue]);
+
+    // Urine Analysis result/remark sync
+    useEffect(() => {
+        if (ua_result === 'No Abnormality' && ua_remark !== 'Normal') {
+            setValue('ua_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [ua_result, setValue]);
 
     const handleAIGenerate = async () => {
         setGeneratingAI(true);
