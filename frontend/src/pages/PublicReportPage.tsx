@@ -298,24 +298,24 @@ const PublicReportPage: React.FC = () => {
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>{getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').name}</td>
-                                <td>{reportData.results.fbc?.lymp_percent || '-'}</td>
-                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').range)}</td>
-                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').unit)}</td>
+                                <td>{getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').name}</td>
+                                <td>{reportData.results.fbc?.lymp_abs || '-'}</td>
+                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').range)}</td>
+                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').unit)}</td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>{getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').name}</td>
-                                <td>{reportData.results.fbc?.gra_percent || '-'}</td>
-                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').range)}</td>
-                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').unit)}</td>
+                                <td>{getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').name}</td>
+                                <td>{reportData.results.fbc?.gra_abs || '-'}</td>
+                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').range)}</td>
+                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').unit)}</td>
                             </tr>
                             <tr>
                                 <td></td>
-                                <td>{getParam('mixed', 'Mixed', '4.5-12.1', '%').name}</td>
-                                <td>{reportData.results.fbc?.mid_percent || '-'}</td>
-                                <td>{renderMultiline(getParam('mixed', 'Mixed', '4.5-12.1', '%').range)}</td>
-                                <td>{renderMultiline(getParam('mixed', 'Mixed', '4.5-12.1', '%').unit)}</td>
+                                <td>{getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').name}</td>
+                                <td>{reportData.results.fbc?.mid_abs || '-'}</td>
+                                <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').range)}</td>
+                                <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').unit)}</td>
                             </tr>
                             <tr>
                                 <td></td>

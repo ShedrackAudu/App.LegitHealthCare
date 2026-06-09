@@ -297,9 +297,9 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     
     pcv_name, pcv_ref, pcv_unit = get_param('pcv', 'PCV', '36-53.9', '%')
     wbc_name, wbc_ref, wbc_unit = get_param('wbc', 'WBC', '3-11', 'x109/L')
-    lymph_name, lymph_ref, lymph_unit = get_param('lymphocyte', 'Lymphocryte', '19.1-48', '%')
-    neut_name, neut_ref, neut_unit = get_param('neutrophil', 'Neutrophil', '43.6-73.3', '%')
-    mixed_name, mixed_ref, mixed_unit = get_param('mixed', 'Mixed', '4.5-12.1', '%')
+    lymph_name, lymph_ref, lymph_unit = get_param('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10\u2079/L')
+    neut_name, neut_ref, neut_unit = get_param('neutrophil', 'Neutrophil', '1.5-8.0', 'x10\u2079/L')
+    mixed_name, mixed_ref, mixed_unit = get_param('mixed', 'Mixed', '0.1-1.8', 'x10\u2079/L')
     plat_name, plat_ref, plat_unit = get_param('platelets', 'Platelets', '100-450', 'x109/L')
     
     k_name, k_ref, k_unit = get_param('potassium', 'Potassium', '3.5-5.0', 'mmol/L')
@@ -336,9 +336,9 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         # FBC
         [td('FBC', True), td(pcv_name), td(fbc.get('pcv')), td(pcv_ref), td(pcv_unit), td(fbc.get('remark'))],
         ['', td(wbc_name), td(fbc.get('wbc')), td(wbc_ref), td(wbc_unit), ''],
-        ['', td(lymph_name), td(fbc.get('lymp_percent')), td(lymph_ref), td(lymph_unit), ''],
-        ['', td(neut_name), td(fbc.get('gra_percent')), td(neut_ref), td(neut_unit), ''],
-        ['', td(mixed_name), td(fbc.get('mid_percent')), td(mixed_ref), td(mixed_unit), ''],
+        ['', td(lymph_name), td(fbc.get('lymp_abs')), td(lymph_ref), td(lymph_unit), ''],
+        ['', td(neut_name), td(fbc.get('gra_abs')), td(neut_ref), td(neut_unit), ''],
+        ['', td(mixed_name), td(fbc.get('mid_abs')), td(mixed_ref), td(mixed_unit), ''],
         ['', td(plat_name), td(fbc.get('plt')), td(plat_ref), td(plat_unit), ''],
         
         # Kidney Function

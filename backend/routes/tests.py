@@ -39,9 +39,9 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 prompt_data = (
                     get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', fbc_data.get('pcv')) +
                     get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', fbc_data.get('wbc')) +
-                    get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '19.1-48', '%', fbc_data.get('lymp_percent')) +
-                    get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '43.6-73.3', '%', fbc_data.get('gra_percent')) +
-                    get_param_prompt(params, 'mixed', 'Mixed (MID)', '4.5-12.1', '%', fbc_data.get('mid_percent')) +
+                    get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', fbc_data.get('lymp_abs')) +
+                    get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', fbc_data.get('gra_abs')) +
+                    get_param_prompt(params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', fbc_data.get('mid_abs')) +
                     get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', fbc_data.get('plt'))
                 )
                 
@@ -667,9 +667,9 @@ def bulk_ai_remarks(test_type):
                     prompt_data = (
                         get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', record.pcv) +
                         get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', record.wbc) +
-                        get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '19.1-48', '%', record.lymp_percent) +
-                        get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '43.6-73.3', '%', record.gra_percent) +
-                        get_param_prompt(params, 'mixed', 'Mixed (MID)', '4.5-12.1', '%', record.mid_percent) +
+                        get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', record.lymp_abs) +
+                        get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', record.gra_abs) +
+                        get_param_prompt(params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', record.mid_abs) +
                         get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', record.plt)
                     )
                     system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (

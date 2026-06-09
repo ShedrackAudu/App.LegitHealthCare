@@ -649,7 +649,8 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     if f:
         results["fbc"] = {
             "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
-            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
+            "lymp_percent": f.lymp_percent, "lymp_abs": f.lymp_abs, "gra_percent": f.gra_percent,
+            "gra_abs": f.gra_abs, "mid_percent": f.mid_percent, "mid_abs": f.mid_abs
         }
     
     k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()

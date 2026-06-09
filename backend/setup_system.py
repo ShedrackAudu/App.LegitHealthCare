@@ -42,9 +42,9 @@ def setup_system(app, purge=False):
                 # FBC
                 {"id": "pcv", "category": "fbc", "parameter_name": "PCV", "reference_value": "36-53.9", "unit": "%", "display_order": 1},
                 {"id": "wbc", "category": "fbc", "parameter_name": "WBC", "reference_value": "3-11", "unit": "x109/L", "display_order": 2},
-                {"id": "lymphocyte", "category": "fbc", "parameter_name": "Lymphocryte", "reference_value": "19.1-48", "unit": "%", "display_order": 3},
-                {"id": "neutrophil", "category": "fbc", "parameter_name": "Neutrophil", "reference_value": "43.6-73.3", "unit": "%", "display_order": 4},
-                {"id": "mixed", "category": "fbc", "parameter_name": "Mixed", "reference_value": "4.5-12.1", "unit": "%", "display_order": 5},
+                {"id": "lymphocyte", "category": "fbc", "parameter_name": "Lymphocryte", "reference_value": "0.6-4.1", "unit": "x10\u2079/L", "display_order": 3},
+                {"id": "neutrophil", "category": "fbc", "parameter_name": "Neutrophil", "reference_value": "1.5-8.0", "unit": "x10\u2079/L", "display_order": 4},
+                {"id": "mixed", "category": "fbc", "parameter_name": "Mixed", "reference_value": "0.1-1.8", "unit": "x10\u2079/L", "display_order": 5},
                 {"id": "platelets", "category": "fbc", "parameter_name": "Platelets", "reference_value": "100-450", "unit": "x109/L", "display_order": 6},
                 
                 # KFT

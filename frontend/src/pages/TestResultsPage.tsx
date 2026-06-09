@@ -419,29 +419,24 @@ const TestResultsPage: React.FC = () => {
                             
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
                                 {(selectedTest === 'ecg' || selectedTest === 'spirometry' || selectedTest === 'audiometry') && (
-                                    <Card 
-                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
-                                        onClick={() => fetchQueueList(selectedTest || '')}
-                                    >
-                                        <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
-                                                    <h3 className="text-lg font-black tracking-tighter leading-none">
-                                                        {selectedTest === 'ecg' ? queueData.ecg || 0 : 
-                                                        selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
-                                                        queueData.audiometry || 0}
-                                                    </h3>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
-                                            </div>
-                                        </CardContent>
-                                    </Card>
+                                <Card 
+                                    className="bg-primary/5 border-primary/20 border-2 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 shadow-sm"
+                                    onClick={() => fetchQueueList(selectedTest || '')}
+                                >
+                                    <CardContent className="p-3 flex items-center gap-3 h-full">
+                                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
+                                            <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
+                                        </div>
+                                        <div className="text-center">
+                                            <h3 className="text-2xl font-black tracking-tighter leading-none">
+                                                {selectedTest === 'ecg' ? queueData.ecg || 0 : 
+                                                selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
+                                                queueData.audiometry || 0}
+                                            </h3>
+                                            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground leading-tight mt-0.5">Queue</p>
+                                        </div>
+                                    </CardContent>
+                                </Card>
                                 )}
 
                                 {/* Search Section Redesign */}
