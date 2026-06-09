@@ -206,6 +206,14 @@ const adminActions = [
     color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     permission: 'manage_departments'
   },
+  { 
+    title: 'Report Customization', 
+    description: 'Customize reference ranges, parameter names, and units on patient reports.',
+    icon: Note01Icon, 
+    path: '/report-customization',
+    color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    permission: 'manage_report_customization'
+  },
 ];
 
 const LiveClock: React.FC = () => {

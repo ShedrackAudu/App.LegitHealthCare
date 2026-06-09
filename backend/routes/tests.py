@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig, ReportParameter
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
@@ -8,11 +8,22 @@ import pandas as pd
 from io import BytesIO
 import json
 
+def get_param_prompt(params, param_id, default_name, default_val, default_unit, current_val):
+    p = params.get(param_id)
+    name = p.parameter_name if p else default_name
+    val_range = p.reference_value if p else default_val
+    unit = p.unit if p else default_unit
+    unit_str = f" {unit}" if unit else ""
+    # Strip newlines for prompt clarity
+    val_range_clean = str(val_range).replace('\n', ' ').strip()
+    unit_str_clean = str(unit_str).replace('\n', ' ').strip()
+    return f"{name}: {current_val or '-'} {unit_str_clean} (Ref Range: {val_range_clean} {unit_str_clean})\n"
+
 def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, company_context):
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, FBCResult
+                from models import db, AISettings, FBCResult, ReportParameter
                 from openai import OpenAI
                 import os
                 
@@ -24,13 +35,14 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                     
                 client = OpenAI(api_key=api_key)
                 
+                params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
-                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 36-53.9 %)\n"
-                    f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
-                    f"Lymphocyte: {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1-48 %)\n"
-                    f"Neutrophil (Granulocyte): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6-73.3 %)\n"
-                    f"Mixed (MID): {fbc_data.get('mid_percent') or '-'} % (Ref Range: 4.5-12.1 %)\n"
-                    f"Platelets (PLT): {fbc_data.get('plt') or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
+                    get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', fbc_data.get('pcv')) +
+                    get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', fbc_data.get('wbc')) +
+                    get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '19.1-48', '%', fbc_data.get('lymp_percent')) +
+                    get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '43.6-73.3', '%', fbc_data.get('gra_percent')) +
+                    get_param_prompt(params, 'mixed', 'Mixed (MID)', '4.5-12.1', '%', fbc_data.get('mid_percent')) +
+                    get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', fbc_data.get('plt'))
                 )
                 
                 system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (
@@ -74,7 +86,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, LipidResult
+                from models import db, AISettings, LipidResult, ReportParameter
                 from openai import OpenAI
                 import os
                 
@@ -86,11 +98,12 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     
                 client = OpenAI(api_key=api_key)
                 
+                params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
-                    f"Total Cholesterol: {lipid_data.get('total_cholesterol') or '-'} mg/dL (Ref Range: <200 mg/dL)\n"
-                    f"Triglycerides: {lipid_data.get('triglycerides') or '-'} mg/dL (Ref Range: <150 mg/dL)\n"
-                    f"HDL-c: {lipid_data.get('hdl') or '-'} mg/dL (Ref Range: >=40 mg/dL)\n"
-                    f"LDL-c: {lipid_data.get('ldl') or '-'} mg/dL (Ref Range: <130 mg/dL)\n"
+                    get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
+                    get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
+                    get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
+                    get_param_prompt(params, 'ldl', 'LDL-c', '<130', 'mg/dL', lipid_data.get('ldl'))
                 )
                 
                 system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
@@ -623,6 +636,7 @@ def bulk_ai_remarks(test_type):
         target_remark_field = target_remark_fields.get(test_type)
 
         # Step 1: Collect prompt data in the main thread (100% thread-safe database access)
+        params = {p.id: p for p in ReportParameter.query.all()}
         records_to_process = []
         for pid in matched_pids:
             try:
@@ -651,12 +665,12 @@ def bulk_ai_remarks(test_type):
 
                 if test_type == 'fbc':
                     prompt_data = (
-                        f"PCV: {record.pcv or '-'} % (Ref Range: 36-53.9 %)\n"
-                        f"WBC: {record.wbc or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
-                        f"Lymphocyte: {record.lymp_percent or '-'} % (Ref Range: 19.1-48 %)\n"
-                        f"Neutrophil (Granulocyte): {record.gra_percent or '-'} % (Ref Range: 43.6-73.3 %)\n"
-                        f"Mixed (MID): {record.mid_percent or '-'} % (Ref Range: 4.5-12.1 %)\n"
-                        f"Platelets (PLT): {record.plt or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
+                        get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', record.pcv) +
+                        get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', record.wbc) +
+                        get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '19.1-48', '%', record.lymp_percent) +
+                        get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '43.6-73.3', '%', record.gra_percent) +
+                        get_param_prompt(params, 'mixed', 'Mixed (MID)', '4.5-12.1', '%', record.mid_percent) +
+                        get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', record.plt)
                     )
                     system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (
                         "You are a medical assistant analyzing patient Full Blood Count (FBC) results. "
@@ -669,10 +683,10 @@ def bulk_ai_remarks(test_type):
 
                 elif test_type == 'lipid':
                     prompt_data = (
-                        f"Total Cholesterol: {record.total_cholesterol or '-'} mg/dL (Ref Range: <200 mg/dL)\n"
-                        f"Triglycerides: {record.triglycerides or '-'} mg/dL (Ref Range: <150 mg/dL)\n"
-                        f"HDL-c: {record.hdl or '-'} mg/dL (Ref Range: >=40 mg/dL)\n"
-                        f"LDL-c: {record.ldl or '-'} mg/dL (Ref Range: <130 mg/dL)\n"
+                        get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
+                        get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
+                        get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
+                        get_param_prompt(params, 'ldl', 'LDL-c', '<130', 'mg/dL', record.ldl)
                     )
                     system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
                         "You are a medical assistant analyzing patient Lipid Profile results. "
@@ -685,11 +699,11 @@ def bulk_ai_remarks(test_type):
 
                 elif test_type == 'lft':
                     prompt_data = (
-                        f"AST: {record.ast or '-'} U/L (Ref Range: 0-46 U/L)\n"
-                        f"ALT: {record.alt or '-'} U/L (Ref Range: 0-49 U/L)\n"
-                        f"ALP: {record.alp or '-'} U/L (Ref Range: Male: 80-306 U/L, Female: 64-306 U/L)\n"
-                        f"TB: {record.tb or '-'} mg/dL (Ref Range: 0-1.2 mg/dL)\n"
-                        f"CB: {record.cb or '-'} mg/dL (Ref Range: 0-0.4 mg/dL)\n"
+                        get_param_prompt(params, 'ast', 'AST', '0-46', 'U/L', record.ast) +
+                        get_param_prompt(params, 'alt', 'ALT', '0-49', 'U/L', record.alt) +
+                        get_param_prompt(params, 'alp', 'ALP', 'Male: 80-306, Female: 64-306', 'U/L', record.alp) +
+                        get_param_prompt(params, 'tb', 'TB', '0-1.2', 'mg/dL', record.tb) +
+                        get_param_prompt(params, 'cb', 'CB', '0-0.4', 'mg/dL', record.cb)
                     )
                     system_prompt = settings.prompt_lft if (settings and settings.prompt_lft) else (
                         "You are a medical assistant analyzing patient Liver Function Test (LFT) results. "
@@ -705,12 +719,12 @@ def bulk_ai_remarks(test_type):
                     urea_val = lft_record.urea if lft_record else '-'
                     creatinine_val = lft_record.creatinine if lft_record else '-'
                     prompt_data = (
-                        f"Potassium: {record.potassium or '-'} mmol/L (Ref Range: 3.5-5.0 mmol/L)\n"
-                        f"Sodium: {record.sodium or '-'} mmol/L (Ref Range: 135-145 mmol/L)\n"
-                        f"Chloride: {record.chloride or '-'} mmol/L (Ref Range: 97-107 mmol/L)\n"
-                        f"Bicarbonate (HCO3): {record.hco3 or '-'} mmol/L (Ref Range: 20-31 mmol/L)\n"
-                        f"Urea: {urea_val or '-'} mmol/L (Ref Range: 2.5-8.33 mmol/L)\n"
-                        f"Creatinine: {creatinine_val or '-'} umol/L (Ref Range: Male: 80-133 umol/L, Female: 62-115 umol/L)\n"
+                        get_param_prompt(params, 'potassium', 'Potassium', '3.5-5.0', 'mmol/L', record.potassium) +
+                        get_param_prompt(params, 'sodium', 'Sodium', '135-145', 'mmol/L', record.sodium) +
+                        get_param_prompt(params, 'chloride', 'Chloride', '97-107', 'mmol/L', record.chloride) +
+                        get_param_prompt(params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.bicarbonate) +
+                        get_param_prompt(params, 'urea', 'Urea', '2.5-8.33', 'mmol/L', urea_val) +
+                        get_param_prompt(params, 'creatinine', 'Creatinine', 'Male: 80-133, Female: 62-115', 'umol/L', creatinine_val)
                     )
                     system_prompt = settings.prompt_kft if (settings and settings.prompt_kft) else (
                         "You are a medical assistant analyzing patient Kidney Function Test (KFT) results. "

@@ -61,6 +61,8 @@ const getPageTitle = (pathname: string, branding: any, brandingError: boolean) =
   if (pathname.includes('/departments')) return 'Clinic Departments';
   if (pathname.includes('/appointments')) return 'Appointment Scheduler';
   if (pathname.includes('/security-analytics')) return 'Security Command Center';
+  if (pathname.includes('/report-customization')) return 'Report Customization';
+  if (pathname.includes('/inventory')) return 'Inventory & Stock Management';
   
   return (branding?.clinic_name && !brandingError) ? branding.clinic_name : 'Legit HealthCare';
 };

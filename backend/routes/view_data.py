@@ -7,7 +7,7 @@ from models import (
     db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
     SpecialTestsResult, DirectorReview, AuditLog, QueueEntry,
-    ReportVerification, AppBranding
+    ReportVerification, AppBranding, ReportParameter
 )
 import uuid
 
@@ -754,6 +754,10 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     branding = AppBranding.query.first()
     branding_data = branding.to_dict() if branding else {}
     
+    # Custom Report Parameters
+    params = ReportParameter.query.all()
+    params_dict = {p.id: p.to_dict() for p in params}
+    
     return {
         "bio": bio_info,
         "results": results,
@@ -764,7 +768,8 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "report_date_time": report_date_time,
             "gen_date_time": datetime.now().isoformat()
         },
-        "branding": branding_data
+        "branding": branding_data,
+        "report_parameters": params_dict
     }
 
 @view_data_bp.route('/patient-report/bulk-download', methods=['GET'])

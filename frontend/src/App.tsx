@@ -38,6 +38,7 @@ import SecurityDashboard from './pages/SecurityDashboard';
 import OfflinePage from './pages/OfflinePage';
 import PatientFilesPage from './pages/PatientFilesPage';
 import InventoryPage from './pages/InventoryPage';
+import ReportCustomization from './pages/ReportCustomization';
 
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -96,6 +97,7 @@ function RootApp() {
                 <Route path="/system-config" element={<ProtectedRoute requiredPermission="manage_departments"><SystemConfigPage /></ProtectedRoute>} />
                 <Route path="/system-branding" element={<ProtectedRoute requiredPermission="manage_branding"><BrandingSettingsPage /></ProtectedRoute>} />
                 <Route path="/ai-integration" element={<ProtectedRoute requiredPermission="manage_ai"><AISettingsPage /></ProtectedRoute>} />
+                <Route path="/report-customization" element={<ProtectedRoute requiredPermission="manage_report_customization"><ReportCustomization /></ProtectedRoute>} />
                 <Route path="/user-management" element={<ProtectedRoute requiredPermission="view_users"><UserManagementPage /></ProtectedRoute>} />
                 <Route path="/roles-permissions" element={<ProtectedRoute requiredPermission="manage_roles"><RolePermissionPage /></ProtectedRoute>} />
                 <Route path="/audit-logs" element={<ProtectedRoute requiredPermission="view_audit_logs"><AuditLogPage /></ProtectedRoute>} />

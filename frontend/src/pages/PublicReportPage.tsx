@@ -161,6 +161,25 @@ const PublicReportPage: React.FC = () => {
 
     const { selected_patient } = reportData;
 
+    const getParam = (id: string, defaultName: string, defaultRange: string, defaultUnit: string) => {
+        const p = reportData?.report_parameters?.[id];
+        return {
+            name: p?.parameter_name || defaultName,
+            range: p?.reference_value || defaultRange,
+            unit: p?.unit !== undefined && p?.unit !== null ? p.unit : defaultUnit
+        };
+    };
+
+    const renderMultiline = (text: string | null | undefined) => {
+        if (!text) return '-';
+        return text.split('\n').map((line, idx) => (
+            <React.Fragment key={idx}>
+                {idx > 0 && <br />}
+                {line}
+            </React.Fragment>
+        ));
+    };
+
     return (
         <div className="h-full overflow-y-auto bg-background text-foreground pb-12 relative print:bg-transparent">
             {/* Control Bar - hidden on print */}
@@ -246,78 +265,200 @@ const PublicReportPage: React.FC = () => {
                             {/* Blood Sugar */}
                             <tr className="category-row">
                                 <td>Blood Sugar</td>
-                                <td>FBS</td><td>{reportData.results.consultation?.fbs || '-'}</td><td>70-99</td><td>ml/dL</td><td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
+                                <td>{getParam('fbs', 'FBS', '70-99', 'ml/dL').name}</td>
+                                <td>{reportData.results.consultation?.fbs || '-'}</td>
+                                <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').range)}</td>
+                                <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').unit)}</td>
+                                <td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
                             </tr>
                             <tr>
-                                <td></td><td>RBS</td><td>{reportData.results.consultation?.rbs || '-'}</td><td>&lt;200</td><td>ml/dL</td>
+                                <td></td>
+                                <td>{getParam('rbs', 'RBS', '<200', 'ml/dL').name}</td>
+                                <td>{reportData.results.consultation?.rbs || '-'}</td>
+                                <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').range)}</td>
+                                <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').unit)}</td>
                             </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                             {/* FBC */}
                             <tr className="category-row">
                                 <td>FBC</td>
-                                <td>PCV</td><td>{reportData.results.fbc?.pcv || '-'}</td><td>36-53.9</td><td>%</td><td rowSpan={6}>{reportData.results.fbc?.remark || '-'}</td>
+                                <td>{getParam('pcv', 'PCV', '36-53.9', '%').name}</td>
+                                <td>{reportData.results.fbc?.pcv || '-'}</td>
+                                <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').range)}</td>
+                                <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').unit)}</td>
+                                <td rowSpan={6}>{reportData.results.fbc?.remark || '-'}</td>
                             </tr>
-                            <tr><td></td><td>WBC</td><td>{reportData.results.fbc?.wbc || '-'}</td><td>3-11</td><td>x109/L</td></tr>
-                            <tr><td></td><td>Lymphocryte</td><td>{reportData.results.fbc?.lymp_percent || '-'}</td><td>19.1-48</td><td>%</td></tr>
-                            <tr><td></td><td>Neutrophil</td><td>{reportData.results.fbc?.gra_percent || '-'}</td><td>43.6-73.3</td><td>%</td></tr>
-                            <tr><td></td><td>Mixed</td><td>{reportData.results.fbc?.mid_percent || '-'}</td><td>4.5-12.1</td><td>%</td></tr>
-                            <tr><td></td><td>Platelets</td><td>{reportData.results.fbc?.plt || '-'}</td><td>100-450</td><td>x109/L</td></tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('wbc', 'WBC', '3-11', 'x109/L').name}</td>
+                                <td>{reportData.results.fbc?.wbc || '-'}</td>
+                                <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').range)}</td>
+                                <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').name}</td>
+                                <td>{reportData.results.fbc?.lymp_percent || '-'}</td>
+                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').range)}</td>
+                                <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '19.1-48', '%').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').name}</td>
+                                <td>{reportData.results.fbc?.gra_percent || '-'}</td>
+                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').range)}</td>
+                                <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '43.6-73.3', '%').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('mixed', 'Mixed', '4.5-12.1', '%').name}</td>
+                                <td>{reportData.results.fbc?.mid_percent || '-'}</td>
+                                <td>{renderMultiline(getParam('mixed', 'Mixed', '4.5-12.1', '%').range)}</td>
+                                <td>{renderMultiline(getParam('mixed', 'Mixed', '4.5-12.1', '%').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('platelets', 'Platelets', '100-450', 'x109/L').name}</td>
+                                <td>{reportData.results.fbc?.plt || '-'}</td>
+                                <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').range)}</td>
+                                <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').unit)}</td>
+                            </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                             {/* KFT */}
                             <tr className="category-row">
                                 <td>Kidney Function</td>
-                                <td>Potassium</td><td>{reportData.results.kft?.potassium || '-'}</td><td>3.5-5.0</td><td>mmol/L</td><td rowSpan={6}>{reportData.results.kft?.remark || '-'}</td>
+                                <td>{getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').name}</td>
+                                <td>{reportData.results.kft?.potassium || '-'}</td>
+                                <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').range)}</td>
+                                <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').unit)}</td>
+                                <td rowSpan={6}>{reportData.results.kft?.remark || '-'}</td>
                             </tr>
-                            <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
-                            <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
-                            <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                            <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-8.33</td><td>mmol/L</td></tr>
                             <tr>
-                                <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
-                                <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
+                                <td></td>
+                                <td>{getParam('sodium', 'Sodium', '135-145', 'mmol/L').name}</td>
+                                <td>{reportData.results.kft?.sodium || '-'}</td>
+                                <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').range)}</td>
+                                <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('chloride', 'Chloride', '97-107', 'mmol/L').name}</td>
+                                <td>{reportData.results.kft?.chloride || '-'}</td>
+                                <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').range)}</td>
+                                <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').name}</td>
+                                <td>{reportData.results.kft?.hco3 || '-'}</td>
+                                <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').range)}</td>
+                                <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').name}</td>
+                                <td>{reportData.results.lft?.urea || '-'}</td>
+                                <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').range)}</td>
+                                <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').name}</td>
+                                <td>{reportData.results.lft?.creatinine || '-'}</td>
+                                <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').range)}</td>
+                                <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').unit)}</td>
                             </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                             {/* Lipid */}
                             <tr className="category-row">
                                 <td>Lipid Profile</td>
-                                <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>&lt;200</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
+                                <td>{getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').name}</td>
+                                <td>{reportData.results.lipid?.tcho || '-'}</td>
+                                <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').unit)}</td>
+                                <td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
                             </tr>
                             <tr>
-                                <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
-                                <td>Male: &lt;150<br />Female: &lt;150</td><td>mg/dL<br />mg/dL</td>
+                                <td></td>
+                                <td>{getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').name}</td>
+                                <td>{reportData.results.lipid?.tg || '-'}</td>
+                                <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').unit)}</td>
                             </tr>
                             <tr>
-                                <td></td><td>HDL-c</td><td>{reportData.results.lipid?.hdl || '-'}</td>
-                                <td>Male: =&gt;40<br />Female: =&gt;40</td><td>mg/dL<br />mg/dL</td>
+                                <td></td>
+                                <td>{getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').name}</td>
+                                <td>{reportData.results.lipid?.hdl || '-'}</td>
+                                <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').unit)}</td>
                             </tr>
-                            <tr><td></td><td>LDL-c</td><td>{reportData.results.lipid?.ldl || '-'}</td><td>&lt;130</td><td>mg/dL</td></tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('ldl', 'LDL-c', '<130', 'mg/dL').name}</td>
+                                <td>{reportData.results.lipid?.ldl || '-'}</td>
+                                <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').unit)}</td>
+                            </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                             {/* LFT */}
                             <tr className="category-row">
                                 <td>Liver Function</td>
-                                <td>AST</td><td>{reportData.results.lft?.ast || '-'}</td><td>0-46</td><td>U/L</td><td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
+                                <td>{getParam('ast', 'AST', '0-46', 'U/L').name}</td>
+                                <td>{reportData.results.lft?.ast || '-'}</td>
+                                <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').range)}</td>
+                                <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').unit)}</td>
+                                <td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
                             </tr>
-                            <tr><td></td><td>ALT</td><td>{reportData.results.lft?.alt || '-'}</td><td>0-49</td><td>U/L</td></tr>
                             <tr>
-                                <td></td><td>ALP</td><td>{reportData.results.lft?.alp || '-'}</td>
-                                <td>Male: 80-306<br />Female: 64-306</td><td>U/L<br />U/L</td>
+                                <td></td>
+                                <td>{getParam('alt', 'ALT', '0-49', 'U/L').name}</td>
+                                <td>{reportData.results.lft?.alt || '-'}</td>
+                                <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').range)}</td>
+                                <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').unit)}</td>
                             </tr>
-                            <tr><td></td><td>TB</td><td>{reportData.results.lft?.tb || '-'}</td><td>0-1.2</td><td>mg/dL</td></tr>
-                            <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-0.4</td><td>mg/dL</td></tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').name}</td>
+                                <td>{reportData.results.lft?.alp || '-'}</td>
+                                <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').range)}</td>
+                                <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('tb', 'TB', '0-1.2', 'mg/dL').name}</td>
+                                <td>{reportData.results.lft?.tb || '-'}</td>
+                                <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').unit)}</td>
+                            </tr>
+                            <tr>
+                                <td></td>
+                                <td>{getParam('cb', 'CB', '0-0.4', 'mg/dL').name}</td>
+                                <td>{reportData.results.lft?.cb || '-'}</td>
+                                <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').range)}</td>
+                                <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').unit)}</td>
+                            </tr>
                             <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                             {/* UA & PSA */}
                             <tr className="category-row">
                                 <td>Urine Analysis</td>
-                                <td>Sugar & Protein</td><td>{reportData.results.consultation?.ua_result || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.ua_remark || '-'}</td>
+                                <td>{getParam('ua', 'Sugar & Protein', 'NA', '').name}</td>
+                                <td>{reportData.results.consultation?.ua_result || '-'}</td>
+                                <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').range)}</td>
+                                <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').unit)}</td>
+                                <td>{reportData.results.consultation?.ua_remark || '-'}</td>
                             </tr>
                             <tr className="category-row">
                                 <td>PSA</td>
-                                <td>PSA</td><td>{reportData.results.consultation?.psa || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.psa_remark || '-'}</td>
+                                <td>{getParam('psa', 'PSA', 'NA', '').name}</td>
+                                <td>{reportData.results.consultation?.psa || '-'}</td>
+                                <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').range)}</td>
+                                <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').unit)}</td>
+                                <td>{reportData.results.consultation?.psa_remark || '-'}</td>
                             </tr>
                             <tr><td colSpan={6} style={{ borderTop: '2px solid var(--table-border-color)', height: '10px' }}></td></tr>
                         </tbody>

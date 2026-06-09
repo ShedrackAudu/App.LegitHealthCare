@@ -315,11 +315,32 @@ export const Sidebar: React.FC = () => {
           </div>
 
           <div className="px-3 mt-auto space-y-1.5">
+            {/* Manage Account Link */}
+            <NavLink
+              to="/account"
+              className={({ isActive }) => cn(
+                "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/manage",
+                "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
+                "dark:lg:text-muted-foreground dark:lg:hover:bg-muted dark:lg:hover:text-foreground",
+                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 lg:bg-white/20 lg:text-white dark:lg:bg-primary dark:lg:text-primary-foreground" : "",
+                isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+              )}
+              title="Manage Account"
+            >
+              <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 shrink-0" />
+              {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
+              {isCollapsed && (
+                <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
+                  Manage Account
+                </div>
+              )}
+            </NavLink>
+
             {/* Logout Button */}
             <button
               onClick={handleLogout}
               className={cn(
-                "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+                "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/logout",
                 "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
                 "dark:lg:text-rose-500 dark:lg:hover:bg-rose-500/10 dark:lg:hover:text-rose-600",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
@@ -328,6 +349,11 @@ export const Sidebar: React.FC = () => {
             >
               <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
+              {isCollapsed && (
+                <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">
+                  Log out
+                </div>
+              )}
             </button>
 
             {/* Separator */}

@@ -31,7 +31,8 @@ class RoutingSession(Session):
                     'temp_access_codes', 'access_requests', 'system_config', 
                     'report_verifications', 'chat_messages', 
                     'chat_groups', 'chat_group_members', 'user_contacts', 'notifications',
-                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions'
+                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions',
+                    'report_parameters'
                 ]:
                     return _db.engine
                 
@@ -435,6 +436,25 @@ class Nationality(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String(100), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
+
+class ReportParameter(db.Model):
+    __tablename__ = 'report_parameters'
+    id = db.Column(db.String(50), primary_key=True)  # unique string key like 'fbs', 'pcv', etc.
+    category = db.Column(db.String(50), nullable=False)  # e.g., 'blood_sugar', 'fbc', 'kft', 'lipid', 'lft', 'ua', 'psa'
+    parameter_name = db.Column(db.String(100), nullable=False)
+    reference_value = db.Column(db.String(255), nullable=False)
+    unit = db.Column(db.String(50), nullable=True)
+    display_order = db.Column(db.Integer, default=0)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "category": self.category,
+            "parameter_name": self.parameter_name,
+            "reference_value": self.reference_value,
+            "unit": self.unit or "",
+            "display_order": self.display_order
+        }
 
 class BioData(db.Model):
     __tablename__ = 'bio_data'

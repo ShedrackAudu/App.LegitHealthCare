@@ -1,16 +1,19 @@
 import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
+import axios from 'axios';
 import {
   DashboardSquare02Icon,
   Note01Icon,
   UserIcon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
   Building02Icon,
   Calendar03Icon,
   Comment01Icon,
-  Activity01Icon
+  Activity01Icon,
+  Logout01Icon,
+  UserSettings01Icon
 } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -29,7 +32,6 @@ const patientItems: SidebarItem[] = [
   { title: 'Technical Files', path: '/patient/files', icon: Activity01Icon },
   { title: 'Appointments', path: '/patient/appointments', icon: Calendar03Icon },
   { title: 'Contact Us', path: '/patient/contact', icon: Comment01Icon },
-  { title: 'Profile', path: '/patient/account', icon: UserIcon },
 ];
 
 export const PatientSidebar: React.FC = () => {
@@ -38,7 +40,23 @@ export const PatientSidebar: React.FC = () => {
     // Default to uncollapsed (false), but respect saved preference
     return saved !== null ? JSON.parse(saved) : false;
   });
-  const { branding, brandingError } = useAppContext();
+  const { branding, brandingError, user, setUser } = useAppContext();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    if (user) {
+      try {
+        await axios.post('/api/logout', { 
+          user_id: user.id,
+          portal: 'patient' 
+        });
+      } catch (err) {
+        console.error("Logout logging failed", err);
+      }
+    }
+    setUser(null);
+    navigate('/login');
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -133,16 +151,67 @@ export const PatientSidebar: React.FC = () => {
           ))}
         </div>
 
-        <div className="px-3 mt-auto">
-          <Button
-            variant="ghost"
-            size="icon"
+        <div className="px-3 mt-auto space-y-1.5">
+          {/* Manage Account Link */}
+          <NavLink
+            to="/patient/account"
+            className={({ isActive }) => cn(
+              "flex items-center rounded-lg transition-all duration-200 group/manage relative h-10",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            )}
+            title="Manage Account"
+          >
+            <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
+            {isCollapsed && (
+              <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
+                Manage Account
+              </div>
+            )}
+          </NavLink>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/logout",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
+            title="Log out"
+          >
+            <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
+            {isCollapsed && (
+              <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">
+                Log out
+              </div>
+            )}
+          </button>
+
+          {/* Separator */}
+          <div className="h-px bg-border my-1.5 mx-1" />
+
+          {/* Collapse/Expand Button */}
+          <button
             onClick={toggleSidebar}
-            className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5" /> : <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5" />}
-          </Button>
+            {isCollapsed ? (
+              <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+            ) : (
+              <>
+                <HugeiconsIcon icon={SidebarLeft01Icon} className="h-5 w-5 shrink-0" />
+                <span className="font-semibold text-sm">Collapse</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </aside>
