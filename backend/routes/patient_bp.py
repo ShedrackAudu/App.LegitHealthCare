@@ -57,9 +57,9 @@ def search_patient():
                 
                 select_clause = ", ".join(available_cols)
                 # Robust search: Case-insensitive (LOWER), handles prefix/suffix, and trims
-                # Use LOWER(...) LIKE LOWER(...) for cross-DB case-insensitive partial match
-                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid) OR LOWER(staff_id) LIKE LOWER(:sid_like)")
-                res = conn.execute(query, {"sid": clean_id, "sid_like": f"%{clean_id}%"})
+                # Use LOWER(...) = LOWER(...) for cross-DB case-insensitive exact match
+                query = text(f"SELECT {select_clause} FROM bio_data WHERE LOWER(TRIM(staff_id)) = LOWER(:sid)")
+                res = conn.execute(query, {"sid": clean_id})
                 result = res.fetchone()
                 
                 if result:
