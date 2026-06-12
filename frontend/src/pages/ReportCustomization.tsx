@@ -17,6 +17,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ReportParameter {
   id: string;
@@ -91,8 +92,52 @@ export const ReportCustomization = () => {
   if (loading) {
     return (
       <MainLayout>
-        <div className="flex justify-center py-20">
-          <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" />
+        <div className="w-full space-y-6 animate-pulse">
+          {/* Header Skeleton */}
+          <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border mb-8 border-primary/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
+              <Skeleton className="h-12 w-12 rounded-xl sm:rounded-2xl bg-muted/40 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-6 w-48 rounded bg-muted/40 animate-pulse" />
+                <Skeleton className="h-3.5 w-80 rounded bg-muted/40 animate-pulse" />
+              </div>
+            </div>
+          </div>
+
+          {/* Categories Tab Bar Skeleton */}
+          <div className="grid w-full grid-cols-2 md:grid-cols-7 h-[64px] p-1.5 gap-1.5 bg-muted/10 border rounded-xl mb-6">
+            {Array.from({ length: 7 }).map((_, i) => (
+              <Skeleton key={i} className="rounded-lg bg-muted/40 h-full animate-pulse" />
+            ))}
+          </div>
+
+          {/* Card Parameter List Skeleton */}
+          <Card className="border-2 shadow-xl relative overflow-hidden">
+            <div className="border-b bg-muted/5 p-6 space-y-2">
+              <Skeleton className="h-5 w-48 rounded bg-muted/40 animate-pulse" />
+              <Skeleton className="h-3.5 w-80 rounded bg-muted/40 animate-pulse" />
+            </div>
+            <CardContent className="p-6 md:p-8 space-y-6">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <div key={i} className="p-5 border-2 rounded-2xl bg-muted/5 space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
+                      <Skeleton className="h-10 w-full rounded bg-muted/40 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
+                      <Skeleton className="h-10 w-full rounded bg-muted/40 animate-pulse" />
+                    </div>
+                    <div className="space-y-2">
+                      <Skeleton className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
+                      <Skeleton className="h-10 w-full rounded bg-muted/40 animate-pulse" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </CardContent>
+          </Card>
         </div>
       </MainLayout>
     );

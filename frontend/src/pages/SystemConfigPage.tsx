@@ -29,6 +29,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ConfigItem {
     id: number;
@@ -105,8 +106,13 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             </CardHeader>
             <CardContent className="p-0">
                 {loading ? (
-                    <div className="h-64 flex items-center justify-center">
-                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-muted animate-pulse">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-background">
+                                <Skeleton className="h-4 w-24 rounded bg-muted/40 animate-pulse" />
+                                <Skeleton className="h-6 w-6 rounded-full bg-muted/40 animate-pulse" />
+                            </div>
+                        ))}
                     </div>
                 ) : items.length === 0 ? (
                     <div className="h-64 flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-4">
@@ -698,8 +704,27 @@ const SystemConfigPage: React.FC = () => {
 
                     <TabsContent value="email">
                         {emailLoading ? (
-                            <div className="h-64 flex items-center justify-center">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+                                <div className="lg:col-span-2 space-y-6">
+                                    <Card className="border-2 shadow-lg">
+                                        <div className="bg-muted/10 p-6 border-b space-y-2">
+                                            <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-3.5 w-72 rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                        <CardContent className="pt-6 space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-11 w-full rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-11 w-full rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">

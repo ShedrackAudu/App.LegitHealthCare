@@ -20,6 +20,7 @@ import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
 import { usePermissions } from '@/hooks/usePermissions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PARAMETERS = [
     { id: 'FBC', label: 'Full Blood Count (FBC)' },
@@ -211,7 +212,60 @@ export const AISettingsPage = () => {
         }));
     };
 
-    if (loading) return <MainLayout><div className="flex justify-center py-20"><HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>;
+    if (loading) {
+        return (
+            <MainLayout>
+                <div className="w-full space-y-6 animate-pulse">
+                    {/* Header Skeleton */}
+                    <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border mb-8 border-primary/5">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
+                            <Skeleton className="h-12 w-12 rounded-xl sm:rounded-2xl bg-muted/40 shrink-0" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-6 w-48 rounded bg-muted/40 animate-pulse" />
+                                <Skeleton className="h-3.5 w-80 rounded bg-muted/40 animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Config Cards Skeletons */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 space-y-6">
+                            <Card className="border-2 shadow-lg">
+                                <div className="bg-muted/10 p-6 border-b space-y-2">
+                                    <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-3 w-72 rounded bg-muted/40 animate-pulse" />
+                                </div>
+                                <CardContent className="pt-6 space-y-4">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <Skeleton className="h-4 w-28 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-10 w-full rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <div className="col-span-1 space-y-6">
+                            <Card className="border-2 shadow-lg">
+                                <div className="bg-muted/10 p-6 border-b space-y-2">
+                                    <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-3 w-48 rounded bg-muted/40 animate-pulse" />
+                                </div>
+                                <CardContent className="pt-6 space-y-4">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <Skeleton className="h-5 w-5 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-4 w-36 rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>

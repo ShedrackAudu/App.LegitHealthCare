@@ -61,6 +61,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 import { UserTimelineDialog } from '@/components/UserTimelineDialog';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface User {
   id: number | string;
@@ -1173,14 +1174,40 @@ const UserTable: React.FC<{
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={6} className="h-64 text-center">
-              <div className="flex flex-col items-center gap-2">
-                <HugeiconsIcon icon={ReloadIcon} className="h-8 w-8 animate-spin text-primary/40" />
-                <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Secure Directory...</p>
-              </div>
-            </TableCell>
-          </TableRow>
+          Array.from({ length: 6 }).map((_, i) => (
+            <TableRow key={i} className="animate-pulse">
+              <TableCell className="py-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-full bg-muted/40 animate-pulse" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                    <Skeleton className="h-3 w-16 rounded bg-muted/40 animate-pulse" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-32 rounded bg-muted/40 animate-pulse" />
+                  <Skeleton className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-1">
+                  <Skeleton className="h-5 w-14 rounded-full bg-muted/40 animate-pulse" />
+                  <Skeleton className="h-5 w-14 rounded-full bg-muted/40 animate-pulse" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-16 rounded bg-muted/40 animate-pulse" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-5 w-16 rounded bg-muted/40 animate-pulse" />
+              </TableCell>
+              <TableCell className="text-right pr-6">
+                <Skeleton className="h-8 w-8 rounded-lg bg-muted/40 ml-auto animate-pulse" />
+              </TableCell>
+            </TableRow>
+          ))
         ) : users.length === 0 ? (
           <TableRow>
             <TableCell colSpan={6} className="h-96 border-0">

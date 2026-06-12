@@ -26,6 +26,7 @@ import { toast } from 'react-hot-toast';
 import { useAppContext } from '@/context/AppContext';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
@@ -165,76 +166,98 @@ const AuditLogPage: React.FC = () => {
             </div>
           </CardHeader>
           <CardContent className="px-8 pb-6">
-            {loading ? (
-              <div className="h-96 flex flex-col items-center justify-center gap-4">
-                <HugeiconsIcon icon={Loading03Icon} className="w-10 h-10 animate-spin text-primary" />
-                <p className="text-muted-foreground font-black text-xs uppercase tracking-widest animate-pulse">Retrieving encrypted logs...</p>
-              </div>
-            ) : (
-              <div className="overflow-x-auto">
-                <Table>
-                  <TableHeader className="bg-muted/10">
-                    <TableRow className="hover:bg-transparent border-b-2 text-left">
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><HugeiconsIcon icon={Activity01Icon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source / Device</TableHead>
-                      <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {logs.filter(log => 
-                       log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                       (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase()))
-                    ).map((log) => (
-                      <TableRow 
-                        key={log.id} 
-                        onClick={() => {
-                            setSelectedLog(log);
-                            setIsModalOpen(true);
-                        }}
-                        className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative"
-                      >
-                        <TableCell className="py-2.5">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader className="bg-muted/10">
+                  <TableRow className="hover:bg-transparent border-b-2 text-left">
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><HugeiconsIcon icon={Activity01Icon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source / Device</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {loading ? (
+                    Array.from({ length: 8 }).map((_, i) => (
+                      <TableRow key={i} className="animate-pulse">
+                        <TableCell className="py-3">
                           <div className="flex items-center gap-2">
-                            <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] border border-primary/20">
-                                {log.user_name?.charAt(0) || 'S'}
-                            </div>
-                            <div className="flex flex-col">
-                                <span className="text-xs font-black tracking-tight">{log.user_name || 'System'}</span>
-                                <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
-                                    Verified Event
-                                </span>
+                            <Skeleton className="w-7 h-7 rounded-lg bg-muted/40 animate-pulse" />
+                            <div className="space-y-1.5 flex-1">
+                              <Skeleton className="h-3.5 w-20 rounded bg-muted/40 animate-pulse" />
+                              <Skeleton className="h-2 w-12 rounded bg-muted/40 animate-pulse" />
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-2.5 text-left">
-                          <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
-                            {log.action}
-                          </Badge>
+                        <TableCell className="py-3">
+                          <Skeleton className="h-5 w-16 rounded bg-muted/40 animate-pulse" />
                         </TableCell>
-                        <TableCell className="text-[11px] font-mono font-bold text-slate-400 py-2.5">
-                          {log.resource}
+                        <TableCell className="py-3">
+                          <Skeleton className="h-3 w-40 rounded bg-muted/40 animate-pulse" />
                         </TableCell>
-                        <TableCell className="py-2.5">
-                          <div className="flex flex-col">
-                            <span className="text-[11px] font-bold text-slate-400">{log.ip_address || '127.0.0.1'}</span>
-                            {log.details?.device && (
-                              <span className="text-[9px] font-semibold text-muted-foreground/80 truncate max-w-[130px]" title={`${log.details.device.platform} / ${log.details.device.browser}`}>
-                                {log.details.device.platform} / {log.details.device.browser}
-                              </span>
-                            )}
+                        <TableCell className="py-3">
+                          <div className="space-y-1.5">
+                            <Skeleton className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
+                            <Skeleton className="h-2 w-16 rounded bg-muted/40 animate-pulse" />
                           </div>
                         </TableCell>
-                        <TableCell className="text-[11px] font-bold text-slate-500 py-2.5 text-right whitespace-nowrap">
-                          {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')}
+                        <TableCell className="py-3 text-right">
+                          <Skeleton className="h-3.5 w-16 rounded bg-muted/40 ml-auto animate-pulse" />
                         </TableCell>
                       </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
+                    ))
+                  ) : logs.filter(log => 
+                     log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
+                     (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase()))
+                  ).map((log) => (
+                    <TableRow 
+                      key={log.id} 
+                      onClick={() => {
+                          setSelectedLog(log);
+                          setIsModalOpen(true);
+                      }}
+                      className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative"
+                    >
+                      <TableCell className="py-2.5">
+                        <div className="flex items-center gap-2">
+                          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] border border-primary/20">
+                              {log.user_name?.charAt(0) || 'S'}
+                          </div>
+                          <div className="flex flex-col">
+                              <span className="text-xs font-black tracking-tight">{log.user_name || 'System'}</span>
+                              <span className="text-[8px] font-bold text-muted-foreground uppercase tracking-widest leading-none">
+                                  Verified Event
+                              </span>
+                          </div>
+                        </div>
+                      </TableCell>
+                      <TableCell className="py-2.5 text-left">
+                        <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
+                          {log.action}
+                        </Badge>
+                      </TableCell>
+                      <TableCell className="text-[11px] font-mono font-bold text-slate-400 py-2.5">
+                        {log.resource}
+                      </TableCell>
+                      <TableCell className="py-2.5">
+                        <div className="flex flex-col">
+                          <span className="text-[11px] font-bold text-slate-400">{log.ip_address || '127.0.0.1'}</span>
+                          {log.details?.device && (
+                            <span className="text-[9px] font-semibold text-muted-foreground/80 truncate max-w-[130px]" title={`${log.details.device.platform} / ${log.details.device.browser}`}>
+                              {log.details.device.platform} / {log.details.device.browser}
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-[11px] font-bold text-slate-500 py-2.5 text-right whitespace-nowrap">
+                        {format(new Date(log.timestamp), 'MMM dd, HH:mm:ss')}
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </div>
           </CardContent>
           <div className="bg-muted/5 p-4 border-t flex items-center justify-between">
             <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
