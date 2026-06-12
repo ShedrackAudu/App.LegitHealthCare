@@ -390,9 +390,41 @@ def get_permissions():
 def get_audit_logs():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
+    action = request.args.get('action')
+    user_id = request.args.get('user_id', type=int)
+    date_start = request.args.get('date_start')
+    date_end = request.args.get('date_end')
+    ip_address = request.args.get('ip_address')
+    correlation_id = request.args.get('correlation_id')
+    patient_id = request.args.get('patient_id')
     
-    # Fetch logs with user joined for performance if needed, but to_dict handles it
-    logs_pagination = AuditLog.query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page)
+    query = AuditLog.query
+    
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+    if user_id:
+        query = query.filter(AuditLog.user_id == user_id)
+    if ip_address:
+        query = query.filter(AuditLog.ip_address.ilike(f"%{ip_address}%"))
+    if correlation_id:
+        query = query.filter(AuditLog.correlation_id == correlation_id)
+    if patient_id:
+        query = query.filter(AuditLog.resource.ilike(f"%{patient_id}%"))
+        
+    if date_start:
+        try:
+            start_dt = datetime.fromisoformat(date_start.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp >= start_dt)
+        except Exception:
+            pass
+    if date_end:
+        try:
+            end_dt = datetime.fromisoformat(date_end.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp <= end_dt)
+        except Exception:
+            pass
+            
+    logs_pagination = query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page)
     
     return jsonify({
         "logs": [log.to_dict() for log in logs_pagination.items],
@@ -400,6 +432,121 @@ def get_audit_logs():
         "pages": logs_pagination.pages,
         "current_page": logs_pagination.page
     })
+
+@admin_bp.route('/api/admin/audit-logs/verify', methods=['GET'])
+@require_permission('view_audit_logs')
+def verify_audit_logs():
+    logs = AuditLog.query.order_by(AuditLog.id.asc()).all()
+    corrupted = []
+    
+    import hashlib
+    expected_prev_hash = "0" * 64
+    
+    for log in logs:
+        # If the log was created before our system migration, it might have no hash or a legacy format.
+        # But we expect new logs to strictly chain.
+        if log.prev_hash is not None and log.prev_hash != expected_prev_hash:
+            corrupted.append({
+                "id": log.id,
+                "action": log.action,
+                "timestamp": log.timestamp.isoformat(),
+                "reason": f"Expected prev_hash '{expected_prev_hash}', got '{log.prev_hash}'"
+            })
+        
+        # Verify self-hash recalculation if hash exists
+        if log.hash:
+            payload = f"{log.prev_hash or ('0' * 64)}|{log.user_id}|{log.action}|{log.resource}|{log.timestamp.isoformat()}|{log.details or ''}"
+            recalculated = hashlib.sha256(payload.encode('utf-8')).hexdigest()
+            
+            if log.hash != recalculated:
+                corrupted.append({
+                    "id": log.id,
+                    "action": log.action,
+                    "timestamp": log.timestamp.isoformat(),
+                    "reason": "Hash mismatch. Data within this log entry has been altered."
+                })
+            
+            expected_prev_hash = log.hash
+        else:
+            expected_prev_hash = "0" * 64
+        
+    return jsonify({
+        "verified": len(corrupted) == 0,
+        "corrupted_count": len(corrupted),
+        "corrupted_logs": corrupted
+    }), 200
+
+@admin_bp.route('/api/admin/audit-logs/export', methods=['GET'])
+@require_permission('view_audit_logs')
+def export_audit_logs():
+    import csv
+    import io
+    from flask import Response
+    
+    action = request.args.get('action')
+    user_id = request.args.get('user_id', type=int)
+    date_start = request.args.get('date_start')
+    date_end = request.args.get('date_end')
+    ip_address = request.args.get('ip_address')
+    correlation_id = request.args.get('correlation_id')
+    patient_id = request.args.get('patient_id')
+    format_type = request.args.get('format', 'csv').lower()
+    
+    query = AuditLog.query
+    
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+    if user_id:
+        query = query.filter(AuditLog.user_id == user_id)
+    if ip_address:
+        query = query.filter(AuditLog.ip_address.ilike(f"%{ip_address}%"))
+    if correlation_id:
+        query = query.filter(AuditLog.correlation_id == correlation_id)
+    if patient_id:
+        query = query.filter(AuditLog.resource.ilike(f"%{patient_id}%"))
+        
+    if date_start:
+        try:
+            start_dt = datetime.fromisoformat(date_start.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp >= start_dt)
+        except Exception:
+            pass
+    if date_end:
+        try:
+            end_dt = datetime.fromisoformat(date_end.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp <= end_dt)
+        except Exception:
+            pass
+            
+    logs = query.order_by(AuditLog.timestamp.desc()).all()
+    
+    if format_type == 'json':
+        serialized = [log.to_dict() for log in logs]
+        return jsonify(serialized)
+        
+    output = io.StringIO()
+    writer = csv.writer(output)
+    writer.writerow(['ID', 'Timestamp', 'Originator', 'Action', 'Resource Target', 'IP Address', 'Correlation ID', 'Metadata Details'])
+    
+    for log in logs:
+        dict_log = log.to_dict()
+        writer.writerow([
+            log.id,
+            log.timestamp.isoformat(),
+            dict_log.get('user_name', 'System'),
+            log.action,
+            log.resource,
+            log.ip_address,
+            log.correlation_id,
+            json.dumps(dict_log.get('details', {}))
+        ])
+        
+    output.seek(0)
+    return Response(
+        output.getvalue(),
+        mimetype="text/csv",
+        headers={"Content-disposition": "attachment; filename=audit_logs_export.csv"}
+    )
 
 @admin_bp.route('/api/admin/config', methods=['GET', 'POST'])
 @require_permission('system_maintenance')
@@ -1224,32 +1371,7 @@ def admin_reset_password(target_user_id):
 @admin_bp.route('/api/admin/audit-logs/clear', methods=['DELETE'])
 @require_permission('system_maintenance')
 def clear_audit_logs():
-    admin_id = get_jwt_identity()
-    try:
-        # Clear all existing logs
-        AuditLog.query.delete()
-        db.session.commit()
-        
-        # Record this destructive action in a fresh log entry
-        log = AuditLog(
-            user_id=admin_id,
-            action="CLEAR_AUDIT_LOGS",
-            resource="System Registry",
-            details=json.dumps({
-                "action": "FULL_CLEAR",
-                "timestamp": datetime.now().isoformat(),
-                "performed_by": admin_id
-            }),
-            ip_address=get_client_ip()
-        )
-        db.session.add(log)
-        db.session.commit()
-        
-        return jsonify({"message": "All audit logs cleared successfully. A clear event has been recorded."}), 200
-    except Exception as e:
-        db.session.rollback()
-        current_app.logger.error(f"Audit clear failed: {str(e)}")
-        return jsonify({"error": f"Internal system error during maintenance: {str(e)}"}), 500
+    return jsonify({"error": "Audit logs are immutable. Deletion or clearing of audit trails is cryptographically restricted."}), 403
 
 @admin_bp.route('/api/admin/biodata/clear', methods=['DELETE'])
 @require_permission('system_maintenance')

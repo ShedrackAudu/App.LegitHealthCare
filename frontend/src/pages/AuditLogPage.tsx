@@ -38,10 +38,31 @@ const AuditLogPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, socket } = useAppContext();
 
+  // Advanced Filters
+  const [actionFilter, setActionFilter] = useState('');
+  const [ipFilter, setIpFilter] = useState('');
+  const [dateStart, setDateStart] = useState('');
+  const [dateEnd, setDateEnd] = useState('');
+  const [correlationIdFilter, setCorrelationIdFilter] = useState('');
+  const [patientFilter, setPatientFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+  
+  // Integrity & Export
+  const [integrityReport, setIntegrityReport] = useState<any>(null);
+  const [verifying, setVerifying] = useState(false);
+
   const fetchLogs = async (pageNum: number) => {
     setLoading(true);
     try {
-      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=15`);
+      let url = `/api/admin/audit-logs?page=${pageNum}&per_page=15`;
+      if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
+      if (ipFilter) url += `&ip_address=${encodeURIComponent(ipFilter)}`;
+      if (dateStart) url += `&date_start=${encodeURIComponent(dateStart)}`;
+      if (dateEnd) url += `&date_end=${encodeURIComponent(dateEnd)}`;
+      if (correlationIdFilter) url += `&correlation_id=${encodeURIComponent(correlationIdFilter)}`;
+      if (patientFilter) url += `&patient_id=${encodeURIComponent(patientFilter)}`;
+      
+      const resp = await axios.get(url);
       setLogs(resp.data.logs);
       setTotalPages(resp.data.pages);
       setPage(resp.data.current_page);
@@ -49,6 +70,69 @@ const AuditLogPage: React.FC = () => {
       toast.error("Failed to fetch audit logs.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleApplyFilters = () => {
+    setPage(1);
+    fetchLogs(1);
+  };
+
+  const handleResetFilters = () => {
+    setActionFilter('');
+    setIpFilter('');
+    setDateStart('');
+    setDateEnd('');
+    setCorrelationIdFilter('');
+    setPatientFilter('');
+    setPage(1);
+    setTimeout(() => {
+      fetchLogs(1);
+    }, 50);
+  };
+
+  const handleVerifyIntegrity = async () => {
+    setVerifying(true);
+    try {
+      const resp = await axios.get('/api/admin/audit-logs/verify');
+      setIntegrityReport(resp.data);
+      if (resp.data.verified) {
+        toast.success("Cryptographic integrity verified! All audit logs are untampered.");
+      } else {
+        toast.error(`Tampering detected! ${resp.data.corrupted_count} logs failed verification.`);
+      }
+    } catch (err) {
+      toast.error("Failed to verify audit logs.");
+    } finally {
+      setVerifying(false);
+    }
+  };
+
+  const handleExportLogs = async (format: 'csv' | 'json') => {
+    try {
+      let url = `/api/admin/audit-logs/export?format=${format}`;
+      if (actionFilter) url += `&action=${encodeURIComponent(actionFilter)}`;
+      if (ipFilter) url += `&ip_address=${encodeURIComponent(ipFilter)}`;
+      if (dateStart) url += `&date_start=${encodeURIComponent(dateStart)}`;
+      if (dateEnd) url += `&date_end=${encodeURIComponent(dateEnd)}`;
+      if (correlationIdFilter) url += `&correlation_id=${encodeURIComponent(correlationIdFilter)}`;
+      if (patientFilter) url += `&patient_id=${encodeURIComponent(patientFilter)}`;
+      
+      if (format === 'json') {
+        const resp = await axios.get(url);
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(resp.data, null, 2));
+        const downloadAnchor = document.createElement('a');
+        downloadAnchor.setAttribute("href", dataStr);
+        downloadAnchor.setAttribute("download", `audit_logs_${new Date().toISOString()}.json`);
+        document.body.appendChild(downloadAnchor);
+        downloadAnchor.click();
+        downloadAnchor.remove();
+      } else {
+        window.open(url, '_blank');
+      }
+      toast.success(`Exported logs to ${format.toUpperCase()} successfully.`);
+    } catch (err) {
+      toast.error("Failed to export logs.");
     }
   };
 
@@ -142,16 +226,123 @@ const AuditLogPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="relative w-full lg:w-80 group">
-            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Search by action or user..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-12 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
-            />
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full lg:w-auto">
+            <div className="relative w-full sm:w-64 group">
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Quick search user..." 
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
+              />
+            </div>
+            <Button 
+              variant="outline" 
+              onClick={() => setShowFilters(!showFilters)}
+              className={`h-11 rounded-xl font-bold px-4 gap-2 border-2 ${showFilters ? 'bg-primary/10 text-primary border-primary/30' : ''}`}
+            >
+              Filters
+            </Button>
+            <Button 
+              variant="outline"
+              disabled={verifying}
+              onClick={handleVerifyIntegrity}
+              className="h-11 rounded-xl font-bold px-4 gap-2 border-2 text-violet-500 border-violet-500/20 hover:bg-violet-500/10"
+            >
+              {verifying ? "Verifying..." : "Verify Integrity"}
+            </Button>
+            <div className="flex gap-2">
+              <Button 
+                variant="outline" 
+                onClick={() => handleExportLogs('csv')}
+                className="h-11 rounded-xl font-bold px-3 text-emerald-500 border-emerald-500/20 hover:bg-emerald-500/10 text-xs"
+              >
+                CSV
+              </Button>
+              <Button 
+                variant="outline" 
+                onClick={() => handleExportLogs('json')}
+                className="h-11 rounded-xl font-bold px-3 text-sky-500 border-sky-500/20 hover:bg-sky-500/10 text-xs"
+              >
+                JSON
+              </Button>
+            </div>
           </div>
         </div>
+
+        {showFilters && (
+          <div className="bg-card p-6 rounded-2xl border-2 space-y-4 animate-in fade-in slide-in-from-top-4 duration-300">
+            <h3 className="text-xs font-black uppercase tracking-wider text-muted-foreground">Advanced Query Filters</h3>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Action Type</label>
+                <Input 
+                  placeholder="e.g. UPDATE_PASSWORD" 
+                  value={actionFilter} 
+                  onChange={(e) => setActionFilter(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">IP Address</label>
+                <Input 
+                  placeholder="e.g. 192.168.1.1" 
+                  value={ipFilter} 
+                  onChange={(e) => setIpFilter(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Start Date</label>
+                <Input 
+                  type="date" 
+                  value={dateStart} 
+                  onChange={(e) => setDateStart(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">End Date</label>
+                <Input 
+                  type="date" 
+                  value={dateEnd} 
+                  onChange={(e) => setDateEnd(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold"
+                />
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Correlation ID</label>
+                <Input 
+                  placeholder="Paste Correlation UUID..." 
+                  value={correlationIdFilter} 
+                  onChange={(e) => setCorrelationIdFilter(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold font-mono text-xs"
+                />
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-black uppercase tracking-wider text-muted-foreground">Patient Staff ID</label>
+                <Input 
+                  placeholder="e.g. STF001" 
+                  value={patientFilter} 
+                  onChange={(e) => setPatientFilter(e.target.value)}
+                  className="h-10 rounded-lg border-2 font-bold"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t">
+              <Button variant="ghost" size="sm" onClick={handleResetFilters} className="font-bold text-xs uppercase">
+                Reset
+              </Button>
+              <Button size="sm" onClick={handleApplyFilters} className="font-bold text-xs uppercase px-6">
+                Apply Filters
+              </Button>
+            </div>
+          </div>
+        )}
 
         <Card className="border-2 shadow-xl overflow-hidden rounded-2xl bg-card">
           <CardHeader className="bg-muted/5 border-b py-4">
@@ -305,7 +496,7 @@ const AuditLogPage: React.FC = () => {
                             <p className="text-sm text-muted-foreground font-medium italic">Detailed breakdown of the system interaction event.</p>
                         </div>
 
-                        <ScrollArea className="max-h-[60vh]">
+                        <div className="max-h-[60vh] overflow-y-auto">
                             <div className="p-8 space-y-8">
                                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
                                     <div className="space-y-1">
@@ -360,6 +551,56 @@ const AuditLogPage: React.FC = () => {
                                     </div>
                                 )}
 
+                                {(selectedLog.correlation_id || selectedLog.hash) && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            Cryptographic Security Context
+                                        </p>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 rounded-2xl bg-violet-500/[0.03] border-2 border-violet-500/10 text-xs">
+                                            {selectedLog.correlation_id && (
+                                                <div>
+                                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-black block">Correlation ID</span>
+                                                    <code className="font-mono text-violet-500 font-bold">{selectedLog.correlation_id}</code>
+                                                </div>
+                                            )}
+                                            {selectedLog.hash && (
+                                                <div>
+                                                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground font-black block">SHA-256 Block Hash</span>
+                                                    <code className="font-mono text-violet-500 font-bold break-all">{selectedLog.hash}</code>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+
+                                {selectedLog.details?.diff && (
+                                    <div className="space-y-3">
+                                        <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                            Field-Level Modifications (Diff)
+                                        </p>
+                                        <div className="overflow-x-auto border rounded-xl">
+                                            <Table>
+                                                <TableHeader className="bg-muted/30">
+                                                    <TableRow>
+                                                        <TableHead className="text-[9px] font-black uppercase py-2">Field</TableHead>
+                                                        <TableHead className="text-[9px] font-black uppercase py-2">Previous Value</TableHead>
+                                                        <TableHead className="text-[9px] font-black uppercase py-2">New Value</TableHead>
+                                                    </TableRow>
+                                                </TableHeader>
+                                                <TableBody>
+                                                    {Object.entries(selectedLog.details.diff).map(([key, change]: any) => (
+                                                        <TableRow key={key} className="hover:bg-transparent text-[11px]">
+                                                            <TableCell className="font-mono font-bold py-2">{key}</TableCell>
+                                                            <TableCell className="text-rose-500 line-through py-2">{String(change.old ?? 'None')}</TableCell>
+                                                            <TableCell className="text-emerald-500 font-bold py-2">{String(change.new ?? 'None')}</TableCell>
+                                                        </TableRow>
+                                                    ))}
+                                                </TableBody>
+                                            </Table>
+                                        </div>
+                                    </div>
+                                )}
+
                                 <div className="space-y-4">
                                     <div className="flex items-center justify-between">
                                         <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
@@ -374,7 +615,7 @@ const AuditLogPage: React.FC = () => {
                                     </div>
                                 </div>
                             </div>
-                        </ScrollArea>
+                        </div>
 
                         <div className="p-6 bg-muted/30 border-t flex justify-end">
                             <Button variant="outline" onClick={() => setIsModalOpen(false)} className="rounded-xl font-bold px-8">

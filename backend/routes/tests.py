@@ -241,11 +241,16 @@ def save_test_result(test_type):
 
     if test_type == 'lft':
         import random
-        record.tb = f"{random.uniform(0.01, 1.2):.2f}"
-        record.cb = f"{random.uniform(0.01, 0.4):.2f}"
-        record.ast = f"{random.uniform(0.1, 46.0):.1f}"
-        record.alp = str(random.randint(64, 306))
-        record.urea = f"{random.uniform(2.5, 8.33):.2f}"
+        if not record.tb:
+            record.tb = f"{random.uniform(0.01, 1.2):.2f}"
+        if not record.cb:
+            record.cb = f"{random.uniform(0.01, 0.4):.2f}"
+        if not record.ast:
+            record.ast = f"{random.uniform(0.1, 46.0):.1f}"
+        if not record.alp:
+            record.alp = str(random.randint(64, 306))
+        if not record.urea:
+            record.urea = f"{random.uniform(2.5, 8.33):.2f}"
 
     if test_type == 'special':
         from models import QueueEntry

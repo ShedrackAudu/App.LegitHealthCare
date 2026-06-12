@@ -188,6 +188,25 @@ def init_db():
 
         # Create tables in default database
         db.create_all()
+
+        # Safe migration check: add correlation_id, hash, and prev_hash to audit_logs table
+        try:
+            with db.engine.connect() as conn:
+                from sqlalchemy import text
+                cols_to_add = [
+                    ("correlation_id", "VARCHAR(36)"),
+                    ("hash", "VARCHAR(64)"),
+                    ("prev_hash", "VARCHAR(64)")
+                ]
+                for col_name, col_type in cols_to_add:
+                    try:
+                        conn.execute(text(f"ALTER TABLE audit_logs ADD COLUMN {col_name} {col_type}"))
+                        conn.commit()
+                    except Exception:
+                        pass
+        except Exception as e:
+            app.logger.warning(f"Failed to auto-alter audit_logs table: {e}")
+
         # Create tables in all other binds
         for bind_name in app.config.get('SQLALCHEMY_BINDS', {}):
             engine = db.engines[bind_name]
@@ -205,10 +224,67 @@ def handle_exception(e):
     # Return a generic error message in production
     return jsonify({"error": "Internal Server Error"}), 500
 
-# Context processor for DB routing
+# Context processor for DB routing and request tracing
 @app.before_request
 def set_db_context():
-    pass
+    from flask import g
+    import uuid
+    # Check if header already has correlation ID (e.g. from upstream/frontend), else generate
+    cor_id = request.headers.get('X-Correlation-ID') or str(uuid.uuid4())
+    g.correlation_id = cor_id
+
+@app.after_request
+def add_correlation_id_header(response):
+    from flask import g
+    if hasattr(g, 'correlation_id'):
+        response.headers['X-Correlation-ID'] = g.correlation_id
+        
+    # Global PHI Read Auditing
+    if request.method == 'GET' and response.status_code == 200:
+        path = request.path
+        action = None
+        resource = None
+        
+        # 1. Patient clinical report details
+        if path.startswith('/api/patient-report/'):
+            parts = path.split('/')
+            if len(parts) >= 4:
+                staff_id = parts[3]
+                action = "VIEW_CLINICAL_RECORD"
+                resource = f"Patient:{staff_id}"
+                
+        # 2. Patient profile view
+        elif path.startswith('/api/patients/') and not path.endswith('/history') and not path.endswith('/records'):
+            parts = path.split('/')
+            if len(parts) >= 3:
+                staff_id = parts[3]
+                action = "VIEW_PATIENT_PROFILE"
+                resource = f"Patient:{staff_id}"
+                
+        # 3. Patient document/file view
+        elif path.startswith('/api/files/view/'):
+            parts = path.split('/')
+            if len(parts) >= 4:
+                file_id = parts[3]
+                action = "VIEW_PATIENT_ATTACHMENT"
+                resource = f"PatientFile:{file_id}"
+                
+        # 4. Patient appointments list / view
+        elif path.startswith('/api/appointments/'):
+            parts = path.split('/')
+            if len(parts) >= 3:
+                appt_id = parts[3]
+                action = "VIEW_APPOINTMENT"
+                resource = f"Appointment:{appt_id}"
+
+        if action and resource:
+            try:
+                from models import AuditLog
+                AuditLog.log_action(action=action, resource=resource, details={"path": path}, commit=True)
+            except Exception as e:
+                app.logger.warning(f"Failed to log read audit: {e}")
+                
+    return response
 
 
 @app.route('/api/ping', methods=['GET'])
