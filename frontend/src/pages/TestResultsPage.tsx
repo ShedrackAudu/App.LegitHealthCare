@@ -50,6 +50,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
@@ -638,8 +639,19 @@ const TestResultsPage: React.FC = () => {
                     <div className="relative mt-2">
                         <ScrollArea className="h-[400px] px-1">
                             {loadingQueue ? (
-                                <div className="flex items-center justify-center h-full">
-                                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                                <div className="space-y-3">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/50 animate-pulse gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                                <div className="space-y-2 flex-1">
+                                                    <Skeleton className="h-4 w-32 bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-3.5 w-24 bg-muted/40 animate-pulse" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-8 w-20 bg-muted/40 rounded-lg animate-pulse" />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : queueEntries.length > 0 ? (
                                 <div className="space-y-3">
@@ -1028,12 +1040,46 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 
     if (fetching) {
         return (
-            <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
-                <div className="flex flex-col items-center gap-4">
-                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm font-bold text-muted-foreground animate-pulse">Fetching existing records...</p>
-                </div>
-            </Card>
+            <div className="space-y-6 animate-in fade-in duration-500">
+                <Card className="border-2 border-primary/10 shadow-lg bg-muted/5">
+                    <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                        <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                            <div className="lg:col-span-2 space-y-2">
+                                <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                                <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                            </div>
+                            {Array.from({ length: 6 }).map((_, idx) => (
+                                <div key={idx} className="space-y-2">
+                                    <Skeleton className="h-3 w-12 bg-muted/30 rounded" />
+                                    <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-2xl relative overflow-hidden">
+                    <CardHeader className="border-b bg-muted/5 py-4">
+                        <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent className="p-8">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {Array.from({ length: 6 }).map((_, idx) => (
+                                    <div key={idx} className="space-y-2">
+                                        <Skeleton className="h-4 w-28 bg-muted/30 rounded" />
+                                        <Skeleton className="h-12 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-end pt-4 border-t">
+                                <Skeleton className="h-11 w-32 bg-muted/40 rounded-xl animate-pulse" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         );
     }
 

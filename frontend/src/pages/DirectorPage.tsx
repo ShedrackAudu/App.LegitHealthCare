@@ -34,6 +34,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 
@@ -979,7 +980,64 @@ const DirectorPage: React.FC = () => {
                     />
                 </div>
 
-                {!patient ? (
+                {searching ? (
+                    <div className="flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0 mt-8 animate-in fade-in duration-500">
+                        {/* Patient Profile Card Skeleton */}
+                        <Card className="border-2 border-primary/10 shadow-lg bg-muted/5 shrink-0">
+                            <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                                <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                                    <div className="lg:col-span-2 space-y-2">
+                                        <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                                        <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                                    </div>
+                                    {Array.from({ length: 6 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-2">
+                                            <Skeleton className="h-3 w-12 bg-muted/30 rounded" />
+                                            <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Content Area Skeleton */}
+                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0 overflow-hidden">
+                            {/* Left Panel */}
+                            <Card className="border-2 shadow-2xl flex flex-col h-full overflow-hidden">
+                                <div className="p-4 bg-muted/5 border-b shrink-0">
+                                    <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                                    {Array.from({ length: 3 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-3">
+                                            <Skeleton className="h-4 w-32 bg-muted/30 rounded" />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+
+                            {/* Right Panel */}
+                            <Card className="border-2 shadow-2xl flex flex-col h-full overflow-hidden">
+                                <div className="p-4 bg-muted/5 border-b shrink-0">
+                                    <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                                    {Array.from({ length: 3 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-2">
+                                            <Skeleton className="h-4 w-24 bg-muted/30 rounded" />
+                                            <Skeleton className="h-24 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                ) : !patient ? (
                     <div className="flex flex-col gap-8 mt-8">
                         {/* Single Patient Review Placeholder Card */}
                         <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[16rem] bg-muted/5 p-8 text-center rounded-3xl">

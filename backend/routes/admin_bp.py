@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 from models import (
     db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, 
     Notification, PatientPortalUser, BioData, ScreeningYearBioData, ConsultationData,
@@ -520,8 +520,14 @@ def request_access():
     return jsonify({"message": "Access request sent to hospital administration"}), 201
 
 @admin_bp.route('/api/admin/verify-access-code', methods=['POST'])
+@jwt_required()
 @limiter.limit("5 per minute")
 def verify_access_code():
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    if portal == 'patient':
+        return jsonify({"error": "Patients cannot activate access keys"}), 403
+
     data = request.json
     code_str = data.get('code')
     user_id = get_jwt_identity()
@@ -567,6 +573,9 @@ def verify_access_code():
     )
     db.session.add(audit)
     db.session.commit()
+
+    # Force SQL Alchemy to refresh relationship collections (temp_codes) to include the new code
+    db.session.refresh(user)
     
     # Real-time notification to frontend
     try:

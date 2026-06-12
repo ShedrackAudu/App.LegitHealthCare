@@ -26,6 +26,7 @@ import {
     TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -147,13 +148,7 @@ const ViewPatientsPage: React.FC = () => {
                         </Button>
                     </div>
                     <CardContent className="p-0">
-                        {loading && patients.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center p-20 space-y-4">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
-                                <p className="text-muted-foreground font-bold animate-pulse uppercase tracking-[0.2em] text-xs">Loading Directory...</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
+                        <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader className="bg-muted/50">
                                         <TableRow className="hover:bg-transparent border-b-2">
@@ -173,7 +168,57 @@ const ViewPatientsPage: React.FC = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {patients.length === 0 ? (
+                                        {loading ? (
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <TableRow key={i} className="animate-pulse">
+                                                    <TableCell>
+                                                        <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <Skeleton className="w-6 h-6 rounded-full bg-muted/40 animate-pulse shrink-0" />
+                                                            <Skeleton className="h-3.5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-12 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3.5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-5 w-16 bg-muted/40 rounded-full animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-4 w-12 bg-muted/40 rounded-full animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-6 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-20 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-28 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-12 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Skeleton className="h-8 w-8 bg-muted/40 rounded animate-pulse" />
+                                                            <Skeleton className="h-8 w-8 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : patients.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={13} className="h-[28rem] border-0">
                                                     <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -281,7 +326,7 @@ const ViewPatientsPage: React.FC = () => {
                                     </TableBody>
                                 </Table>
                             </div>
-                        )}
+                        
                     </CardContent>
                     
                     {/* Pagination Footer */}

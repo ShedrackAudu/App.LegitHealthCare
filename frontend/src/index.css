@@ -442,4 +442,12 @@
   margin: 0 !important;
 }
 
+/* High-contrast premium skeleton loaders for both light and dark modes */
+.animate-pulse {
+  background-color: hsl(var(--muted-foreground) / 0.15) !important;
+}
+.dark .animate-pulse {
+  background-color: hsl(var(--muted) / 0.8) !important;
+}
+
 

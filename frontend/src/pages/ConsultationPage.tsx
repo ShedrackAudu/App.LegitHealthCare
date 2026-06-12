@@ -42,6 +42,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { Badge } from '@/components/ui/badge';
@@ -531,7 +532,48 @@ const ConsultationPage: React.FC = () => {
           </div>
         </div>
 
-        {!patient ? (
+        {searching ? (
+          <div className="animate-in fade-in duration-500 space-y-6 mt-8">
+            {/* Bio Grid Skeleton */}
+            <Card className="border-2 border-primary/10 shadow-lg bg-muted/5">
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                  <div className="lg:col-span-2 space-y-2">
+                    <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                    <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                  </div>
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                      <Skeleton className="h-5 w-20 bg-muted/40 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Form Fields Skeleton */}
+            <Card className="border-2 shadow-2xl relative overflow-hidden">
+              <CardHeader className="border-b bg-muted/5 py-4">
+                <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+              </CardHeader>
+              <CardContent className="p-8 space-y-10">
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-32 bg-muted/30 rounded" />
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
+                    {Array.from({ length: 8 }).map((_, idx) => (
+                      <div key={idx} className="space-y-2">
+                        <Skeleton className="h-3.5 w-24 bg-muted/30 rounded" />
+                        <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : !patient ? (
           <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 mt-8 p-6">
             <div className="text-center space-y-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
@@ -713,8 +755,19 @@ const ConsultationPage: React.FC = () => {
           <div className="relative mt-2">
             <ScrollArea className="h-[400px] px-1">
               {loadingQueue ? (
-                <div className="flex items-center justify-center h-full">
-                  <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/50 animate-pulse gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-32 bg-muted/40 rounded animate-pulse" />
+                          <Skeleton className="h-3.5 w-24 bg-muted/40 rounded animate-pulse" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-8 w-20 bg-muted/40 rounded-lg animate-pulse" />
+                    </div>
+                  ))}
                 </div>
               ) : queueEntries.length > 0 ? (
                 <div className="space-y-3">
