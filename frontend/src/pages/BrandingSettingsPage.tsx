@@ -27,6 +27,7 @@ import axios from 'axios';
 import { Badge } from "@/components/ui/badge";
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { SafeImage } from '@/components/common/SafeImage';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const BrandingSettingsPage: React.FC = () => {
     const { activeSection, fetchBranding } = useAppContext();
@@ -179,8 +180,55 @@ const BrandingSettingsPage: React.FC = () => {
     if (loading) {
         return (
             <MainLayout>
-                <div className="h-full w-full flex items-center justify-center">
-                    <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary opacity-50" />
+                <div className="w-full space-y-6 animate-pulse">
+                    {/* Header Skeleton */}
+                    <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border border-primary/5">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
+                            <Skeleton className="h-12 w-12 rounded-xl sm:rounded-2xl bg-muted/40 shrink-0" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-6 w-40 rounded bg-muted/40 animate-pulse" />
+                                <Skeleton className="h-3 w-64 rounded bg-muted/40 animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Identity Card Skeleton */}
+                    <Card className="border-2 shadow-lg">
+                        <div className="bg-muted/10 p-6 border-b space-y-2">
+                            <Skeleton className="h-5 w-36 rounded bg-muted/40 animate-pulse" />
+                            <Skeleton className="h-3.5 w-64 rounded bg-muted/40 animate-pulse" />
+                        </div>
+                        <CardContent className="pt-6 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div className="space-y-2">
+                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-12 w-full rounded-xl bg-muted/40 animate-pulse" />
+                                </div>
+                                <div className="space-y-2">
+                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-12 w-full rounded-xl bg-muted/40 animate-pulse" />
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Logos & Assets Card Skeleton */}
+                    <Card className="border-2 shadow-lg">
+                        <div className="bg-muted/10 p-6 border-b space-y-2">
+                            <Skeleton className="h-5 w-36 rounded bg-muted/40 animate-pulse" />
+                            <Skeleton className="h-3.5 w-80 rounded bg-muted/40 animate-pulse" />
+                        </div>
+                        <CardContent className="pt-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {Array.from({ length: 3 }).map((_, i) => (
+                                    <div key={i} className="space-y-3">
+                                        <Skeleton className="h-3.5 w-28 rounded bg-muted/40 animate-pulse" />
+                                        <Skeleton className="h-32 w-full rounded-xl bg-muted/40 animate-pulse" />
+                                    </div>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </MainLayout>
         );
