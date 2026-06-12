@@ -100,8 +100,7 @@ def setup_system(app, purge=False):
         else:
             for key, value in details.items():
                 setattr(admin_user, key, value)
-            admin_user.set_password(password)
-            print("Updated existing admin.")
+            print("Updated existing admin details (retained existing password).")
 
         if admin_role and admin_role not in admin_user.roles:
             admin_user.roles.append(admin_role)
