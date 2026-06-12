@@ -3,10 +3,11 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Sun01Icon,
   Moon01Icon,
-  Logout01Icon,
+  Logout02Icon,
   UserIcon,
   Notification01Icon,
-  Download01Icon
+  Download01Icon,
+  AccountSetting01Icon
 } from '@hugeicons/core-free-icons';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
@@ -37,6 +38,7 @@ export const PatientHeader: React.FC = () => {
   const location = useLocation();
   const pageTitle = getPageTitle(location.pathname);
   const [profileName, setProfileName] = useState<string | null>(null);
+  const [profileFullName, setProfileFullName] = useState<string | null>(null);
 
   // PWA Install Prompt State
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
@@ -78,6 +80,9 @@ export const PatientHeader: React.FC = () => {
         headers: { 'X-Staff-ID': user.username }
       });
       setProfileName(response.data.first_name);
+      if (response.data.first_name) {
+        setProfileFullName(`${response.data.first_name} ${response.data.last_name || ''}`.trim());
+      }
     } catch (err) {
       console.error("Header name fetch failed:", err);
     }
@@ -168,17 +173,27 @@ export const PatientHeader: React.FC = () => {
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                <div className="flex flex-col space-y-0.5">
+                  <span className="text-sm font-bold text-foreground truncate flex items-center gap-2">
+                    <HugeiconsIcon icon={UserIcon} className="h-4 w-4 text-muted-foreground" />
+                    {profileFullName || (user ? `${user.first_name} ${user.last_name || ''}`.trim() : 'My Account')}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+                    Patient
+                  </span>
+                </div>
+              </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/patient/account')}>
-                <HugeiconsIcon icon={UserIcon} className="mr-2 h-4 w-4" /> Manage Account
+                <HugeiconsIcon icon={AccountSetting01Icon} className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer"
                 onClick={handleLogout}
               >
-                <HugeiconsIcon icon={Logout01Icon} className="mr-2 h-4 w-4" /> Log out
+                <HugeiconsIcon icon={Logout02Icon} className="mr-2 h-4 w-4" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

@@ -53,14 +53,20 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
                 
-                response = client.chat.completions.create(
-                    model=settings.model_selection if (settings and settings.model_selection) else "gpt-4o",
-                    messages=[
+                model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
+                params = {
+                    "model": model_name,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"FBC Results:\n{prompt_data}"}
-                    ],
-                    max_tokens=60
-                )
+                    ]
+                }
+                if model_name.startswith("o1") or model_name.startswith("o3"):
+                    params["max_completion_tokens"] = 60
+                else:
+                    params["max_tokens"] = 60
+
+                response = client.chat.completions.create(**params)
                 
                 remark = response.choices[0].message.content.strip()
                 # Clean up wrapping quotes if the AI output includes them
@@ -114,14 +120,20 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
                 
-                response = client.chat.completions.create(
-                    model=settings.model_selection if (settings and settings.model_selection) else "gpt-4o",
-                    messages=[
+                model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
+                params = {
+                    "model": model_name,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"Lipid Results:\n{prompt_data}"}
-                    ],
-                    max_tokens=60
-                )
+                    ]
+                }
+                if model_name.startswith("o1") or model_name.startswith("o3"):
+                    params["max_completion_tokens"] = 60
+                else:
+                    params["max_tokens"] = 60
+
+                response = client.chat.completions.create(**params)
                 
                 remark = response.choices[0].message.content.strip()
                 if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
@@ -284,6 +296,38 @@ def save_test_result(test_type):
             resource=f"Patient:{staff_id}",
             details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": log_test_type}
         )
+
+        if test_type == 'special' and user_id:
+            current_test_type = data.get('current_test_type')
+            dept_name = None
+            if current_test_type == 'ecg':
+                dept_name = 'ECG'
+            elif current_test_type == 'spirometry':
+                dept_name = 'Spirometry'
+            elif current_test_type == 'audiometry':
+                dept_name = 'Audiometry'
+                
+            if dept_name:
+                try:
+                    from models import StaffPatientSeen
+                    existing_seen = StaffPatientSeen.query.filter_by(
+                        user_id=int(user_id),
+                        staff_id=staff_id,
+                        screening_year=int(screening_year),
+                        department=dept_name
+                    ).first()
+                    if not existing_seen:
+                        new_seen = StaffPatientSeen(
+                            user_id=int(user_id),
+                            staff_id=staff_id,
+                            screening_year=int(screening_year),
+                            department=dept_name
+                        )
+                        db.session.add(new_seen)
+                except Exception as seen_err:
+                    import sys
+                    sys.stderr.write(f"[DEBUG] Error recording seen special test: {seen_err}\n")
+
         db.session.commit()
 
         # Generate FBC remark in the background if enabled
@@ -759,14 +803,19 @@ def bulk_ai_remarks(test_type):
         # Step 2: Make OpenAI API calls concurrently (No database access in threads)
         def call_openai(item):
             try:
-                response = client.chat.completions.create(
-                    model=model_name,
-                    messages=[
+                params = {
+                    "model": model_name,
+                    "messages": [
                         {"role": "system", "content": item["system_prompt"]},
                         {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
-                    ],
-                    max_tokens=60
-                )
+                    ]
+                }
+                if model_name.startswith("o1") or model_name.startswith("o3"):
+                    params["max_completion_tokens"] = 60
+                else:
+                    params["max_tokens"] = 60
+
+                response = client.chat.completions.create(**params)
                 remark = response.choices[0].message.content.strip()
                 if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
                     remark = remark[1:-1].strip()

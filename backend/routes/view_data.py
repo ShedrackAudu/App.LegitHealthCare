@@ -312,6 +312,60 @@ def handle_patient(staff_id):
         
     if request.method == 'PUT':
         data = request.json
+        
+        # Check and handle Staff ID modification
+        new_staff_id = data.get('staff_id')
+        if new_staff_id:
+            new_staff_id = new_staff_id.strip()
+            if new_staff_id.lower() != clean_staff_id.lower():
+                # Verify conflict
+                conflict = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(new_staff_id)).first()
+                if conflict:
+                    return jsonify({"error": f"Staff ID '{new_staff_id}' is already in use by another patient."}), 400
+                
+                old_id = patient.staff_id
+                
+                # List of models where staff_id needs to be updated
+                models_to_update = [
+                    ScreeningYearBioData, ConsultationData, FBCResult, KFTResult, 
+                    LipidResult, LFTResult, SpecialTestsResult, DirectorReview, 
+                    QueueEntry, ReportVerification
+                ]
+                
+                try:
+                    from models import StaffPatientSeen
+                    models_to_update.append(StaffPatientSeen)
+                except ImportError:
+                    pass
+                
+                for model in models_to_update:
+                    db.session.query(model).filter(func.lower(model.staff_id) == func.lower(old_id)).update(
+                        {model.staff_id: new_staff_id}, 
+                        synchronize_session=False
+                    )
+                
+                # Update in patient_users (patients bind)
+                try:
+                    from sqlalchemy import text
+                    patients_engine = db.engines.get('patients')
+                    if patients_engine:
+                        with patients_engine.connect() as conn:
+                            check_query = text("SELECT id FROM patient_users WHERE LOWER(username) = LOWER(:sid)")
+                            row = conn.execute(check_query, {"sid": old_id}).fetchone()
+                            if row:
+                                update_username_query = text("""
+                                    UPDATE patient_users 
+                                    SET username = :new_sid 
+                                    WHERE LOWER(username) = LOWER(:sid)
+                                """)
+                                conn.execute(update_username_query, {"new_sid": new_staff_id, "sid": old_id})
+                                conn.commit()
+                except Exception as ex:
+                    print(f"Failed to update patient_users username: {str(ex)}")
+
+                patient.staff_id = new_staff_id
+                clean_staff_id = new_staff_id
+        
         # Update fields
         first_name = data.get('first_name', patient.first_name)
         last_name = data.get('last_name', patient.last_name)

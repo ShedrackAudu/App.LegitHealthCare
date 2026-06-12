@@ -14,7 +14,7 @@ import {
   MachineRobotIcon,
   PaintBrush01Icon,
   Building02Icon,
-  UserSettings01Icon,
+  AccountSetting01Icon,
   Comment01Icon,
   Key01Icon,
   Settings02Icon,
@@ -23,7 +23,7 @@ import {
   PackageIcon,
   SidebarLeft01Icon,
   SidebarRight01Icon,
-  Logout01Icon
+  Logout02Icon
 } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -192,10 +192,8 @@ export const Sidebar: React.FC = () => {
                   key={item.path}
                   to={item.path}
                   onClick={() => {
-                    if (window.innerWidth < 1024) {
-                      setIsCollapsed(true);
-                      localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
-                    }
+                    setIsCollapsed(true);
+                    localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
                   }}
                   className={({ isActive }) => cn(
                     "flex items-center rounded-lg transition-all duration-200 group/item relative",
@@ -272,10 +270,8 @@ export const Sidebar: React.FC = () => {
                         key={item.path}
                         to={item.path}
                         onClick={() => {
-                          if (window.innerWidth < 1024) {
-                            setIsCollapsed(true);
-                            localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
-                          }
+                          setIsCollapsed(true);
+                          localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
                         }}
                         className={({ isActive }) => cn(
                           "flex items-center rounded-lg transition-all duration-200 group/item relative",
@@ -315,9 +311,28 @@ export const Sidebar: React.FC = () => {
           </div>
 
           <div className="px-3 mt-auto space-y-1.5">
+            {/* Versioning */}
+            <div className={cn(
+              "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none lg:text-white/40 dark:lg:text-muted-foreground/40",
+              isCollapsed ? "text-center" : "px-3"
+            )}>
+              {isCollapsed ? (
+                <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
+              ) : (
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'} ({import.meta.env.VITE_APP_GIT_HASH || 'dev'})</span>
+                  <span className="text-[9px] font-medium opacity-80">Build: {import.meta.env.VITE_APP_BUILD_DATE || 'N/A'}</span>
+                </div>
+              )}
+            </div>
+
             {/* Manage Account Link */}
             <NavLink
               to="/account"
+              onClick={() => {
+                setIsCollapsed(true);
+                localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+              }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/manage",
                 "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
@@ -327,7 +342,7 @@ export const Sidebar: React.FC = () => {
               )}
               title="Manage Account"
             >
-              <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 shrink-0" />
+              <HugeiconsIcon icon={AccountSetting01Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
               {isCollapsed && (
                 <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
@@ -347,7 +362,7 @@ export const Sidebar: React.FC = () => {
               )}
               title="Log out"
             >
-              <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
+              <HugeiconsIcon icon={Logout02Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
               {isCollapsed && (
                 <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">

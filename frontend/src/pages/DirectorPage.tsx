@@ -914,7 +914,8 @@ const DirectorPage: React.FC = () => {
             });
             setPatient(pRes.data);
             
-            const hRes = await axios.get(`/api/director/get-patient-history/${id}?year=${activeYear}`, {
+            const staffId = pRes.data.staff_id;
+            const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setHistory(hRes.data);

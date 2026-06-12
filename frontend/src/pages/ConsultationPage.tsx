@@ -201,6 +201,7 @@ const ConsultationPage: React.FC = () => {
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
+  const [seenCount, setSeenCount] = useState(0);
   const [queueEntries, setQueueEntries] = useState<any[]>([]);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [loadingQueue, setLoadingQueue] = useState(false);
@@ -245,6 +246,17 @@ const ConsultationPage: React.FC = () => {
     }
   };
 
+  const fetchSeenStats = async () => {
+    try {
+      const resp = await axios.get(`/api/queue/seen-stats?year=${activeYear}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      setSeenCount(resp.data.consultation || 0);
+    } catch (err) {
+      console.error("Failed to fetch seen stats:", err);
+    }
+  };
+
   const fetchQueueList = async () => {
     setLoadingQueue(true);
     try {
@@ -278,8 +290,12 @@ const ConsultationPage: React.FC = () => {
 
   useEffect(() => {
     fetchQueue();
+    fetchSeenStats();
     // Poll every 30 seconds for queue changes
-    const interval = setInterval(fetchQueue, 30000);
+    const interval = setInterval(() => {
+      fetchQueue();
+      fetchSeenStats();
+    }, 30000);
     return () => clearInterval(interval);
   }, [activeYear, activeSection]);
 
@@ -427,6 +443,7 @@ const ConsultationPage: React.FC = () => {
       });
       toast.success("Consultation records saved!");
       fetchQueue();
+      fetchSeenStats();
       setSearchId('');
       setPatient(null);
     } catch (err) {
@@ -451,26 +468,51 @@ const ConsultationPage: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
-            {/* Queue Status Card */}
-            <Card
-              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
-              onClick={fetchQueueList}
-            >
-              <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
+            {/* Cards sub-container for side-by-side layout on mobile */}
+            <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+              {/* Queue Status Card */}
+              <Card
+                className="flex-1 md:flex-none md:w-36 relative overflow-hidden cursor-pointer bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 h-16 flex items-center rounded-xl shrink-0 group select-none"
+                onClick={fetchQueueList}
+              >
+                <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary group-hover:bg-primary/20 transition-all shrink-0">
+                    <HugeiconsIcon icon={UserGroupIcon} className="h-4.5 w-4.5" />
                   </div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
-                    <h3 className="text-lg font-black tracking-tighter leading-none">{queueCount}</h3>
+                  <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                    <span className="text-lg font-black tracking-tighter text-foreground leading-none">{queueCount}</span>
+                    <div className="flex items-center gap-1 mt-0">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/80 leading-none">Waiting</span>
+                      <span className="relative flex h-1.5 w-1.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-10 transition-opacity">
-                  VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+                {/* Subtle glass overlay shine */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              </Card>
+
+              {/* Seen Status Card */}
+              <Card
+                className="flex-1 md:flex-none md:w-36 relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-sm h-16 flex items-center rounded-xl shrink-0 group select-none"
+              >
+                <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                    <HugeiconsIcon icon={UserIcon} className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                    <span className="text-lg font-black tracking-tighter text-foreground leading-none">{seenCount}</span>
+                    <div className="flex items-center gap-1 mt-0">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/85 leading-none">Consulted</span>
+                    </div>
+                  </div>
+                </CardContent>
+                {/* Subtle glass overlay shine */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              </Card>
+            </div>
 
             {/* Unified Search Header style matching Director */}
             <PatientSearch

@@ -213,12 +213,23 @@ const TestResultsPage: React.FC = () => {
     }, [searchId, activeSection, isSelecting, searchByPid]);
 
     const [queueData, setQueueData] = useState<any>({});
+    const [seenStats, setSeenStats] = useState<any>({});
+    
     const fetchQueue = async () => {
         try {
             const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueData(resp.data);
+        } catch (err) {}
+    };
+
+    const fetchSeenStats = async () => {
+        try {
+            const resp = await axios.get(`/api/queue/seen-stats?year=${activeYear}`, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            setSeenStats(resp.data);
         } catch (err) {}
     };
 
@@ -256,7 +267,11 @@ const TestResultsPage: React.FC = () => {
 
     useEffect(() => {
         fetchQueue();
-        const interval = setInterval(fetchQueue, 30000);
+        fetchSeenStats();
+        const interval = setInterval(() => {
+            fetchQueue();
+            fetchSeenStats();
+        }, 30000);
         return () => clearInterval(interval);
     }, [activeYear, activeSection]);
 
@@ -419,24 +434,58 @@ const TestResultsPage: React.FC = () => {
                             
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
                                 {(selectedTest === 'ecg' || selectedTest === 'spirometry' || selectedTest === 'audiometry') && (
-                                <Card 
-                                    className="bg-primary/5 border-primary/20 border-2 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 shadow-sm"
-                                    onClick={() => fetchQueueList(selectedTest || '')}
-                                >
-                                    <CardContent className="p-3 flex items-center gap-3 h-full">
-                                        <div className="p-2.5 bg-primary/10 rounded-xl text-primary">
-                                            <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
-                                        </div>
-                                        <div className="text-center">
-                                            <h3 className="text-2xl font-black tracking-tighter leading-none">
-                                                {selectedTest === 'ecg' ? queueData.ecg || 0 : 
-                                                selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
-                                                queueData.audiometry || 0}
-                                            </h3>
-                                            <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground leading-tight mt-0.5">Queue</p>
-                                        </div>
-                                    </CardContent>
-                                </Card>
+                                <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+                                    {/* Queue Status Card */}
+                                    <Card 
+                                        className="flex-1 md:flex-none md:w-36 relative overflow-hidden cursor-pointer bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 h-16 flex items-center rounded-xl shrink-0 group select-none"
+                                        onClick={() => fetchQueueList(selectedTest || '')}
+                                    >
+                                        <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-xl text-primary group-hover:bg-primary/20 transition-all shrink-0">
+                                                <HugeiconsIcon icon={UserGroupIcon} className="h-4.5 w-4.5" />
+                                            </div>
+                                            <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                                                 <span className="text-lg font-black tracking-tighter text-foreground leading-none">
+                                                     {selectedTest === 'ecg' ? queueData.ecg || 0 : 
+                                                     selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
+                                                     queueData.audiometry || 0}
+                                                 </span>
+                                                 <div className="flex items-center gap-1 mt-0">
+                                                     <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/80 leading-none">Waiting</span>
+                                                     <span className="relative flex h-1.5 w-1.5 shrink-0">
+                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                                     </span>
+                                                 </div>
+                                             </div>
+                                        </CardContent>
+                                        {/* Subtle glass overlay shine */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                                    </Card>
+
+                                    {/* Seen Status Card */}
+                                    <Card 
+                                        className="flex-1 md:flex-none md:w-36 relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-sm h-16 flex items-center rounded-xl shrink-0 group select-none"
+                                    >
+                                        <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                                                <HugeiconsIcon icon={UserIcon} className="h-4.5 w-4.5" />
+                                            </div>
+                                            <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                                                 <span className="text-lg font-black tracking-tighter text-foreground leading-none">
+                                                     {selectedTest === 'ecg' ? seenStats.ecg || 0 : 
+                                                     selectedTest === 'spirometry' ? seenStats.spirometry || 0 : 
+                                                     seenStats.audiometry || 0}
+                                                 </span>
+                                                 <div className="flex items-center gap-1 mt-0">
+                                                     <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/85 leading-none">Seen</span>
+                                                 </div>
+                                             </div>
+                                        </CardContent>
+                                        {/* Subtle glass overlay shine */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                                    </Card>
+                                </div>
                                 )}
 
                                 {/* Search Section Redesign */}
@@ -556,6 +605,8 @@ const TestResultsPage: React.FC = () => {
                             toast.success("Tests saved successfully!");
                             setPatient(null);
                             setSearchId('');
+                            fetchQueue();
+                            fetchSeenStats();
                         }}
                     />
                 )}

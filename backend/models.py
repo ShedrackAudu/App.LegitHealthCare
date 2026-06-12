@@ -504,6 +504,19 @@ class QueueEntry(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
     queue_number = db.Column(db.Integer, nullable=True)
 
+class StaffPatientSeen(db.Model):
+    __tablename__ = 'staff_patient_seen'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    staff_id = db.Column(db.String(50), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
+    department = db.Column(db.String(50), nullable=False, index=True) # 'Consultation', 'Spirometry', 'Audiometry', 'ECG'
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'staff_id', 'screening_year', 'department', name='_user_patient_year_dept_uc'),
+    )
+
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'
     id = db.Column(db.Integer, primary_key=True)

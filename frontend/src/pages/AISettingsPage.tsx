@@ -67,11 +67,11 @@ const CONSULTATION_PARAMETERS = [
 const AI_MODELS = [
     { id: 'gpt-4o', label: 'GPT-4o (Omni - Latest & Smartest)' },
     { id: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cost-Efficient)' },
-    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    { id: 'gpt-4', label: 'GPT-4 (Standard)' },
-    { id: 'o1-preview', label: 'OpenAI o1-preview (Advanced Reasoning)' },
+    { id: 'o1', label: 'OpenAI o1 (Advanced Reasoning)' },
     { id: 'o1-mini', label: 'OpenAI o1-mini (Faster Reasoning)' },
-    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Legacy)' }
+    { id: 'o3-mini', label: 'OpenAI o3-mini (Latest Reasoning & Fast)' },
+    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { id: 'gpt-4', label: 'GPT-4 (Standard)' }
 ];
 
 export const AISettingsPage = () => {
@@ -371,11 +371,11 @@ export const AISettingsPage = () => {
                         <CardContent className="p-8 space-y-8">
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Laboratory & Diagnostics</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {PARAMETERS.map((param) => (
                                         <div 
                                             key={param.id} 
-                                            className={`flex items-center space-x-3 p-4 border-2 rounded-xl transition-colors ${
+                                            className={`flex items-center space-x-3 p-3 border rounded-lg h-11 transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
                                                 ? 'border-primary bg-primary/5' 
                                                 : 'hover:bg-muted/50'
@@ -385,9 +385,9 @@ export const AISettingsPage = () => {
                                                 id={param.id} 
                                                 checked={(settings.medical_parameters || []).includes(param.id)}
                                                 onCheckedChange={() => handleParamToggle(param.id)}
-                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5"
+                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5 shrink-0"
                                             />
-                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-none">{param.label}</Label>
+                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-tight text-xs line-clamp-2 select-none" title={param.label}>{param.label}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -395,23 +395,23 @@ export const AISettingsPage = () => {
 
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Granular Consultation Details</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {CONSULTATION_PARAMETERS.map((param) => (
                                         <div 
                                             key={param.id} 
-                                            className={`flex items-center space-x-2 p-3 border rounded-lg transition-colors ${
+                                            className={`flex items-center space-x-3 p-3 border rounded-lg h-11 transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
-                                                ? 'border-primary/50 bg-primary/5' 
-                                                : 'hover:bg-muted/30'
+                                                ? 'border-primary bg-primary/5' 
+                                                : 'hover:bg-muted/50'
                                             }`}
                                         >
                                             <Checkbox 
                                                 id={param.id} 
                                                 checked={(settings.medical_parameters || []).includes(param.id)}
                                                 onCheckedChange={() => handleParamToggle(param.id)}
-                                                className="h-4 w-4"
+                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5 shrink-0"
                                             />
-                                            <Label htmlFor={param.id} className="text-xs font-bold cursor-pointer flex-1 leading-tight">{param.label}</Label>
+                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-tight text-xs line-clamp-2 select-none" title={param.label}>{param.label}</Label>
                                         </div>
                                     ))}
                                 </div>

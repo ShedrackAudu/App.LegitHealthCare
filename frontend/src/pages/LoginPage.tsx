@@ -707,8 +707,10 @@ const LoginPage = () => {
           )}
         </div>
 
-        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
-          © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
+        <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl flex items-center gap-1.5">
+          <span>© 2026 {branding?.clinic_name || 'Legit HealthCare'}</span>
+          <span>•</span>
+          <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
         </div>
       </div>
     </div>

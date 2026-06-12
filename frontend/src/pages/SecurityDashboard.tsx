@@ -8,7 +8,7 @@ import {
   Alert01Icon,
   Database02Icon,
   UserIcon,
-  Logout01Icon,
+  Logout02Icon,
   Clock01Icon,
   Settings02Icon
 } from '@hugeicons/core-free-icons';
@@ -425,7 +425,7 @@ export default function SecurityDashboard() {
                           onClick={() => handleRevokeSession(sess.user_id)}
                           title="Revoke Session"
                         >
-                          <HugeiconsIcon icon={Logout01Icon} className="h-3.5 w-3.5" />
+                          <HugeiconsIcon icon={Logout02Icon} className="h-3.5 w-3.5" />
                         </Button>
                       </div>
                     </div>

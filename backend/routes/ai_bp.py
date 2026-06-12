@@ -235,15 +235,23 @@ def generate_overview():
         user_content = f"Patient Data:\n{full_context}"
         
         # 3. Call OpenAI API
-        response = client.chat.completions.create(
-            model=settings.model_selection or "gpt-4o",
-            messages=[
+        model_name = settings.model_selection or "gpt-4o"
+        params = {
+            "model": model_name,
+            "messages": [
                 {"role": "system", "content": system_content},
                 {"role": "user", "content": user_content}
-            ],
-            response_format={ "type": "json_object" },
-            max_tokens=800
-        )
+            ]
+        }
+        if model_name.startswith("o1") or model_name.startswith("o3"):
+            params["max_completion_tokens"] = 800
+            if model_name not in ["o1-mini", "o1-preview"]:
+                params["response_format"] = { "type": "json_object" }
+        else:
+            params["max_tokens"] = 800
+            params["response_format"] = { "type": "json_object" }
+
+        response = client.chat.completions.create(**params)
         
         raw_content = response.choices[0].message.content
         try:
@@ -269,7 +277,7 @@ def generate_overview():
         
     except openai.AuthenticationError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked on the OpenAI Platform. Please update your API credentials in the AI Configuration menu."}), 401
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked on the OpenAI Platform. Please update your API credentials in the AI Configuration menu."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
         return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation and that a valid API key is currently provisioned."}), 402
@@ -333,14 +341,20 @@ def generate_lab_remark():
             "Write ONLY the plain text remark. Do NOT wrap in quotes, brackets, or add conversational intros/outros."
         )
         
-        response = client.chat.completions.create(
-            model=settings.model_selection or "gpt-4o",
-            messages=[
+        model_name = settings.model_selection or "gpt-4o"
+        params = {
+            "model": model_name,
+            "messages": [
                 {"role": "system", "content": system_content},
                 {"role": "user", "content": f"Lab Findings:\n{full_context}"}
-            ],
-            max_tokens=100
-        )
+            ]
+        }
+        if model_name.startswith("o1") or model_name.startswith("o3"):
+            params["max_completion_tokens"] = 100
+        else:
+            params["max_tokens"] = 100
+
+        response = client.chat.completions.create(**params)
         
         remark = response.choices[0].message.content.strip()
         if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
@@ -355,7 +369,7 @@ def generate_lab_remark():
         
     except openai.AuthenticationError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked."}), 401
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
         return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded."}), 402

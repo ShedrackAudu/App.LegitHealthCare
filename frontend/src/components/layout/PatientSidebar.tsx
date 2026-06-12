@@ -12,8 +12,8 @@ import {
   Calendar03Icon,
   Comment01Icon,
   Activity01Icon,
-  Logout01Icon,
-  UserSettings01Icon
+  Logout02Icon,
+  AccountSetting01Icon
 } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -126,6 +126,10 @@ export const PatientSidebar: React.FC = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => {
+                setIsCollapsed(true);
+                localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+              }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 group/item relative",
                 isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
@@ -152,9 +156,21 @@ export const PatientSidebar: React.FC = () => {
         </div>
 
         <div className="px-3 mt-auto space-y-1.5">
+          {/* Versioning */}
+          <div className={cn(
+            "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none",
+            isCollapsed ? "text-center" : "px-3"
+          )}>
+            <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
+          </div>
+
           {/* Manage Account Link */}
           <NavLink
             to="/patient/account"
+            onClick={() => {
+              setIsCollapsed(true);
+              localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+            }}
             className={({ isActive }) => cn(
               "flex items-center rounded-lg transition-all duration-200 group/manage relative h-10",
               isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3",
@@ -164,7 +180,7 @@ export const PatientSidebar: React.FC = () => {
             )}
             title="Manage Account"
           >
-            <HugeiconsIcon icon={UserSettings01Icon} className="h-5 w-5 shrink-0" />
+            <HugeiconsIcon icon={AccountSetting01Icon} className="h-5 w-5 shrink-0" />
             {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
             {isCollapsed && (
               <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
@@ -182,7 +198,7 @@ export const PatientSidebar: React.FC = () => {
             )}
             title="Log out"
           >
-            <HugeiconsIcon icon={Logout01Icon} className="h-5 w-5 shrink-0" />
+            <HugeiconsIcon icon={Logout02Icon} className="h-5 w-5 shrink-0" />
             {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
             {isCollapsed && (
               <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">

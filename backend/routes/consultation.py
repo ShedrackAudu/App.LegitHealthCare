@@ -140,6 +140,27 @@ def save_consultation():
     else:
         sys.stderr.write(f"[DEBUG] JWT identity is MISSING or INVALID\n")
             
+    # Record seen patient
+    if user_id:
+        try:
+            from models import StaffPatientSeen
+            existing_seen = StaffPatientSeen.query.filter_by(
+                user_id=int(user_id),
+                staff_id=staff_id,
+                screening_year=int(screening_year),
+                department='Consultation'
+            ).first()
+            if not existing_seen:
+                new_seen = StaffPatientSeen(
+                    user_id=int(user_id),
+                    staff_id=staff_id,
+                    screening_year=int(screening_year),
+                    department='Consultation'
+                )
+                db.session.add(new_seen)
+        except Exception as seen_err:
+            sys.stderr.write(f"[DEBUG] Error recording seen consultation: {seen_err}\n")
+
     # Remove from Consultation Queue
     from models import QueueEntry
     from sqlalchemy import func

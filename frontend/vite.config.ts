@@ -3,6 +3,24 @@ import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindv4 from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'child_process'
+
+let gitHash = "dev"
+try {
+  gitHash = execSync("git rev-parse --short HEAD").toString().trim()
+} catch (e) {
+  // git not installed or no commits
+}
+
+let gitTag = ""
+try {
+  gitTag = execSync("git describe --tags --abbrev=0").toString().trim()
+} catch (e) {
+  // no tags
+}
+
+const appVersion = gitTag || "v1.2.0"
+const buildDate = new Date().toISOString().slice(0, 10)
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -108,6 +126,11 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+    'import.meta.env.VITE_APP_GIT_HASH': JSON.stringify(gitHash),
+    'import.meta.env.VITE_APP_BUILD_DATE': JSON.stringify(buildDate),
   },
   optimizeDeps: {
     include: [

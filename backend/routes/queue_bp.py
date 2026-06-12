@@ -3,7 +3,7 @@ from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
 from zoneinfo import ZoneInfo
 from decorators import require_permission
-from flask_jwt_extended import get_jwt_identity, get_jwt
+from flask_jwt_extended import get_jwt_identity, get_jwt, jwt_required
 
 queue_bp = Blueprint('queue_bp', __name__)
 
@@ -237,4 +237,39 @@ def delete_patient_from_queue(department, staff_id):
     )
 
     return jsonify({"message": f"Patient {staff_id} successfully removed from {target_dept} queue"}), 200
+
+@queue_bp.route('/seen-stats', methods=['GET'], strict_slashes=False)
+@jwt_required()
+def get_seen_stats():
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    year = request.args.get('year')
+    if not year:
+        return jsonify({"error": "Year required"}), 400
+        
+    from models import StaffPatientSeen
+    
+    counts = db.session.query(
+        StaffPatientSeen.department,
+        func.count(StaffPatientSeen.id)
+    ).filter(
+        StaffPatientSeen.user_id == int(user_id),
+        StaffPatientSeen.screening_year == int(year)
+    ).group_by(StaffPatientSeen.department).all()
+    
+    result = {
+        "consultation": 0,
+        "audiometry": 0,
+        "spirometry": 0,
+        "ecg": 0
+    }
+    
+    for dept, count in counts:
+        dept_key = dept.strip().lower()
+        if dept_key in result:
+            result[dept_key] = count
+            
+    return jsonify(result), 200
 
