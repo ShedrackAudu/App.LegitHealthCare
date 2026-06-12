@@ -268,6 +268,62 @@ def get_user_timeline(user_id):
             
     return jsonify(final_logs)
 
+@admin_bp.route('/api/admin/users/<string:user_id>/send-reminder', methods=['POST'])
+@require_permission('view_users')
+def send_reminder(user_id):
+    if not user_id.startswith('p'):
+        return jsonify({"error": "Only patient accounts can receive verification reminders."}), 400
+        
+    real_id = int(user_id[1:])
+    patient = PatientPortalUser.query.get_or_404(real_id)
+    
+    if patient.is_verified:
+        return jsonify({"error": "This patient account is already verified."}), 400
+
+    try:
+        from utils.email_utils import EmailService
+        from models import AppBranding
+        from datetime import datetime
+        
+        branding = AppBranding.query.first()
+        clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+
+        app_url = current_app.config.get('FRONTEND_URL', current_app.config.get('APP_URL', 'http://localhost:5173'))
+        if logo_url and logo_url.startswith('/'):
+            backend_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+            logo_url = f"{backend_url.rstrip('/')}{logo_url}"
+
+        screening_year = str(datetime.now().year)
+
+        subject = f"Reminder: Complete Your Patient Account Verification - Legit HealthCare"
+        html_content = EmailService.get_registration_success_template(
+            first_name=patient.first_name,
+            year=screening_year,
+            clinic_name=clinic_name,
+            app_url=app_url,
+            logo_url=logo_url,
+            is_reminder=True
+        )
+
+        success = EmailService.send_email(patient.email, subject, html_content)
+        if success:
+            patient.last_reminder_sent = datetime.now()
+            db.session.commit()
+            
+            AuditLog.log_action(
+                action="MANUAL_SEND_VERIFICATION_REMINDER",
+                resource=f"Patient:{patient.username}",
+                details={"email": patient.email},
+                commit=True
+            )
+            return jsonify({"message": f"Verification reminder sent successfully to {patient.email}"}), 200
+        else:
+            return jsonify({"error": "Failed to send email. Check your SMTP settings."}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Error initiating reminder: {str(e)}"}), 500
+
 @admin_bp.route('/api/admin/users/<string:user_id>/roles', methods=['POST'])
 @require_permission('change_roles')
 def update_user_roles(user_id):

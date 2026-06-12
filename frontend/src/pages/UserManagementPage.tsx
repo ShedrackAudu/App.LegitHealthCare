@@ -140,6 +140,7 @@ const UserManagementPage: React.FC = () => {
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | number | null>(null);
 
   const handlePatientSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -357,6 +358,19 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
+  const handleSendReminder = async (targetUserId: string | number) => {
+    setSendingReminder(targetUserId);
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      await axios.post(`/api/admin/users/${targetUserId}/send-reminder`, {}, { headers });
+      toast.success("Verification reminder sent successfully!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to send reminder.");
+    } finally {
+      setSendingReminder(null);
+    }
+  };
+
   const viewProfile = async (uId: number | string) => {
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
@@ -441,6 +455,8 @@ const UserManagementPage: React.FC = () => {
                   onViewProfile={viewProfile}
                   setSelectedUserForTimeline={setSelectedUserForTimeline}
                   setIsTimelineOpen={setIsTimelineOpen}
+                  handleSendReminder={handleSendReminder}
+                  sendingReminder={sendingReminder}
                 />
               </CardContent>
             </Card>
@@ -476,6 +492,8 @@ const UserManagementPage: React.FC = () => {
                   onViewProfile={viewProfile}
                   setSelectedUserForTimeline={setSelectedUserForTimeline}
                   setIsTimelineOpen={setIsTimelineOpen}
+                  handleSendReminder={handleSendReminder}
+                  sendingReminder={sendingReminder}
                 />
               </CardContent>
             </Card>
@@ -1158,8 +1176,19 @@ const UserTable: React.FC<{
   handleAction: (action: string, u: User) => void, 
   onViewProfile: (id: number | string) => void,
   setSelectedUserForTimeline: (user: User) => void,
-  setIsTimelineOpen: (open: boolean) => void
-}> = ({ users, loading, handleAction, onViewProfile, setSelectedUserForTimeline, setIsTimelineOpen }) => (
+  setIsTimelineOpen: (open: boolean) => void,
+  handleSendReminder?: (id: number | string) => void,
+  sendingReminder?: number | string | null
+}> = ({ 
+  users, 
+  loading, 
+  handleAction, 
+  onViewProfile, 
+  setSelectedUserForTimeline, 
+  setIsTimelineOpen,
+  handleSendReminder,
+  sendingReminder
+}) => (
   <div className="overflow-x-auto">
     <Table>
       <TableHeader className="bg-muted/50">
@@ -1333,6 +1362,19 @@ const UserTable: React.FC<{
                       <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />
                       View Timeline
                     </DropdownMenuItem>
+                    {user.roles.includes('Patient') && !user.is_verified && (
+                      <DropdownMenuItem 
+                        onClick={() => handleSendReminder?.(user.id)} 
+                        disabled={sendingReminder === user.id}
+                        className="cursor-pointer gap-2"
+                      >
+                        <HugeiconsIcon 
+                          icon={sendingReminder === user.id ? Loading03Icon : Mail01Icon} 
+                          className={`h-4 w-4 ${sendingReminder === user.id ? 'animate-spin' : ''}`} 
+                        />
+                        {sendingReminder === user.id ? 'Sending...' : 'Send Reminder'}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleAction('deactivate', user)}
