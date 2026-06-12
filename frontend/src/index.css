@@ -443,10 +443,14 @@
 }
 
 /* High-contrast premium skeleton loaders for both light and dark modes */
-.animate-pulse {
+.skeleton,
+div.animate-pulse[class*="bg-muted"],
+span.animate-pulse[class*="bg-muted"] {
   background-color: hsl(var(--muted-foreground) / 0.15) !important;
 }
-.dark .animate-pulse {
+.dark .skeleton,
+.dark div.animate-pulse[class*="bg-muted"],
+.dark span.animate-pulse[class*="bg-muted"] {
   background-color: hsl(var(--muted) / 0.8) !important;
 }
 
