@@ -660,6 +660,14 @@ const DirectorPage: React.FC = () => {
     const [searching, setSearching] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bulkAiEnabled, setBulkAiEnabled] = useState(true);
+    const [lastReviewed, setLastReviewed] = useState<{ patientId: string | number; staffId: string } | null>(() => {
+        try {
+            const saved = localStorage.getItem('last_reviewed_director');
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
 
     // Batch AI Processing states
     const [batchOpen, setBatchOpen] = useState(false);
@@ -944,6 +952,14 @@ const DirectorPage: React.FC = () => {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Director Review saved successfully!");
+            
+            const info = {
+                patientId: patient.patient_id || 'N/A',
+                staffId: patient.staff_id
+            };
+            setLastReviewed(info);
+            localStorage.setItem('last_reviewed_director', JSON.stringify(info));
+
             setPatient(null);
             setHistory(null);
         } catch (err) {
@@ -1049,6 +1065,28 @@ const DirectorPage: React.FC = () => {
                                 <p className="text-muted-foreground font-medium text-sm italic max-w-sm mx-auto leading-snug">
                                     Search for a patient using the search bar at the top to begin individual clinical review.
                                 </p>
+                                {lastReviewed && (
+                                    <div 
+                                        onClick={() => handleSearchWithId(lastReviewed.staffId, 'general')}
+                                        className="p-4 bg-primary/5 hover:bg-primary/10 border-2 border-primary/15 rounded-2xl max-w-xs mx-auto transition-all cursor-pointer active:scale-95 group/last shadow-sm mt-2"
+                                    >
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">
+                                            Last Patient Reviewed
+                                        </p>
+                                        <div className="flex justify-center items-center gap-2 text-xs">
+                                            <span className="font-semibold text-muted-foreground">
+                                                Patient ID: <strong className="font-bold text-foreground font-mono">#{lastReviewed.patientId}</strong>
+                                            </span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                                            <span className="font-semibold text-muted-foreground">
+                                                Staff ID: <strong className="font-bold text-foreground font-mono">#{lastReviewed.staffId}</strong>
+                                            </span>
+                                        </div>
+                                        <p className="text-[9px] text-primary/70 group-hover/last:text-primary transition-colors font-bold mt-1.5 leading-none">
+                                            Click to reload patient details
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="flex flex-col items-center gap-1">
                                     <div className="h-px w-8 bg-muted-foreground/20" />
                                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
