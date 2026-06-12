@@ -22,25 +22,10 @@ def client():
                 db.metadata.create_all(bind=engine)
             yield client
             db.session.remove()
-            try:
-                db.drop_all()
-            except Exception:
-                pass
-            try:
-                db.engine.dispose()
-            except Exception:
-                pass
+            db.drop_all()
             for bind_name in app.config.get('SQLALCHEMY_BINDS', {}):
                 engine = db.engines[bind_name]
-                try:
-                    db.metadata.drop_all(bind=engine)
-                except Exception:
-                    pass
-                try:
-                    engine.dispose()
-                except Exception:
-                    pass
-
+                db.metadata.drop_all(bind=engine)
 
 @pytest.fixture
 def setup_user(client):

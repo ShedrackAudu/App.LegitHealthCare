@@ -822,9 +822,6 @@ class AuditLog(db.Model):
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.now)
-    correlation_id = db.Column(db.String(36), nullable=True)
-    hash = db.Column(db.String(64), nullable=True)
-    prev_hash = db.Column(db.String(64), nullable=True)
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
@@ -946,32 +943,12 @@ class AuditLog(db.Model):
             else:
                 details_str = json.dumps({"portal": portal_type})
 
-            correlation_id = None
-            try:
-                from flask import g, has_request_context
-                if has_request_context() and hasattr(g, 'correlation_id'):
-                    correlation_id = g.correlation_id
-            except Exception:
-                pass
-
-            last_log = cls.query.order_by(cls.id.desc()).first()
-            prev_hash = last_log.hash if (last_log and last_log.hash) else "0" * 64
-            
-            now = datetime.now()
-            import hashlib
-            hash_payload = f"{prev_hash}|{user_id}|{action}|{resource}|{now.isoformat()}|{details_str}"
-            curr_hash = hashlib.sha256(hash_payload.encode('utf-8')).hexdigest()
-
             log = cls(
                 user_id=user_id,
                 action=action,
                 resource=resource,
                 details=details_str,
-                ip_address=ip_address,
-                timestamp=now,
-                correlation_id=correlation_id,
-                prev_hash=prev_hash,
-                hash=curr_hash
+                ip_address=ip_address
             )
             db.session.add(log)
             if commit:
@@ -1060,10 +1037,7 @@ class AuditLog(db.Model):
             "resource": self.resource,
             "details": details_data,
             "ip_address": self.ip_address,
-            "timestamp": self.timestamp.isoformat(),
-            "correlation_id": self.correlation_id,
-            "hash": self.hash,
-            "prev_hash": self.prev_hash
+            "timestamp": self.timestamp.isoformat()
         }
 
 
@@ -1320,198 +1294,3 @@ def on_audit_log_insert(mapper, connection, target):
     except Exception as e:
         import sys
         sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")
-
-
-# Advanced ORM Audit Listeners for Patients
-AUDITED_MODELS = [
-    'BioData', 'ScreeningYearBioData', 'ConsultationData', 
-    'FBCResult', 'KFTResult', 'LipidResult', 'LFTResult', 
-    'SpecialTestsResult', 'DirectorReview', 'PatientFile', 'Appointment'
-]
-
-SENSITIVE_FIELDS = {
-    'password_hash', 'password', 'token', 'secret', 'otp', 
-    'api_key', 'api_secret', 'jwt_token', 'card_number', 'cvv'
-}
-
-def mask_value(field, value):
-    if field in SENSITIVE_FIELDS:
-        return "********"
-    return value
-
-def log_orm_action(connection, action, resource, details_dict, user_id=None, ip_address=None):
-    try:
-        import json
-        from datetime import datetime
-        import hashlib
-        from sqlalchemy import inspect
-        
-        from flask_jwt_extended import get_jwt_identity, get_jwt
-        from utils.ip import get_client_ip
-        from flask import has_request_context, request, session, g
-        
-        # Route audit log inserts to the default database engine (where audit_logs resides)
-        from models import AuditLog
-        target_connection = db.session().connection(bind_arguments={'mapper': inspect(AuditLog)})
-
-
-        
-        if user_id is None:
-            try:
-                user_id = get_jwt_identity()
-            except Exception:
-                pass
-            if user_id is None:
-                try:
-                    user_id = session.get('user_id')
-                except Exception:
-                    pass
-        
-        if ip_address is None:
-            try:
-                ip_address = get_client_ip()
-            except Exception:
-                pass
-                
-        portal_type = 'staff'
-        try:
-            claims = get_jwt()
-            portal_type = claims.get('portal', 'staff')
-        except Exception:
-            pass
-            
-        details_dict['portal'] = portal_type
-        
-        if has_request_context():
-            user_agent_str = request.headers.get('User-Agent', '')
-            platform = "Unknown OS"
-            browser = "Unknown Browser"
-            if user_agent_str:
-                ua_lower = user_agent_str.lower()
-                if 'windows' in ua_lower: platform = 'Windows'
-                elif 'macintosh' in ua_lower or 'mac os' in ua_lower: platform = 'macOS'
-                elif 'iphone' in ua_lower or 'ipad' in ua_lower: platform = 'iOS'
-                elif 'android' in ua_lower: platform = 'Android'
-                elif 'linux' in ua_lower: platform = 'Linux'
-                
-                if 'edg/' in ua_lower or 'edge' in ua_lower: browser = 'Edge'
-                elif 'opr/' in ua_lower or 'opera' in ua_lower: browser = 'Opera'
-                elif 'chrome' in ua_lower or 'crios' in ua_lower: browser = 'Chrome'
-                elif 'firefox' in ua_lower or 'fxios' in ua_lower: browser = 'Firefox'
-                elif 'safari' in ua_lower and 'chrome' not in ua_lower: browser = 'Safari'
-                
-            details_dict['device'] = {
-                "platform": platform,
-                "browser": browser,
-                "user_agent": user_agent_str
-            }
-            
-        details_str = json.dumps(details_dict)
-        
-        correlation_id = None
-        try:
-            if has_request_context() and hasattr(g, 'correlation_id'):
-                correlation_id = g.correlation_id
-        except Exception:
-            pass
-            
-        last_log_row = target_connection.execute(
-            db.text("SELECT hash FROM audit_logs ORDER BY id DESC LIMIT 1")
-        ).fetchone()
-        prev_hash = last_log_row[0] if (last_log_row and last_log_row[0]) else "0" * 64
-        
-        now = datetime.now()
-        now_str = now.isoformat()
-        
-        hash_payload = f"{prev_hash}|{user_id}|{action}|{resource}|{now_str}|{details_str}"
-        curr_hash = hashlib.sha256(hash_payload.encode('utf-8')).hexdigest()
-        
-        target_connection.execute(
-            db.text("INSERT INTO audit_logs (user_id, action, resource, details, ip_address, timestamp, correlation_id, hash, prev_hash) "
-                    "VALUES (:user_id, :action, :resource, :details, :ip_address, :timestamp, :correlation_id, :hash, :prev_hash)"),
-            {
-                "user_id": user_id,
-                "action": action,
-                "resource": resource,
-                "details": details_str,
-                "ip_address": ip_address,
-                "timestamp": now,
-                "correlation_id": correlation_id,
-                "hash": curr_hash,
-                "prev_hash": prev_hash
-            }
-        )
-    except Exception as e:
-        import sys
-        sys.stderr.write(f"[ORM AUDIT LOG ERROR] {e}\n")
-
-
-def register_audit_listeners():
-    from sqlalchemy.orm import class_mapper
-    from sqlalchemy import inspect
-    from datetime import datetime
-    import sys
-    
-    for model_name in AUDITED_MODELS:
-        try:
-            model_cls = globals().get(model_name)
-            if not model_cls:
-                sys.stderr.write(f"[AUDIT LISTEN] NOT FOUND: {model_name}\n")
-                continue
-            sys.stderr.write(f"[AUDIT LISTEN] REGISTERING: {model_name}\n")
-            
-            @event.listens_for(model_cls, 'after_insert')
-
-            def receive_after_insert(mapper, connection, target):
-                state = inspect(target)
-                attrs_dict = {}
-                for attr in state.attrs:
-                    val = attr.value
-                    if isinstance(val, datetime):
-                        val = val.isoformat()
-                    attrs_dict[attr.key] = mask_value(attr.key, val)
-                    
-                action = f"CREATE_{target.__class__.__name__.upper()}"
-                staff_id = getattr(target, 'staff_id', None)
-                resource = f"Patient:{staff_id}" if staff_id else f"{target.__class__.__name__}:{target.id}"
-                
-                log_orm_action(connection, action, resource, {"payload": attrs_dict})
-                
-            @event.listens_for(model_cls, 'before_update')
-            def receive_before_update(mapper, connection, target):
-                state = inspect(target)
-                diff = {}
-                for attr in state.attrs:
-                    hist = attr.history
-                    if hist.has_changes():
-                        old_val = hist.deleted[0] if hist.deleted else None
-                        new_val = hist.added[0] if hist.added else None
-                        if isinstance(old_val, datetime):
-                            old_val = old_val.isoformat()
-                        if isinstance(new_val, datetime):
-                            new_val = new_val.isoformat()
-                            
-                        old_val = mask_value(attr.key, old_val)
-                        new_val = mask_value(attr.key, new_val)
-                        
-                        if old_val != new_val:
-                            diff[attr.key] = {"old": old_val, "new": new_val}
-                            
-                if diff:
-                    action = f"UPDATE_{target.__class__.__name__.upper()}"
-                    staff_id = getattr(target, 'staff_id', None)
-                    resource = f"Patient:{staff_id}" if staff_id else f"{target.__class__.__name__}:{target.id}"
-                    log_orm_action(connection, action, resource, {"diff": diff})
-                    
-            @event.listens_for(model_cls, 'after_delete')
-            def receive_after_delete(mapper, connection, target):
-                action = f"DELETE_{target.__class__.__name__.upper()}"
-                staff_id = getattr(target, 'staff_id', None)
-                resource = f"Patient:{staff_id}" if staff_id else f"{target.__class__.__name__}:{target.id}"
-                
-                log_orm_action(connection, action, resource, {"deleted": True})
-        except Exception as e:
-            import sys
-            sys.stderr.write(f"[AUDIT REGISTER ERROR] Failed for {model_name}: {e}\n")
-
-register_audit_listeners()
