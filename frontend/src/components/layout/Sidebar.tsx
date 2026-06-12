@@ -91,6 +91,26 @@ export const Sidebar: React.FC = () => {
     return () => clearTimeout(timer);
   }, [location.pathname]);
 
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!isCollapsed) {
+        if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+          setIsCollapsed(true);
+          localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isCollapsed]);
+
   const handleLogout = async () => {
     if (user) {
         try {
@@ -123,6 +143,7 @@ export const Sidebar: React.FC = () => {
       )}
 
       <aside
+        ref={sidebarRef}
         className={cn(
           "h-[100dvh] sticky top-0 touch-none border-r border-border bg-card text-card-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
           "lg:bg-primary lg:text-primary-foreground lg:border-primary-foreground/10",

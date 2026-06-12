@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import axios from 'axios';
@@ -77,6 +77,26 @@ export const PatientSidebar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!isCollapsed) {
+        if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+          setIsCollapsed(true);
+          localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isCollapsed]);
+
   const toggleSidebar = () => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
@@ -85,6 +105,7 @@ export const PatientSidebar: React.FC = () => {
 
   return (
     <aside
+      ref={sidebarRef}
       className={cn(
         "h-full border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
