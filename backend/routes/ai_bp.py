@@ -171,31 +171,24 @@ def generate_overview():
             fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if fbc:
                 context_parts.append(f"--- FBC Results ---")
-                context_parts.append(f"PCV: {fbc.pcv}, WBC: {fbc.wbc}, PLT: {fbc.plt}, HGB: {fbc.hgb}, RBC: {fbc.rbc}")
                 context_parts.append(f"Remark: {fbc.fbc_remark}")
 
         if "KFT" in selected_params:
             kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if kft:
-                lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-                urea_val = lft.urea if lft else 'N/A'
-                creat_val = lft.creatinine if lft else 'N/A'
                 context_parts.append(f"--- KFT Results ---")
-                context_parts.append(f"Potassium: {kft.potassium}, Sodium: {kft.sodium}, Urea: {urea_val}, Creatinine: {creat_val}")
                 context_parts.append(f"Remark: {kft.kft_remark}")
 
         if "LFT" in selected_params:
             lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if lft:
                 context_parts.append(f"--- LFT Results ---")
-                context_parts.append(f"AST: {lft.ast}, ALT: {lft.alt}, ALP: {lft.alp}, TB: {lft.tb}, CB: {lft.cb}")
                 context_parts.append(f"Remark: {lft.lft_remark}")
 
         if "Lipid Profile" in selected_params:
             lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             if lp:
                 context_parts.append(f"--- Lipid Profile Results ---")
-                context_parts.append(f"Total Chol: {lp.total_cholesterol}, Triglycerides: {lp.triglycerides}, HDL: {lp.hdl}, LDL: {lp.ldl}")
                 context_parts.append(f"Remark: {lp.lp_remark}")
 
         if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry", "Weight", "Height"]):
