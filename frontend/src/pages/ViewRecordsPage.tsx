@@ -25,6 +25,7 @@ import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { Pagination } from '@/components/ui/pagination';
 
 const ViewRecordsPage: React.FC = () => {
     const { user, activeSection, activeYear } = useAppContext();
@@ -37,13 +38,14 @@ const ViewRecordsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(25);
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
 
-    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general') => {
+    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general', pageSize = perPage) => {
         setLoading(true);
         try {
-            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
+            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=${pageSize}&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
             
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -68,7 +70,13 @@ const ViewRecordsPage: React.FC = () => {
 
 
     const handlePageChange = (newPage: number) => {
-        fetchRecords(newPage, searchTerm);
+        fetchRecords(newPage, searchTerm, undefined, perPage);
+    };
+
+    const handlePerPageChange = (newPerPage: number) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
+        fetchRecords(1, searchTerm, undefined, newPerPage);
     };
 
     const handleDelete = async () => {
@@ -430,37 +438,15 @@ const ViewRecordsPage: React.FC = () => {
                                 </ScrollArea>
 
                                 {/* Pagination Controls */}
-                                <div className="p-4 bg-muted/20 border-t flex items-center justify-between no-print">
-                                    <div className="flex items-center gap-4">
-                                        <p className="text-sm font-bold text-muted-foreground">
-                                            Total: <span className="text-foreground">{recordsData.total}</span>
-                                        </p>
-                                        <div className="h-4 w-px bg-border" />
-                                        <p className="text-sm font-bold text-muted-foreground">
-                                            Page <span className="text-foreground">{recordsData.current_page}</span> of <span className="text-foreground">{recordsData.pages}</span>
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl border-2 font-bold px-4"
-                                            disabled={currentPage === 1 || loading}
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                        >
-                                            <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
-                                        </Button>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl border-2 font-bold px-4"
-                                            disabled={currentPage === recordsData.pages || loading}
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                        >
-                                            Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                <div className="bg-muted/20 border-t px-8 py-2 no-print">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalItems={recordsData.total}
+                                        perPage={perPage}
+                                        onPageChange={handlePageChange}
+                                        onPerPageChange={handlePerPageChange}
+                                        loading={loading}
+                                    />
                                 </div>
                             </div>
                         )}

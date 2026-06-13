@@ -27,24 +27,28 @@ import { useAppContext } from '@/context/AppContext';
 import { format } from 'date-fns';
 import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 
 const AuditLogPage: React.FC = () => {
   const [logs, setLogs] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
+  const [perPage, setPerPage] = useState(25);
+  const [totalItems, setTotalItems] = useState(0);
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, socket } = useAppContext();
 
-  const fetchLogs = async (pageNum: number) => {
+  const fetchLogs = async (pageNum: number, pageSize = perPage) => {
     setLoading(true);
     try {
-      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=15`);
+      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=${pageSize}`);
       setLogs(resp.data.logs);
       setTotalPages(resp.data.pages);
       setPage(resp.data.current_page);
+      setTotalItems(resp.data.total || 0);
     } catch (err) {
       toast.error("Failed to fetch audit logs.");
     } finally {
@@ -53,15 +57,16 @@ const AuditLogPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLogs(page);
-  }, [page]);
+    fetchLogs(page, perPage);
+  }, [page, perPage]);
 
   useEffect(() => {
     if (!socket) return;
     
     const handleNewLog = (newLog: any) => {
       if (page === 1) {
-        setLogs(prev => [newLog, ...prev.slice(0, 14)]);
+        setLogs(prev => [newLog, ...prev.slice(0, perPage - 1)]);
+        setTotalItems(prev => prev + 1);
       }
     };
     
@@ -69,7 +74,7 @@ const AuditLogPage: React.FC = () => {
     return () => {
       socket.off('new_audit_log', handleNewLog);
     };
-  }, [socket, page]);
+  }, [socket, page, perPage]);
 
   const getActionColor = (action: string) => {
     const act = action.toUpperCase();
@@ -259,30 +264,15 @@ const AuditLogPage: React.FC = () => {
               </Table>
             </div>
           </CardContent>
-          <div className="bg-muted/5 p-4 border-t flex items-center justify-between">
-            <div className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
-                Page {page} of {totalPages}
-            </div>
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                disabled={page === 1 || loading}
-                className="h-8 rounded-lg font-black text-[10px] uppercase gap-1"
-              >
-                <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Prev
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                disabled={page === totalPages || loading}
-                className="h-8 rounded-lg font-black text-[10px] uppercase gap-1"
-              >
-                Next <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3" />
-              </Button>
-            </div>
+          <div className="bg-muted/5 px-8 py-2 border-t">
+            <Pagination
+              currentPage={page}
+              totalItems={totalItems}
+              perPage={perPage}
+              onPageChange={setPage}
+              onPerPageChange={setPerPage}
+              loading={loading}
+            />
           </div>
         </Card>
 

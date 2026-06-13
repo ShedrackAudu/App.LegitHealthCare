@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'react-hot-toast';
 
 const ViewPatientsPage: React.FC = () => {
@@ -39,7 +40,7 @@ const ViewPatientsPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [perPage] = useState(25);
+    const [perPage, setPerPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
     
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
@@ -47,12 +48,12 @@ const ViewPatientsPage: React.FC = () => {
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchPatients = async (query = searchQuery, targetPage = page) => {
+    const fetchPatients = async (query = searchQuery, targetPage = page, pageSize = perPage) => {
         setLoading(true);
         try {
             const url = query 
-                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${perPage}`
-                : `/api/patients/all?page=${targetPage}&per_page=${perPage}`;
+                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${pageSize}`
+                : `/api/patients/all?page=${targetPage}&per_page=${pageSize}`;
             
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -330,30 +331,22 @@ const ViewPatientsPage: React.FC = () => {
                     </CardContent>
                     
                     {/* Pagination Footer */}
-                    <div className="bg-muted/30 border-t p-4 flex items-center justify-between">
-                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            Page {page} of {totalPages}
-                        </div>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={page <= 1 || loading}
-                                onClick={() => fetchPatients(searchQuery, page - 1)}
-                                className="font-bold border-2"
-                            >
-                                <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={page >= totalPages || loading}
-                                onClick={() => fetchPatients(searchQuery, page + 1)}
-                                className="font-bold border-2"
-                            >
-                                Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
+                    <div className="bg-muted/30 border-t px-8 py-2">
+                        <Pagination
+                            currentPage={page}
+                            totalItems={totalItems}
+                            perPage={perPage}
+                            onPageChange={(newPage) => {
+                                setPage(newPage);
+                                fetchPatients(searchQuery, newPage, perPage);
+                            }}
+                            onPerPageChange={(newPerPage) => {
+                                setPerPage(newPerPage);
+                                setPage(1);
+                                fetchPatients(searchQuery, 1, newPerPage);
+                            }}
+                            loading={loading}
+                        />
                     </div>
                 </Card>
 
