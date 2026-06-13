@@ -771,7 +771,7 @@ def bulk_ai_remarks(test_type):
                         get_param_prompt(params, 'potassium', 'Potassium', '3.5-5.0', 'mmol/L', record.potassium) +
                         get_param_prompt(params, 'sodium', 'Sodium', '135-145', 'mmol/L', record.sodium) +
                         get_param_prompt(params, 'chloride', 'Chloride', '97-107', 'mmol/L', record.chloride) +
-                        get_param_prompt(params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.bicarbonate) +
+                        get_param_prompt(params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.hco3) +
                         get_param_prompt(params, 'urea', 'Urea', '2.5-8.33', 'mmol/L', urea_val) +
                         get_param_prompt(params, 'creatinine', 'Creatinine', 'Male: 80-133, Female: 62-115', 'umol/L', creatinine_val)
                     )
