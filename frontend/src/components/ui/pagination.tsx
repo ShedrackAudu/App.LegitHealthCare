@@ -39,16 +39,16 @@ export const Pagination: React.FC<PaginationProps> = ({
   const endIndex = Math.min(currentPage * perPage, totalItems);
 
   return (
-    <div className={cn("flex items-center justify-between gap-4 py-4", className)}>
+    <div className={cn("flex flex-row items-center justify-between gap-2 sm:gap-4 py-2 w-full", className)}>
       {/* Rows per page selector */}
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button
             variant="outline"
-            className="flex items-center gap-2 h-10 px-4 rounded-xl border border-input bg-background text-sm font-bold text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-primary outline-none transition-all"
+            className="flex items-center gap-1.5 h-8 sm:h-10 px-2.5 sm:px-4 rounded-lg sm:rounded-xl border border-input bg-background text-[11px] sm:text-sm font-bold text-muted-foreground hover:bg-accent hover:text-accent-foreground focus-visible:ring-1 focus-visible:ring-primary/20 focus-visible:border-primary outline-none transition-all"
           >
             <span>{perPage} per page</span>
-            <HugeiconsIcon icon={ArrowDown01Icon} className="h-4 w-4 text-muted-foreground" />
+            <HugeiconsIcon icon={ArrowDown01Icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-muted-foreground" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="w-44 p-1.5 border border-border rounded-2xl shadow-xl bg-popover text-popover-foreground z-[100]">
@@ -98,9 +98,9 @@ export const Pagination: React.FC<PaginationProps> = ({
       </DropdownMenu>
 
       {/* Range Display & Navigation Controls */}
-      <div className="flex items-center h-10 border border-input rounded-xl bg-background overflow-hidden">
+      <div className="flex items-center h-8 sm:h-10 border border-input rounded-lg sm:rounded-xl bg-background overflow-hidden">
         {/* Page Range Text */}
-        <span className="px-4 text-sm font-bold text-muted-foreground whitespace-nowrap select-none">
+        <span className="px-2 sm:px-4 text-[11px] sm:text-sm font-bold text-muted-foreground whitespace-nowrap select-none">
           {startIndex}-{endIndex} of {totalItems}
         </span>
         
@@ -111,10 +111,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage === 1 || loading}
-          className="flex items-center justify-center w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
+          className="flex items-center justify-center w-8 sm:w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
           title="Previous Page"
         >
-          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowLeft01Icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
 
         {/* Divider */}
@@ -124,10 +124,10 @@ export const Pagination: React.FC<PaginationProps> = ({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage === totalPages || loading}
-          className="flex items-center justify-center w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
+          className="flex items-center justify-center w-8 sm:w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
           title="Next Page"
         >
-          <HugeiconsIcon icon={ArrowRight01Icon} className="h-4 w-4" />
+          <HugeiconsIcon icon={ArrowRight01Icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
       </div>
     </div>

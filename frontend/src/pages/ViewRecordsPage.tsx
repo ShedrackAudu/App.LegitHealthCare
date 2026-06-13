@@ -26,6 +26,7 @@ import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { Pagination } from '@/components/ui/pagination';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const ViewRecordsPage: React.FC = () => {
     const { user, activeSection, activeYear } = useAppContext();
@@ -137,12 +138,7 @@ const ViewRecordsPage: React.FC = () => {
 
                 <Card className="border-2 shadow-xl bg-card overflow-hidden">
                     <CardContent className="p-0">
-                        {loading && recordsData.records.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center p-20 gap-4">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 text-primary animate-spin" />
-                                <p className="font-bold text-muted-foreground animate-pulse">Gathering diagnostic data...</p>
-                            </div>
-                        ) : recordsData.records.length === 0 ? (
+                        {recordsData.records.length === 0 && !loading ? (
                             <div className="flex flex-col items-center justify-center min-h-[24rem] p-8 text-center space-y-4">
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
                                     <HugeiconsIcon icon={Search01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
@@ -298,8 +294,22 @@ const ViewRecordsPage: React.FC = () => {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {recordsData.records.map((r: any) => (
-                                                    <TableRow key={r.id} className="group hover:bg-muted/30 transition-colors border-b text-xs">
+                                                {loading && recordsData.records.length === 0 ? (
+                                                    Array.from({ length: 5 }).map((_, rowIndex) => (
+                                                        <TableRow key={rowIndex} className="animate-pulse">
+                                                            {Array.from({ length: 99 }).map((_, colIndex) => (
+                                                                <TableCell 
+                                                                    key={colIndex} 
+                                                                    className={`py-3 ${colIndex === 13 || colIndex === 44 || colIndex === 61 || colIndex === 69 || colIndex === 74 || colIndex === 80 || colIndex === 88 || colIndex === 97 ? "border-r" : ""} ${colIndex === 98 ? "text-right" : ""}`}
+                                                                >
+                                                                    <Skeleton className={`h-4 bg-muted/40 rounded animate-pulse ${colIndex === 0 || colIndex === 1 ? "w-16" : colIndex === 2 || colIndex === 4 ? "w-24" : "w-12"}`} />
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    recordsData.records.map((r: any) => (
+                                                        <TableRow key={r.id} className="group hover:bg-muted/30 transition-colors border-b text-xs">
                                                         <TableCell className="uppercase font-bold text-[11px]">{r.patient_id || '-'}</TableCell>
                                                         <TableCell><code className="font-black text-primary text-[11px]">{r.staff_id}</code></TableCell>
                                                         <TableCell className="font-bold text-[11px]">{r.first_name}</TableCell>
@@ -430,7 +440,7 @@ const ViewRecordsPage: React.FC = () => {
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
-                                                ))}
+                                                )))}
                                             </TableBody>
                                         </Table>
                                     </div>
