@@ -19,6 +19,7 @@ import {
   SelectValue 
 } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
 
@@ -103,9 +104,21 @@ const PatientFilesPage: React.FC = () => {
                         </div>
                     </div>
                 ) : fetchingYears ? (
-                    <div className="flex flex-col items-center justify-center min-h-[320px] sm:min-h-[450px] bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20 p-8 shadow-inner">
-                        <HugeiconsIcon icon={Loading03Icon} className="h-16 w-16 animate-spin text-primary" />
-                        <p className="text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse mt-6">Syncing Records...</p>
+                    <div className="space-y-6">
+                        <Card className="border border-border/80 bg-card/45 backdrop-blur-sm p-6">
+                            <div className="space-y-4 animate-pulse">
+                                <Skeleton className="h-8 w-48 bg-muted/40 rounded" />
+                                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="p-4 border border-border/50 rounded-xl space-y-3">
+                                            <Skeleton className="h-12 w-12 rounded bg-muted/40" />
+                                            <Skeleton className="h-4 w-3/4 rounded bg-muted/40" />
+                                            <Skeleton className="h-3 w-1/2 rounded bg-muted/40" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        </Card>
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 gap-6">

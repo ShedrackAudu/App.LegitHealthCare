@@ -20,6 +20,7 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -368,14 +369,42 @@ const PatientMedicalReport: React.FC = () => {
                     )}
 
                     {loading && (
-                        <div className="flex flex-col items-center justify-center py-20 md:py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
-                            <div className="relative mb-6">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <HugeiconsIcon icon={File01Icon} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
+                        <div className="w-full max-w-4xl mx-auto space-y-8 animate-pulse">
+                            {/* Fake A4 Page 1 Skeleton */}
+                            <div className="bg-card border rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+                                {/* Header / Branding */}
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b">
+                                    <Skeleton className="h-12 w-48 bg-muted/40 rounded" />
+                                    <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                </div>
+                                {/* Bio details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-xl">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <Skeleton className="h-3 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Fake Table */}
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-36 bg-muted/40 rounded" />
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <div className="bg-muted/20 h-10 border-b flex items-center px-4 justify-between">
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                        </div>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <div key={i} className="h-12 border-b flex items-center px-4 justify-between last:border-0">
+                                                <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-12 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-20 bg-muted/40 rounded" />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                            <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>
                         </div>
                     )}
                 </div>{/* end no-print helper wrapper */}

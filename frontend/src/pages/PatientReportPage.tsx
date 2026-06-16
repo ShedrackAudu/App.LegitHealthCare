@@ -12,6 +12,7 @@ import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppContext } from '@/context/AppContext';
@@ -362,9 +363,42 @@ const PatientReportPage: React.FC = () => {
                     </div>
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                            <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
-                            <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
+                        <div className="w-full max-w-4xl mx-auto space-y-8 animate-pulse mt-6">
+                            {/* Fake A4 Page 1 Skeleton */}
+                            <div className="bg-card border rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+                                {/* Header / Branding */}
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b">
+                                    <Skeleton className="h-12 w-48 bg-muted/40 rounded" />
+                                    <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                </div>
+                                {/* Bio details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-xl">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <Skeleton className="h-3 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Fake Table */}
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-36 bg-muted/40 rounded" />
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <div className="bg-muted/20 h-10 border-b flex items-center px-4 justify-between">
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                        </div>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <div key={i} className="h-12 border-b flex items-center px-4 justify-between last:border-0">
+                                                <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-12 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-20 bg-muted/40 rounded" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : reportData ? (
                         <>
