@@ -110,17 +110,20 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     ConsultationData.screening_year == screening_year
                 ).first()
                 blood_sugar_type = "Unknown"
+                blood_sugar_details = ""
                 if consultation:
                     fbs_val = consultation.fbs
                     rbs_val = consultation.rbs
                     if fbs_val and fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                         blood_sugar_type = "Fasting (FBS)"
+                        blood_sugar_details = get_param_prompt(params, 'fbs', 'FBS', '70-99', 'mg/dL', fbs_val)
                     elif rbs_val and rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                         blood_sugar_type = "Non-Fasting (RBS)"
+                        blood_sugar_details = get_param_prompt(params, 'rbs', 'RBS', '70-140', 'mg/dL', rbs_val)
                 
-                params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
                     f"Blood Sugar Type: {blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
+                    (blood_sugar_details if blood_sugar_details else "Blood Sugar: Not Entered\n") +
                     get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
                     get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
                     get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
@@ -755,16 +758,20 @@ def bulk_ai_remarks(test_type):
                         ConsultationData.screening_year == record.screening_year
                     ).first()
                     lipid_blood_sugar_type = "Unknown"
+                    lipid_blood_sugar_details = ""
                     if lipid_consultation:
                         lipid_fbs_val = lipid_consultation.fbs
                         lipid_rbs_val = lipid_consultation.rbs
                         if lipid_fbs_val and lipid_fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                             lipid_blood_sugar_type = "Fasting (FBS)"
+                            lipid_blood_sugar_details = get_param_prompt(report_params, 'fbs', 'FBS', '70-99', 'mg/dL', lipid_fbs_val)
                         elif lipid_rbs_val and lipid_rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                             lipid_blood_sugar_type = "Non-Fasting (RBS)"
+                            lipid_blood_sugar_details = get_param_prompt(report_params, 'rbs', 'RBS', '70-140', 'mg/dL', lipid_rbs_val)
                     
                     prompt_data = (
                         f"Blood Sugar Type: {lipid_blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
+                        (lipid_blood_sugar_details if lipid_blood_sugar_details else "Blood Sugar: Not Entered\n") +
                         get_param_prompt(report_params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
                         get_param_prompt(report_params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
                         get_param_prompt(report_params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
