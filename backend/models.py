@@ -552,7 +552,7 @@ class ConsultationData(db.Model):
     breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
     abdomen_others = db.Column(db.String(255))
-    assessment_hx_pe = db.Column(db.String(100)) # Satisfactory...
+    assessment_hx_pe = db.Column(db.Text) # Satisfactory...
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
@@ -684,7 +684,7 @@ class DirectorReview(db.Model):
     murmur = db.Column(db.String(10))
     chest_status = db.Column(db.String(50))
     
-    assessment_hx_pe = db.Column(db.String(100))
+    assessment_hx_pe = db.Column(db.Text)
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)

@@ -193,6 +193,22 @@ def init_db():
             engine = db.engines[bind_name]
             db.metadata.create_all(bind=engine)
 
+        # Dynamic migrations: alter columns to TEXT for assessment_hx_pe in postgresql
+        for engine_key, engine_instance in ([('default', db.engine)] + list(db.engines.items())):
+            if engine_instance.dialect.name == 'postgresql':
+                with engine_instance.connect() as conn:
+                    from sqlalchemy import text
+                    try:
+                        conn.execute(text("ALTER TABLE consultation_data ALTER COLUMN assessment_hx_pe TYPE TEXT;"))
+                        conn.commit()
+                    except Exception:
+                        pass
+                    try:
+                        conn.execute(text("ALTER TABLE director_reviews ALTER COLUMN assessment_hx_pe TYPE TEXT;"))
+                        conn.commit()
+                    except Exception:
+                        pass
+
 from werkzeug.exceptions import HTTPException
 
 @app.errorhandler(Exception)
