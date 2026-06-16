@@ -8,7 +8,6 @@ import {
   ArrowUpRight01Icon, 
   SentIcon, 
   ArrowLeft01Icon, 
-  Loading03Icon, 
   Building02Icon, 
   LicenseIcon 
 } from '@hugeicons/core-free-icons';
@@ -16,6 +15,7 @@ import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
+import { Skeleton } from '@/components/ui/skeleton';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
@@ -113,8 +113,71 @@ const PatientContactPage: React.FC = () => {
     if (loading) {
         return (
             <PatientLayout>
-                <div className="h-[60vh] flex items-center justify-center">
-                    <HugeiconsIcon icon={Loading03Icon} className="h-5 w-5 animate-spin text-primary" />
+                <div className="space-y-5">
+                    {/* Header Skeleton */}
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
+                        <div className="space-y-1">
+                            <Skeleton className="h-6 w-32 bg-muted/40 rounded animate-pulse" />
+                            <Skeleton className="h-4 w-64 bg-muted/40 rounded mt-1 animate-pulse" />
+                        </div>
+                        <Skeleton className="h-9 w-24 bg-muted/40 rounded-xl animate-pulse" />
+                    </div>
+
+                    {/* Quick Contact Row Skeleton */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <Card className="border shadow-md rounded-xl overflow-hidden bg-card/40">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 bg-muted/40 rounded-xl shrink-0 animate-pulse" />
+                                <div className="flex-1 space-y-1.5">
+                                    <Skeleton className="h-2.5 w-16 bg-muted/30 rounded animate-pulse" />
+                                    <Skeleton className="h-4 w-28 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <Skeleton className="h-8 w-16 bg-muted/40 rounded-lg shrink-0 animate-pulse" />
+                            </CardContent>
+                        </Card>
+                        <Card className="border shadow-md rounded-xl overflow-hidden bg-card/40">
+                            <CardContent className="p-4 flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 bg-muted/40 rounded-xl shrink-0 animate-pulse" />
+                                <div className="flex-1 space-y-1.5">
+                                    <Skeleton className="h-2.5 w-16 bg-muted/30 rounded animate-pulse" />
+                                    <Skeleton className="h-4 w-28 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <Skeleton className="h-8 w-16 bg-muted/40 rounded-lg shrink-0 animate-pulse" />
+                            </CardContent>
+                        </Card>
+                    </div>
+
+                    {/* WhatsApp Section Skeleton */}
+                    <Card className="border shadow-lg rounded-xl overflow-hidden">
+                        <CardHeader className="p-5 border-b bg-muted/5 flex flex-row items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <Skeleton className="h-8 w-8 bg-muted/40 rounded-xl shrink-0 animate-pulse" />
+                                <div className="space-y-1">
+                                    <Skeleton className="h-4 w-20 bg-muted/40 rounded animate-pulse" />
+                                    <Skeleton className="h-3 w-36 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                            </div>
+                            <Skeleton className="h-5 w-12 bg-muted/30 rounded-full animate-pulse" />
+                        </CardHeader>
+                        <CardContent className="p-5 space-y-4">
+                            <div className="flex flex-wrap gap-2">
+                                <Skeleton className="h-6 w-20 bg-muted/30 rounded-lg animate-pulse" />
+                                <Skeleton className="h-6 w-32 bg-muted/30 rounded-lg animate-pulse" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <div className="flex items-center justify-between">
+                                    <Skeleton className="h-3 w-20 bg-muted/30 rounded animate-pulse" />
+                                    <Skeleton className="h-2.5 w-10 bg-muted/30 rounded animate-pulse" />
+                                </div>
+                                <Skeleton className="h-[120px] w-full bg-muted/40 rounded-xl animate-pulse" />
+                                <Skeleton className="h-3 w-64 bg-muted/30 rounded animate-pulse" />
+                            </div>
+                            <div className="grid grid-cols-2 gap-2.5">
+                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                            </div>
+                        </CardContent>
+                    </Card>
                 </div>
             </PatientLayout>
         );

@@ -4,7 +4,6 @@ import {
     File01Icon,
     Download01Icon,
     Mail01Icon,
-    Loading03Icon,
     PrinterIcon,
     Calendar03Icon,
     ArrowRight01Icon,
@@ -341,30 +340,43 @@ const PatientMedicalReport: React.FC = () => {
                     )}
 
                     {!reportData && !loading && (
-                        <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                        <div className="w-full">
                             {fetchingYears ? (
-                                <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/30 mb-2" />
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-6 animate-pulse">
+                                    <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/40 rounded-full" />
+                                    <div className="space-y-2.5 flex flex-col items-center">
+                                        <Skeleton className="h-5 w-48 bg-muted/40 rounded" />
+                                        <Skeleton className="h-3 w-64 bg-muted/30 rounded" />
+                                        <Skeleton className="h-3 w-40 bg-muted/30 rounded" />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 pt-6">
+                                        <div className="h-px w-10 bg-muted-foreground/10" />
+                                        <Skeleton className="h-3 w-32 bg-muted/30 rounded" />
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                        <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                                            No Report Selected
+                                        </h3>
+                                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
+                                            {availableYears.length > 0
+                                                ? "Please select a screening session from the menu above to view your comprehensive results."
+                                                : "No historical medical screenings found in our database for your account."}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 pt-6">
+                                        <div className="h-px w-10 bg-muted-foreground/20" />
+                                        <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                            Official Medical Archives • {user?.username}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-                            <div className="space-y-2">
-                                <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                    {fetchingYears ? "Accessing Archives" : "No Report Selected"}
-                                </h3>
-                                <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
-                                    {availableYears.length > 0
-                                        ? "Please select a screening session from the menu above to view your comprehensive results."
-                                        : "No historical medical screenings found in our database for your account."}
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center gap-2 pt-6">
-                                <div className="h-px w-10 bg-muted-foreground/20" />
-                                <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-                                    Official Medical Archives • {user?.username}
-                                </p>
-                            </div>
                         </div>
                     )}
 
