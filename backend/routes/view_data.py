@@ -495,8 +495,8 @@ def get_screening_records(year):
                 (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
             )
     
-    # Sort by created_at desc to show newest first
-    query = query.order_by(ScreeningYearBioData.created_at.desc())
+    # Sort naturally by patient_id descending (newest/highest serial first)
+    query = query.order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
