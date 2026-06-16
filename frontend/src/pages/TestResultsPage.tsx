@@ -1639,7 +1639,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                     status: 'completed',
                 });
                 if ((data.error_count || 0) > 0) {
-                    toast.info(`No records to process. ${data.error_count} skipped.`);
+                    toast(`No records to process. ${data.error_count} skipped.`);
                 }
                 return;
             }
