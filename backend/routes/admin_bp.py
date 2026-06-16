@@ -751,6 +751,29 @@ def export_screening_matrix():
         # 1. Fetch all screening base records for the year
         screening_base = ScreeningYearBioData.query.filter_by(screening_year=year).all()
         
+        # Get all staff_ids to query other tables in bulk
+        staff_ids = [yp.staff_id for yp in screening_base]
+        
+        # Query other tables in bulk
+        bio_list = BioData.query.filter(BioData.staff_id.in_(staff_ids)).all() if staff_ids else []
+        consultation_list = ConsultationData.query.filter(ConsultationData.staff_id.in_(staff_ids), ConsultationData.screening_year == year).all() if staff_ids else []
+        fbc_list = FBCResult.query.filter(FBCResult.staff_id.in_(staff_ids), FBCResult.screening_year == year).all() if staff_ids else []
+        kft_list = KFTResult.query.filter(KFTResult.staff_id.in_(staff_ids), KFTResult.screening_year == year).all() if staff_ids else []
+        lipid_list = LipidResult.query.filter(LipidResult.staff_id.in_(staff_ids), LipidResult.screening_year == year).all() if staff_ids else []
+        lft_list = LFTResult.query.filter(LFTResult.staff_id.in_(staff_ids), LFTResult.screening_year == year).all() if staff_ids else []
+        special_list = SpecialTestsResult.query.filter(SpecialTestsResult.staff_id.in_(staff_ids), SpecialTestsResult.screening_year == year).all() if staff_ids else []
+        director_list = DirectorReview.query.filter(DirectorReview.staff_id.in_(staff_ids), DirectorReview.screening_year == year).all() if staff_ids else []
+        
+        # Map them using dictionaries for quick O(1) lookup
+        bio_dict = {b.staff_id: b for b in bio_list}
+        consultation_dict = {c.staff_id: c for c in consultation_list}
+        fbc_dict = {f.staff_id: f for f in fbc_list}
+        kft_dict = {k.staff_id: k for k in kft_list}
+        lipid_dict = {l.staff_id: l for l in lipid_list}
+        lft_dict = {l.staff_id: l for l in lft_list}
+        special_dict = {s.staff_id: s for s in special_list}
+        director_dict = {d.staff_id: d for d in director_list}
+        
         data = []
         for yp in screening_base:
             # Complete Unified Schema Initialization (Clean Parameter Names)
@@ -781,37 +804,35 @@ def export_screening_matrix():
                 "Overall Assessment": "", "Director Review Date": ""
             }
             
-            bio = BioData.query.filter_by(staff_id=yp.staff_id).first()
+            bio = bio_dict.get(yp.staff_id)
             if bio:
                 row.update({ "Middle Name": getattr(bio, 'middle_name', ''), "Gender": getattr(bio, 'gender', ''), "Age": getattr(bio, 'age', ''), "DOB": getattr(bio, 'dob').strftime('%Y-%m-%d') if getattr(bio, 'dob', None) else '', "Phone": getattr(bio, 'phone', ''), "Email": getattr(bio, 'email', ''), "Department": getattr(bio, 'department', ''), "Race": getattr(bio, 'race', ''), "Nationality": getattr(bio, 'nationality', '') })
                 
-            c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            c = consultation_dict.get(yp.staff_id)
             if c:
                 row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "UA Remark Others": c.ua_remark_others, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Breast Others": c.breast_others, "Abdomen": c.abdomen, "Abdomen Others": c.abdomen_others, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
-
-
                 
-            f = FBCResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            f = fbc_dict.get(yp.staff_id)
             if f:
                 row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark })
                 
-            k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            k = kft_dict.get(yp.staff_id)
             if k:
                 row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Calcium": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
-            li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            li = lipid_dict.get(yp.staff_id)
             if li:
                 row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark })
                 
-            lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            lf = lft_dict.get(yp.staff_id)
             if lf:
                 row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "Urea": lf.urea, "Creatinine": lf.creatinine, "LFT Remark": lf.lft_remark })
                 
-            s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            s = special_dict.get(yp.staff_id)
             if s:
                 row.update({ "ECG": s.ecg_result, "ECG Remark": s.ecg_remark, "Spirometry": s.spirometry_result, "Spirometry Remark": s.spirometry_remark, "Audiometry": s.audiometry_result, "Audiometry Remark": s.audiometry_remark, "Weight": s.weight, "Height": s.height })
                 
-            dr = DirectorReview.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            dr = director_dict.get(yp.staff_id)
             if dr:
                 # Director overrides for vitals/assessments if populated
                 overrides = {

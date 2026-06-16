@@ -92,7 +92,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, LipidResult, ReportParameter
+                from models import db, AISettings, LipidResult, ReportParameter, ConsultationData
                 from openai import OpenAI
                 import os
                 
@@ -104,8 +104,23 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     
                 client = OpenAI(api_key=api_key)
                 
+                # Determine blood sugar type (FBS=Fasting vs RBS=Non-Fasting) from consultation data
+                consultation = ConsultationData.query.filter(
+                    func.lower(func.trim(ConsultationData.staff_id)) == func.lower(func.trim(staff_id)),
+                    ConsultationData.screening_year == screening_year
+                ).first()
+                blood_sugar_type = "Unknown"
+                if consultation:
+                    fbs_val = consultation.fbs
+                    rbs_val = consultation.rbs
+                    if fbs_val and fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                        blood_sugar_type = "Fasting (FBS)"
+                    elif rbs_val and rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                        blood_sugar_type = "Non-Fasting (RBS)"
+                
                 params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
+                    f"Blood Sugar Type: {blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
                     get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
                     get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
                     get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
@@ -731,7 +746,22 @@ def bulk_ai_remarks(test_type):
                     remark_field = "fbc_remark"
 
                 elif test_type == 'lipid':
+                    # Determine blood sugar type (FBS=Fasting vs RBS=Non-Fasting) from consultation data
+                    lipid_consultation = ConsultationData.query.filter(
+                        func.lower(func.trim(ConsultationData.staff_id)) == func.lower(func.trim(record.staff_id)),
+                        ConsultationData.screening_year == record.screening_year
+                    ).first()
+                    lipid_blood_sugar_type = "Unknown"
+                    if lipid_consultation:
+                        lipid_fbs_val = lipid_consultation.fbs
+                        lipid_rbs_val = lipid_consultation.rbs
+                        if lipid_fbs_val and lipid_fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                            lipid_blood_sugar_type = "Fasting (FBS)"
+                        elif lipid_rbs_val and lipid_rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                            lipid_blood_sugar_type = "Non-Fasting (RBS)"
+                    
                     prompt_data = (
+                        f"Blood Sugar Type: {lipid_blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
                         get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
                         get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
                         get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
