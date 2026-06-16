@@ -748,9 +748,9 @@ def export_screening_matrix():
         year = request.args.get('year', datetime.now().year, type=int)
         context = request.headers.get('X-Company-Context', 'General').upper()
         
-        # 1. Fetch all screening base records for the year, sorted naturally by patient_id descending
+        # 1. Fetch all screening base records for the year, sorted naturally by patient_id ascending
         screening_base = ScreeningYearBioData.query.filter_by(screening_year=year)\
-            .order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())\
+            .order_by(db.func.length(ScreeningYearBioData.patient_id).asc(), ScreeningYearBioData.patient_id.asc())\
             .all()
         
         # Get all staff_ids to query other tables in bulk
