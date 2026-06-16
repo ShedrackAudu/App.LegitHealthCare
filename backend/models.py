@@ -120,7 +120,7 @@ class StaffUser(db.Model):
             now = datetime.now()
             for t in self.temp_codes:
                 if t.permission and t.permission.name == permission_name:
-                    if not t.is_revoked:
+                    if not t.is_revoked and t.times_used > 0:
                         if not t.expires_at or t.expires_at > now:
                             return True
         return False
@@ -152,7 +152,7 @@ class StaffUser(db.Model):
                     "permission_name": t.permission.name if t.permission else "Unknown",
                     "is_revoked": t.is_revoked,
                     "expires_at": t.expires_at.isoformat() if t.expires_at else None
-                } for t in self.temp_codes if t.permission
+                } for t in self.temp_codes if t.permission and t.times_used > 0
             ] if hasattr(self, 'temp_codes') else []
         }
 
