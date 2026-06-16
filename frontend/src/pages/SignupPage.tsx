@@ -331,7 +331,7 @@ const SignupPage: React.FC = () => {
           style={{ 
             backgroundImage: branding?.auth_branding_image 
               ? `url(${(window as any).API_BASE_URL}${branding.auth_branding_image})` 
-              : `url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop')` 
+              : `url('/images/auth_branding.webp')` 
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent mix-blend-multiply" />
