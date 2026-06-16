@@ -117,9 +117,16 @@ def generate_overview():
         patient = BioData.query.filter_by(staff_id=staff_id).first()
         consultation = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
         
-        if not patient or not consultation:
-            return jsonify({"error": "Patient or Consultation data not found for given criteria."}), 404
+        if not patient:
+            return jsonify({"error": "Patient data not found for given criteria."}), 404
             
+        def getval(field_name, db_obj):
+            if data and field_name in data:
+                return data[field_name]
+            if db_obj and hasattr(db_obj, field_name):
+                return getattr(db_obj, field_name)
+            return None
+
         # 2. Build AI Prompt Context
         context_parts = []
         context_parts.append(f"Patient Name: {patient.first_name} {patient.last_name}")
@@ -128,34 +135,34 @@ def generate_overview():
         selected_params = json.loads(settings.medical_parameters) if settings.medical_parameters else []
         
         consultation_fields = {
-            "Consultation:luts": ("LUTS", consultation.luts),
-            "Consultation:chronic_cough": ("Chronic Cough", consultation.chronic_cough),
-            "Consultation:chronic_chest_pain": ("Chronic Chest Pain", consultation.chronic_chest_pain),
-            "Consultation:chest_infection": ("Chest Infection", consultation.chest_infection),
-            "Consultation:heart_dx": ("Heart Disease History", consultation.heart_dx),
-            "Consultation:palor": ("Palor", consultation.palor),
-            "Consultation:jaundice": ("Jaundice", consultation.jaundice),
-            "Consultation:murmur": ("Murmur", consultation.murmur),
-            "Consultation:chest_status": ("Chest Status", consultation.chest_status),
-            "Consultation:psa": ("PSA", f"{consultation.psa} (Remark: {consultation.psa_remark})"),
-            "Consultation:sugar": ("Blood Sugar", f"FBS: {consultation.fbs}, RBS: {consultation.rbs} (Remark: {consultation.sugar_remark})"),
-            "Consultation:urinalysis": ("Urinalysis Result", f"{consultation.ua_result} (Remark: {consultation.ua_remark})"),
-            "Consultation:ua_remark_others": ("U/A Remark Others", consultation.ua_remark_others),
-            "Consultation:dm_status": ("Diabetes Status", consultation.dm_status),
-            "Consultation:htn_status": ("Hypertension Status", consultation.htn_status),
-            "Consultation:bp": ("Blood Pressure", consultation.bp),
-            "Consultation:pulse": ("Pulse Rate", consultation.pulse),
-            "Consultation:spo2": ("SPO2", consultation.spo2),
-            "Consultation:hs_status": ("Heart Sounds", consultation.hs_status),
-            "Consultation:breast": ("Breast Exam", f"{consultation.breast_exam} (Remark: {consultation.breast_remark})"),
-            "Consultation:breast_others": ("Breast Others", consultation.breast_others),
-            "Consultation:abdomen": ("Abdomen", consultation.abdomen),
-            "Consultation:abdomen_others": ("Abdomen Others", consultation.abdomen_others),
-            "Consultation:hx_pe": ("H&P Assessment", consultation.assessment_hx_pe),
-            "Consultation:other_assessments": ("Other Assessments", consultation.other_assessments),
-            "Consultation:overall_lab": ("Overall Lab Remark", consultation.overall_lab_remark),
-            "Consultation:overall_assessment": ("Overall Assessment", consultation.overall_assessment),
-            "Consultation:other_remarks": ("General Remarks", consultation.other_remarks)
+            "Consultation:luts": ("LUTS", getval("luts", consultation)),
+            "Consultation:chronic_cough": ("Chronic Cough", getval("chronic_cough", consultation)),
+            "Consultation:chronic_chest_pain": ("Chronic Chest Pain", getval("chronic_chest_pain", consultation)),
+            "Consultation:chest_infection": ("Chest Infection", getval("chest_infection", consultation)),
+            "Consultation:heart_dx": ("Heart Disease History", getval("heart_dx", consultation)),
+            "Consultation:palor": ("Palor", getval("palor", consultation)),
+            "Consultation:jaundice": ("Jaundice", getval("jaundice", consultation)),
+            "Consultation:murmur": ("Murmur", getval("murmur", consultation)),
+            "Consultation:chest_status": ("Chest Status", getval("chest_status", consultation)),
+            "Consultation:psa": ("PSA", f"{getval('psa', consultation)} (Remark: {getval('psa_remark', consultation)})"),
+            "Consultation:sugar": ("Blood Sugar", f"FBS: {getval('fbs', consultation)}, RBS: {getval('rbs', consultation)} (Remark: {getval('sugar_remark', consultation)})"),
+            "Consultation:urinalysis": ("Urinalysis Result", f"{getval('ua_result', consultation)} (Remark: {getval('ua_remark', consultation)})"),
+            "Consultation:ua_remark_others": ("U/A Remark Others", getval("ua_remark_others", consultation)),
+            "Consultation:dm_status": ("Diabetes Status", getval("dm_status", consultation)),
+            "Consultation:htn_status": ("Hypertension Status", getval("htn_status", consultation)),
+            "Consultation:bp": ("Blood Pressure", getval("bp", consultation)),
+            "Consultation:pulse": ("Pulse Rate", getval("pulse", consultation)),
+            "Consultation:spo2": ("SPO2", getval("spo2", consultation)),
+            "Consultation:hs_status": ("Heart Sounds", getval("hs_status", consultation)),
+            "Consultation:breast": ("Breast Exam", f"{getval('breast_exam', consultation)} (Remark: {getval('breast_remark', consultation)})"),
+            "Consultation:breast_others": ("Breast Others", getval("breast_others", consultation)),
+            "Consultation:abdomen": ("Abdomen", getval("abdomen", consultation)),
+            "Consultation:abdomen_others": ("Abdomen Others", getval("abdomen_others", consultation)),
+            "Consultation:hx_pe": ("H&P Assessment", getval("assessment_hx_pe", consultation)),
+            "Consultation:other_assessments": ("Other Assessments", getval("other_assessments", consultation)),
+            "Consultation:overall_lab": ("Overall Lab Remark", getval("overall_lab_remark", consultation)),
+            "Consultation:overall_assessment": ("Overall Assessment", getval("overall_assessment", consultation)),
+            "Consultation:other_remarks": ("General Remarks", getval("other_remarks", consultation))
         }
         
         relevant_consultation = []
@@ -166,45 +173,49 @@ def generate_overview():
         if relevant_consultation:
             context_parts.append("--- Consultation Data ---")
             context_parts.extend(relevant_consultation)
-
+ 
         if "FBC" in selected_params:
             fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-            if fbc:
+            fbc_rem = getval("fbc_remark", fbc)
+            if fbc_rem or fbc:
                 context_parts.append(f"--- FBC Results ---")
-                context_parts.append(f"Remark: {fbc.fbc_remark}")
-
+                context_parts.append(f"Remark: {fbc_rem or 'N/A'}")
+ 
         if "KFT" in selected_params:
             kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-            if kft:
+            kft_rem = getval("kft_remark", kft)
+            if kft_rem or kft:
                 context_parts.append(f"--- KFT Results ---")
-                context_parts.append(f"Remark: {kft.kft_remark}")
-
+                context_parts.append(f"Remark: {kft_rem or 'N/A'}")
+ 
         if "LFT" in selected_params:
             lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-            if lft:
+            lft_rem = getval("lft_remark", lft)
+            if lft_rem or lft:
                 context_parts.append(f"--- LFT Results ---")
-                context_parts.append(f"Remark: {lft.lft_remark}")
-
+                context_parts.append(f"Remark: {lft_rem or 'N/A'}")
+ 
         if "Lipid Profile" in selected_params:
             lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-            if lp:
+            lp_rem = getval("lp_remark", lp)
+            if lp_rem or lp:
                 context_parts.append(f"--- Lipid Profile Results ---")
-                context_parts.append(f"Remark: {lp.lp_remark}")
-
+                context_parts.append(f"Remark: {lp_rem or 'N/A'}")
+ 
         if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry", "Weight", "Height"]):
             spec = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
-            if spec:
+            if spec or any(getval(x, spec) for x in ["ecg_result", "ecg_remark", "spirometry_result", "spirometry_remark", "audiometry_result", "audiometry_remark", "weight", "height"]):
                 context_parts.append(f"--- Special Tests & Vitals ---")
                 if "ECG" in selected_params:
-                    context_parts.append(f"ECG: {spec.ecg_result} (Remark: {spec.ecg_remark})")
+                    context_parts.append(f"ECG: {getval('ecg_result', spec)} (Remark: {getval('ecg_remark', spec)})")
                 if "Spirometry" in selected_params:
-                    context_parts.append(f"Spiro: {spec.spirometry_result} (Remark: {spec.spirometry_remark})")
+                    context_parts.append(f"Spiro: {getval('spirometry_result', spec)} (Remark: {getval('spirometry_remark', spec)})")
                 if "Audiometry" in selected_params:
-                    context_parts.append(f"Audio: {spec.audiometry_result} (Remark: {spec.audiometry_remark})")
+                    context_parts.append(f"Audio: {getval('audiometry_result', spec)} (Remark: {getval('audiometry_remark', spec)})")
                 if "Weight" in selected_params:
-                    context_parts.append(f"Weight: {spec.weight} kg")
+                    context_parts.append(f"Weight: {getval('weight', spec)} kg")
                 if "Height" in selected_params:
-                    context_parts.append(f"Height: {spec.height} m")
+                    context_parts.append(f"Height: {getval('height', spec)} m")
             
         # (Other tests like FBC, LFT, ECG would be fetched here if requested and available)
         
@@ -305,21 +316,37 @@ def generate_lab_remark():
         kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
         lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
         
+        def getval(field_name, db_obj):
+            if data and field_name in data:
+                return data[field_name]
+            if db_obj and hasattr(db_obj, field_name):
+                return getattr(db_obj, field_name)
+            return None
+
         # Build Context
         context_parts = []
         if patient:
             context_parts.append(f"Patient Age: {patient.age or 'N/A'}, Gender: {patient.gender or 'N/A'}")
-        if fbc:
-            context_parts.append(f"FBC Remark: {fbc.fbc_remark or 'N/A'}")
-        if lft:
-            context_parts.append(f"LFT Remark: {lft.lft_remark or 'N/A'}")
-        if kft:
-            context_parts.append(f"KFT Remark: {kft.kft_remark or 'N/A'}")
-        if lp:
-            context_parts.append(f"Lipid Remark: {lp.lp_remark or 'N/A'}")
-        if consultation:
-            context_parts.append(f"FBS/RBS: FBS={consultation.fbs or 'N/A'}, RBS={consultation.rbs or 'N/A'} (Remark: {consultation.sugar_remark or 'N/A'})")
-            context_parts.append(f"Urinalysis: Result={consultation.ua_result or 'N/A'} (Remark: {consultation.ua_remark or 'N/A'})")
+            
+        fbc_rem = getval("fbc_remark", fbc)
+        if fbc_rem or fbc:
+            context_parts.append(f"FBC Remark: {fbc_rem or 'N/A'}")
+            
+        lft_rem = getval("lft_remark", lft)
+        if lft_rem or lft:
+            context_parts.append(f"LFT Remark: {lft_rem or 'N/A'}")
+            
+        kft_rem = getval("kft_remark", kft)
+        if kft_rem or kft:
+            context_parts.append(f"KFT Remark: {kft_rem or 'N/A'}")
+            
+        lp_rem = getval("lp_remark", lp)
+        if lp_rem or lp:
+            context_parts.append(f"Lipid Remark: {lp_rem or 'N/A'}")
+            
+        if consultation or any(getval(x, consultation) for x in ["fbs", "rbs", "sugar_remark", "ua_result", "ua_remark"]):
+            context_parts.append(f"FBS/RBS: FBS={getval('fbs', consultation) or 'N/A'}, RBS={getval('rbs', consultation) or 'N/A'} (Remark: {getval('sugar_remark', consultation) or 'N/A'})")
+            context_parts.append(f"Urinalysis: Result={getval('ua_result', consultation) or 'N/A'} (Remark: {getval('ua_remark', consultation) or 'N/A'})")
             
         full_context = "\n".join(context_parts)
         if not context_parts:

@@ -188,7 +188,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
         murmur: 'No'
     } : {};
 
-    const { register, handleSubmit, setValue, watch, control, reset, formState: { errors } } = useForm({
+    const { register, handleSubmit, setValue, watch, control, reset, getValues, formState: { errors } } = useForm({
         defaultValues: {
             ...radioDefaults,
             ...history?.consultation,
@@ -308,9 +308,11 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     const handleAIGenerate = async () => {
         setGeneratingAI(true);
         try {
+            const formValues = getValues();
             const res = await axios.post('/api/ai/generate', {
                 staff_id: patient.staff_id,
-                screening_year: activeYear
+                screening_year: activeYear,
+                ...formValues
             }, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -335,13 +337,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
             setGeneratingAI(false);
         }
     };
-
+ 
     const handleAILabRemarkGenerate = async () => {
         setGeneratingLabAI(true);
         try {
+            const formValues = getValues();
             const res = await axios.post('/api/ai/generate-lab-remark', {
                 staff_id: patient.staff_id,
-                screening_year: activeYear
+                screening_year: activeYear,
+                ...formValues
             }, {
                 headers: { 'X-Company-Context': activeSection }
             });
