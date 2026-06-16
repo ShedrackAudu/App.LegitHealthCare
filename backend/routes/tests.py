@@ -609,6 +609,7 @@ def bulk_upload(test_type):
 @tests_bp.route('/bulk-ai-remarks/<test_type>', methods=['POST'])
 @jwt_required()
 def bulk_ai_remarks(test_type):
+    """Start a background bulk AI remarks generation task. Returns a task_id immediately."""
     try:
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
@@ -630,7 +631,12 @@ def bulk_ai_remarks(test_type):
         from openai import OpenAI
         import os
         import re
-        from gevent.pool import Pool
+        import uuid
+        import gevent
+        from bulk_tasks import create_task, update_task_success, update_task_error, complete_task, fail_task, cleanup_old_tasks
+
+        # Clean up old tasks on each new request
+        cleanup_old_tasks()
 
         settings = AISettings.query.first()
         api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
@@ -675,11 +681,7 @@ def bulk_ai_remarks(test_type):
         if not matched_pids:
             return jsonify({"error": "No patients found in the specified range."}), 400
 
-        client = OpenAI(api_key=api_key)
         model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
-
-        processed = []
-        errors = []
 
         model_map = {
             'fbc': FBCResult,
@@ -700,26 +702,27 @@ def bulk_ai_remarks(test_type):
         target_remark_field = target_remark_fields.get(test_type)
 
         # Step 1: Collect prompt data in the main thread (100% thread-safe database access)
-        params = {p.id: p for p in ReportParameter.query.all()}
+        report_params = {p.id: p for p in ReportParameter.query.all()}
         records_to_process = []
+        initial_errors = []
         for pid in matched_pids:
             try:
                 sb = ScreeningYearBioData.query.filter_by(patient_id=pid, screening_year=int(screening_year)).first()
                 if not sb:
-                    errors.append({"patient_id": pid, "error": "Patient ID not found in database for this year."})
+                    initial_errors.append({"patient_id": pid, "error": "Patient ID not found in database for this year."})
                     continue
                 
                 staff_id = sb.staff_id
                 record = model_class.query.filter_by(staff_id=staff_id, screening_year=int(screening_year)).first()
                 if not record:
-                    errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
+                    initial_errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
                     continue
 
                 # Skip if patient already has a remark for this test type and override is not enabled
                 if target_remark_field and not override:
                     existing_remark = getattr(record, target_remark_field, None)
                     if existing_remark and existing_remark.strip():
-                        errors.append({"patient_id": pid, "error": "Skipped: remark already exists."})
+                        initial_errors.append({"patient_id": pid, "error": "Skipped: remark already exists."})
                         continue
 
                 # Determine fields
@@ -729,12 +732,12 @@ def bulk_ai_remarks(test_type):
 
                 if test_type == 'fbc':
                     prompt_data = (
-                        get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', record.pcv) +
-                        get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', record.wbc) +
-                        get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', record.lymp_abs) +
-                        get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', record.gra_abs) +
-                        get_param_prompt(params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', record.mid_abs) +
-                        get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', record.plt)
+                        get_param_prompt(report_params, 'pcv', 'PCV', '36-53.9', '%', record.pcv) +
+                        get_param_prompt(report_params, 'wbc', 'WBC', '3-11', 'x10^9/L', record.wbc) +
+                        get_param_prompt(report_params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', record.lymp_abs) +
+                        get_param_prompt(report_params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', record.gra_abs) +
+                        get_param_prompt(report_params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', record.mid_abs) +
+                        get_param_prompt(report_params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', record.plt)
                     )
                     system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (
                         "You are a medical assistant analyzing patient Full Blood Count (FBC) results. "
@@ -762,10 +765,10 @@ def bulk_ai_remarks(test_type):
                     
                     prompt_data = (
                         f"Blood Sugar Type: {lipid_blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
-                        get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
-                        get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
-                        get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
-                        get_param_prompt(params, 'ldl', 'LDL-c', '<130', 'mg/dL', record.ldl)
+                        get_param_prompt(report_params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
+                        get_param_prompt(report_params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
+                        get_param_prompt(report_params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
+                        get_param_prompt(report_params, 'ldl', 'LDL-c', '<130', 'mg/dL', record.ldl)
                     )
                     system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
                         "You are a medical assistant analyzing patient Lipid Profile results. "
@@ -778,11 +781,11 @@ def bulk_ai_remarks(test_type):
 
                 elif test_type == 'lft':
                     prompt_data = (
-                        get_param_prompt(params, 'ast', 'AST', '0-46', 'U/L', record.ast) +
-                        get_param_prompt(params, 'alt', 'ALT', '0-49', 'U/L', record.alt) +
-                        get_param_prompt(params, 'alp', 'ALP', 'Male: 80-306, Female: 64-306', 'U/L', record.alp) +
-                        get_param_prompt(params, 'tb', 'TB', '0-1.2', 'mg/dL', record.tb) +
-                        get_param_prompt(params, 'cb', 'CB', '0-0.4', 'mg/dL', record.cb)
+                        get_param_prompt(report_params, 'ast', 'AST', '0-46', 'U/L', record.ast) +
+                        get_param_prompt(report_params, 'alt', 'ALT', '0-49', 'U/L', record.alt) +
+                        get_param_prompt(report_params, 'alp', 'ALP', 'Male: 80-306, Female: 64-306', 'U/L', record.alp) +
+                        get_param_prompt(report_params, 'tb', 'TB', '0-1.2', 'mg/dL', record.tb) +
+                        get_param_prompt(report_params, 'cb', 'CB', '0-0.4', 'mg/dL', record.cb)
                     )
                     system_prompt = settings.prompt_lft if (settings and settings.prompt_lft) else (
                         "You are a medical assistant analyzing patient Liver Function Test (LFT) results. "
@@ -798,12 +801,12 @@ def bulk_ai_remarks(test_type):
                     urea_val = lft_record.urea if lft_record else '-'
                     creatinine_val = lft_record.creatinine if lft_record else '-'
                     prompt_data = (
-                        get_param_prompt(params, 'potassium', 'Potassium', '3.5-5.0', 'mmol/L', record.potassium) +
-                        get_param_prompt(params, 'sodium', 'Sodium', '135-145', 'mmol/L', record.sodium) +
-                        get_param_prompt(params, 'chloride', 'Chloride', '97-107', 'mmol/L', record.chloride) +
-                        get_param_prompt(params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.hco3) +
-                        get_param_prompt(params, 'urea', 'Urea', '2.5-8.33', 'mmol/L', urea_val) +
-                        get_param_prompt(params, 'creatinine', 'Creatinine', 'Male: 80-133, Female: 62-115', 'umol/L', creatinine_val)
+                        get_param_prompt(report_params, 'potassium', 'Potassium', '3.5-5.0', 'mmol/L', record.potassium) +
+                        get_param_prompt(report_params, 'sodium', 'Sodium', '135-145', 'mmol/L', record.sodium) +
+                        get_param_prompt(report_params, 'chloride', 'Chloride', '97-107', 'mmol/L', record.chloride) +
+                        get_param_prompt(report_params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.hco3) +
+                        get_param_prompt(report_params, 'urea', 'Urea', '2.5-8.33', 'mmol/L', urea_val) +
+                        get_param_prompt(report_params, 'creatinine', 'Creatinine', 'Male: 80-133, Female: 62-115', 'umol/L', creatinine_val)
                     )
                     system_prompt = settings.prompt_kft if (settings and settings.prompt_kft) else (
                         "You are a medical assistant analyzing patient Kidney Function Test (KFT) results. "
@@ -822,7 +825,7 @@ def bulk_ai_remarks(test_type):
                         break
 
                 if not has_any_value:
-                    errors.append({"patient_id": pid, "error": "No results have been entered for this patient yet."})
+                    initial_errors.append({"patient_id": pid, "error": "No results have been entered for this patient yet."})
                     continue
 
                 records_to_process.append({
@@ -833,58 +836,114 @@ def bulk_ai_remarks(test_type):
                     "remark_field": remark_field
                 })
             except Exception as ex:
-                errors.append({"patient_id": pid, "error": f"Failed database lookup: {str(ex)}"})
+                initial_errors.append({"patient_id": pid, "error": f"Failed database lookup: {str(ex)}"})
 
-        # Step 2: Make OpenAI API calls concurrently (No database access in threads)
-        def call_openai(item):
-            try:
-                params = {
-                    "model": model_name,
-                    "messages": [
-                        {"role": "system", "content": item["system_prompt"]},
-                        {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
-                    ]
-                }
-                if model_name.startswith("o1") or model_name.startswith("o3"):
-                    params["max_completion_tokens"] = 60
-                else:
-                    params["max_tokens"] = 60
+        # If there are no records to process, return results immediately (no background task needed)
+        if not records_to_process:
+            return jsonify({
+                "message": "Bulk AI Remarks processing complete.",
+                "task_id": None,
+                "total": 0,
+                "processed_count": 0,
+                "error_count": len(initial_errors),
+                "processed": [],
+                "errors": initial_errors,
+                "status": "completed"
+            }), 200
 
-                response = client.chat.completions.create(**params)
-                remark = response.choices[0].message.content.strip()
-                if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
-                    remark = remark[1:-1].strip()
-                if len(remark) > 130:
-                    remark = remark[:127] + "..."
-                return item["pid"], item["record_id"], item["remark_field"], True, remark
-            except Exception as ex:
-                return item["pid"], item["record_id"], item["remark_field"], False, str(ex)
+        # Step 2: Create a background task and return task_id immediately
+        task_id = str(uuid.uuid4())
+        total_to_process = len(records_to_process)
+        create_task(task_id, total_to_process)
 
-        pool = Pool(5)
-        api_results = pool.map(call_openai, records_to_process)
 
-        # Step 3: Save and commit remarks in the main thread (100% thread-safe)
-        for pid, record_id, remark_field, success, detail in api_results:
-            if success:
-                try:
-                    rec = model_class.query.get(record_id)
-                    if rec:
-                        setattr(rec, remark_field, detail)
-                        processed.append({"patient_id": pid, "remark": detail})
-                except Exception as ex:
-                    errors.append({"patient_id": pid, "error": f"Failed to save remark: {str(ex)}"})
-            else:
-                errors.append({"patient_id": pid, "error": detail})
+        # Get the Flask app for app_context in the background greenlet
+        from flask import current_app
+        app = current_app._get_current_object()
+        company_context = request.headers.get('X-Company-Context', '')
 
-        db.session.commit()
+        # Capture model class name for re-import in background context
+        model_class_name = model_class.__name__
+
+        def _run_bulk_ai_task():
+            """Background greenlet that processes OpenAI calls and saves results."""
+            with app.app_context():
+                with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
+                    try:
+                        from models import db, FBCResult, KFTResult, LipidResult, LFTResult
+                        from openai import OpenAI as BGOpenAI
+                        from gevent.pool import Pool as GeventPool
+
+                        bg_model_map = {
+                            'FBCResult': FBCResult,
+                            'KFTResult': KFTResult,
+                            'LipidResult': LipidResult,
+                            'LFTResult': LFTResult
+                        }
+                        bg_model_class = bg_model_map[model_class_name]
+                        bg_client = BGOpenAI(api_key=api_key)
+
+                        def call_openai_and_save(item):
+                            """Process a single patient: call OpenAI, save to DB, update task."""
+                            try:
+                                ai_params = {
+                                    "model": model_name,
+                                    "messages": [
+                                        {"role": "system", "content": item["system_prompt"]},
+                                        {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
+                                    ]
+                                }
+                                if model_name.startswith("o1") or model_name.startswith("o3"):
+                                    ai_params["max_completion_tokens"] = 60
+                                else:
+                                    ai_params["max_tokens"] = 60
+
+                                response = bg_client.chat.completions.create(**ai_params)
+                                remark = response.choices[0].message.content.strip()
+                                if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
+                                    remark = remark[1:-1].strip()
+                                if len(remark) > 130:
+                                    remark = remark[:127] + "..."
+
+                                # Save to DB
+                                rec = bg_model_class.query.get(item["record_id"])
+                                if rec:
+                                    setattr(rec, item["remark_field"], remark)
+                                    db.session.commit()
+
+                                update_task_success(task_id, item["pid"], remark)
+                            except Exception as ex:
+                                try:
+                                    db.session.rollback()
+                                except Exception:
+                                    pass
+                                update_task_error(task_id, item["pid"], str(ex))
+
+                        # Process with concurrency pool of 5
+                        pool = GeventPool(5)
+                        pool.map(call_openai_and_save, records_to_process)
+
+                        complete_task(task_id)
+                    except Exception as e:
+                        import traceback
+                        traceback.print_exc()
+                        try:
+                            db.session.rollback()
+                        except Exception:
+                            pass
+                        fail_task(task_id, str(e))
+
+        # Spawn the background greenlet
+        gevent.spawn(_run_bulk_ai_task)
 
         return jsonify({
-            "message": f"Bulk AI Remarks processing complete.",
-            "processed_count": len(processed),
-            "error_count": len(errors),
-            "processed": processed,
-            "errors": errors
-        }), 200
+            "task_id": task_id,
+            "total": total_to_process,
+            "skipped_count": len(initial_errors),
+            "skipped": initial_errors,
+            "message": "Bulk AI remarks generation started in background."
+        }), 202
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -893,3 +952,25 @@ def bulk_ai_remarks(test_type):
         except Exception:
             pass
         return jsonify({"error": f"Server processing error: {str(e)}"}), 500
+
+
+@tests_bp.route('/bulk-ai-remarks/status/<task_id>', methods=['GET'])
+@jwt_required()
+def bulk_ai_remarks_status(task_id):
+    """Poll the progress of a background bulk AI remarks task."""
+    from bulk_tasks import get_task
+
+    task = get_task(task_id)
+    if not task:
+        return jsonify({"error": "Task not found or expired."}), 404
+
+    return jsonify({
+        "task_id": task_id,
+        "status": task["status"],
+        "total": task["total"],
+        "processed_count": task["processed_count"],
+        "error_count": task["error_count"],
+        "processed": task["processed"],
+        "errors": task["errors"],
+        "error_message": task.get("error_message"),
+    }), 200

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
 import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
@@ -1554,7 +1554,63 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
     const [range, setRange] = useState('');
     const [override, setOverride] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [taskId, setTaskId] = useState<string | null>(null);
+    const [progress, setProgress] = useState<any>(null);
     const [result, setResult] = useState<any>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const skippedRef = useRef<any[]>([]);
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    const stopPolling = () => {
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+    };
+
+    const startPolling = (tid: string) => {
+        stopPolling();
+        pollRef.current = setInterval(async () => {
+            try {
+                const resp = await axios.get(`/api/tests/bulk-ai-remarks/status/${tid}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const data = resp.data;
+                setProgress(data);
+
+                if (data.status === 'completed' || data.status === 'failed') {
+                    stopPolling();
+                    setLoading(false);
+                    setTaskId(null);
+                    const allErrors = [...(skippedRef.current || []), ...(data.errors || [])];
+                    const totalErrors = allErrors.length;
+                    setResult({
+                        processed_count: data.processed_count,
+                        error_count: totalErrors,
+                        processed: data.processed,
+                        errors: allErrors,
+                        status: data.status,
+                        error_message: data.error_message,
+                    });
+                    skippedRef.current = [];
+                    if (data.status === 'completed') {
+                        toast.success(`Bulk AI remarks complete! ${data.processed_count} succeeded, ${totalErrors} failed/skipped.`);
+                    } else {
+                        toast.error(data.error_message || "Bulk AI remarks task failed.");
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+                // Don't stop polling on transient network errors
+            }
+        }, 1000);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1564,22 +1620,54 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
         }
         setLoading(true);
         setResult(null);
+        setProgress(null);
         try {
             const resp = await axios.post(`/api/tests/bulk-ai-remarks/${testType}`, 
                 { range: range.trim(), screening_year: activeYear, override },
                 { headers: { 'X-Company-Context': activeSection } }
             );
-            setResult(resp.data);
-            toast.success("Bulk AI remarks generation completed!");
+            const data = resp.data;
+
+            // If no records to process (all skipped), show results immediately
+            if (!data.task_id) {
+                setLoading(false);
+                setResult({
+                    processed_count: data.processed_count || 0,
+                    error_count: data.error_count || 0,
+                    processed: data.processed || [],
+                    errors: data.errors || [],
+                    status: 'completed',
+                });
+                if ((data.error_count || 0) > 0) {
+                    toast.info(`No records to process. ${data.error_count} skipped.`);
+                }
+                return;
+            }
+
+            // Store initial skipped errors for merging later
+            skippedRef.current = data.skipped || [];
+
+            // Task started — begin polling
+            setTaskId(data.task_id);
+            setProgress({
+                status: 'running',
+                total: data.total,
+                processed_count: 0,
+                error_count: 0,
+            });
+            startPolling(data.task_id);
         } catch (err: any) {
             console.error(err);
-            toast.error(err.response?.data?.error || "Failed to generate bulk AI remarks");
-        } finally {
             setLoading(false);
+            toast.error(err.response?.data?.error || "Failed to start bulk AI remarks");
         }
     };
 
     if (!['fbc', 'kft', 'lipid', 'lft'].includes(testType || '')) return null;
+
+    const progressPercent = progress && progress.total > 0
+        ? Math.min(100, Math.round(((progress.processed_count + progress.error_count) / progress.total) * 100))
+        : 0;
 
     return (
         <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md mt-6">
@@ -1616,7 +1704,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                             {loading ? (
                                 <>
                                     <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
-                                    Processing AI...
+                                    Processing...
                                 </>
                             ) : 'Generate Remarks'}
                         </Button>
@@ -1634,11 +1722,50 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                     </div>
                 </form>
 
-                {result && (
+                {/* Live progress section */}
+                {loading && progress && (
+                    <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3 animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-indigo-500" />
+                                <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">Generating AI remarks...</span>
+                            </div>
+                            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{progressPercent}%</span>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="w-full bg-indigo-100 dark:bg-indigo-900/40 rounded-full h-3 overflow-hidden">
+                            <div 
+                                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+
+                        {/* Live counters */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
+                            <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                                Progress: {progress.processed_count + progress.error_count} / {progress.total}
+                            </span>
+                            {progress.processed_count > 0 && (
+                                <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                                    ✅ {progress.processed_count} succeeded
+                                </span>
+                            )}
+                            {progress.error_count > 0 && (
+                                <span className="text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                                    ❌ {progress.error_count} failed
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Final results */}
+                {result && !loading && (
                     <div className="p-4 bg-muted/30 border rounded-xl space-y-2 text-sm animate-in fade-in duration-300">
                         <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-wider">
                             <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Succeeded: {result.processed_count}</span>
-                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed: {result.error_count}</span>
+                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed/Skipped: {result.error_count}</span>
                         </div>
                         {result.errors && result.errors.length > 0 && (
                             <div className="space-y-1.5 pt-2">
