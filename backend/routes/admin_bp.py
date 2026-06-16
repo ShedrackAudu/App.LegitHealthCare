@@ -748,16 +748,10 @@ def export_screening_matrix():
         year = request.args.get('year', datetime.now().year, type=int)
         context = request.headers.get('X-Company-Context', 'General').upper()
         
-        # 1. Fetch all screening base records for the year
-        screening_base = ScreeningYearBioData.query.filter_by(screening_year=year).all()
-        
-        # Natural sort descending by patient_id (e.g., 10 down to 1, newest/highest first)
-        import re
-        def natural_sort_key(item):
-            val = item.patient_id or ""
-            return [int(text) if text.isdigit() else text.lower() for text in re.split(r'(\d+)', val)]
-            
-        screening_base.sort(key=natural_sort_key, reverse=True)
+        # 1. Fetch all screening base records for the year, sorted naturally by patient_id descending
+        screening_base = ScreeningYearBioData.query.filter_by(screening_year=year)\
+            .order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())\
+            .all()
         
         # Get all staff_ids to query other tables in bulk
         staff_ids = [yp.staff_id for yp in screening_base]
