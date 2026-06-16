@@ -885,39 +885,41 @@ def bulk_ai_remarks(test_type):
 
                         def call_openai_and_save(item):
                             """Process a single patient: call OpenAI, save to DB, update task."""
-                            try:
-                                ai_params = {
-                                    "model": model_name,
-                                    "messages": [
-                                        {"role": "system", "content": item["system_prompt"]},
-                                        {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
-                                    ]
-                                }
-                                if model_name.startswith("o1") or model_name.startswith("o3"):
-                                    ai_params["max_completion_tokens"] = 60
-                                else:
-                                    ai_params["max_tokens"] = 60
+                            with app.app_context():
+                                with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
+                                    try:
+                                        ai_params = {
+                                            "model": model_name,
+                                            "messages": [
+                                                {"role": "system", "content": item["system_prompt"]},
+                                                {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
+                                            ]
+                                        }
+                                        if model_name.startswith("o1") or model_name.startswith("o3"):
+                                            ai_params["max_completion_tokens"] = 60
+                                        else:
+                                            ai_params["max_tokens"] = 60
 
-                                response = bg_client.chat.completions.create(**ai_params)
-                                remark = response.choices[0].message.content.strip()
-                                if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
-                                    remark = remark[1:-1].strip()
-                                if len(remark) > 130:
-                                    remark = remark[:127] + "..."
+                                        response = bg_client.chat.completions.create(**ai_params)
+                                        remark = response.choices[0].message.content.strip()
+                                        if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
+                                            remark = remark[1:-1].strip()
+                                        if len(remark) > 130:
+                                            remark = remark[:127] + "..."
 
-                                # Save to DB
-                                rec = bg_model_class.query.get(item["record_id"])
-                                if rec:
-                                    setattr(rec, item["remark_field"], remark)
-                                    db.session.commit()
+                                        # Save to DB
+                                        rec = bg_model_class.query.get(item["record_id"])
+                                        if rec:
+                                            setattr(rec, item["remark_field"], remark)
+                                            db.session.commit()
 
-                                update_task_success(task_id, item["pid"], remark)
-                            except Exception as ex:
-                                try:
-                                    db.session.rollback()
-                                except Exception:
-                                    pass
-                                update_task_error(task_id, item["pid"], str(ex))
+                                        update_task_success(task_id, item["pid"], remark)
+                                    except Exception as ex:
+                                        try:
+                                            db.session.rollback()
+                                        except Exception:
+                                            pass
+                                        update_task_error(task_id, item["pid"], str(ex))
 
                         # Process with concurrency pool of 5
                         pool = GeventPool(5)

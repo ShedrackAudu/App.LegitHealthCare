@@ -1673,7 +1673,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
         <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md mt-6">
             <CardHeader className="p-6 pb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 self-start">
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary self-start">
                         <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6" />
                     </div>
                     <div>
@@ -1699,7 +1699,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                         <Button 
                             type="submit" 
                             disabled={loading || !range.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                         >
                             {loading ? (
                                 <>
@@ -1716,7 +1716,7 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                             onCheckedChange={(checked: boolean) => setOverride(checked)}
                             disabled={loading}
                         />
-                        <Label htmlFor="override-remarks" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                        <Label htmlFor="override-remarks" className="text-xs font-bold text-muted-foreground cursor-pointer select-none">
                             Override existing remarks
                         </Label>
                     </div>
@@ -1724,26 +1724,26 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
 
                 {/* Live progress section */}
                 {loading && progress && (
-                    <div className="p-4 bg-indigo-50/50 dark:bg-indigo-950/20 border border-indigo-200 dark:border-indigo-800 rounded-xl space-y-3 animate-in fade-in duration-300">
+                    <div className="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl space-y-3 animate-in fade-in duration-300">
                         <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-indigo-500" />
-                                <span className="text-sm font-bold text-indigo-700 dark:text-indigo-300">Generating AI remarks...</span>
+                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-primary" />
+                                <span className="text-sm font-bold text-primary">Generating AI remarks...</span>
                             </div>
-                            <span className="text-sm font-black text-indigo-600 dark:text-indigo-400 tabular-nums">{progressPercent}%</span>
+                            <span className="text-sm font-black text-primary tabular-nums">{progressPercent}%</span>
                         </div>
                         
                         {/* Progress bar */}
-                        <div className="w-full bg-indigo-100 dark:bg-indigo-900/40 rounded-full h-3 overflow-hidden">
+                        <div className="w-full bg-primary/10 dark:bg-primary/20 rounded-full h-3 overflow-hidden">
                             <div 
-                                className="h-full bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-full transition-all duration-500 ease-out"
+                                className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
                                 style={{ width: `${progressPercent}%` }}
                             />
                         </div>
 
                         {/* Live counters */}
                         <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
-                            <span className="text-indigo-600 dark:text-indigo-400 bg-indigo-100 dark:bg-indigo-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                            <span className="text-primary bg-primary/10 px-2.5 py-1 rounded-full tabular-nums">
                                 Progress: {progress.processed_count + progress.error_count} / {progress.total}
                             </span>
                             {progress.processed_count > 0 && (

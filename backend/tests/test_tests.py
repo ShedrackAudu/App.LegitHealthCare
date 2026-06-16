@@ -80,16 +80,36 @@ def test_bulk_ai_remarks_kft_success(client, setup_user):
 
             response = client.post('/api/tests/bulk-ai-remarks/kft', headers=headers, data=json.dumps(payload))
             
-            # Verify status code
-            assert response.status_code == 200
+            # Verify status code is 202 Accepted
+            assert response.status_code == 202
             
-            # Verify JSON content
+            # Verify initial JSON content
             data = json.loads(response.data)
-            assert data['processed_count'] == 1
-            assert len(data['errors']) == 0
-            assert data['processed'][0]['patient_id'] == 'P100'
-            assert data['processed'][0]['remark'] == 'Normal kidney function.'
+            assert 'task_id' in data
+            task_id = data['task_id']
+            assert data['skipped_count'] == 0
+
+            # Yield control to gevent to run the spawned greenlet
+            import gevent
+            import time
+            
+            # Poll status endpoint until completed
+            status_data = {}
+            for _ in range(25):  # Try for up to 5 seconds
+                gevent.sleep(0.2)
+                status_response = client.get(f'/api/tests/bulk-ai-remarks/status/{task_id}', headers=headers)
+                assert status_response.status_code == 200
+                status_data = json.loads(status_response.data)
+                if status_data.get('status') == 'completed':
+                    break
+            
+            assert status_data.get('status') == 'completed'
+            assert status_data.get('processed_count') == 1
+            assert status_data.get('error_count') == 0
+            assert status_data.get('processed')[0]['patient_id'] == 'P100'
+            assert status_data.get('processed')[0]['remark'] == 'Normal kidney function.'
 
             # Verify database update
+            db.session.expire_all()
             updated_kft = KFTResult.query.filter_by(staff_id='STF_KFT_TEST', screening_year=2026).first()
             assert updated_kft.kft_remark == 'Normal kidney function.'
