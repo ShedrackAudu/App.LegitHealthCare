@@ -47,11 +47,44 @@ import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import NetworkStatusBanner from './components/common/NetworkStatusBanner';
 
+const ACKNOWLEDGED_VERSION_KEY = 'lhc_acknowledged_version';
+
 const AppUpdateNotifier: React.FC = () => {
   const [show, setShow] = useState(false);
-  const [currentServerVersion, setCurrentServerVersion] = useState<string | null>(null);
+  const [pendingServerVersion, setPendingServerVersion] = useState<string>('');
   const lastDismissedAt = useRef<number | null>(null);
   const { socket, user } = useAppContext();
+
+  // Decide whether to show the card for a given server commit hash
+  const maybeShowCard = (serverCommitShort: string) => {
+    const localCommit = import.meta.env.VITE_APP_GIT_HASH;
+    const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
+
+    // Hide if hashes match (frontend already up to date)
+    if (!serverCommitShort || serverCommitShort === localCommitShort) {
+      return;
+    }
+
+    // Hide if the user already acknowledged this exact server version (clicked Refresh Now)
+    const acknowledgedVersion = localStorage.getItem(ACKNOWLEDGED_VERSION_KEY);
+    if (acknowledgedVersion === serverCommitShort) {
+      console.log(`[VERSION CHECK] Server version ${serverCommitShort} already acknowledged. Suppressing card.`);
+      return;
+    }
+
+    // Respect 5-minute "Later" cooldown
+    if (lastDismissedAt.current) {
+      const timeSinceDismiss = Date.now() - lastDismissedAt.current;
+      if (timeSinceDismiss < 300000) {
+        console.log(`[VERSION CHECK] Update available but muted for cooldown (${Math.round((300000 - timeSinceDismiss) / 1000)}s left).`);
+        return;
+      }
+    }
+
+    console.warn(`[VERSION CHECK] Version mismatch: Local=${localCommitShort}, Server=${serverCommitShort}. Showing notification.`);
+    setPendingServerVersion(serverCommitShort);
+    setShow(true);
+  };
 
   // Perform version check against the server
   const checkVersion = async () => {
@@ -64,67 +97,45 @@ const AppUpdateNotifier: React.FC = () => {
       const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
 
       console.log(`[VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
-      
-      if (serverCommitShort && serverCommitShort !== 'latest') {
-        setCurrentServerVersion(serverCommitShort);
-        
-        // If server has a valid commit and it doesn't match our local build hash, prompt update
-        if (localCommitShort && localCommitShort !== 'dev' && serverCommitShort !== localCommitShort) {
-          // Verify if 5 minutes (300,000 ms) have passed since user manually dismissed this update
-          if (lastDismissedAt.current) {
-            const timeSinceDismiss = Date.now() - lastDismissedAt.current;
-            if (timeSinceDismiss < 300000) {
-              console.log(`[VERSION CHECK] Update available but muted for cooldown (${Math.round((300000 - timeSinceDismiss)/1000)}s left)`);
-              return;
-            }
-          }
 
-          console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
-          setShow(true);
-        }
+      if (serverCommitShort && serverCommitShort !== 'latest') {
+        maybeShowCard(serverCommitShort);
       }
     } catch (err) {
       console.error("[VERSION CHECK] Failed to check app version:", err);
     }
   };
 
+  // "Later" — dismiss temporarily with a 5-minute cooldown
   const dismissNotification = () => {
     setShow(false);
     lastDismissedAt.current = Date.now();
   };
 
-  useEffect(() => {
-    // Check version on mount (user opening the app or logging in / refreshing)
-    checkVersion();
+  // "Refresh Now" — save acknowledged version to localStorage so it won't reappear after reload
+  const refreshNow = () => {
+    if (pendingServerVersion) {
+      localStorage.setItem(ACKNOWLEDGED_VERSION_KEY, pendingServerVersion);
+      console.log(`[VERSION CHECK] Acknowledged version ${pendingServerVersion}. Reloading...`);
+    }
+    // Force a hard reload to bypass browser cache and load the latest deployed assets
+    window.location.href = window.location.href.split('?')[0] + '?_cb=' + Date.now();
+  };
 
-    // Check version periodically every 1 minute to check for updates and cooldown expirations
-    const interval = setInterval(checkVersion, 60000);
+  useEffect(() => {
+    // Check version on mount
+    checkVersion();
+    // Poll every 5 minutes
+    const interval = setInterval(checkVersion, 300000);
     return () => clearInterval(interval);
-  }, [user]); // Re-run check when user object changes (e.g. logging in)
+  }, [user]);
 
   useEffect(() => {
     if (!socket) return;
     const handleUpdate = (data: any) => {
-      // If the incoming broadcast hash is different from our current local hash, display it
-      const localCommit = import.meta.env.VITE_APP_GIT_HASH;
-      const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
       const serverCommitShort = data && data.commit ? data.commit.substring(0, 7) : '';
-
       if (serverCommitShort) {
-        setCurrentServerVersion(serverCommitShort);
-      }
-
-      if (lastDismissedAt.current) {
-        const timeSinceDismiss = Date.now() - lastDismissedAt.current;
-        if (timeSinceDismiss < 300000) {
-          return;
-        }
-      }
-
-      if (serverCommitShort && serverCommitShort !== localCommitShort) {
-        setShow(true);
-      } else if (!data || !data.commit) {
-        setShow(true);
+        maybeShowCard(serverCommitShort);
       }
     };
     socket.on('app_update_available', handleUpdate);
@@ -147,24 +158,22 @@ const AppUpdateNotifier: React.FC = () => {
             A new version of Legit HealthCare has been successfully deployed. Refresh to apply updates.
           </p>
         </div>
-        <button 
-          onClick={dismissNotification} 
+        <button
+          onClick={dismissNotification}
           className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted/60"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
         </button>
       </div>
       <div className="flex gap-2 justify-end mt-1">
-        <button 
-          onClick={dismissNotification} 
+        <button
+          onClick={dismissNotification}
           className="px-3.5 py-1.5 rounded-xl border-2 text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
         >
           Later
         </button>
-        <button 
-          onClick={() => {
-            window.location.reload();
-          }} 
+        <button
+          onClick={refreshNow}
           className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-black hover:bg-primary/95 transition-all shadow-md shadow-primary/20 flex items-center gap-1.5 active:scale-[0.98]"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
