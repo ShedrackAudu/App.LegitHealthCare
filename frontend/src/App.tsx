@@ -41,6 +41,7 @@ import InventoryPage from './pages/InventoryPage';
 import ReportCustomization from './pages/ReportCustomization';
 import React, { useState, useEffect } from 'react';
 import { useAppContext } from './context/AppContext';
+import axios from 'axios';
 
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
@@ -53,19 +54,16 @@ const AppUpdateNotifier: React.FC = () => {
   // Perform version check against the server
   const checkVersion = async () => {
     try {
-      const response = await fetch('/api/webhooks/version-check');
-      if (response.ok) {
-        const data = await response.json();
-        const serverCommit = data.commit;
-        const localCommit = import.meta.env.VITE_APP_GIT_HASH;
+      const response = await axios.get('/api/webhooks/version-check');
+      const serverCommit = response.data.commit;
+      const localCommit = import.meta.env.VITE_APP_GIT_HASH;
 
-        console.log(`[VERSION CHECK] Local: ${localCommit}, Server: ${serverCommit}`);
-        
-        // If server has a valid commit and it doesn't match our local build hash, prompt update
-        if (serverCommit && serverCommit !== 'latest' && localCommit && localCommit !== 'dev' && serverCommit !== localCommit) {
-          console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
-          setShow(true);
-        }
+      console.log(`[VERSION CHECK] Local: ${localCommit}, Server: ${serverCommit}`);
+      
+      // If server has a valid commit and it doesn't match our local build hash, prompt update
+      if (serverCommit && serverCommit !== 'latest' && localCommit && localCommit !== 'dev' && serverCommit !== localCommit) {
+        console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
+        setShow(true);
       }
     } catch (err) {
       console.error("[VERSION CHECK] Failed to check app version:", err);
