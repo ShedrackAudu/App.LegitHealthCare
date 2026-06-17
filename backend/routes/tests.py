@@ -23,7 +23,7 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, FBCResult, ReportParameter
+                from models import db, AISettings, FBCResult, ReportParameter, BioData
                 from openai import OpenAI
                 import os
                 
@@ -35,8 +35,15 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                     
                 client = OpenAI(api_key=api_key)
                 
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+                
                 params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
+                    f"Patient Gender: {gender_str}\n" +
                     get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', fbc_data.get('pcv')) +
                     get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', fbc_data.get('wbc')) +
                     get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', fbc_data.get('lymp_abs')) +
@@ -54,7 +61,7 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 )
                 
                 model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
-                params = {
+                api_params = {
                     "model": model_name,
                     "messages": [
                         {"role": "system", "content": system_prompt},
@@ -62,11 +69,11 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                     ]
                 }
                 if model_name.startswith("o1") or model_name.startswith("o3"):
-                    params["max_completion_tokens"] = 60
+                    api_params["max_completion_tokens"] = 60
                 else:
-                    params["max_tokens"] = 60
+                    api_params["max_tokens"] = 60
 
-                response = client.chat.completions.create(**params)
+                response = client.chat.completions.create(**api_params)
                 
                 remark = response.choices[0].message.content.strip()
                 # Clean up wrapping quotes if the AI output includes them
@@ -92,7 +99,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, LipidResult, ReportParameter, ConsultationData
+                from models import db, AISettings, LipidResult, ReportParameter, ConsultationData, BioData
                 from openai import OpenAI
                 import os
                 
@@ -104,6 +111,14 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     
                 client = OpenAI(api_key=api_key)
                 
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+                
+                report_params = {p.id: p for p in ReportParameter.query.all()}
+
                 # Determine blood sugar type (FBS=Fasting vs RBS=Non-Fasting) from consultation data
                 consultation = ConsultationData.query.filter(
                     func.lower(func.trim(ConsultationData.staff_id)) == func.lower(func.trim(staff_id)),
@@ -116,18 +131,19 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     rbs_val = consultation.rbs
                     if fbs_val and fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                         blood_sugar_type = "Fasting (FBS)"
-                        blood_sugar_details = get_param_prompt(params, 'fbs', 'FBS', '70-99', 'mg/dL', fbs_val)
+                        blood_sugar_details = get_param_prompt(report_params, 'fbs', 'FBS', '70-99', 'mg/dL', fbs_val)
                     elif rbs_val and rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
                         blood_sugar_type = "Non-Fasting (RBS)"
-                        blood_sugar_details = get_param_prompt(params, 'rbs', 'RBS', '70-140', 'mg/dL', rbs_val)
+                        blood_sugar_details = get_param_prompt(report_params, 'rbs', 'RBS', '70-140', 'mg/dL', rbs_val)
                 
                 prompt_data = (
+                    f"Patient Gender: {gender_str}\n" +
                     f"Blood Sugar Type: {blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
                     (blood_sugar_details if blood_sugar_details else "Blood Sugar: Not Entered\n") +
-                    get_param_prompt(params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
-                    get_param_prompt(params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
-                    get_param_prompt(params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
-                    get_param_prompt(params, 'ldl', 'LDL-c', '<130', 'mg/dL', lipid_data.get('ldl'))
+                    get_param_prompt(report_params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
+                    get_param_prompt(report_params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
+                    get_param_prompt(report_params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
+                    get_param_prompt(report_params, 'ldl', 'LDL-c', '<130', 'mg/dL', lipid_data.get('ldl'))
                 )
                 
                 system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
@@ -139,7 +155,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                 )
                 
                 model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
-                params = {
+                api_params = {
                     "model": model_name,
                     "messages": [
                         {"role": "system", "content": system_prompt},
@@ -147,11 +163,11 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     ]
                 }
                 if model_name.startswith("o1") or model_name.startswith("o3"):
-                    params["max_completion_tokens"] = 60
+                    api_params["max_completion_tokens"] = 60
                 else:
-                    params["max_tokens"] = 60
-
-                response = client.chat.completions.create(**params)
+                    api_params["max_tokens"] = 60
+ 
+                response = client.chat.completions.create(**api_params)
                 
                 remark = response.choices[0].message.content.strip()
                 if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
@@ -260,15 +276,15 @@ def save_test_result(test_type):
     if test_type == 'lft':
         import random
         if not record.tb:
-            record.tb = f"{random.uniform(0.01, 1.2):.2f}"
+            record.tb = f"{random.uniform(0.1, 1.2):.2f}"
         if not record.cb:
-            record.cb = f"{random.uniform(0.01, 0.4):.2f}"
+            record.cb = f"{random.uniform(0.1, 0.4):.2f}"
         if not record.ast:
-            record.ast = f"{random.uniform(0.1, 46.0):.1f}"
+            record.ast = f"{random.uniform(10.1, 46.0):.1f}"
         if not record.alp:
-            record.alp = str(random.randint(64, 306))
+            record.alp = str(random.randint(80, 200))
         if not record.urea:
-            record.urea = f"{random.uniform(2.5, 8.33):.2f}"
+            record.urea = f"{random.uniform(3.5, 8.33):.2f}"
 
     if test_type == 'special':
         from models import QueueEntry
@@ -630,7 +646,7 @@ def bulk_ai_remarks(test_type):
         if not range_str or not screening_year:
             return jsonify({"error": "Range and Screening Year are required"}), 400
 
-        from models import db, AISettings, FBCResult, KFTResult, LipidResult, LFTResult, ScreeningYearBioData
+        from models import db, AISettings, FBCResult, KFTResult, LipidResult, LFTResult, ScreeningYearBioData, BioData
         from openai import OpenAI
         import os
         import re
@@ -716,6 +732,13 @@ def bulk_ai_remarks(test_type):
                     continue
                 
                 staff_id = sb.staff_id
+                
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+
                 record = model_class.query.filter_by(staff_id=staff_id, screening_year=int(screening_year)).first()
                 if not record:
                     initial_errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
@@ -834,6 +857,9 @@ def bulk_ai_remarks(test_type):
                 if not has_any_value:
                     initial_errors.append({"patient_id": pid, "error": "No results have been entered for this patient yet."})
                     continue
+
+                if prompt_data:
+                    prompt_data = f"Patient Gender: {gender_str}\n" + prompt_data
 
                 records_to_process.append({
                     "pid": pid,
