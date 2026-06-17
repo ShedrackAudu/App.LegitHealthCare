@@ -71,16 +71,11 @@ def handle_render_deploy():
 @webhooks_bp.route('/version-check', methods=['GET'])
 def version_check():
     """
-    Returns the latest deployed commit hash to allow client comparison on login/load.
+    Returns the latest deployed commit hash of the running server instance.
     """
     import os
-    config_hash = SystemConfig.query.get('last_deployed_commit')
-    latest_hash = config_hash.value if config_hash else None
-    
-    # Fallback to environment variable if database does not have it yet
-    if not latest_hash or latest_hash == 'latest':
-        env_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
-        latest_hash = env_hash[:7] if (env_hash and env_hash != 'latest') else 'latest'
+    env_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
+    latest_hash = env_hash[:7] if (env_hash and env_hash != 'latest') else 'latest'
         
     return jsonify({
         "commit": latest_hash
