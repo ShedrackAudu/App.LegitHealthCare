@@ -39,7 +39,7 @@ import OfflinePage from './pages/OfflinePage';
 import PatientFilesPage from './pages/PatientFilesPage';
 import InventoryPage from './pages/InventoryPage';
 import ReportCustomization from './pages/ReportCustomization';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useAppContext } from './context/AppContext';
 import axios from 'axios';
 
@@ -50,6 +50,7 @@ import NetworkStatusBanner from './components/common/NetworkStatusBanner';
 const AppUpdateNotifier: React.FC = () => {
   const [show, setShow] = useState(false);
   const [currentServerVersion, setCurrentServerVersion] = useState<string | null>(null);
+  const lastDismissedAt = useRef<number | null>(null);
   const { socket, user } = useAppContext();
 
   // Perform version check against the server
@@ -67,14 +68,17 @@ const AppUpdateNotifier: React.FC = () => {
       if (serverCommitShort && serverCommitShort !== 'latest') {
         setCurrentServerVersion(serverCommitShort);
         
-        // If they already dismissed this specific server version, don't show the popup
-        const dismissedVersion = localStorage.getItem('dismissed_app_version');
-        if (dismissedVersion === serverCommitShort) {
-          return;
-        }
-
         // If server has a valid commit and it doesn't match our local build hash, prompt update
         if (localCommitShort && localCommitShort !== 'dev' && serverCommitShort !== localCommitShort) {
+          // Verify if 5 minutes (300,000 ms) have passed since user manually dismissed this update
+          if (lastDismissedAt.current) {
+            const timeSinceDismiss = Date.now() - lastDismissedAt.current;
+            if (timeSinceDismiss < 300000) {
+              console.log(`[VERSION CHECK] Update available but muted for cooldown (${Math.round((300000 - timeSinceDismiss)/1000)}s left)`);
+              return;
+            }
+          }
+
           console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
           setShow(true);
         }
@@ -86,17 +90,15 @@ const AppUpdateNotifier: React.FC = () => {
 
   const dismissNotification = () => {
     setShow(false);
-    if (currentServerVersion) {
-      localStorage.setItem('dismissed_app_version', currentServerVersion);
-    }
+    lastDismissedAt.current = Date.now();
   };
 
   useEffect(() => {
     // Check version on mount (user opening the app or logging in / refreshing)
     checkVersion();
 
-    // Check version periodically every 2 minutes to catch new updates while active
-    const interval = setInterval(checkVersion, 120000);
+    // Check version periodically every 1 minute to check for updates and cooldown expirations
+    const interval = setInterval(checkVersion, 60000);
     return () => clearInterval(interval);
   }, [user]); // Re-run check when user object changes (e.g. logging in)
 
@@ -110,8 +112,11 @@ const AppUpdateNotifier: React.FC = () => {
 
       if (serverCommitShort) {
         setCurrentServerVersion(serverCommitShort);
-        const dismissedVersion = localStorage.getItem('dismissed_app_version');
-        if (dismissedVersion === serverCommitShort) {
+      }
+
+      if (lastDismissedAt.current) {
+        const timeSinceDismiss = Date.now() - lastDismissedAt.current;
+        if (timeSinceDismiss < 300000) {
           return;
         }
       }
