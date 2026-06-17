@@ -49,6 +49,7 @@ import NetworkStatusBanner from './components/common/NetworkStatusBanner';
 
 const AppUpdateNotifier: React.FC = () => {
   const [show, setShow] = useState(false);
+  const [currentServerVersion, setCurrentServerVersion] = useState<string | null>(null);
   const { socket, user } = useAppContext();
 
   // Perform version check against the server
@@ -58,15 +59,35 @@ const AppUpdateNotifier: React.FC = () => {
       const serverCommit = response.data.commit;
       const localCommit = import.meta.env.VITE_APP_GIT_HASH;
 
-      console.log(`[VERSION CHECK] Local: ${localCommit}, Server: ${serverCommit}`);
+      const serverCommitShort = serverCommit ? serverCommit.substring(0, 7) : '';
+      const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
+
+      console.log(`[VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
       
-      // If server has a valid commit and it doesn't match our local build hash, prompt update
-      if (serverCommit && serverCommit !== 'latest' && localCommit && localCommit !== 'dev' && serverCommit !== localCommit) {
-        console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
-        setShow(true);
+      if (serverCommitShort && serverCommitShort !== 'latest') {
+        setCurrentServerVersion(serverCommitShort);
+        
+        // If they already dismissed this specific server version, don't show the popup
+        const dismissedVersion = localStorage.getItem('dismissed_app_version');
+        if (dismissedVersion === serverCommitShort) {
+          return;
+        }
+
+        // If server has a valid commit and it doesn't match our local build hash, prompt update
+        if (localCommitShort && localCommitShort !== 'dev' && serverCommitShort !== localCommitShort) {
+          console.warn("[VERSION CHECK] Version mismatch detected. Showing update notification.");
+          setShow(true);
+        }
       }
     } catch (err) {
       console.error("[VERSION CHECK] Failed to check app version:", err);
+    }
+  };
+
+  const dismissNotification = () => {
+    setShow(false);
+    if (currentServerVersion) {
+      localStorage.setItem('dismissed_app_version', currentServerVersion);
     }
   };
 
@@ -84,7 +105,18 @@ const AppUpdateNotifier: React.FC = () => {
     const handleUpdate = (data: any) => {
       // If the incoming broadcast hash is different from our current local hash, display it
       const localCommit = import.meta.env.VITE_APP_GIT_HASH;
-      if (data && data.commit && data.commit !== localCommit) {
+      const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
+      const serverCommitShort = data && data.commit ? data.commit.substring(0, 7) : '';
+
+      if (serverCommitShort) {
+        setCurrentServerVersion(serverCommitShort);
+        const dismissedVersion = localStorage.getItem('dismissed_app_version');
+        if (dismissedVersion === serverCommitShort) {
+          return;
+        }
+      }
+
+      if (serverCommitShort && serverCommitShort !== localCommitShort) {
         setShow(true);
       } else if (!data || !data.commit) {
         setShow(true);
@@ -111,7 +143,7 @@ const AppUpdateNotifier: React.FC = () => {
           </p>
         </div>
         <button 
-          onClick={() => setShow(false)} 
+          onClick={dismissNotification} 
           className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted/60"
         >
           <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
@@ -119,7 +151,7 @@ const AppUpdateNotifier: React.FC = () => {
       </div>
       <div className="flex gap-2 justify-end mt-1">
         <button 
-          onClick={() => setShow(false)} 
+          onClick={dismissNotification} 
           className="px-3.5 py-1.5 rounded-xl border-2 text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
         >
           Later

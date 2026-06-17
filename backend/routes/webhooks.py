@@ -37,7 +37,8 @@ def handle_render_deploy():
     if event and event not in ['deploy.succeeded', 'deploy.live'] and status not in ['live', 'succeeded']:
         return jsonify({"message": "Ignored non-success deploy event"}), 200
         
-    commit_hash = deploy_data.get('commit', {}).get('id', 'latest')
+    raw_commit = deploy_data.get('commit', {}).get('id', 'latest')
+    commit_hash = raw_commit[:7] if (raw_commit and raw_commit != 'latest') else 'latest'
     
     # Store the latest deployed commit hash in SystemConfig
     try:
@@ -55,15 +56,15 @@ def handle_render_deploy():
     # Get the active app instance to pass to the thread context
     app = current_app._get_current_object()
     
-    # Schedule the socket emit to run in 5 minutes (300 seconds)
-    print(f"[DEPLOY WEBHOOK] Received deploy success for commit {commit_hash}. Scheduling notification in 5 minutes...")
-    timer = threading.Timer(300.0, broadcast_update_notification, args=[app, commit_hash])
+    # Schedule the socket emit to run in 1 second (instantaneous broadcast)
+    print(f"[DEPLOY WEBHOOK] Received deploy success for commit {commit_hash}. Scheduling instantaneous notification...")
+    timer = threading.Timer(1.0, broadcast_update_notification, args=[app, commit_hash])
     timer.daemon = True
     timer.start()
     
     return jsonify({
         "status": "success",
-        "message": "Deployment webhook received. Update notification scheduled in 5 minutes.",
+        "message": "Deployment webhook received. Update notification scheduled.",
         "commit": commit_hash
     }), 200
 
@@ -78,7 +79,8 @@ def version_check():
     
     # Fallback to environment variable if database does not have it yet
     if not latest_hash or latest_hash == 'latest':
-        latest_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
+        env_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
+        latest_hash = env_hash[:7] if (env_hash and env_hash != 'latest') else 'latest'
         
     return jsonify({
         "commit": latest_hash
