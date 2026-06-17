@@ -72,12 +72,13 @@ def version_check():
     """
     Returns the latest deployed commit hash to allow client comparison on login/load.
     """
+    import os
     config_hash = SystemConfig.query.get('last_deployed_commit')
     latest_hash = config_hash.value if config_hash else None
     
     # Fallback to environment variable if database does not have it yet
-    if not latest_hash:
-        latest_hash = request.environ.get('RENDER_GIT_COMMIT', 'latest')
+    if not latest_hash or latest_hash == 'latest':
+        latest_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
         
     return jsonify({
         "commit": latest_hash

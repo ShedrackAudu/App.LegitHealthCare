@@ -73,6 +73,10 @@ const AppUpdateNotifier: React.FC = () => {
   useEffect(() => {
     // Check version on mount (user opening the app or logging in / refreshing)
     checkVersion();
+
+    // Check version periodically every 2 minutes to catch new updates while active
+    const interval = setInterval(checkVersion, 120000);
+    return () => clearInterval(interval);
   }, [user]); // Re-run check when user object changes (e.g. logging in)
 
   useEffect(() => {
