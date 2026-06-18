@@ -115,11 +115,6 @@ const LandingPage = () => {
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
               <a href="#about" className="hover:text-primary transition-colors">About</a>
-              <Link to="/login">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-6 rounded-xl border-2">
-                  Patient Portal
-                </Button>
-              </Link>
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
                 <Link to="/login">
@@ -150,9 +145,6 @@ const LandingPage = () => {
             <div className="flex flex-col space-y-4 text-lg font-bold">
               <a href="#services" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">Services</a>
               <a href="#about" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">About</a>
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="text-primary">
-                Patient Portal
-              </Link>
             </div>
             <div className="pt-6 border-t border-border flex flex-col gap-4">
               <Link to="/login" onClick={() => setMenuOpen(false)}>
