@@ -338,13 +338,34 @@ def handle_patient(staff_id):
                 except ImportError:
                     pass
                 
+                # 1. Create a new patient record with the new staff ID to satisfy foreign key constraints during child updates
+                new_patient = BioData(
+                    staff_id=new_staff_id,
+                    first_name=patient.first_name,
+                    middle_name=patient.middle_name,
+                    last_name=patient.last_name,
+                    department=patient.department,
+                    gender=patient.gender,
+                    dob=patient.dob,
+                    age=patient.age,
+                    phone=patient.phone,
+                    email=patient.email,
+                    race=patient.race,
+                    nationality=patient.nationality,
+                    passport_image=patient.passport_image,
+                    created_at=patient.created_at
+                )
+                db.session.add(new_patient)
+                db.session.flush() # Ensure the new row is in the database session
+                
+                # 2. Update referencing tables
                 for model in models_to_update:
                     db.session.query(model).filter(func.lower(model.staff_id) == func.lower(old_id)).update(
                         {model.staff_id: new_staff_id}, 
                         synchronize_session=False
                     )
                 
-                # Update in patient_users (patients bind)
+                # 3. Update in patient_users (patients bind)
                 try:
                     from sqlalchemy import text
                     patients_engine = db.engines.get('patients')
@@ -363,7 +384,9 @@ def handle_patient(staff_id):
                 except Exception as ex:
                     print(f"Failed to update patient_users username: {str(ex)}")
 
-                patient.staff_id = new_staff_id
+                # 4. Delete the old patient record since it is no longer referenced
+                db.session.delete(patient)
+                patient = new_patient
                 clean_staff_id = new_staff_id
         
         # Update fields
