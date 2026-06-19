@@ -338,7 +338,7 @@ def download_registered_excel():
     
     if not records:
         output = io.BytesIO()
-        df = pd.DataFrame(columns=["Staff ID", "Patient ID", "First Name", "Last Name", "Department", "Gender", "Age", "Phone", "Email", "Race", "Nationality"])
+        df = pd.DataFrame(columns=["Staff ID", "Patient ID", "First Name", "Middle Name", "Last Name", "Department", "Gender", "Age", "Phone", "Email", "Race", "Nationality"])
         with pd.ExcelWriter(output, engine='openpyxl') as writer:
             df.to_excel(writer, index=False, sheet_name='No Registrations')
         output.seek(0)
@@ -350,6 +350,7 @@ def download_registered_excel():
             "Staff ID": yr.staff_id,
             "Patient ID": yr.patient_id,
             "First Name": yr.first_name,
+            "Middle Name": bio.middle_name or "",
             "Last Name": yr.last_name,
             "Department": yr.department or "Unknown",
             "Gender": yr.gender,

@@ -571,7 +571,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <ComboField {...register('assessment_hx_pe', { required: 'Assessment Hx & PE is required' })} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} setValue={setValue} error={(errors as any).assessment_hx_pe} />
                               <div className="space-y-1 col-span-full lg:col-span-4">
                                  <div className="flex items-center justify-between ml-1 mb-1">
-                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark</Label>
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark <span className="text-red-500">*</span></Label>
                                     <Button
                                         type="button"
                                         variant="outline"
@@ -585,7 +585,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                                         AI Generate
                                     </Button>
                                  </div>
-                                 <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
+                                 <textarea {...register('overall_lab_remark', { required: 'Overall Lab Remark is required' })} className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none ${(errors as any).overall_lab_remark ? 'border-red-500 ring-2 ring-red-500/20' : 'border-primary/10'}`} placeholder="Enter comprehensive lab findings..." />
+                                 {(errors as any).overall_lab_remark && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).overall_lab_remark.message}</p>}
                               </div>
                         </div>
 
