@@ -55,6 +55,8 @@ const AppUpdateNotifier: React.FC = () => {
   const lastDismissedAt = useRef<number | null>(null);
   const { socket, user } = useAppContext();
 
+  const lastSeenServerVersion = useRef<string | null>(null);
+
   // Decide whether to show the card for a given server commit hash
   const maybeShowCard = (serverCommitShort: string) => {
     const localCommit = import.meta.env.VITE_APP_GIT_HASH;
@@ -72,8 +74,12 @@ const AppUpdateNotifier: React.FC = () => {
       return;
     }
 
-    // Respect 5-minute "Later" cooldown
-    if (lastDismissedAt.current) {
+    // If we detect a NEW version (different from the last version we saw when dismissing/cooldown started),
+    // we bypass/clear the cooldown entirely to display the brand new update immediately.
+    const isNewDeployment = lastSeenServerVersion.current && lastSeenServerVersion.current !== serverCommitShort;
+
+    // Respect 5-minute "Later" cooldown ONLY if it's the SAME version we dismissed
+    if (!isNewDeployment && lastDismissedAt.current) {
       const timeSinceDismiss = Date.now() - lastDismissedAt.current;
       if (timeSinceDismiss < 300000) {
         console.log(`[VERSION CHECK] Update available but muted for cooldown (${Math.round((300000 - timeSinceDismiss) / 1000)}s left).`);
@@ -82,6 +88,7 @@ const AppUpdateNotifier: React.FC = () => {
     }
 
     console.warn(`[VERSION CHECK] Version mismatch: Local=${localCommitShort}, Server=${serverCommitShort}. Showing notification.`);
+    lastSeenServerVersion.current = serverCommitShort;
     setPendingServerVersion(serverCommitShort);
     setShow(true);
   };
