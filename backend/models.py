@@ -1003,14 +1003,45 @@ class AuditLog(db.Model):
 
         user_name = "System"
         portal = details_data.get('portal', 'staff')
+        patient_name = None
+        patient_staff_id = None
         
+        # 1. Check if resource is Patient-related
+        if self.resource and self.resource.startswith("Patient:"):
+            parts = self.resource.split(":")
+            potential_id = parts[1] if len(parts) > 1 else None
+            if potential_id:
+                try:
+                    bio = BioData.query.filter_by(staff_id=potential_id).first()
+                    if not bio:
+                        bio = BioData.query.filter_by(phone=potential_id).first()
+                    if bio:
+                        middle = f" {bio.middle_name}" if bio.middle_name else ""
+                        patient_name = f"{bio.first_name}{middle} {bio.last_name}"
+                        patient_staff_id = bio.staff_id
+                except Exception:
+                    pass
+
+        # 2. Check if originator is Patient
         if portal == 'patient':
             if self.user_id:
                 try:
                     # Look up in PatientPortalUser (which uses 'patients' bind)
                     patient = PatientPortalUser.query.get(self.user_id)
                     if patient:
-                        user_name = f"{patient.first_name} {patient.last_name} (Patient)"
+                        bio = BioData.query.filter_by(staff_id=patient.username).first()
+                        if not bio:
+                            bio = BioData.query.filter_by(phone=patient.phone).first()
+                        
+                        if bio:
+                            middle = f" {bio.middle_name}" if bio.middle_name else ""
+                            patient_name = f"{bio.first_name}{middle} {bio.last_name}"
+                            patient_staff_id = bio.staff_id
+                            user_name = f"{patient_name} (Patient)"
+                        else:
+                            patient_name = f"{patient.first_name} {patient.last_name}"
+                            patient_staff_id = patient.username
+                            user_name = f"{patient_name} (Patient)"
                     else:
                         user_name = f"Patient {self.user_id}"
                 except:
@@ -1037,7 +1068,9 @@ class AuditLog(db.Model):
             "resource": self.resource,
             "details": details_data,
             "ip_address": self.ip_address,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
+            "patient_name": patient_name,
+            "patient_staff_id": patient_staff_id
         }
 
 

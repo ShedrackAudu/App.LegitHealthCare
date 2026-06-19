@@ -462,7 +462,7 @@ export default function SecurityDashboard() {
                             <span className="text-muted-foreground">[{formatLogTime(log.timestamp)}]</span>
                             <span className="font-bold text-teal-600 dark:text-teal-400">{log.action}</span>
                           </div>
-                          <p className="text-foreground/80">Resource: {log.resource}</p>
+                          <p className="text-foreground/80">Resource: {log.resource}{log.patient_name && ` (${log.patient_name})`}</p>
                           {detailsStr && (
                             <p className="text-muted-foreground truncate max-w-[280px]" title={detailsStr}>
                               Details: {detailsStr}
