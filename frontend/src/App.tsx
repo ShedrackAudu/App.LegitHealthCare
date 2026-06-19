@@ -125,8 +125,8 @@ const AppUpdateNotifier: React.FC = () => {
   useEffect(() => {
     // Check version on mount
     checkVersion();
-    // Poll every 5 minutes
-    const interval = setInterval(checkVersion, 300000);
+    // Poll every 1 minute to check for updates and detect when 5-minute cooldown has expired
+    const interval = setInterval(checkVersion, 60000);
     return () => clearInterval(interval);
   }, [user]);
 
