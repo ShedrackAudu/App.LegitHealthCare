@@ -16,7 +16,7 @@ def broadcast_update_notification(app, commit_hash):
             socketio.emit('app_update_available', {
                 'commit': commit_hash,
                 'message': 'A new version of the application has been successfully deployed.'
-            })
+            }, namespace='/')
         except Exception as e:
             print(f"[DEPLOY WEBHOOK] Failed to emit socket event: {str(e)}")
 
