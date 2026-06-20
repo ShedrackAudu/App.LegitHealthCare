@@ -278,7 +278,12 @@ def save_test_result(test_type):
         if not record.tb:
             record.tb = f"{random.uniform(0.1, 1.2):.2f}"
         if not record.cb:
-            record.cb = f"{random.uniform(0.1, 0.4):.2f}"
+            tb_val = float(record.tb)
+            # Ensure CB is not higher than TB, capped at 0.4 clinical max bound
+            max_cb_bound = min(0.4, tb_val)
+            # Ensure lower bound is valid in case TB is extremely low (e.g. 0.1)
+            min_cb_bound = min(0.1, max_cb_bound)
+            record.cb = f"{random.uniform(min_cb_bound, max_cb_bound):.2f}"
         if not record.ast:
             record.ast = f"{random.uniform(10.1, 46.0):.1f}"
         if not record.alp:
