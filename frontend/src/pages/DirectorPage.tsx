@@ -469,8 +469,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
-                            { id: 'ecg_result', label: 'ECG Status', optional: true },
-                            { id: 'ecg_remark', label: 'ECG Remark', optional: true },
+                            { id: 'ecg_result', label: 'ECG Status' },
+                            { id: 'ecg_remark', label: 'ECG Remark' },
                             { id: 'spirometry_result', label: 'Spirometry' },
                             { id: 'spirometry_remark', label: 'Spiro Remark' },
                             { id: 'audiometry_result', label: 'Audiometry' },
