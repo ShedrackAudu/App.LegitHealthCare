@@ -888,6 +888,8 @@ def bulk_download_reports():
     year_param = request.args.get('year')
     year = int(year_param) if year_param else datetime.now().year
 
+    exclude_email = request.args.get('exclude_email', 'true').lower() == 'true'
+
     # Parse range (e.g. 1-100)
     try:
         if '-' in range_str:
@@ -918,10 +920,10 @@ def bulk_download_reports():
             continue
 
         if start_id <= pid_int <= end_id:
-            # Check condition 2: Does not have email address
             bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
             email = bio.email if bio else None
-            if not email or not email.strip():
+            # If exclude_email is true, only include if patient has no email
+            if not exclude_email or not email or not email.strip():
                 # Check condition 1: Report is 100% complete
                 percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
                 if percentage == 100:
@@ -965,7 +967,7 @@ def bulk_download_reports():
             user_id=user_id,
             action='Bulk Download Reports',
             resource=f"Range:{range_str}:Year:{year}",
-            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, no email) in range {range_str} for year {year}.",
+            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, exclude_email={exclude_email}) in range {range_str} for year {year}.",
             ip_address=get_client_ip()
         )
         db.session.add(audit)

@@ -35,6 +35,7 @@ const PatientReportPage: React.FC = () => {
     const [bulkLoading, setBulkLoading] = useState(false);
     const [bulkDownloadEnabled, setBulkDownloadEnabled] = useState(true);
     const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
+    const [excludeEmail, setExcludeEmail] = useState(true);
 
     useEffect(() => {
         const checkBulkDownloadStatus = async () => {
@@ -73,7 +74,8 @@ const PatientReportPage: React.FC = () => {
                     range: rangeInput,
                     year: activeYear,
                     company: activeSection,
-                    list_only: 'true'
+                    list_only: 'true',
+                    exclude_email: excludeEmail ? 'true' : 'false'
                 },
                 headers: {
                     'X-Company-Context': activeSection
@@ -969,12 +971,32 @@ const PatientReportPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-3 text-muted-foreground">
                                     <p className="font-bold text-foreground">Downloads reports meeting these criteria:</p>
                                     <ul className="list-disc list-inside space-y-1 pl-1">
                                         <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
-                                        <li>No email address is attached to the patient profile</li>
+                                        {excludeEmail && (
+                                            <li>No email address is attached to the patient profile</li>
+                                        )}
                                     </ul>
+
+                                    <div className="pt-2 border-t flex items-center justify-between gap-4">
+                                        <div className="space-y-0.5">
+                                            <label htmlFor="exclude-email-toggle" className="font-bold text-foreground cursor-pointer">Only patients without email</label>
+                                            <p className="text-[10px] text-muted-foreground">Exclude patients who already have an email address configured.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="exclude-email-toggle"
+                                            onClick={() => setExcludeEmail(!excludeEmail)}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            disabled={bulkLoading || !bulkDownloadEnabled}
+                                        >
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                            />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
