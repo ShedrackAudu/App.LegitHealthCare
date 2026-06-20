@@ -71,11 +71,18 @@ def handle_render_deploy():
 @webhooks_bp.route('/version-check', methods=['GET'])
 def version_check():
     """
-    Returns the latest deployed commit hash of the running server instance.
+    Returns the latest deployed commit hash. It prioritizes the latest commit hash
+    received via the render-deploy webhook (saved to the DB), falling back to the
+    running backend instance environment variable. This ensures frontend-only deploys
+    are immediately detected by clients.
     """
     import os
-    env_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
-    latest_hash = env_hash[:7] if (env_hash and env_hash != 'latest') else 'latest'
+    config_hash = SystemConfig.query.get('last_deployed_commit')
+    latest_hash = config_hash.value if config_hash else None
+    
+    if not latest_hash or latest_hash == 'latest':
+        env_hash = os.environ.get('RENDER_GIT_COMMIT', 'latest')
+        latest_hash = env_hash[:7] if (env_hash and env_hash != 'latest') else 'latest'
         
     return jsonify({
         "commit": latest_hash
