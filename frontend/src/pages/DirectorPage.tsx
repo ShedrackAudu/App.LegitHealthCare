@@ -469,14 +469,14 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
-                            { id: 'ecg_result', label: 'ECG Status' },
-                            { id: 'ecg_remark', label: 'ECG Remark' },
-                            { id: 'spirometry_result', label: 'Spirometry' },
-                            { id: 'spirometry_remark', label: 'Spiro Remark' },
-                            { id: 'audiometry_result', label: 'Audiometry' },
-                            { id: 'audiometry_remark', label: 'Audio Remark' },
-                            { id: 'weight', label: 'Weight (kg)' },
-                            { id: 'height', label: 'Height (m)' }
+                            { id: 'ecg_result', label: 'ECG Status', optional: false },
+                            { id: 'ecg_remark', label: 'ECG Remark', optional: false },
+                            { id: 'spirometry_result', label: 'Spirometry', optional: false },
+                            { id: 'spirometry_remark', label: 'Spiro Remark', optional: false },
+                            { id: 'audiometry_result', label: 'Audiometry', optional: false },
+                            { id: 'audiometry_remark', label: 'Audio Remark', optional: false },
+                            { id: 'weight', label: 'Weight (kg)', optional: false },
+                            { id: 'height', label: 'Height (m)', optional: false }
                         ].map(f => (
                             <div key={f.id} className="space-y-1">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} {!f.optional && <span className="text-red-500">*</span>}</Label>
