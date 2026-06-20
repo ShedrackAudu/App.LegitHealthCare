@@ -1007,15 +1007,44 @@ const PatientReportPage: React.FC = () => {
             {bulkProgress && (
                 <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
                     <div className="max-w-md w-full bg-card border-2 border-primary/10 rounded-3xl p-8 shadow-2xl space-y-6">
-                        <div className="relative w-20 h-20 mx-auto">
-                            <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
-                            <div 
-                                className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" 
-                                style={{ animationDuration: '1.5s' }}
-                            />
-                            <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-primary">
-                                📊
+                        <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+                            {/* Outer Pulsing Glow */}
+                            <div className="absolute inset-0 rounded-full bg-indigo-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                            
+                            {/* Inner Circle Background */}
+                            <div className="absolute inset-2 rounded-full bg-card border-2 border-indigo-500/5 shadow-inner flex items-center justify-center z-10">
+                                <span className="text-2xl animate-pulse">📄</span>
                             </div>
+                            
+                            {/* SVG Gradient Spinner */}
+                            <svg className="w-full h-full transform -rotate-90 z-20" viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="spinnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#4f46e5" />
+                                        <stop offset="100%" stopColor="#ec4899" />
+                                    </linearGradient>
+                                </defs>
+                                <circle 
+                                    cx="50" 
+                                    cy="50" 
+                                    r="42" 
+                                    className="stroke-muted/30" 
+                                    strokeWidth="6" 
+                                    fill="transparent" 
+                                />
+                                <circle 
+                                    cx="50" 
+                                    cy="50" 
+                                    r="42" 
+                                    stroke="url(#spinnerGradient)" 
+                                    className="transition-all duration-300" 
+                                    strokeWidth="6" 
+                                    fill="transparent" 
+                                    strokeDasharray="264"
+                                    strokeDashoffset={264 - (264 * (bulkProgress.current / (bulkProgress.total || 1)))}
+                                    strokeLinecap="round"
+                                />
+                            </svg>
                         </div>
                         
                         <div className="space-y-2">
