@@ -22,6 +22,7 @@ import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { toJpeg } from 'html-to-image';
 import { FileAttachmentSection } from '@/components/FileAttachmentSection';
+import JSZip from 'jszip';
 import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
@@ -33,6 +34,7 @@ const PatientReportPage: React.FC = () => {
     const [rangeInput, setRangeInput] = useState('');
     const [bulkLoading, setBulkLoading] = useState(false);
     const [bulkDownloadEnabled, setBulkDownloadEnabled] = useState(true);
+    const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
 
     useEffect(() => {
         const checkBulkDownloadStatus = async () => {
@@ -58,22 +60,74 @@ const PatientReportPage: React.FC = () => {
             return;
         }
         setBulkLoading(true);
-        toast.loading('Scanning and generating bulk reports. This may take a moment...', { id: 'bulkDownload' });
+        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
+        
+        const originalPatient = selectedPatient;
+        const originalReportData = reportData;
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
         try {
+            // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
                 params: {
                     range: rangeInput,
                     year: activeYear,
-                    company: activeSection
+                    company: activeSection,
+                    list_only: 'true'
                 },
                 headers: {
                     'X-Company-Context': activeSection
-                },
-                responseType: 'blob'
+                }
             });
             
-            const blob = new Blob([response.data], { type: 'application/zip' });
-            const url = window.URL.createObjectURL(blob);
+            const patientsList = response.data.patients || [];
+            if (patientsList.length === 0) {
+                toast.error("No completed reports found in the specified range.", { id: 'bulkDownload' });
+                setBulkProgress(null);
+                setBulkLoading(false);
+                return;
+            }
+
+            toast.loading(`Found ${patientsList.length} completed reports. Starting pixel-perfect PDF rendering...`, { id: 'bulkDownload' });
+
+            const zip = new JSZip();
+
+            // 2. Loop through each patient, load their data, and render the PDF
+            for (let i = 0; i < patientsList.length; i++) {
+                const patientInfo = patientsList[i];
+                setBulkProgress({ 
+                    current: i + 1, 
+                    total: patientsList.length, 
+                    name: `${patientInfo.first_name} ${patientInfo.last_name}` 
+                });
+
+                // Fetch details
+                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+
+                // Swap states to trigger rendering of the report pages
+                setSelectedPatient(patientInfo);
+                setReportData(detailRes.data);
+
+                // Wait 400ms for React rendering and browser layout calculations
+                await delay(400);
+
+                // Capture PDF
+                const pdfBlob = await generateFrontendPDF();
+
+                // Add to ZIP
+                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
+                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
+                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                
+                zip.file(filename, pdfBlob);
+            }
+
+            setBulkProgress(prev => prev ? { ...prev, name: 'Compiling ZIP package...' } : null);
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+            const url = window.URL.createObjectURL(zipBlob);
             const link = document.createElement('a');
             link.href = url;
             link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeInput.replace(/\s+/g, '')}.zip`;
@@ -81,21 +135,16 @@ const PatientReportPage: React.FC = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
+            
             toast.success('Bulk reports downloaded successfully', { id: 'bulkDownload' });
         } catch (err: any) {
             console.error('Bulk download error:', err);
-            if (err.response?.data instanceof Blob) {
-                const text = await err.response.data.text();
-                try {
-                    const json = JSON.parse(text);
-                    toast.error(json.error || 'Failed to download reports', { id: 'bulkDownload' });
-                } catch {
-                    toast.error('Failed to download reports. No matching reports found.', { id: 'bulkDownload' });
-                }
-            } else {
-                toast.error(err.response?.data?.error || 'Failed to download reports', { id: 'bulkDownload' });
-            }
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to download reports';
+            toast.error(errorMsg, { id: 'bulkDownload' });
         } finally {
+            setSelectedPatient(originalPatient);
+            setReportData(originalReportData);
+            setBulkProgress(null);
             setBulkLoading(false);
         }
     };
@@ -952,6 +1001,47 @@ const PatientReportPage: React.FC = () => {
                                 Bulk Download (ZIP)
                             </Button>
                         </Card>
+                    </div>
+                </div>
+            )}
+            {bulkProgress && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+                    <div className="max-w-md w-full bg-card border-2 border-primary/10 rounded-3xl p-8 shadow-2xl space-y-6">
+                        <div className="relative w-20 h-20 mx-auto">
+                            <div className="absolute inset-0 rounded-full border-4 border-primary/10" />
+                            <div 
+                                className="absolute inset-0 rounded-full border-4 border-primary border-t-transparent animate-spin" 
+                                style={{ animationDuration: '1.5s' }}
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center text-2xl font-black text-primary">
+                                📊
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-black tracking-tight text-foreground">Generating Bulk Reports</h2>
+                            <p className="text-sm text-muted-foreground font-semibold">
+                                Please do not close or reload this page.
+                            </p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-primary transition-all duration-300 rounded-full"
+                                    style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
+                                <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 rounded-2xl bg-muted/40 border text-left">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 mb-0.5">Processing Patient</p>
+                            <p className="text-sm font-black text-foreground truncate">{bulkProgress.name || 'Initial Scanning...'}</p>
+                        </div>
                     </div>
                 </div>
             )}

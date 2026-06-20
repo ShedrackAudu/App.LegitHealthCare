@@ -930,6 +930,19 @@ def bulk_download_reports():
     if not matching_records:
         return jsonify({"error": "No completed reports matching the conditions found in the specified range."}), 404
 
+    list_only = request.args.get('list_only', 'false').lower() == 'true'
+    if list_only:
+        return jsonify({
+            "patients": [
+                {
+                    "staff_id": yr.staff_id,
+                    "patient_id": yr.patient_id,
+                    "first_name": bio.first_name if bio else yr.first_name,
+                    "last_name": bio.last_name if bio else yr.last_name
+                } for yr, bio in matching_records
+            ]
+        }), 200
+
     # Create ZIP file in memory
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
