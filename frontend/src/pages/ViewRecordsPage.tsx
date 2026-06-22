@@ -43,11 +43,22 @@ const ViewRecordsPage: React.FC = () => {
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
 
-    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general', pageSize = perPage) => {
+    // Advanced Filters State
+    const [genderFilter, setGenderFilter] = useState('');
+    const [deptFilter, setDeptFilter] = useState('');
+    const [minAge, setMinAge] = useState('');
+    const [maxAge, setMaxAge] = useState('');
+
+    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general', pageSize = perPage, filters = { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge }) => {
         setLoading(true);
         try {
-            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=${pageSize}&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
+            let url = `/api/records/screening/${activeYear}?page=${page}&per_page=${pageSize}&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
             
+            if (filters.gender) url += `&gender=${filters.gender}`;
+            if (filters.dept) url += `&department=${filters.dept}`;
+            if (filters.minA) url += `&min_age=${filters.minA}`;
+            if (filters.maxA) url += `&max_age=${filters.maxA}`;
+
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -62,22 +73,19 @@ const ViewRecordsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchRecords(1, searchTerm);
-    }, [activeSection, activeYear, user]);
+        fetchRecords(1, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+    }, [activeSection, activeYear, user, genderFilter, deptFilter, minAge, maxAge]);
 
     // REMOVED deprecated ad-hoc search logic
 
-
-
-
     const handlePageChange = (newPage: number) => {
-        fetchRecords(newPage, searchTerm, undefined, perPage);
+        fetchRecords(newPage, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
     };
 
     const handlePerPageChange = (newPerPage: number) => {
         setPerPage(newPerPage);
         setCurrentPage(1);
-        fetchRecords(1, searchTerm, undefined, newPerPage);
+        fetchRecords(1, searchTerm, undefined, newPerPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
     };
 
     const handleDelete = async () => {
@@ -102,6 +110,15 @@ const ViewRecordsPage: React.FC = () => {
         }
     };
 
+    const clearFilters = () => {
+        setGenderFilter('');
+        setDeptFilter('');
+        setMinAge('');
+        setMaxAge('');
+        setSearchTerm('');
+        fetchRecords(1, '', undefined, perPage, { gender: '', dept: '', minA: '', maxA: '' });
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -121,11 +138,11 @@ const ViewRecordsPage: React.FC = () => {
                         activeSection={activeSection}
                         onSearch={(query, searchType) => {
                             setSearchTerm(query);
-                            fetchRecords(1, query, searchType);
+                            fetchRecords(1, query, searchType, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
                         }}
                         onSelect={(p) => {
                             setSearchTerm(p.staff_id);
-                            fetchRecords(1, p.staff_id, 'general');
+                            fetchRecords(1, p.staff_id, 'general', perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
                         }}
                         searching={loading}
                         themeColor="primary"
@@ -134,6 +151,75 @@ const ViewRecordsPage: React.FC = () => {
                         strict={true}
                         showPidToggle={true}
                     />
+                </div>
+
+                {/* Filters Panel */}
+                <div className="bg-card p-4 rounded-2xl border flex flex-wrap gap-4 items-end shadow-sm">
+                    <div className="flex flex-col gap-1.5 min-w-[120px] flex-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
+                        <select 
+                            value={genderFilter} 
+                            onChange={(e) => setGenderFilter(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        >
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5 min-w-[160px] flex-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
+                        <select 
+                            value={deptFilter} 
+                            onChange={(e) => setDeptFilter(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        >
+                            <option value="">All Departments</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Accounts">Accounts</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Security">Security</option>
+                            <option value="HSE">HSE</option>
+                            <option value="Medical">Medical</option>
+                            <option value="IT">IT</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 w-24">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
+                        <input 
+                            type="number" 
+                            placeholder="Min" 
+                            value={minAge} 
+                            onChange={(e) => setMinAge(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 w-24">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
+                        <input 
+                            type="number" 
+                            placeholder="Max" 
+                            value={maxAge} 
+                            onChange={(e) => setMaxAge(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={clearFilters}
+                            className="h-9 px-4 text-xs font-black rounded-xl"
+                        >
+                            Reset
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="border-2 shadow-xl bg-card overflow-hidden">

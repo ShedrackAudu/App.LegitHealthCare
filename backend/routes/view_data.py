@@ -104,6 +104,13 @@ def search_patients():
     search_type = request.args.get('search_type', 'general').lower()
     query_lower = query.lower().strip()
     
+    # Parse filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    nationality = request.args.get('nationality', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
     # 1. Base Query with Filtering (cap at 100 to keep sorting efficient)
     MAX_RESULTS = 100
     if search_type == 'pid':
@@ -148,6 +155,18 @@ def search_patients():
             (BioData.phone.ilike(search)) |
             (BioData.email.ilike(search))
         )
+
+    # Apply advanced filters to base_query
+    if gender:
+        base_query = base_query.filter(func.lower(BioData.gender) == func.lower(gender))
+    if department:
+        base_query = base_query.filter(func.lower(BioData.department) == func.lower(department))
+    if nationality:
+        base_query = base_query.filter(BioData.nationality.ilike(f"%{nationality}%"))
+    if min_age is not None:
+        base_query = base_query.filter(BioData.age >= min_age)
+    if max_age is not None:
+        base_query = base_query.filter(BioData.age <= max_age)
 
     all_matches = base_query.limit(MAX_RESULTS).all()
 
@@ -233,7 +252,27 @@ def get_all_patients():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
-    pagination = BioData.query.order_by(BioData.created_at.desc()).paginate(
+    # Advanced filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    nationality = request.args.get('nationality', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
+    query = BioData.query
+    
+    if gender:
+        query = query.filter(func.lower(BioData.gender) == func.lower(gender))
+    if department:
+        query = query.filter(func.lower(BioData.department) == func.lower(department))
+    if nationality:
+        query = query.filter(BioData.nationality.ilike(f"%{nationality}%"))
+    if min_age is not None:
+        query = query.filter(BioData.age >= min_age)
+    if max_age is not None:
+        query = query.filter(BioData.age <= max_age)
+        
+    pagination = query.order_by(BioData.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
@@ -506,6 +545,12 @@ def get_screening_records(year):
     search_query = request.args.get('q', '').strip()
     search_type = request.args.get('search_type', 'general').lower()
     
+    # Advanced filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
     query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     if search_query:
@@ -517,6 +562,16 @@ def get_screening_records(year):
                 (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
                 (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
             )
+            
+    # Apply advanced filters
+    if gender:
+        query = query.filter(func.lower(ScreeningYearBioData.gender) == func.lower(gender))
+    if department:
+        query = query.filter(func.lower(ScreeningYearBioData.department) == func.lower(department))
+    if min_age is not None:
+        query = query.filter(ScreeningYearBioData.age >= min_age)
+    if max_age is not None:
+        query = query.filter(ScreeningYearBioData.age <= max_age)
     
     # Sort naturally by patient_id descending (newest/highest serial first)
     query = query.order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())

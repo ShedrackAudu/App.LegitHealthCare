@@ -36,15 +36,28 @@ const AuditLogPage: React.FC = () => {
   const [totalPages, setTotalPages] = useState(1);
   const [perPage, setPerPage] = useState(25);
   const [totalItems, setTotalItems] = useState(0);
-  const [searchTerm, setSearchTerm] = useState('');
+  
+  // Advanced filters state
+  const [actionFilter, setActionFilter] = useState('');
+  const [userFilter, setUserFilter] = useState('');
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, socket } = useAppContext();
 
-  const fetchLogs = async (pageNum: number, pageSize = perPage) => {
+  const fetchLogs = async (pageNum: number, pageSize = perPage, filters = { action: actionFilter, username: userFilter, start: startDate, end: endDate }) => {
     setLoading(true);
     try {
-      const resp = await axios.get(`/api/admin/audit-logs?page=${pageNum}&per_page=${pageSize}`);
+      let url = `/api/admin/audit-logs?page=${pageNum}&per_page=${pageSize}`;
+      
+      if (filters.action) url += `&action=${filters.action}`;
+      if (filters.username) url += `&username=${filters.username}`;
+      if (filters.start) url += `&start_date=${new Date(filters.start).toISOString()}`;
+      if (filters.end) url += `&end_date=${new Date(filters.end).toISOString()}`;
+
+      const resp = await axios.get(url);
       setLogs(resp.data.logs);
       setTotalPages(resp.data.pages);
       setPage(resp.data.current_page);
@@ -57,8 +70,8 @@ const AuditLogPage: React.FC = () => {
   };
 
   useEffect(() => {
-    fetchLogs(page, perPage);
-  }, [page, perPage]);
+    fetchLogs(page, perPage, { action: actionFilter, username: userFilter, start: startDate, end: endDate });
+  }, [page, perPage, actionFilter, userFilter, startDate, endDate]);
 
   useEffect(() => {
     if (!socket) return;
@@ -147,14 +160,65 @@ const AuditLogPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="relative w-full lg:w-80 group">
-            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-            <Input 
-              placeholder="Search by action or user..." 
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-              className="h-12 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
+          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-stretch sm:items-center">
+            <div className="relative group flex-1 sm:w-60">
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Search action..." 
+                value={actionFilter}
+                onChange={(e) => setActionFilter(e.target.value)}
+                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
+              />
+            </div>
+            <div className="relative group flex-1 sm:w-60">
+              <HugeiconsIcon icon={UserIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <Input 
+                placeholder="Search staff/username..." 
+                value={userFilter}
+                onChange={(e) => setUserFilter(e.target.value)}
+                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Date Filters Panel */}
+        <div className="bg-card p-4 rounded-2xl border flex flex-wrap gap-4 items-end shadow-sm">
+          <div className="flex flex-col gap-1.5 min-w-[150px] flex-1">
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Start Date</label>
+            <input 
+              type="date" 
+              value={startDate} 
+              onChange={(e) => setStartDate(e.target.value)}
+              className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground w-full"
             />
+          </div>
+          
+          <div className="flex flex-col gap-1.5 min-w-[150px] flex-1">
+            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">End Date</label>
+            <input 
+              type="date" 
+              value={endDate} 
+              onChange={(e) => setEndDate(e.target.value)}
+              className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground w-full"
+            />
+          </div>
+
+          <div className="flex gap-2">
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={() => {
+                setActionFilter('');
+                setUserFilter('');
+                setStartDate('');
+                setEndDate('');
+                fetchLogs(1, perPage, { action: '', username: '', start: '', end: '' });
+              }}
+              className="h-9 px-4 text-xs font-black rounded-xl"
+            >
+              Reset
+            </Button>
           </div>
         </div>
 

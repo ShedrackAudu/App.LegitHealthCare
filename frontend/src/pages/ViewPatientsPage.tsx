@@ -43,19 +43,33 @@ const ViewPatientsPage: React.FC = () => {
     const [perPage, setPerPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
     
+    // Filters State
+    const [genderFilter, setGenderFilter] = useState('');
+    const [deptFilter, setDeptFilter] = useState('');
+    const [nationFilter, setNationFilter] = useState('');
+    const [minAge, setMinAge] = useState('');
+    const [maxAge, setMaxAge] = useState('');
+    
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchPatients = async (query = searchQuery, targetPage = page, pageSize = perPage) => {
+    const fetchPatients = async (query = searchQuery, targetPage = page, pageSize = perPage, filters = { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge }) => {
         setLoading(true);
         try {
-            const url = query 
+            let baseUrl = query 
                 ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${pageSize}`
                 : `/api/patients/all?page=${targetPage}&per_page=${pageSize}`;
             
-            const response = await axios.get(url, {
+            // Append filters
+            if (filters.gender) baseUrl += `&gender=${filters.gender}`;
+            if (filters.dept) baseUrl += `&department=${filters.dept}`;
+            if (filters.nation) baseUrl += `&nationality=${filters.nation}`;
+            if (filters.minA) baseUrl += `&min_age=${filters.minA}`;
+            if (filters.maxA) baseUrl += `&max_age=${filters.maxA}`;
+            
+            const response = await axios.get(baseUrl, {
                 headers: { 'X-Company-Context': activeSection }
             });
 
@@ -80,8 +94,8 @@ const ViewPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchPatients(searchQuery, 1);
-    }, [activeSection, activeYear, user]);
+        fetchPatients(searchQuery, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+    }, [activeSection, activeYear, user, genderFilter, deptFilter, nationFilter, minAge, maxAge]);
 
     const handlePatientClick = (patient: any) => {
         setSelectedPatient(patient);
@@ -105,6 +119,16 @@ const ViewPatientsPage: React.FC = () => {
         }
     };
 
+    const clearFilters = () => {
+        setGenderFilter('');
+        setDeptFilter('');
+        setNationFilter('');
+        setMinAge('');
+        setMaxAge('');
+        setSearchQuery('');
+        fetchPatients('', 1, perPage, { gender: '', dept: '', nation: '', minA: '', maxA: '' });
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -124,17 +148,97 @@ const ViewPatientsPage: React.FC = () => {
                         activeSection={activeSection}
                         onSearch={(q) => {
                             setSearchQuery(q);
-                            fetchPatients(q, 1);
+                            fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
                         }}
                         onSelect={(p) => {
                             setSearchQuery(p.staff_id);
-                            fetchPatients(p.staff_id, 1);
+                            fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
                         }}
                         searching={loading}
                         themeColor="emerald"
                         placeholder="Search Staff ID or Name..."
                         initialValue={searchQuery}
                     />
+                </div>
+
+                {/* Filters Section */}
+                <div className="bg-card p-4 rounded-2xl border flex flex-wrap gap-4 items-end shadow-sm">
+                    <div className="flex flex-col gap-1.5 min-w-[120px] flex-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
+                        <select 
+                            value={genderFilter} 
+                            onChange={(e) => setGenderFilter(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        >
+                            <option value="">All Genders</option>
+                            <option value="Male">Male</option>
+                            <option value="Female">Female</option>
+                        </select>
+                    </div>
+                    
+                    <div className="flex flex-col gap-1.5 min-w-[160px] flex-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
+                        <select 
+                            value={deptFilter} 
+                            onChange={(e) => setDeptFilter(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        >
+                            <option value="">All Departments</option>
+                            <option value="Admin">Admin</option>
+                            <option value="Accounts">Accounts</option>
+                            <option value="Human Resources">Human Resources</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Operations">Operations</option>
+                            <option value="Security">Security</option>
+                            <option value="HSE">HSE</option>
+                            <option value="Medical">Medical</option>
+                            <option value="IT">IT</option>
+                        </select>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 min-w-[140px] flex-1">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Nationality</label>
+                        <input 
+                            type="text" 
+                            placeholder="Nationality..." 
+                            value={nationFilter} 
+                            onChange={(e) => setNationFilter(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 w-24">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
+                        <input 
+                            type="number" 
+                            placeholder="Min" 
+                            value={minAge} 
+                            onChange={(e) => setMinAge(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        />
+                    </div>
+
+                    <div className="flex flex-col gap-1.5 w-24">
+                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
+                        <input 
+                            type="number" 
+                            placeholder="Max" 
+                            value={maxAge} 
+                            onChange={(e) => setMaxAge(e.target.value)}
+                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                        />
+                    </div>
+
+                    <div className="flex gap-2">
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            onClick={clearFilters}
+                            className="h-9 px-4 text-xs font-black rounded-xl"
+                        >
+                            Reset
+                        </Button>
+                    </div>
                 </div>
 
                 <Card className="border-2 shadow-xl overflow-hidden bg-card">

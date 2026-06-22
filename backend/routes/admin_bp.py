@@ -447,8 +447,43 @@ def get_audit_logs():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     
-    # Fetch logs with user joined for performance if needed, but to_dict handles it
-    logs_pagination = AuditLog.query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page)
+    # Advanced filters
+    action = request.args.get('action', '').strip()
+    username = request.args.get('username', '').strip()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+    
+    from models import User
+    from datetime import datetime
+    
+    query = AuditLog.query
+    
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+        
+    if username:
+        query = query.join(User, AuditLog.user_id == User.id).filter(
+            (User.first_name.ilike(f"%{username}%")) |
+            (User.last_name.ilike(f"%{username}%")) |
+            (User.username.ilike(f"%{username}%"))
+        )
+        
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp >= start_dt)
+        except ValueError:
+            pass
+            
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp <= end_dt)
+        except ValueError:
+            pass
+            
+    # Fetch logs ordered by newest first
+    logs_pagination = query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
     
     return jsonify({
         "logs": [log.to_dict() for log in logs_pagination.items],
