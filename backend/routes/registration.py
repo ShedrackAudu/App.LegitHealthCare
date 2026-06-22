@@ -366,11 +366,18 @@ def download_registered_excel():
     output = io.BytesIO()
     
     with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
-        df_all.to_excel(writer, sheet_name="All Registered", index=False)
-        
         workbook = writer.book
-        worksheet_all = writer.sheets["All Registered"]
         
+        # 1. Create a Department Summary Sheet with a chart
+        dept_counts = df_all["Department"].value_counts().reset_index()
+        dept_counts.columns = ["Department", "Patient Count"]
+        total_patients = len(df_all)
+        dept_counts["Percentage"] = (dept_counts["Patient Count"] / total_patients)
+        
+        dept_counts.to_excel(writer, sheet_name="Department Summary", index=False)
+        worksheet_summary = writer.sheets["Department Summary"]
+        
+        # Formatting for summary sheet
         header_format = workbook.add_format({
             'bold': True,
             'text_wrap': True,
@@ -380,11 +387,45 @@ def download_registered_excel():
             'border': 1
         })
         
+        percent_format = workbook.add_format({'num_format': '0.0%'})
+        
+        # Rewrite headers & format columns
+        for col_num, value in enumerate(dept_counts.columns.values):
+            worksheet_summary.write(0, col_num, value, header_format)
+            max_len = max(dept_counts[value].astype(str).map(len).max(), len(value)) + 3
+            worksheet_summary.set_column(col_num, col_num, max_len)
+            
+        # Format the percentage column
+        worksheet_summary.set_column(2, 2, 12, percent_format)
+        
+        # Add total row to summary
+        total_row_idx = len(dept_counts) + 1
+        worksheet_summary.write(total_row_idx, 0, "Total", workbook.add_format({'bold': True}))
+        worksheet_summary.write(total_row_idx, 1, f"=SUM(B2:B{total_row_idx})", workbook.add_format({'bold': True}))
+        worksheet_summary.write(total_row_idx, 2, f"=SUM(C2:C{total_row_idx})", workbook.add_format({'bold': True, 'num_format': '0.0%'}))
+        
+        # Create a Pie Chart to display percentages
+        chart = workbook.add_chart({'type': 'pie'})
+        chart.add_series({
+            'name': 'Department Distribution',
+            'categories': f"='Department Summary'!$A$2:$A${total_row_idx}",
+            'values':     f"='Department Summary'!$C$2:$C${total_row_idx}",
+            'data_labels': {'percentage': True, 'leader_lines': True},
+        })
+        chart.set_title({'name': 'Registered Patients by Department (%)'})
+        chart.set_style(10)
+        worksheet_summary.insert_chart('E2', chart, {'x_offset': 25, 'y_offset': 10})
+        
+        # 2. Write the details sheet
+        df_all.to_excel(writer, sheet_name="All Registered", index=False)
+        worksheet_all = writer.sheets["All Registered"]
+        
         for col_num, value in enumerate(df_all.columns.values):
             worksheet_all.write(0, col_num, value, header_format)
             max_len = max(df_all[value].astype(str).map(len).max(), len(value)) + 3
             worksheet_all.set_column(col_num, col_num, max_len)
             
+        # 3. Write individual department sheets
         departments = df_all["Department"].unique()
         for dept in departments:
             sheet_title = str(dept)[:30]
