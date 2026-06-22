@@ -154,38 +154,34 @@ const AppUpdateNotifier: React.FC = () => {
   if (!show) return null;
 
   return (
-    <div className="fixed bottom-6 right-6 z-[9999] max-w-sm w-full bg-card/85 backdrop-blur-md border-2 border-primary/20 rounded-2xl shadow-2xl p-4 flex flex-col gap-3 animate-in fade-in slide-in-from-bottom-5 duration-500 ring-1 ring-black/5">
-      <div className="flex items-start gap-3">
-        <div className="p-2 bg-primary/10 text-primary rounded-xl shrink-0 mt-0.5">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+    <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-background/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
+      <div className="max-w-md w-full bg-card border-2 border-primary/20 rounded-2xl shadow-2xl p-6 flex flex-col gap-4 animate-in zoom-in-95 duration-300 ring-1 ring-black/5">
+        <div className="flex items-start gap-4">
+          <div className="p-3 bg-primary/10 text-primary rounded-2xl shrink-0 mt-0.5">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.29 7 12 12 20.71 7"></polyline><line x1="12" y1="22" x2="12" y2="12"></line></svg>
+          </div>
+          <div className="flex-1 space-y-1">
+            <p className="text-base font-black text-foreground">New Update Deployed</p>
+            <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
+              A new version of Legit HealthCare has been successfully deployed. You must reload to apply the updates and continue your work.
+            </p>
+          </div>
         </div>
-        <div className="flex-1 space-y-1">
-          <p className="text-sm font-black text-foreground">New Update Deployed</p>
-          <p className="text-xs text-muted-foreground font-semibold leading-relaxed">
-            A new version of Legit HealthCare has been successfully deployed. Refresh to apply updates.
-          </p>
+        <div className="flex gap-2 justify-end mt-2">
+          <button
+            onClick={dismissNotification}
+            className="px-4 py-2 rounded-xl border-2 text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
+          >
+            Later
+          </button>
+          <button
+            onClick={refreshNow}
+            className="px-5 py-2 rounded-xl bg-primary text-primary-foreground text-xs font-black hover:bg-primary/95 transition-all shadow-md shadow-primary/20 flex items-center gap-1.5 active:scale-[0.98]"
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
+            Refresh Now
+          </button>
         </div>
-        <button
-          onClick={dismissNotification}
-          className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-lg hover:bg-muted/60"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
-        </button>
-      </div>
-      <div className="flex gap-2 justify-end mt-1">
-        <button
-          onClick={dismissNotification}
-          className="px-3.5 py-1.5 rounded-xl border-2 text-xs font-black text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-all"
-        >
-          Later
-        </button>
-        <button
-          onClick={refreshNow}
-          className="px-4 py-1.5 rounded-xl bg-primary text-primary-foreground text-xs font-black hover:bg-primary/95 transition-all shadow-md shadow-primary/20 flex items-center gap-1.5 active:scale-[0.98]"
-        >
-          <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M21.5 2v6h-6M21.34 15.57a10 10 0 1 1-.57-8.38l5.67-5.67"/></svg>
-          Refresh Now
-        </button>
       </div>
     </div>
   );
