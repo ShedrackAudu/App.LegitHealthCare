@@ -54,8 +54,14 @@ const AuditLogPage: React.FC = () => {
       
       if (filters.action) url += `&action=${filters.action}`;
       if (filters.username) url += `&username=${filters.username}`;
-      if (filters.start) url += `&start_date=${new Date(filters.start).toISOString()}`;
-      if (filters.end) url += `&end_date=${new Date(filters.end).toISOString()}`;
+      if (filters.start) {
+        const d = new Date(filters.start);
+        if (!isNaN(d.getTime())) url += `&start_date=${d.toISOString()}`;
+      }
+      if (filters.end) {
+        const d = new Date(filters.end);
+        if (!isNaN(d.getTime())) url += `&end_date=${d.toISOString()}`;
+      }
 
       const resp = await axios.get(url);
       setLogs(resp.data.logs);
@@ -276,10 +282,7 @@ const AuditLogPage: React.FC = () => {
                         </TableCell>
                       </TableRow>
                     ))
-                  ) : logs.filter(log => 
-                     log.action.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                     (log.user_name && log.user_name.toLowerCase().includes(searchTerm.toLowerCase()))
-                  ).map((log) => (
+                  ) : logs.map((log) => (
                     <TableRow 
                       key={log.id} 
                       onClick={() => {
