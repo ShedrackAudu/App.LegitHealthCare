@@ -450,7 +450,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}!</h1>
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
