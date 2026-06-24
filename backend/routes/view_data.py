@@ -578,8 +578,12 @@ def get_screening_records(year):
     
     pagination = query.paginate(page=page, per_page=per_page, error_out=False)
     
+    engine = db.engines[bind]
     results = []
     for yp in pagination.items:
+        # Calculate progress
+        percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+        
         # Aggregated Patient Data
         record = {
             "id": yp.id,
@@ -590,7 +594,12 @@ def get_screening_records(year):
             "department": yp.department,
             "gender": yp.gender,
             "age": yp.age,
-            "created_at": yp.created_at.isoformat() if yp.created_at else None
+            "created_at": yp.created_at.isoformat() if yp.created_at else None,
+            "progress": {
+                "percentage": percentage,
+                "status": status,
+                "missing_fields": missing_fields
+            }
         }
         
         # robust bio-data lookup inside current section only

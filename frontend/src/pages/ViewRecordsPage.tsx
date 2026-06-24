@@ -29,6 +29,13 @@ import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { Pagination } from '@/components/ui/pagination';
 import { Skeleton } from '@/components/ui/skeleton';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogDescription, 
+    DialogHeader, 
+    DialogTitle 
+} from '@/components/ui/dialog';
 
 const ViewRecordsPage: React.FC = () => {
     const { user, activeSection, activeYear } = useAppContext();
@@ -44,6 +51,11 @@ const ViewRecordsPage: React.FC = () => {
     const [perPage, setPerPage] = useState(25);
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
+    const [pendingModal, setPendingModal] = useState<{
+        open: boolean;
+        patientName: string;
+        missing: Array<{ label: string; category: string }>;
+    }>({ open: false, patientName: '', missing: [] });
 
     // Advanced Filters State
     const [genderFilter, setGenderFilter] = useState('');
@@ -340,6 +352,7 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px]">Department</TableHead>
                                                     <TableHead className="min-w-[120px]">Race / Continent</TableHead>
                                                     <TableHead className="min-w-[120px] border-r">Reg. Date</TableHead>
+                                                    <TableHead className="min-w-[140px] border-r text-center">Completion</TableHead>
                                                     
                                                     {/* Consultation */}
                                                     <TableHead className="min-w-[100px]">Blood Pressure</TableHead>
@@ -448,10 +461,10 @@ const ViewRecordsPage: React.FC = () => {
                                                 {loading && recordsData.records.length === 0 ? (
                                                     Array.from({ length: 5 }).map((_, rowIndex) => (
                                                         <TableRow key={rowIndex} className="animate-pulse">
-                                                            {Array.from({ length: 99 }).map((_, colIndex) => (
+                                                            {Array.from({ length: 100 }).map((_, colIndex) => (
                                                                 <TableCell 
                                                                     key={colIndex} 
-                                                                    className={`py-3 ${colIndex === 13 || colIndex === 44 || colIndex === 61 || colIndex === 69 || colIndex === 74 || colIndex === 80 || colIndex === 88 || colIndex === 97 ? "border-r" : ""} ${colIndex === 98 ? "text-right" : ""}`}
+                                                                    className={`py-3 ${colIndex === 14 || colIndex === 45 || colIndex === 62 || colIndex === 70 || colIndex === 75 || colIndex === 81 || colIndex === 89 || colIndex === 98 ? "border-r" : ""} ${colIndex === 99 ? "text-right" : ""}`}
                                                                 >
                                                                     <Skeleton className={`h-4 bg-muted/40 rounded animate-pulse ${colIndex === 0 || colIndex === 1 ? "w-16" : colIndex === 2 || colIndex === 4 ? "w-24" : "w-12"}`} />
                                                                 </TableCell>
@@ -475,6 +488,36 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px]">{r.department}</TableCell>
                                                         <TableCell className="text-[11px] uppercase">{r.race || '-'}</TableCell>
                                                         <TableCell className="border-r text-[11px] font-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</TableCell>
+                                                        <TableCell className="border-r text-center font-bold bg-muted/5">
+                                                            <div className="flex flex-col items-center gap-1 py-0.5">
+                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                                                                    (r.progress?.percentage || 0) === 100 
+                                                                    ? 'bg-emerald-500/10 text-emerald-500' 
+                                                                    : (r.progress?.percentage || 0) > 50 
+                                                                    ? 'bg-amber-500/10 text-amber-500' 
+                                                                    : 'bg-rose-500/10 text-rose-500'
+                                                                }`}>
+                                                                    {r.progress?.percentage || 0}%
+                                                                </span>
+                                                                <div className="w-16 bg-muted dark:bg-muted/40 rounded-full h-1 overflow-hidden">
+                                                                    <div 
+                                                                        className={`h-full transition-all duration-500 ${
+                                                                            (r.progress?.percentage || 0) === 100 ? 'bg-emerald-500' :
+                                                                            (r.progress?.percentage || 0) > 50 ? 'bg-amber-500' : 'bg-rose-500'
+                                                                        }`}
+                                                                        style={{ width: `${r.progress?.percentage || 0}%` }}
+                                                                    />
+                                                                </div>
+                                                                {(r.progress?.percentage || 0) < 100 && (
+                                                                    <button 
+                                                                        onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, missing: r.progress?.missing_fields || [] })}
+                                                                        className="text-[9px] text-primary hover:underline font-bold mt-0.5 cursor-pointer"
+                                                                    >
+                                                                        View Pending
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
                                                         
                                                         {/* Consultation */}
                                                         <TableCell className="font-bold bg-primary/5 text-[11px]">{r.consultation?.bp || '-'}</TableCell>
@@ -625,6 +668,41 @@ const ViewRecordsPage: React.FC = () => {
                 variant="danger"
                 loading={deleting}
             />
+
+            <Dialog open={pendingModal.open} onOpenChange={(open) => setPendingModal(prev => ({ ...prev, open }))}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black tracking-tight">Pending Parameters</DialogTitle>
+                        <DialogDescription className="text-xs font-bold text-muted-foreground">
+                            Screening report checklist for <span className="text-foreground">{pendingModal.patientName}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-[350px] overflow-auto py-2">
+                        {pendingModal.missing.length === 0 ? (
+                            <p className="text-xs text-muted-foreground font-bold text-center py-4">No pending parameters found.</p>
+                        ) : (
+                            Object.entries(
+                                pendingModal.missing.reduce((acc: Record<string, string[]>, curr: { label: string; category: string }) => {
+                                    if (!acc[curr.category]) acc[curr.category] = [];
+                                    acc[curr.category].push(curr.label);
+                                    return acc;
+                                }, {})
+                            ).map(([category, labels]) => (
+                                <div key={category} className="space-y-2 bg-muted/40 p-3 rounded-xl border border-dashed">
+                                    <h3 className="text-[10px] font-black uppercase tracking-wider text-primary">{category}</h3>
+                                    <div className="flex flex-wrap gap-1.5">
+                                        {labels.map((label: string) => (
+                                            <Badge key={label} variant="outline" className="bg-background text-[11px] font-black text-rose-500 border-rose-500/20 py-0.5 px-2 rounded-md">
+                                                {label}
+                                            </Badge>
+                                        ))}
+                                    </div>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </MainLayout>
     );
 };

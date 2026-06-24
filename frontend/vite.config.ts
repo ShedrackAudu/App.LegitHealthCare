@@ -27,20 +27,6 @@ export default defineConfig({
   plugins: [
     tailwindv4(),
     react(),
-    {
-      name: 'generate-version-json',
-      generateBundle() {
-        this.emitFile({
-          type: 'asset',
-          fileName: 'version.json',
-          source: JSON.stringify({
-            version: appVersion,
-            commit: gitHash,
-            buildDate: buildDate
-          }, null, 2)
-        });
-      }
-    },
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
