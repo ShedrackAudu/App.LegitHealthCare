@@ -9,7 +9,8 @@ import {
   PlusSignIcon,
   EyeIcon,
   ArrowLeft01Icon,
-  ArrowRight01Icon
+  ArrowRight01Icon,
+  FilterIcon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -42,13 +43,21 @@ const ViewPatientsPage: React.FC = () => {
     const [totalItems, setTotalItems] = useState(0);
     const [perPage, setPerPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
-    
     // Filters State
     const [genderFilter, setGenderFilter] = useState('');
     const [deptFilter, setDeptFilter] = useState('');
     const [nationFilter, setNationFilter] = useState('');
     const [minAge, setMinAge] = useState('');
     const [maxAge, setMaxAge] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    
+    const activeFiltersCount = [
+        genderFilter,
+        deptFilter,
+        nationFilter,
+        minAge,
+        maxAge
+    ].filter(Boolean).length;
     
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
@@ -144,102 +153,163 @@ const ViewPatientsPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <PatientSearch
-                        activeSection={activeSection}
-                        onSearch={(q) => {
-                            setSearchQuery(q);
-                            fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
-                        }}
-                        onSelect={(p) => {
-                            setSearchQuery(p.staff_id);
-                            fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
-                        }}
-                        searching={loading}
-                        themeColor="emerald"
-                        placeholder="Search Staff ID or Name..."
-                        initialValue={searchQuery}
-                    />
-                </div>
-
-                {/* Filters Section */}
-                <div className="bg-card p-4 rounded-2xl border flex flex-wrap gap-4 items-end shadow-sm">
-                    <div className="flex flex-col gap-1.5 min-w-[120px] flex-1">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
-                        <select 
-                            value={genderFilter} 
-                            onChange={(e) => setGenderFilter(e.target.value)}
-                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
+                    <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
+                        <div className="flex-1 min-w-[280px]">
+                            <PatientSearch
+                                activeSection={activeSection}
+                                onSearch={(q) => {
+                                    setSearchQuery(q);
+                                    fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                onSelect={(p) => {
+                                    setSearchQuery(p.staff_id);
+                                    fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                searching={loading}
+                                themeColor="emerald"
+                                placeholder="Search Staff ID or Name..."
+                                initialValue={searchQuery}
+                            />
+                        </div>
+                        <Button
+                            variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
                         >
-                            <option value="">All Genders</option>
-                            <option value="Male">Male</option>
-                            <option value="Female">Female</option>
-                        </select>
-                    </div>
-                    
-                    <div className="flex flex-col gap-1.5 min-w-[160px] flex-1">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
-                        <select 
-                            value={deptFilter} 
-                            onChange={(e) => setDeptFilter(e.target.value)}
-                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
-                        >
-                            <option value="">All Departments</option>
-                            <option value="Admin">Admin</option>
-                            <option value="Accounts">Accounts</option>
-                            <option value="Human Resources">Human Resources</option>
-                            <option value="Engineering">Engineering</option>
-                            <option value="Operations">Operations</option>
-                            <option value="Security">Security</option>
-                            <option value="HSE">HSE</option>
-                            <option value="Medical">Medical</option>
-                            <option value="IT">IT</option>
-                        </select>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 min-w-[140px] flex-1">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Nationality</label>
-                        <input 
-                            type="text" 
-                            placeholder="Nationality..." 
-                            value={nationFilter} 
-                            onChange={(e) => setNationFilter(e.target.value)}
-                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 w-24">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
-                        <input 
-                            type="number" 
-                            placeholder="Min" 
-                            value={minAge} 
-                            onChange={(e) => setMinAge(e.target.value)}
-                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
-                        />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5 w-24">
-                        <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
-                        <input 
-                            type="number" 
-                            placeholder="Max" 
-                            value={maxAge} 
-                            onChange={(e) => setMaxAge(e.target.value)}
-                            className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground"
-                        />
-                    </div>
-
-                    <div className="flex gap-2">
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            onClick={clearFilters}
-                            className="h-9 px-4 text-xs font-black rounded-xl"
-                        >
-                            Reset
+                            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                            <span>Filters</span>
+                            {activeFiltersCount > 0 && (
+                                <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                    {activeFiltersCount}
+                                </Badge>
+                            )}
                         </Button>
                     </div>
                 </div>
+
+                {/* Collapsible Filters Panel */}
+                {showFilters && (
+                    <div className="bg-card/45 backdrop-blur-md p-6 rounded-2xl border border-slate-500/10 shadow-lg animate-in slide-in-from-top-4 duration-300 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
+                                <select 
+                                    value={genderFilter} 
+                                    onChange={(e) => setGenderFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Genders</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
+                                <select 
+                                    value={deptFilter} 
+                                    onChange={(e) => setDeptFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Departments</option>
+                                    <option value="Admin">Admin</option>
+                                    <option value="Accounts">Accounts</option>
+                                    <option value="Human Resources">Human Resources</option>
+                                    <option value="Engineering">Engineering</option>
+                                    <option value="Operations">Operations</option>
+                                    <option value="Security">Security</option>
+                                    <option value="HSE">HSE</option>
+                                    <option value="Medical">Medical</option>
+                                    <option value="IT">IT</option>
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Nationality</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Nationality..." 
+                                    value={nationFilter} 
+                                    onChange={(e) => setNationFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Min Age" 
+                                    value={minAge} 
+                                    onChange={(e) => setMinAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Max Age" 
+                                    value={maxAge} 
+                                    onChange={(e) => setMaxAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t pt-4 border-dashed border-slate-500/15">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={clearFilters}
+                                className="h-9 px-4 text-xs font-bold rounded-xl"
+                            >
+                                Reset All
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Filter Badges */}
+                {activeFiltersCount > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center bg-muted/20 p-3 rounded-xl border border-dashed border-slate-500/10">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Active Filters:</span>
+                        {genderFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Gender: {genderFilter}</span>
+                                <button onClick={() => setGenderFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {deptFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Dept: {deptFilter}</span>
+                                <button onClick={() => setDeptFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {nationFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Nationality: {nationFilter}</span>
+                                <button onClick={() => setNationFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {minAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Min Age: {minAge}</span>
+                                <button onClick={() => setMinAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {maxAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Max Age: {maxAge}</span>
+                                <button onClick={() => setMaxAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors underline ml-auto">
+                            Clear all
+                        </button>
+                    </div>
+                )}
 
                 <Card className="border-2 shadow-xl overflow-hidden bg-card">
                     <div className="bg-muted/30 border-b p-4 flex justify-between items-center">

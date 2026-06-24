@@ -17,7 +17,8 @@ import {
   GlobeIcon, 
   ComputerTerminal01Icon, 
   ArrowUpRight01Icon, 
-  Shield01Icon 
+  Shield01Icon,
+  FilterIcon
 } from '@hugeicons/core-free-icons';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -38,22 +39,26 @@ const AuditLogPage: React.FC = () => {
   const [totalItems, setTotalItems] = useState(0);
   
   // Advanced filters state
-  const [actionFilter, setActionFilter] = useState('');
-  const [userFilter, setUserFilter] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
+
+  const activeFiltersCount = [
+    startDate,
+    endDate
+  ].filter(Boolean).length;
 
   const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const { user, socket } = useAppContext();
 
-  const fetchLogs = async (pageNum: number, pageSize = perPage, filters = { action: actionFilter, username: userFilter, start: startDate, end: endDate }) => {
+  const fetchLogs = async (pageNum: number, pageSize = perPage, filters = { query: searchQuery, start: startDate, end: endDate }) => {
     setLoading(true);
     try {
       let url = `/api/admin/audit-logs?page=${pageNum}&per_page=${pageSize}`;
       
-      if (filters.action) url += `&action=${filters.action}`;
-      if (filters.username) url += `&username=${filters.username}`;
+      if (filters.query) url += `&q=${filters.query}`;
       if (filters.start) {
         const d = new Date(filters.start);
         if (!isNaN(d.getTime())) url += `&start_date=${d.toISOString()}`;
@@ -75,9 +80,30 @@ const AuditLogPage: React.FC = () => {
     }
   };
 
+  const prevFilters = React.useRef({ query: '', start: '', end: '' });
+  const isResetting = React.useRef(false);
+
   useEffect(() => {
-    fetchLogs(page, perPage, { action: actionFilter, username: userFilter, start: startDate, end: endDate });
-  }, [page, perPage, actionFilter, userFilter, startDate, endDate]);
+    const filtersChanged = 
+      prevFilters.current.query !== searchQuery ||
+      prevFilters.current.start !== startDate ||
+      prevFilters.current.end !== endDate;
+
+    if (filtersChanged) {
+      prevFilters.current = { query: searchQuery, start: startDate, end: endDate };
+      if (page !== 1) {
+        isResetting.current = true;
+        setPage(1);
+      }
+      fetchLogs(1, perPage, { query: searchQuery, start: startDate, end: endDate });
+    } else {
+      if (isResetting.current) {
+        isResetting.current = false;
+      } else {
+        fetchLogs(page, perPage, { query: searchQuery, start: startDate, end: endDate });
+      }
+    }
+  }, [page, perPage, searchQuery, startDate, endDate]);
 
   useEffect(() => {
     if (!socket) return;
@@ -166,67 +192,112 @@ const AuditLogPage: React.FC = () => {
             </div>
           </div>
           
-          <div className="flex flex-col sm:flex-row gap-3 w-full lg:w-auto items-stretch sm:items-center">
-            <div className="relative group flex-1 sm:w-60">
+          <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
+            <div className="relative group flex-grow sm:w-80">
               <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
               <Input 
-                placeholder="Search action..." 
-                value={actionFilter}
-                onChange={(e) => setActionFilter(e.target.value)}
-                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
+                placeholder="Search action or staff..." 
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold w-full"
               />
             </div>
-            <div className="relative group flex-1 sm:w-60">
-              <HugeiconsIcon icon={UserIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
-              <Input 
-                placeholder="Search staff/username..." 
-                value={userFilter}
-                onChange={(e) => setUserFilter(e.target.value)}
-                className="h-11 pl-10 rounded-xl border-2 focus-visible:ring-primary/20 font-bold"
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* Date Filters Panel */}
-        <div className="bg-card p-4 rounded-2xl border flex flex-wrap gap-4 items-end shadow-sm">
-          <div className="flex flex-col gap-1.5 min-w-[150px] flex-1">
-            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Start Date</label>
-            <input 
-              type="date" 
-              value={startDate} 
-              onChange={(e) => setStartDate(e.target.value)}
-              className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground w-full"
-            />
-          </div>
-          
-          <div className="flex flex-col gap-1.5 min-w-[150px] flex-1">
-            <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">End Date</label>
-            <input 
-              type="date" 
-              value={endDate} 
-              onChange={(e) => setEndDate(e.target.value)}
-              className="bg-background border rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-9 text-foreground w-full"
-            />
-          </div>
-
-          <div className="flex gap-2">
-            <Button 
-              variant="outline" 
-              size="sm" 
-              onClick={() => {
-                setActionFilter('');
-                setUserFilter('');
-                setStartDate('');
-                setEndDate('');
-                fetchLogs(1, perPage, { action: '', username: '', start: '', end: '' });
-              }}
-              className="h-9 px-4 text-xs font-black rounded-xl"
+            <Button
+                variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                onClick={() => setShowFilters(!showFilters)}
+                className="h-11 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
             >
-              Reset
+                <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                <span>Filters</span>
+                {activeFiltersCount > 0 && (
+                    <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                        {activeFiltersCount}
+                    </Badge>
+                )}
             </Button>
           </div>
         </div>
+
+        {/* Collapsible Date Filters Panel */}
+        {showFilters && (
+          <div className="bg-card/45 backdrop-blur-md p-6 rounded-2xl border border-slate-500/10 shadow-lg animate-in slide-in-from-top-4 duration-300 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                  <HugeiconsIcon icon={Calendar01Icon} className="w-3.5 h-3.5" /> Start Date
+                </label>
+                <input 
+                  type="date" 
+                  value={startDate} 
+                  onChange={(e) => setStartDate(e.target.value)}
+                  className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all w-full"
+                />
+              </div>
+              
+              <div className="flex flex-col gap-1.5">
+                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider flex items-center gap-1">
+                  <HugeiconsIcon icon={Calendar01Icon} className="w-3.5 h-3.5" /> End Date
+                </label>
+                <input 
+                  type="date" 
+                  value={endDate} 
+                  onChange={(e) => setEndDate(e.target.value)}
+                  className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all w-full"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 border-t pt-4 border-dashed border-slate-500/15">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
+                  setStartDate('');
+                  setEndDate('');
+                  setSearchQuery('');
+                }}
+                className="h-9 px-4 text-xs font-bold rounded-xl"
+              >
+                Reset All
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {/* Active Filter Badges */}
+        {(activeFiltersCount > 0 || searchQuery) && (
+          <div className="flex flex-wrap gap-2 items-center bg-muted/20 p-3 rounded-xl border border-dashed border-slate-500/10 animate-in fade-in duration-300">
+            <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Active Filters:</span>
+            {searchQuery && (
+              <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                <span>Query: {searchQuery}</span>
+                <button onClick={() => setSearchQuery('')} className="hover:text-red-500 transition-colors">✕</button>
+              </Badge>
+            )}
+            {startDate && (
+              <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                <span>From: {startDate}</span>
+                <button onClick={() => setStartDate('')} className="hover:text-red-500 transition-colors">✕</button>
+              </Badge>
+            )}
+            {endDate && (
+              <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                <span>To: {endDate}</span>
+                <button onClick={() => setEndDate('')} className="hover:text-red-500 transition-colors">✕</button>
+              </Badge>
+            )}
+            <button 
+              onClick={() => {
+                setSearchQuery('');
+                setStartDate('');
+                setEndDate('');
+              }} 
+              className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors underline ml-auto"
+            >
+              Clear all
+            </button>
+          </div>
+        )}
 
         <Card className="border-2 shadow-xl overflow-hidden rounded-2xl bg-card">
           <CardHeader className="bg-muted/5 border-b py-4">

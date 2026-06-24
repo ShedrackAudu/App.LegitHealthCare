@@ -450,6 +450,7 @@ def get_audit_logs():
     # Advanced filters
     action = request.args.get('action', '').strip()
     username = request.args.get('username', '').strip()
+    q = request.args.get('q', '').strip()
     start_date = request.args.get('start_date', '').strip()
     end_date = request.args.get('end_date', '').strip()
     
@@ -458,6 +459,14 @@ def get_audit_logs():
     
     query = AuditLog.query
     
+    if q:
+        query = query.outerjoin(User, AuditLog.user_id == User.id).filter(
+            (AuditLog.action.ilike(f"%{q}%")) |
+            (User.first_name.ilike(f"%{q}%")) |
+            (User.last_name.ilike(f"%{q}%")) |
+            (User.username.ilike(f"%{q}%"))
+        )
+        
     if action:
         query = query.filter(AuditLog.action.ilike(f"%{action}%"))
         

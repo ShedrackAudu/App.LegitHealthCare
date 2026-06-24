@@ -699,7 +699,7 @@ const ConsultationPage: React.FC = () => {
                         <SelectField name="psa_remark" control={control} label="PSA Remark" options={['Normal', 'Abnormal', 'Not Applicable']} />
                         <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} setValue={setValue} />
                         <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} error={errors.rbs?.message} setValue={setValue} />
-                        <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                        <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Impaired', 'Normal']} />
                         <SelectField name="ua_result" control={control} label="Sugar & Protein - U/A" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                         <SelectField name="ua_remark" control={control} label="U/A Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                         <div className="space-y-1.5 lg:col-span-1">

@@ -561,7 +561,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
                               <ComboField {...register('fbs', { required: 'FBS is required' })} label="FBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).fbs} />
                              <ComboField {...register('rbs', { required: 'RBS is required' })} label="RBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).rbs} />
-                             <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                             <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Impaired', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <div className="space-y-1">

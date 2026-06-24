@@ -95,21 +95,43 @@ const AppUpdateNotifier: React.FC = () => {
 
   // Perform version check against the server
   const checkVersion = async () => {
+    // Skip version checks in local development to avoid unnecessary overlays
+    const localCommit = import.meta.env.VITE_APP_GIT_HASH;
+    const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
+    if (import.meta.env.DEV || localCommitShort === 'dev' || !localCommitShort) {
+      return;
+    }
+
+    // 1. Direct frontend version check (from static files server)
     try {
-      const response = await axios.get('/api/webhooks/version-check');
+      const frontendResponse = await axios.get(`/version.json?_cb=${Date.now()}`, {
+        headers: { 'Cache-Control': 'no-cache', 'Pragma': 'no-cache' }
+      });
+      if (frontendResponse.status === 200 && frontendResponse.data && frontendResponse.data.commit) {
+        const serverCommitShort = frontendResponse.data.commit.substring(0, 7);
+        console.log(`[FRONTEND VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
+        if (serverCommitShort && serverCommitShort !== 'dev' && serverCommitShort !== 'latest') {
+          maybeShowCard(serverCommitShort);
+          return; // If frontend check succeeded, bypass backend check to prevent mismatch loops
+        }
+      }
+    } catch (err) {
+      console.warn("[VERSION CHECK] Direct frontend version check failed, falling back to backend check:", err);
+    }
+
+    // 2. Fallback backend version check
+    try {
+      const response = await axios.get(`/api/webhooks/version-check?_cb=${Date.now()}`);
       const serverCommit = response.data.commit;
-      const localCommit = import.meta.env.VITE_APP_GIT_HASH;
-
       const serverCommitShort = serverCommit ? serverCommit.substring(0, 7) : '';
-      const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
 
-      console.log(`[VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
+      console.log(`[BACKEND VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
 
       if (serverCommitShort && serverCommitShort !== 'latest') {
         maybeShowCard(serverCommitShort);
       }
     } catch (err) {
-      console.error("[VERSION CHECK] Failed to check app version:", err);
+      console.error("[VERSION CHECK] Failed to check backend app version:", err);
     }
   };
 
