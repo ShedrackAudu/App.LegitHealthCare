@@ -64,6 +64,10 @@ const ViewRecordsPage: React.FC = () => {
     const [maxAge, setMaxAge] = useState('');
     const [showFilters, setShowFilters] = useState(false);
 
+    // Sorting State
+    const [sortBy, setSortBy] = useState('');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
     const activeFiltersCount = [
         genderFilter,
         deptFilter,
@@ -71,7 +75,15 @@ const ViewRecordsPage: React.FC = () => {
         maxAge
     ].filter(Boolean).length;
 
-    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general', pageSize = perPage, filters = { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge }) => {
+    const fetchRecords = async (
+        page = 1, 
+        query = '', 
+        searchType?: 'pid' | 'general', 
+        pageSize = perPage, 
+        filters = { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge },
+        sort = sortBy,
+        order = sortOrder
+    ) => {
         setLoading(true);
         try {
             let url = `/api/records/screening/${activeYear}?page=${page}&per_page=${pageSize}&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
@@ -80,6 +92,7 @@ const ViewRecordsPage: React.FC = () => {
             if (filters.dept) url += `&department=${filters.dept}`;
             if (filters.minA) url += `&min_age=${filters.minA}`;
             if (filters.maxA) url += `&max_age=${filters.maxA}`;
+            if (sort) url += `&sort_by=${sort}&sort_order=${order}`;
 
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
@@ -95,8 +108,17 @@ const ViewRecordsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchRecords(1, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
-    }, [activeSection, activeYear, user, genderFilter, deptFilter, minAge, maxAge]);
+        fetchRecords(1, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge }, sortBy, sortOrder);
+    }, [activeSection, activeYear, user, genderFilter, deptFilter, minAge, maxAge, sortBy, sortOrder]);
+
+    const toggleSortByCompletion = () => {
+        if (sortBy === 'completion') {
+            setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+        } else {
+            setSortBy('completion');
+            setSortOrder('desc');
+        }
+    };
 
     // REMOVED deprecated ad-hoc search logic
 
@@ -326,7 +348,7 @@ const ViewRecordsPage: React.FC = () => {
                                         <Table>
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
-                                                    <TableHead className="min-w-[1400px] bg-muted/90 border-r text-center" colSpan={14}>Patient Profile</TableHead>
+                                                    <TableHead className="min-w-[1670px] bg-muted/90 border-r text-center" colSpan={15}>Patient Profile</TableHead>
                                                     <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={31}>Consultation & Vitals</TableHead>
                                                     <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
                                                     <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
@@ -352,7 +374,19 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px]">Department</TableHead>
                                                     <TableHead className="min-w-[120px]">Race / Continent</TableHead>
                                                     <TableHead className="min-w-[120px] border-r">Reg. Date</TableHead>
-                                                    <TableHead className="min-w-[140px] border-r text-center">Completion</TableHead>
+                                                    <TableHead 
+                                                        className="min-w-[140px] border-r text-center select-none cursor-pointer hover:bg-muted/80 transition-colors" 
+                                                        onClick={toggleSortByCompletion}
+                                                    >
+                                                        <div className="flex items-center justify-center gap-1.5 font-black">
+                                                            <span>Completion</span>
+                                                            {sortBy === 'completion' ? (
+                                                                <span className="text-primary font-black text-xs">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                                            ) : (
+                                                                <span className="text-muted-foreground/30 font-black text-xs">↕</span>
+                                                            )}
+                                                        </div>
+                                                    </TableHead>
                                                     
                                                     {/* Consultation */}
                                                     <TableHead className="min-w-[100px]">Blood Pressure</TableHead>
@@ -489,29 +523,52 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px] uppercase">{r.race || '-'}</TableCell>
                                                         <TableCell className="border-r text-[11px] font-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</TableCell>
                                                         <TableCell className="border-r text-center font-bold bg-muted/5">
-                                                            <div className="flex flex-col items-center gap-1 py-0.5">
-                                                                <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
-                                                                    (r.progress?.percentage || 0) === 100 
-                                                                    ? 'bg-emerald-500/10 text-emerald-500' 
-                                                                    : (r.progress?.percentage || 0) > 50 
-                                                                    ? 'bg-amber-500/10 text-amber-500' 
-                                                                    : 'bg-rose-500/10 text-rose-500'
-                                                                }`}>
-                                                                    {r.progress?.percentage || 0}%
-                                                                </span>
-                                                                <div className="w-16 bg-muted dark:bg-muted/40 rounded-full h-1 overflow-hidden">
-                                                                    <div 
-                                                                        className={`h-full transition-all duration-500 ${
-                                                                            (r.progress?.percentage || 0) === 100 ? 'bg-emerald-500' :
-                                                                            (r.progress?.percentage || 0) > 50 ? 'bg-amber-500' : 'bg-rose-500'
-                                                                        }`}
-                                                                        style={{ width: `${r.progress?.percentage || 0}%` }}
-                                                                    />
+                                                            <div className="flex flex-col items-center gap-1.5 py-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Compact Circular Progress */}
+                                                                    <div className="relative h-7 w-7 shrink-0">
+                                                                        <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+                                                                            <circle 
+                                                                                className="text-muted/10 dark:text-muted/20" 
+                                                                                strokeWidth="14" 
+                                                                                stroke="currentColor" 
+                                                                                fill="transparent" 
+                                                                                r="38" 
+                                                                                cx="50" 
+                                                                                cy="50" 
+                                                                            />
+                                                                            <circle 
+                                                                                strokeWidth="14" 
+                                                                                strokeDasharray={238.76}
+                                                                                strokeDashoffset={238.76 - (238.76 * (r.progress?.percentage || 0)) / 100}
+                                                                                strokeLinecap="round" 
+                                                                                stroke={
+                                                                                    (r.progress?.percentage || 0) === 100 ? '#10b981' : 
+                                                                                    (r.progress?.percentage || 0) > 50 ? '#f59e0b' : 
+                                                                                    '#ef4444'
+                                                                                } 
+                                                                                fill="transparent" 
+                                                                                r="38" 
+                                                                                cx="50" 
+                                                                                cy="50" 
+                                                                            />
+                                                                        </svg>
+                                                                    </div>
+                                                                    {/* Percentage Badge */}
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                                                                        (r.progress?.percentage || 0) === 100 
+                                                                        ? 'bg-emerald-500/10 text-emerald-500' 
+                                                                        : (r.progress?.percentage || 0) > 50 
+                                                                        ? 'bg-amber-500/10 text-amber-500' 
+                                                                        : 'bg-rose-500/10 text-rose-500'
+                                                                    }`}>
+                                                                        {r.progress?.percentage || 0}%
+                                                                    </span>
                                                                 </div>
                                                                 {(r.progress?.percentage || 0) < 100 && (
                                                                     <button 
                                                                         onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, missing: r.progress?.missing_fields || [] })}
-                                                                        className="text-[9px] text-primary hover:underline font-bold mt-0.5 cursor-pointer"
+                                                                        className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
                                                                     >
                                                                         View Pending
                                                                     </button>

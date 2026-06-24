@@ -573,17 +573,51 @@ def get_screening_records(year):
     if max_age is not None:
         query = query.filter(ScreeningYearBioData.age <= max_age)
     
-    # Sort naturally by patient_id descending (newest/highest serial first)
-    query = query.order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())
-    
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    
     engine = db.engines[bind]
-    results = []
-    for yp in pagination.items:
-        # Calculate progress
-        percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+    sort_by = request.args.get('sort_by', '').strip().lower()
+    sort_order = request.args.get('sort_order', 'desc').strip().lower()
+    
+    if sort_by == 'completion':
+        all_records = query.all()
+        # Sort naturally first so identical percentages are stable
+        all_records.sort(key=lambda x: (len(x.patient_id or ''), x.patient_id or ''), reverse=True)
         
+        records_with_progress = []
+        for yp in all_records:
+            percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+            records_with_progress.append((yp, {
+                "percentage": percentage,
+                "status": status,
+                "missing_fields": missing_fields
+            }))
+        
+        reverse_sort = (sort_order == 'desc')
+        records_with_progress.sort(key=lambda x: x[1]["percentage"], reverse=reverse_sort)
+        
+        total = len(records_with_progress)
+        import math
+        pages = math.ceil(total / per_page)
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_items = records_with_progress[start_idx:end_idx]
+    else:
+        # Sort naturally by patient_id descending (newest/highest serial first)
+        query = query.order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        total = pagination.total
+        pages = pagination.pages
+        
+        paginated_items = []
+        for yp in pagination.items:
+            percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+            paginated_items.append((yp, {
+                "percentage": percentage,
+                "status": status,
+                "missing_fields": missing_fields
+            }))
+
+    results = []
+    for yp, progress_data in paginated_items:
         # Aggregated Patient Data
         record = {
             "id": yp.id,
@@ -595,11 +629,7 @@ def get_screening_records(year):
             "gender": yp.gender,
             "age": yp.age,
             "created_at": yp.created_at.isoformat() if yp.created_at else None,
-            "progress": {
-                "percentage": percentage,
-                "status": status,
-                "missing_fields": missing_fields
-            }
+            "progress": progress_data
         }
         
         # robust bio-data lookup inside current section only
@@ -684,9 +714,9 @@ def get_screening_records(year):
         
     return jsonify({
         "records": results,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page
+        "total": total,
+        "pages": pages,
+        "current_page": page
     }), 200
 
 @view_data_bp.route('/records/screening/<int:id>', methods=['DELETE'])
