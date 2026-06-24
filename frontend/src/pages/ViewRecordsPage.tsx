@@ -349,13 +349,13 @@ const ViewRecordsPage: React.FC = () => {
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
                                                     <TableHead className="min-w-[1670px] bg-muted/90 border-r text-center" colSpan={15}>Patient Profile</TableHead>
-                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={31}>Consultation & Vitals</TableHead>
-                                                    <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
-                                                    <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-primary/5 text-primary border-r text-center" colSpan={6}>Liver Function (LFT)</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
-                                                    <TableHead className="min-w-[1200px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={9}>Director's Review</TableHead>
+                                                    <TableHead className="min-w-[3580px] bg-primary/10 text-primary border-r text-center" colSpan={33}>Consultation & Vitals</TableHead>
+                                                    <TableHead className="min-w-[1270px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
+                                                    <TableHead className="min-w-[530px] bg-blue-50 text-blue-600 border-r text-center" colSpan={6}>Kidney Function (KFT)</TableHead>
+                                                    <TableHead className="min-w-[550px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
+                                                    <TableHead className="min-w-[750px] bg-primary/5 text-primary border-r text-center" colSpan={8}>Liver Function (LFT)</TableHead>
+                                                    <TableHead className="min-w-[970px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
+                                                    <TableHead className="min-w-[1400px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={9}>Director's Review</TableHead>
                                                     <TableHead className="min-w-[100px] text-right bg-muted/90">Actions</TableHead>
                                                 </TableRow>
                                                 <TableRow className="hover:bg-transparent border-b text-[11px] font-bold">
@@ -495,10 +495,10 @@ const ViewRecordsPage: React.FC = () => {
                                                 {loading && recordsData.records.length === 0 ? (
                                                     Array.from({ length: 5 }).map((_, rowIndex) => (
                                                         <TableRow key={rowIndex} className="animate-pulse">
-                                                            {Array.from({ length: 100 }).map((_, colIndex) => (
+                                                            {Array.from({ length: 102 }).map((_, colIndex) => (
                                                                 <TableCell 
                                                                     key={colIndex} 
-                                                                    className={`py-3 ${colIndex === 14 || colIndex === 45 || colIndex === 62 || colIndex === 70 || colIndex === 75 || colIndex === 81 || colIndex === 89 || colIndex === 98 ? "border-r" : ""} ${colIndex === 99 ? "text-right" : ""}`}
+                                                                    className={`py-3 ${colIndex === 14 || colIndex === 47 || colIndex === 64 || colIndex === 70 || colIndex === 75 || colIndex === 83 || colIndex === 91 || colIndex === 100 ? "border-r" : ""} ${colIndex === 101 ? "text-right" : ""}`}
                                                                 >
                                                                     <Skeleton className={`h-4 bg-muted/40 rounded animate-pulse ${colIndex === 0 || colIndex === 1 ? "w-16" : colIndex === 2 || colIndex === 4 ? "w-24" : "w-12"}`} />
                                                                 </TableCell>
