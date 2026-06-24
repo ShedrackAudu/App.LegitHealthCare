@@ -16,7 +16,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from decorators import require_permission
 from utils.ip import get_client_ip
-from utils.progress_utils import calculate_report_progress
+from utils.progress_utils import calculate_report_progress, calculate_batch_progress
 
 view_data_bp = Blueprint('view_data', __name__)
 
@@ -582,9 +582,15 @@ def get_screening_records(year):
         # Sort naturally first so identical percentages are stable
         all_records.sort(key=lambda x: (len(x.patient_id or ''), x.patient_id or ''), reverse=True)
         
+        # Get all staff_ids for batch calculation
+        staff_ids = [yp.staff_id for yp in all_records]
+        progress_map = calculate_batch_progress(staff_ids, year, engine)
+        
         records_with_progress = []
         for yp in all_records:
-            percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+            percentage, points, status, missing_fields = progress_map.get(
+                yp.staff_id, (0, 0, "Registration Data Preparing", [])
+            )
             records_with_progress.append((yp, {
                 "percentage": percentage,
                 "status": status,
@@ -607,9 +613,15 @@ def get_screening_records(year):
         total = pagination.total
         pages = pagination.pages
         
+        # Get staff_ids for the current page only
+        staff_ids = [yp.staff_id for yp in pagination.items]
+        progress_map = calculate_batch_progress(staff_ids, year, engine)
+        
         paginated_items = []
         for yp in pagination.items:
-            percentage, points, status, missing_fields = calculate_report_progress(yp.staff_id, year, engine)
+            percentage, points, status, missing_fields = progress_map.get(
+                yp.staff_id, (0, 0, "Registration Data Preparing", [])
+            )
             paginated_items.append((yp, {
                 "percentage": percentage,
                 "status": status,
