@@ -5,6 +5,35 @@ from models import db, SystemConfig
 
 webhooks_bp = Blueprint('webhooks', __name__)
 
+def find_commit_hash(data):
+    """
+    Recursively searches a nested JSON/dictionary structure for a Git commit hash.
+    Matches any 7-40 character hexadecimal string that is associated with keys like
+    'commit', 'hash', 'rev', 'sha', or 'id'.
+    """
+    import re
+    hex_pattern = re.compile(r'^[0-9a-fA-F]{7,40}$')
+    
+    if isinstance(data, dict):
+        for k, v in data.items():
+            k_lower = k.lower()
+            if isinstance(v, str):
+                v_clean = v.strip()
+                if any(x in k_lower for x in ['commit', 'hash', 'rev', 'sha', 'id']):
+                    if hex_pattern.match(v_clean):
+                        return v_clean
+        # Recurse values
+        for v in data.values():
+            res = find_commit_hash(v)
+            if res:
+                return res
+    elif isinstance(data, list):
+        for item in data:
+            res = find_commit_hash(item)
+            if res:
+                return res
+    return None
+
 def broadcast_update_notification(app, commit_hash):
     """
     Timer callback function that runs in a background thread to broadcast
@@ -25,21 +54,66 @@ def handle_render_deploy():
     """
     Endpoint that receives Render's Deploy Succeeded Webhook.
     """
-    data = request.json or {}
-    
-    # Render's webhooks send a JSON payload. We check if it indicates success.
-    # Standard Render deploy webhook events: "deploy.succeeded", "deploy.live", etc.
-    event = data.get('event')
-    deploy_data = data.get('deploy', {})
-    status = deploy_data.get('status')
-    
-    # If a payload is provided, verify it is a success event; otherwise, support manual/generic triggers.
-    if event and event not in ['deploy.succeeded', 'deploy.live'] and status not in ['live', 'succeeded']:
-        return jsonify({"message": "Ignored non-success deploy event"}), 200
+    try:
+        data = request.json or {}
+    except Exception:
+        data = {}
         
-    raw_commit = deploy_data.get('commit', {}).get('id', 'latest')
-    commit_hash = raw_commit[:7] if (raw_commit and raw_commit != 'latest') else 'latest'
+    commit_param = request.args.get('commit')
+    event_param = request.args.get('event')
+    status_param = request.args.get('status')
     
+    event = data.get('event') or event_param
+    deploy_data = data.get('deploy')
+    if not isinstance(deploy_data, dict):
+        deploy_data = {}
+        
+    status = deploy_data.get('status') or status_param
+    
+    # If event/status is provided, verify it is a success; otherwise, allow it.
+    if event and isinstance(event, str):
+        event_lower = event.lower()
+        if event_lower not in ['deploy.succeeded', 'deploy.live'] and 'success' not in event_lower and 'live' not in event_lower:
+            # Also check status
+            if status and isinstance(status, str) and status.lower() not in ['live', 'succeeded']:
+                return jsonify({"message": "Ignored non-success deploy event"}), 200
+                
+    commit_hash = None
+    
+    # Check query parameter first
+    if commit_param and isinstance(commit_param, str) and commit_param != 'latest':
+        commit_hash = commit_param.strip()
+        
+    # Check nested commit object in deploy_data
+    if not commit_hash:
+        commit_obj = deploy_data.get('commit')
+        if isinstance(commit_obj, dict):
+            commit_hash = commit_obj.get('id')
+        elif isinstance(commit_obj, str):
+            commit_hash = commit_obj
+            
+    # Check direct keys
+    if not commit_hash:
+        for key in ['commit', 'commit_hash', 'hash', 'revision', 'commitId', 'sha']:
+            val = data.get(key)
+            if isinstance(val, str):
+                commit_hash = val
+                break
+            elif isinstance(val, dict):
+                commit_hash = val.get('id') or val.get('hash')
+                if commit_hash:
+                    break
+                    
+    # Recursive search fallback
+    if not commit_hash:
+        commit_hash = find_commit_hash(data)
+        
+    # Formatting
+    if commit_hash and isinstance(commit_hash, str) and commit_hash != 'latest':
+        commit_hash = commit_hash.strip()[:7]
+    else:
+        commit_hash = 'latest'
+        
     # Store the latest deployed commit hash in SystemConfig
     try:
         config_hash = SystemConfig.query.get('last_deployed_commit')
@@ -54,14 +128,15 @@ def handle_render_deploy():
         print(f"[DEPLOY WEBHOOK] Failed to save commit hash to DB: {str(e)}")
 
     # Get the active app instance to pass to the thread context
-    app = current_app._get_current_object()
-    
-    # Schedule the socket emit to run in 1 second (instantaneous broadcast)
-    print(f"[DEPLOY WEBHOOK] Received deploy success for commit {commit_hash}. Scheduling instantaneous notification...")
-    timer = threading.Timer(1.0, broadcast_update_notification, args=[app, commit_hash])
-    timer.daemon = True
-    timer.start()
-    
+    try:
+        app = current_app._get_current_object()
+        print(f"[DEPLOY WEBHOOK] Received deploy success. Commit: {commit_hash}. Scheduling instantaneous notification...")
+        timer = threading.Timer(1.0, broadcast_update_notification, args=[app, commit_hash])
+        timer.daemon = True
+        timer.start()
+    except Exception as e:
+        print(f"[DEPLOY WEBHOOK] Failed to schedule broadcast: {str(e)}")
+        
     return jsonify({
         "status": "success",
         "message": "Deployment webhook received. Update notification scheduled.",

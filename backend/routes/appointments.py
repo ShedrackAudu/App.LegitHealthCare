@@ -196,6 +196,13 @@ def create_appointment():
                 subject=f"New Appointment: {patient_name} ({staff_id})",
                 html_content=email_content
             )
+            
+            if email:
+                EmailService.send_email(
+                    to_email=email,
+                    subject=f"Appointment Confirmation: {patient_name} ({staff_id})",
+                    html_content=email_content
+                )
         except Exception as e:
             print(f"Appointment Email Error: {e}")
             # Don't fail the request if email fails, but log it
