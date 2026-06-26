@@ -1377,17 +1377,24 @@ def track_model_changes(mapper, connection, target):
                 "changes": changes
             }
             
-            # Insert direct raw SQL to avoid recursion or session locks
-            connection.execute(
-                db.text("INSERT INTO audit_logs (user_id, action, resource, details, created_at) VALUES (:uid, :act, :res, :det, :ts)"),
-                {
-                    "uid": int(user_id) if user_id else None,
-                    "act": action_desc,
-                    "res": f"{tbl_name}:{getattr(target, 'id', 'new')}",
-                    "det": json.dumps(details_json),
-                    "ts": datetime.now()
-                }
-            )
+            # Insert direct raw SQL on the default system database engine to bypass dynamic bind context issues
+            try:
+                # We obtain the default hc_system database engine
+                default_engine = db.engines.get(None) or db.engine
+                with default_engine.connect() as default_conn:
+                    default_conn.execute(
+                        db.text("INSERT INTO audit_logs (user_id, action, resource, details, created_at) VALUES (:uid, :act, :res, :det, :ts)"),
+                        {
+                            "uid": int(user_id) if user_id else None,
+                            "act": action_desc,
+                            "res": f"{tbl_name}:{getattr(target, 'id', 'new')}",
+                            "det": json.dumps(details_json),
+                            "ts": datetime.now()
+                        }
+                    )
+                    default_conn.commit()
+            except Exception as conn_ex:
+                sys.stderr.write(f"[AUDIT LOG INSERT ERROR] {conn_ex}\n")
     except Exception as ex:
         import sys
         sys.stderr.write(f"[TRACK_MODEL_CHANGES_ERROR] {ex}\n")
