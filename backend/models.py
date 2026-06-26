@@ -1336,13 +1336,16 @@ def track_model_changes(mapper, connection, target):
         state = db.inspect(target)
         changes = {}
         for attr in state.attrs:
+            # We track attributes that are dirty/modified
             hist = attr.history
             if hist.has_changes():
-                # Extract old and new values
                 old_val = hist.deleted[0] if hist.deleted else None
                 new_val = hist.added[0] if hist.added else None
                 
-                # Format to string representation
+                # Exclude timestamps or identical values
+                if old_val == new_val:
+                    continue
+                    
                 old_str = str(old_val) if old_val is not None else "None"
                 new_str = str(new_val) if new_val is not None else "None"
                 
@@ -1358,12 +1361,14 @@ def track_model_changes(mapper, connection, target):
             except Exception:
                 user_id = None
             
-            # Determine staff username if available
             user_label = "System"
             if user_id:
-                res = connection.execute(db.text("SELECT username FROM users WHERE id = :uid"), {"uid": int(user_id)}).fetchone()
-                if res:
-                    user_label = res[0]
+                try:
+                    res = connection.execute(db.text("SELECT username FROM users WHERE id = :uid"), {"uid": int(user_id)}).fetchone()
+                    if res:
+                        user_label = res[0]
+                except Exception:
+                    pass
 
             tbl_name = target.__tablename__
             staff_id_val = getattr(target, 'staff_id', 'Unknown')
@@ -1377,9 +1382,10 @@ def track_model_changes(mapper, connection, target):
                 "changes": changes
             }
             
-            # Insert direct raw SQL on the default system database engine to bypass dynamic bind context issues
+            # Write directly to default database using raw SQL statement on current connection
+            # We use target's table session query or execute directly on mapper connection if it fits,
+            # but since connection might be bound to child binds, we execute directly on standard default engine conn.
             try:
-                # We obtain the default hc_system database engine
                 default_engine = db.engines.get(None) or db.engine
                 with default_engine.connect() as default_conn:
                     default_conn.execute(
@@ -1394,21 +1400,22 @@ def track_model_changes(mapper, connection, target):
                     )
                     default_conn.commit()
             except Exception as conn_ex:
+                import sys
                 sys.stderr.write(f"[AUDIT LOG INSERT ERROR] {conn_ex}\n")
     except Exception as ex:
         import sys
         sys.stderr.write(f"[TRACK_MODEL_CHANGES_ERROR] {ex}\n")
 
 # Listeners for Patient BioData
-event.listen(BioData, 'before_update', track_model_changes)
-event.listen(ScreeningYearBioData, 'before_update', track_model_changes)
+event.listen(BioData, 'after_update', track_model_changes)
+event.listen(ScreeningYearBioData, 'after_update', track_model_changes)
 
 # Listeners for Screening/Clinical Records
-event.listen(ConsultationData, 'before_update', track_model_changes)
-event.listen(FBCResult, 'before_update', track_model_changes)
-event.listen(KFTResult, 'before_update', track_model_changes)
-event.listen(LipidResult, 'before_update', track_model_changes)
-event.listen(LFTResult, 'before_update', track_model_changes)
-event.listen(SpecialTestsResult, 'before_update', track_model_changes)
-event.listen(DirectorReview, 'before_update', track_model_changes)
+event.listen(ConsultationData, 'after_update', track_model_changes)
+event.listen(FBCResult, 'after_update', track_model_changes)
+event.listen(KFTResult, 'after_update', track_model_changes)
+event.listen(LipidResult, 'after_update', track_model_changes)
+event.listen(LFTResult, 'after_update', track_model_changes)
+event.listen(SpecialTestsResult, 'after_update', track_model_changes)
+event.listen(DirectorReview, 'after_update', track_model_changes)
 
