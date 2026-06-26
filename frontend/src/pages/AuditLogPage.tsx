@@ -353,21 +353,21 @@ const AuditLogPage: React.FC = () => {
           </CardHeader>
           <CardContent className="px-8 pb-6">
             <div className="overflow-x-auto">
-              <Table>
+              <Table className="w-full min-w-max">
                 <TableHeader className="bg-muted/10">
-                  <TableRow className="hover:bg-transparent border-b-2 text-left">
-                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[25%]"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left w-[20%]"><HugeiconsIcon icon={Activity01Icon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[25%]">Resource Target</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 w-[15%]"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source / Device</TableHead>
-                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right w-[15%]"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
+                  <TableRow className="hover:bg-transparent border-b-2 text-left whitespace-nowrap">
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left whitespace-nowrap"><HugeiconsIcon icon={UserIcon} className="w-3 h-3 inline mr-1" /> Originator</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-left whitespace-nowrap"><HugeiconsIcon icon={Activity01Icon} className="w-3 h-3 inline mr-1" /> Action</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 whitespace-nowrap">Resource Target</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 whitespace-nowrap"><HugeiconsIcon icon={GlobeIcon} className="w-3 h-3 inline mr-1" /> Source / Device</TableHead>
+                    <TableHead className="font-black text-[10px] uppercase tracking-wider py-4 text-right whitespace-nowrap"><HugeiconsIcon icon={Calendar01Icon} className="w-3 h-3 inline mr-1" /> Timestamp</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {loading ? (
                     Array.from({ length: 8 }).map((_, i) => (
-                      <TableRow key={i} className="animate-pulse">
-                        <TableCell className="py-3">
+                      <TableRow key={i} className="animate-pulse whitespace-nowrap">
+                        <TableCell className="py-3 whitespace-nowrap">
                           <div className="flex items-center gap-2">
                             <Skeleton className="w-7 h-7 rounded-lg bg-muted/40 animate-pulse" />
                             <div className="space-y-1.5 flex-1">
@@ -376,19 +376,19 @@ const AuditLogPage: React.FC = () => {
                             </div>
                           </div>
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="py-3 whitespace-nowrap">
                           <Skeleton className="h-5 w-16 rounded bg-muted/40 animate-pulse" />
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="py-3 whitespace-nowrap">
                           <Skeleton className="h-3 w-40 rounded bg-muted/40 animate-pulse" />
                         </TableCell>
-                        <TableCell className="py-3">
+                        <TableCell className="py-3 whitespace-nowrap">
                           <div className="space-y-1.5">
                             <Skeleton className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
                             <Skeleton className="h-2 w-16 rounded bg-muted/40 animate-pulse" />
                           </div>
                         </TableCell>
-                        <TableCell className="py-3 text-right">
+                        <TableCell className="py-3 text-right whitespace-nowrap">
                           <Skeleton className="h-3.5 w-16 rounded bg-muted/40 ml-auto animate-pulse" />
                         </TableCell>
                       </TableRow>
@@ -400,9 +400,9 @@ const AuditLogPage: React.FC = () => {
                           setSelectedLog(log);
                           setIsModalOpen(true);
                       }}
-                      className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative"
+                      className="group hover:bg-muted/5 transition-all border-b cursor-pointer relative whitespace-nowrap"
                     >
-                      <TableCell className="py-2.5">
+                      <TableCell className="py-2.5 whitespace-nowrap">
                         <div className="flex items-center gap-2">
                           <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-black text-[10px] border border-primary/20">
                               {log.user_name?.charAt(0) || 'S'}
@@ -415,26 +415,26 @@ const AuditLogPage: React.FC = () => {
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell className="py-2.5 text-left">
-                        <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm ${getActionColor(log.action)}`}>
+                      <TableCell className="py-2.5 text-left whitespace-nowrap">
+                        <Badge variant="outline" className={`font-black text-[9px] px-2 py-0.5 rounded-lg border shadow-sm whitespace-nowrap ${getActionColor(log.action)}`}>
                           {log.action}
                         </Badge>
                       </TableCell>
-                      <TableCell className="py-2.5">
+                      <TableCell className="py-2.5 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="text-[11px] font-mono font-bold text-slate-400">{log.resource}</span>
+                          <span className="text-[11px] font-mono font-bold text-slate-400 whitespace-nowrap">{log.resource}</span>
                           {log.patient_name && (
-                            <span className="text-[10px] font-bold text-primary mt-0.5">
+                            <span className="text-[10px] font-bold text-primary mt-0.5 whitespace-nowrap">
                               {log.patient_name}
                             </span>
                           )}
                         </div>
                       </TableCell>
-                      <TableCell className="py-2.5">
+                      <TableCell className="py-2.5 whitespace-nowrap">
                         <div className="flex flex-col">
-                          <span className="text-[11px] font-bold text-slate-400">{log.ip_address || '127.0.0.1'}</span>
+                          <span className="text-[11px] font-bold text-slate-400 whitespace-nowrap">{log.ip_address || '127.0.0.1'}</span>
                           {log.details?.device && (
-                            <span className="text-[9px] font-semibold text-muted-foreground/80 truncate max-w-[130px]" title={`${log.details.device.platform} / ${log.details.device.browser}`}>
+                            <span className="text-[9px] font-semibold text-muted-foreground/80 whitespace-nowrap" title={`${log.details.device.platform} / ${log.details.device.browser}`}>
                               {log.details.device.platform} / {log.details.device.browser}
                             </span>
                           )}

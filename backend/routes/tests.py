@@ -467,10 +467,31 @@ def get_test_result(test_type, staff_id):
     # Log view action in audit trail
     try:
         from models import AuditLog
+        display_test_type = test_type.upper()
+        log_test_type = test_type
+        if test_type == 'special':
+            subtype = request.args.get('subtype')
+            if subtype in ['ecg', 'spirometry', 'audiometry']:
+                display_test_type = subtype.upper()
+                log_test_type = subtype
+            else:
+                special_types = []
+                if record:
+                    if getattr(record, 'ecg_result', None) or getattr(record, 'ecg_remark', None):
+                        special_types.append("ECG")
+                    if getattr(record, 'spirometry_result', None) or getattr(record, 'spirometry_remark', None):
+                        special_types.append("Spirometry")
+                    if getattr(record, 'audiometry_result', None) or getattr(record, 'audiometry_remark', None):
+                        special_types.append("Audiometry")
+                if special_types:
+                    display_test_type = ", ".join(special_types)
+                else:
+                    display_test_type = "SPECIAL"
+
         AuditLog.log_action(
-            action=f"View Patient {test_type.upper()} Result",
+            action=f"View Patient {display_test_type} Result",
             resource=f"Patient:{staff_id}",
-            details={"screening_year": screening_year, "test_type": test_type},
+            details={"screening_year": screening_year, "test_type": log_test_type},
             commit=True
         )
     except Exception as audit_err:

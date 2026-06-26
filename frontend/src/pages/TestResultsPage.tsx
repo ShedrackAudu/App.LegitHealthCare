@@ -994,7 +994,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             setFetching(true);
             try {
                 const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
+                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}&subtype=${testType}`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setInitialData(resp.data);
