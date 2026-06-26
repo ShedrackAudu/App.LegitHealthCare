@@ -62,6 +62,7 @@ import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 import { UserTimelineDialog } from '@/components/UserTimelineDialog';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 
 interface User {
   id: number | string;
@@ -222,6 +223,38 @@ const UserManagementPage: React.FC = () => {
       u.phone.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
+
+  // Staff Pagination State
+  const [staffPage, setStaffPage] = useState(1);
+  const [staffPerPage, setStaffPerPage] = useState(25);
+
+  // Patients Pagination State
+  const [patientsPage, setPatientsPage] = useState(1);
+  const [patientsPerPage, setPatientsPerPage] = useState(25);
+
+  // Reset page numbers when search term changes
+  useEffect(() => {
+    setStaffPage(1);
+    setPatientsPage(1);
+  }, [searchTerm]);
+
+  const staffUsers = useMemo(() => {
+    return filteredUsers.filter(u => !u.roles.includes('Patient'));
+  }, [filteredUsers]);
+
+  const patientUsers = useMemo(() => {
+    return filteredUsers.filter(u => u.roles.includes('Patient'));
+  }, [filteredUsers]);
+
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (staffPage - 1) * staffPerPage;
+    return staffUsers.slice(startIndex, startIndex + staffPerPage);
+  }, [staffUsers, staffPage, staffPerPage]);
+
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (patientsPage - 1) * patientsPerPage;
+    return patientUsers.slice(startIndex, startIndex + patientsPerPage);
+  }, [patientUsers, patientsPage, patientsPerPage]);
 
   const handleResetPassword = async () => {
     if (!selectedUser || !newPassword) return;
@@ -434,7 +467,7 @@ const UserManagementPage: React.FC = () => {
                       <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Staff Directory
                     </CardTitle>
-                    <CardDescription>Filtering {filteredUsers.filter(u => !u.roles.includes('Patient')).length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
+                    <CardDescription>Filtering {staffUsers.length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
                     <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
@@ -449,7 +482,7 @@ const UserManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
-                  users={filteredUsers.filter(u => !u.roles.includes('Patient'))}
+                  users={paginatedStaff}
                   loading={loading}
                   handleAction={handleAction}
                   onViewProfile={viewProfile}
@@ -459,6 +492,21 @@ const UserManagementPage: React.FC = () => {
                   sendingReminder={sendingReminder}
                 />
               </CardContent>
+              {/* Pagination Footer */}
+              {!loading && staffUsers.length > 0 && (
+                <div className="bg-muted/30 border-t px-8 py-2">
+                  <Pagination
+                    currentPage={staffPage}
+                    totalItems={staffUsers.length}
+                    perPage={staffPerPage}
+                    onPageChange={setStaffPage}
+                    onPerPageChange={(newPerPage) => {
+                      setStaffPerPage(newPerPage);
+                      setStaffPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </Card>
           </TabsContent>
 
@@ -471,7 +519,7 @@ const UserManagementPage: React.FC = () => {
                       <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Patient Registry
                     </CardTitle>
-                    <CardDescription>Filtering {filteredUsers.filter(u => u.roles.includes('Patient')).length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
+                    <CardDescription>Filtering {patientUsers.length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
                     <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
@@ -486,7 +534,7 @@ const UserManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
-                  users={filteredUsers.filter(u => u.roles.includes('Patient'))}
+                  users={paginatedPatients}
                   loading={loading}
                   handleAction={handleAction}
                   onViewProfile={viewProfile}
@@ -496,6 +544,21 @@ const UserManagementPage: React.FC = () => {
                   sendingReminder={sendingReminder}
                 />
               </CardContent>
+              {/* Pagination Footer */}
+              {!loading && patientUsers.length > 0 && (
+                <div className="bg-muted/30 border-t px-8 py-2">
+                  <Pagination
+                    currentPage={patientsPage}
+                    totalItems={patientUsers.length}
+                    perPage={patientsPerPage}
+                    onPageChange={setPatientsPage}
+                    onPerPageChange={(newPerPage) => {
+                      setPatientsPerPage(newPerPage);
+                      setPatientsPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
