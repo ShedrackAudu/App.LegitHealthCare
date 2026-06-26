@@ -159,6 +159,21 @@ const PatientMedicalReport: React.FC = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
             toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+            
+            // Log download to audit trail
+            try {
+                const sId = reportData?.bio?.staff_id;
+                const sec = reportData?.bio?.section || 'DCP';
+                if (sId) {
+                    await api.post('/api/patient/reports/log-download', {
+                        staff_id: sId,
+                        screening_year: selectedYear,
+                        section: sec
+                    });
+                }
+            } catch (auditErr) {
+                console.error("Failed to log report download audit action", auditErr);
+            }
         } catch (err: any) {
             console.error('PDF error:', err);
             const msg = err.message || String(err) || 'Failed to generate frontend PDF.';

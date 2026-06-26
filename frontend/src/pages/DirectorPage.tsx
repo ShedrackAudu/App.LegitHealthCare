@@ -414,11 +414,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')}</Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">
+                                    {f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
                                 {f.includes('REMARK') ? (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                    <Input 
+                                        {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                        className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                    />
                                 ) : (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm font-mono" />
+                                    <Input 
+                                        {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                        className={`h-9 text-sm font-mono ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                    />
+                                )}
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
                                 )}
                             </div>
                         ))}
@@ -428,16 +439,20 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Chloride, and Calcium">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'BICARBONATE_CA', 'KFT_REMARK'].map(f => {
-                            const displayName = f === 'BICARBONATE_CA' ? 'CALCIUM CA' : f.replace('_', ' ');
+                            const isCalcium = f === 'BICARBONATE_CA';
+                            const displayName = isCalcium ? 'CALCIUM CA' : f.replace('_', ' ');
                             return (
                                 <div key={f} className="space-y-1">
                                     <Label className="text-xs whitespace-nowrap truncate block">
-                                        {displayName}
+                                        {displayName} {!isCalcium && <span className="text-red-500">*</span>}
                                     </Label>
                                     <Input 
-                                        {...register(f.toLowerCase())} 
-                                        className="h-9 text-sm font-mono" 
+                                        {...register(f.toLowerCase(), isCalcium ? {} : { required: `${displayName} is required` })} 
+                                        className={`h-9 text-sm font-mono ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                                     />
+                                    {(errors as any)[f.toLowerCase()] && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                    )}
                                 </div>
                             );
                         })}
@@ -448,8 +463,16 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {['TOTAL_CHOLESTEROL', 'TRIGLYCERIDES', 'HDL', 'LDL', 'LP_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">
+                                    {f.replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input 
+                                    {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -459,8 +482,16 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['AST', 'ALT', 'ALP', 'TB', 'CB', 'UREA', 'CREATININE', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">
+                                    {f.replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input 
+                                    {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -608,20 +639,48 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One</Label>
-                                    <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_one', { required: 'Comment One is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_one ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="First comment..." 
+                                    />
+                                    {(errors as any).comment_one && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_one.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two</Label>
-                                    <textarea {...register('comment_two')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_two', { required: 'Comment Two is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_two ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Second comment..." 
+                                    />
+                                    {(errors as any).comment_two && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_two.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three</Label>
-                                    <textarea {...register('comment_three')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_three', { required: 'Comment Three is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_three ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Third comment..." 
+                                    />
+                                    {(errors as any).comment_three && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_three.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four</Label>
-                                    <textarea {...register('comment_four')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_four', { required: 'Comment Four is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_four ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Fourth comment..." 
+                                    />
+                                    {(errors as any).comment_four && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_four.message}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>

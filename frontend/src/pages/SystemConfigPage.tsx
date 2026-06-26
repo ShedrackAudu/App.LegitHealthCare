@@ -83,7 +83,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         disabled={!newItemName.trim()}
                     >
                         {!adding && <HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" />}
-                        Add {title.slice(0, -1)}
+                        Add {getSingular(title)}
                     </Button>
                 </div>
             </CardContent>
@@ -140,6 +140,15 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
         </Card>
     </div>
 );
+
+const getSingular = (val: string) => {
+    if (!val) return '';
+    const low = val.toLowerCase();
+    if (low === 'nationalities') {
+        return val[0] === 'N' ? 'Nationality' : 'nationality';
+    }
+    return val.slice(0, -1);
+};
 
 const SystemConfigPage: React.FC = () => {
     const { activeSection, user } = useAppContext();
@@ -337,7 +346,7 @@ const SystemConfigPage: React.FC = () => {
             const resp = await axios.post(`/api/config/${type}`,
                 { name: trimmedName }
             );
-            toast.success(`${type.slice(0, -1)} added successfully`);
+            toast.success(`${getSingular(type)} added successfully`);
 
             if (type === 'departments') setDepartments([...departments, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
             if (type === 'races') setRaces([...races, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
@@ -345,7 +354,7 @@ const SystemConfigPage: React.FC = () => {
 
             setNewItemName('');
         } catch (err: any) {
-            toast.error(err.response?.data?.error || `Failed to add ${type.slice(0, -1)}`);
+            toast.error(err.response?.data?.error || `Failed to add ${getSingular(type)}`);
         } finally {
             setAdding(false);
         }
@@ -1328,7 +1337,7 @@ const SystemConfigPage: React.FC = () => {
                 isOpen={deleteModal.open}
                 onClose={() => setDeleteModal({ ...deleteModal, open: false })}
                 onConfirm={handleDelete}
-                title={`Delete ${deleteModal.type.slice(0, -1)}`}
+                title={`Delete ${getSingular(deleteModal.type)}`}
                 description={`Are you sure you want to delete '${deleteModal.name}'? This change will reflect in all registration dropdowns.`}
                 confirmText="Delete Item"
                 variant="danger"

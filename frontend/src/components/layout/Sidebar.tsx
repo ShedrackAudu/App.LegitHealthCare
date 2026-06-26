@@ -146,8 +146,6 @@ export const Sidebar: React.FC = () => {
         ref={sidebarRef}
         className={cn(
           "h-[100dvh] sticky top-0 touch-none border-r border-border bg-card text-card-foreground transition-all duration-300 ease-in-out z-40 group flex flex-col no-print",
-          "lg:bg-primary lg:text-primary-foreground lg:border-primary-foreground/10",
-          "dark:lg:bg-card dark:lg:text-card-foreground dark:lg:border-border",
           isCollapsed ? "lg:w-16" : "lg:w-64",
           isCollapsed 
             ? "max-lg:hidden" 
@@ -158,8 +156,7 @@ export const Sidebar: React.FC = () => {
           to="/"
           className={cn(
             "h-14 shrink-0 flex items-center px-4 border-b border-border transition-colors cursor-pointer group",
-            "lg:border-primary-foreground/10 lg:hover:bg-white/5",
-            "dark:lg:border-border dark:lg:hover:bg-muted/30"
+            "h-14 shrink-0 flex items-center px-4 border-b border-border transition-colors cursor-pointer group hover:bg-muted/30"
           )}
         >
           {/* Clinic Logo */}
@@ -172,11 +169,7 @@ export const Sidebar: React.FC = () => {
                 fallbackText={branding?.clinic_name}
               />
             ) : (
-              <div className={cn(
-                "text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary/80 transition-colors",
-                "lg:text-white lg:group-hover:text-white/80",
-                "dark:lg:text-primary dark:lg:group-hover:text-primary/80"
-              )}>
+              <div className="text-primary font-bold text-lg truncate w-[90%] text-left flex items-center gap-2 group-hover:text-primary/80 transition-colors">
                 <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
                 {branding?.clinic_name || 'LEGIT HC'}
               </div>
@@ -189,11 +182,7 @@ export const Sidebar: React.FC = () => {
                 className="max-h-8 w-auto object-contain mx-auto group-hover:opacity-80 transition-opacity" 
               />
             ) : (
-              <div className={cn(
-                "text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary/80 transition-colors",
-                "lg:text-white lg:group-hover:text-white/80",
-                "dark:lg:text-primary dark:lg:group-hover:text-primary/80"
-              )}>
+              <div className="text-primary font-bold text-lg truncate text-center w-full flex items-center justify-center group-hover:text-primary/80 transition-colors">
                 <HugeiconsIcon icon={Building02Icon} className="h-5 w-5 shrink-0" />
               </div>
             )
@@ -220,16 +209,8 @@ export const Sidebar: React.FC = () => {
                     "flex items-center rounded-lg transition-all duration-200 group/item relative",
                     isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                     isActive
-                      ? cn(
-                          "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
-                          "lg:bg-white/30 lg:text-white lg:shadow-none",
-                          "dark:lg:bg-primary dark:lg:text-primary-foreground dark:lg:shadow-lg dark:lg:shadow-primary/20"
-                        )
-                      : cn(
-                          "text-muted-foreground hover:bg-muted hover:text-foreground",
-                          "lg:text-primary-foreground/85 lg:hover:bg-white/10 lg:hover:text-white",
-                          "dark:lg:text-muted-foreground dark:lg:hover:bg-muted dark:lg:hover:text-foreground"
-                        )
+                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   )}
                 >
                   <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
@@ -271,16 +252,10 @@ export const Sidebar: React.FC = () => {
                 <div className="pt-1 pb-2 space-y-0.5">
                   <div className={cn(
                     "px-3 mb-1 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/60 transition-all duration-300",
-                    "lg:text-primary-foreground/60",
-                    "dark:lg:text-muted-foreground/60",
                     isCollapsed && "flex justify-center"
                   )}>
                     {isCollapsed ? (
-                      <div className={cn(
-                        "h-px bg-border w-10 my-3",
-                        "lg:bg-white/20",
-                        "dark:lg:bg-border"
-                      )} />
+                      <div className="h-px bg-border w-10 my-3" />
                     ) : (
                       "Admin Control Panel"
                     )}
@@ -298,16 +273,8 @@ export const Sidebar: React.FC = () => {
                           "flex items-center rounded-lg transition-all duration-200 group/item relative",
                           isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
                           isActive
-                            ? cn(
-                                "bg-primary text-primary-foreground shadow-lg shadow-primary/20",
-                                "lg:bg-white/30 lg:text-white lg:shadow-none",
-                                "dark:lg:bg-primary dark:lg:text-primary-foreground dark:lg:shadow-lg dark:lg:shadow-primary/20"
-                              )
-                            : cn(
-                                "text-muted-foreground hover:bg-muted hover:text-foreground",
-                                "lg:text-primary-foreground/85 lg:hover:bg-white/10 lg:hover:text-white",
-                                "dark:lg:text-muted-foreground dark:lg:hover:bg-muted dark:lg:hover:text-foreground"
-                              )
+                            ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                            : "text-muted-foreground hover:bg-muted hover:text-foreground"
                         )}
                       >
                         <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
@@ -334,7 +301,7 @@ export const Sidebar: React.FC = () => {
           <div className="px-3 mt-auto space-y-1.5">
             {/* Versioning */}
             <div className={cn(
-              "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none lg:text-white/40 dark:lg:text-muted-foreground/40",
+              "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none",
               isCollapsed ? "text-center" : "px-3"
             )}>
               {isCollapsed ? (
@@ -356,9 +323,7 @@ export const Sidebar: React.FC = () => {
               }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/manage",
-                "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
-                "dark:lg:text-muted-foreground dark:lg:hover:bg-muted dark:lg:hover:text-foreground",
-                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20 lg:bg-white/20 lg:text-white dark:lg:bg-primary dark:lg:text-primary-foreground" : "",
+                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
               )}
               title="Manage Account"
@@ -377,8 +342,6 @@ export const Sidebar: React.FC = () => {
               onClick={handleLogout}
               className={cn(
                 "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/logout",
-                "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
-                "dark:lg:text-rose-500 dark:lg:hover:bg-rose-500/10 dark:lg:hover:text-rose-600",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
               )}
               title="Log out"
@@ -393,19 +356,13 @@ export const Sidebar: React.FC = () => {
             </button>
 
             {/* Separator */}
-            <div className={cn(
-              "h-px bg-border my-1.5 mx-1",
-              "lg:bg-white/30",
-              "dark:lg:bg-border"
-            )} />
+            <div className="h-px bg-border my-1.5 mx-1" />
 
             {/* Collapse/Expand Button */}
             <button
               onClick={toggleSidebar}
               className={cn(
                 "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
-                "lg:text-white lg:hover:bg-white/10 lg:hover:text-white",
-                "dark:lg:text-muted-foreground dark:lg:hover:bg-muted dark:lg:hover:text-foreground",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
               )}
               title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}

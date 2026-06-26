@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 import zipfile
@@ -1142,6 +1142,26 @@ def get_patient_report(staff_id, year):
         return jsonify({"error": "Clinical data not found for the selected year"}), 404
     
     report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+    
+    # Audit log entry for viewing report
+    try:
+        from models import AuditLog
+        requester_label = "Patient" if not requester_staff else f"Staff ({requester_staff.username})"
+        action_name = "View Patient Report"
+        AuditLog.log_action(
+            action=action_name,
+            resource=f"ScreeningYearBioData:{yearly.id}",
+            details={
+                "staff_id": staff_id,
+                "screening_year": year,
+                "section": bind.upper(),
+                "viewed_by": requester_label,
+                "requester_id": user_id
+            }
+        )
+    except Exception as audit_err:
+        current_app.logger.error(f"Audit log failed for report view: {audit_err}")
+
     return jsonify(report_data), 200
 
 @view_data_bp.route('/public/verify/<token>', methods=['GET'])

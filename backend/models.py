@@ -1327,3 +1327,81 @@ def on_audit_log_insert(mapper, connection, target):
     except Exception as e:
         import sys
         sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")
+
+# Event hooks to track before and after modifications of patient clinical and bio data
+from sqlalchemy.orm import attributes
+
+def track_model_changes(mapper, connection, target):
+    try:
+        state = db.inspect(target)
+        changes = {}
+        for attr in state.attrs:
+            hist = attr.history
+            if hist.has_changes():
+                # Extract old and new values
+                old_val = hist.deleted[0] if hist.deleted else None
+                new_val = hist.added[0] if hist.added else None
+                
+                # Format to string representation
+                old_str = str(old_val) if old_val is not None else "None"
+                new_str = str(new_val) if new_val is not None else "None"
+                
+                changes[attr.key] = {
+                    "before": old_str,
+                    "after": new_str
+                }
+        
+        if changes:
+            from flask_jwt_extended import get_jwt_identity
+            try:
+                user_id = get_jwt_identity()
+            except Exception:
+                user_id = None
+            
+            # Determine staff username if available
+            user_label = "System"
+            if user_id:
+                res = connection.execute(db.text("SELECT username FROM users WHERE id = :uid"), {"uid": int(user_id)}).fetchone()
+                if res:
+                    user_label = res[0]
+
+            tbl_name = target.__tablename__
+            staff_id_val = getattr(target, 'staff_id', 'Unknown')
+            year_val = getattr(target, 'screening_year', 'Unknown')
+
+            action_desc = f"Edited Patient Data ({tbl_name})"
+            details_json = {
+                "staff_id": staff_id_val,
+                "screening_year": year_val,
+                "edited_by": user_label,
+                "changes": changes
+            }
+            
+            # Insert direct raw SQL to avoid recursion or session locks
+            connection.execute(
+                db.text("INSERT INTO audit_logs (user_id, action, resource, details, created_at) VALUES (:uid, :act, :res, :det, :ts)"),
+                {
+                    "uid": int(user_id) if user_id else None,
+                    "act": action_desc,
+                    "res": f"{tbl_name}:{getattr(target, 'id', 'new')}",
+                    "det": json.dumps(details_json),
+                    "ts": datetime.now()
+                }
+            )
+    except Exception as ex:
+        import sys
+        sys.stderr.write(f"[TRACK_MODEL_CHANGES_ERROR] {ex}\n")
+
+# Listeners for Patient BioData
+event.listen(BioData, 'before_update', track_model_changes)
+event.listen(ScreeningYearBioData, 'before_update', track_model_changes)
+
+# Listeners for Screening/Clinical Records
+event.listen(ConsultationData, 'before_update', track_model_changes)
+event.listen(FBCResult, 'before_update', track_model_changes)
+event.listen(KFTResult, 'before_update', track_model_changes)
+event.listen(LipidResult, 'before_update', track_model_changes)
+event.listen(LFTResult, 'before_update', track_model_changes)
+event.listen(SpecialTestsResult, 'before_update', track_model_changes)
+event.listen(DirectorReview, 'before_update', track_model_changes)
+

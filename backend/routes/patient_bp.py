@@ -161,7 +161,7 @@ def claim_account():
     try:
         db.session.flush() # Try flushing to catch constraints early
         db.session.commit()
-        AuditLog.log_action("Claim Patient Account", resource=f"PatientPortalUser:{user.id}", details={"staff_id": staff_id, "email": email})
+        AuditLog.log_action("Initiated Patient Account Claim", resource=f"PatientPortalUser:{user.id}", details={"staff_id": staff_id, "email": email, "status": "Pending OTP Verification"})
         
         # Sync with Clinical BioData (dcp, dct binds)
         contexts = ['dcp', 'dct']
@@ -288,7 +288,7 @@ def verify_patient_otp():
         user.is_verified = True
         user.otp_code = None
         db.session.commit()
-        AuditLog.log_action("Verify Patient OTP / Complete Register", resource=f"PatientPortalUser:{user.id}", details={"email": email})
+        AuditLog.log_action("New Patient Account Verified & Claimed", resource=f"PatientPortalUser:{user.id}", details={"email": email, "status": "Completed Registration"})
         return jsonify({
             "message": "Welcome! Your account has been successfully created.",
             "user": user.to_dict()
@@ -345,6 +345,49 @@ def get_report_years():
     years = sorted(list(years_set), reverse=True)
     return jsonify(years), 200
 
+@patient_bp.route('/api/patient/reports/log-download', methods=['POST'])
+@jwt_required()
+def log_patient_report_download():
+    user_id_str = get_jwt_identity()
+    if not user_id_str:
+        return jsonify({"error": "Unauthorized"}), 401
+
+    data = request.json or {}
+    staff_id = data.get('staff_id')
+    screening_year = data.get('screening_year')
+    section = data.get('section', 'DCP').upper()
+
+    if not staff_id or not screening_year:
+        return jsonify({"error": "staff_id and screening_year are required"}), 400
+
+    from models import PatientPortalUser, StaffUser, AuditLog
+    
+    try:
+        user_id = int(user_id_str)
+        p_user = PatientPortalUser.query.get(user_id)
+        requester_label = "Patient" if p_user else "Staff"
+    except ValueError:
+        p_user = None
+        requester_label = "Staff"
+        user_id = -1
+
+    try:
+        AuditLog.log_action(
+            action="Download Patient Report",
+            resource=f"PatientReport:{staff_id}:{screening_year}",
+            details={
+                "staff_id": staff_id,
+                "screening_year": screening_year,
+                "section": section,
+                "downloaded_by": requester_label,
+                "requester_id": user_id
+            }
+        )
+        return jsonify({"success": True, "message": "Download action logged successfully"}), 200
+    except Exception as e:
+        current_app.logger.error(f"Audit log failed for report download: {e}")
+        return jsonify({"error": "Failed to log download"}), 500
+
 @patient_bp.route('/api/patient/profile', methods=['GET'])
 @jwt_required()
 def get_patient_profile():
@@ -383,10 +426,19 @@ def get_patient_profile():
                 query = text("SELECT staff_id, first_name, middle_name, last_name, department, gender, dob, age, phone, email, race, nationality FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
                 res = conn.execute(query, {"sid": clean_id})
                 result = res.fetchone()
-                
                 if result:
                     # Robust mapping
                     row = dict(result._mapping)
+                    # Log audit action
+                    try:
+                        AuditLog.log_action(
+                            action="View Patient Profile",
+                            resource=f"PatientPortalUser:{user_id}",
+                            details={"staff_id": str(row.get('staff_id')), "section": ctx.upper()}
+                        )
+                    except Exception as ex:
+                        current_app.logger.error(f"Audit log failed for profile view: {ex}")
+                        
                     return jsonify({
                         "staff_id": str(row.get('staff_id')),
                         "first_name": row.get('first_name'),
