@@ -70,7 +70,8 @@ def get_patient_history(staff_id):
         AuditLog.log_action(
             action="View Patient Medical Record History",
             resource=f"Patient:{staff_id}",
-            details={"screening_year": year_int, "section": bind.upper() if bind else 'UNKNOWN'}
+            details={"screening_year": year_int, "section": bind.upper() if bind else 'UNKNOWN'},
+            commit=True
         )
     except Exception as audit_err:
         pass

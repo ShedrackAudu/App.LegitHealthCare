@@ -1157,7 +1157,8 @@ def get_patient_report(staff_id, year):
                 "section": bind.upper(),
                 "viewed_by": requester_label,
                 "requester_id": user_id
-            }
+            },
+            commit=True
         )
     except Exception as audit_err:
         current_app.logger.error(f"Audit log failed for report view: {audit_err}")

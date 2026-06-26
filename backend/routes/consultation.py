@@ -91,7 +91,8 @@ def get_screening_patient(year, staff_id):
         AuditLog.log_action(
             action="View Patient Consultation Record",
             resource=f"Patient:{record.staff_id}",
-            details={"screening_year": year, "section": bind.upper()}
+            details={"screening_year": year, "section": bind.upper()},
+            commit=True
         )
     except Exception as audit_err:
         pass

@@ -470,7 +470,8 @@ def get_test_result(test_type, staff_id):
         AuditLog.log_action(
             action=f"View Patient {test_type.upper()} Result",
             resource=f"Patient:{staff_id}",
-            details={"screening_year": screening_year, "test_type": test_type}
+            details={"screening_year": screening_year, "test_type": test_type},
+            commit=True
         )
     except Exception as audit_err:
         pass
