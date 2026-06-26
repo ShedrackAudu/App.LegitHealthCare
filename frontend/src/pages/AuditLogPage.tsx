@@ -425,7 +425,7 @@ const AuditLogPage: React.FC = () => {
                           <span className="text-[11px] font-mono font-bold text-slate-400">{log.resource}</span>
                           {log.patient_name && (
                             <span className="text-[10px] font-bold text-primary mt-0.5">
-                              Patient: {log.patient_name}
+                              {log.patient_name}
                             </span>
                           )}
                         </div>
