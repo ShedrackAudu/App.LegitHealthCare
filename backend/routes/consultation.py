@@ -85,6 +85,17 @@ def get_screening_patient(year, staff_id):
             "consulted_by_name": consultation.consulted_by_name
         }
         
+    # Log view action in audit trail
+    try:
+        from models import AuditLog
+        AuditLog.log_action(
+            action="View Patient Consultation Record",
+            resource=f"Patient:{record.staff_id}",
+            details={"screening_year": year, "section": bind.upper()}
+        )
+    except Exception as audit_err:
+        pass
+        
     return jsonify(data), 200
 
 @consultation_bp.route('/consultation', methods=['POST'])

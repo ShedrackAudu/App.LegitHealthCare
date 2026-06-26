@@ -64,6 +64,17 @@ def get_patient_history(staff_id):
     if not history:
         return jsonify({"message": "No data found for this patient in the selected year"}), 404
         
+    # Log view action in audit trail
+    try:
+        from models import AuditLog
+        AuditLog.log_action(
+            action="View Patient Medical Record History",
+            resource=f"Patient:{staff_id}",
+            details={"screening_year": year_int, "section": bind.upper() if bind else 'UNKNOWN'}
+        )
+    except Exception as audit_err:
+        pass
+        
     return jsonify(history), 200
 
 @director_bp.route('/save-director-review', methods=['POST'])

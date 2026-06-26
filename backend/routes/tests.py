@@ -463,6 +463,18 @@ def get_test_result(test_type, staff_id):
         
     # Convert to dict
     result = {c.name: getattr(record, c.name) for c in record.__table__.columns}
+    
+    # Log view action in audit trail
+    try:
+        from models import AuditLog
+        AuditLog.log_action(
+            action=f"View Patient {test_type.upper()} Result",
+            resource=f"Patient:{staff_id}",
+            details={"screening_year": screening_year, "test_type": test_type}
+        )
+    except Exception as audit_err:
+        pass
+        
     return jsonify(result), 200
 
 @tests_bp.route('/download-template/<test_type>', methods=['GET'])

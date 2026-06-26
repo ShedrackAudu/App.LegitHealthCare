@@ -1328,94 +1328,116 @@ def on_audit_log_insert(mapper, connection, target):
         import sys
         sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")
 
-# Event hooks to track before and after modifications of patient clinical and bio data
-from sqlalchemy.orm import attributes
 
-def track_model_changes(mapper, connection, target):
+@event.listens_for(Session, 'before_flush')
+def before_flush_audit(session, flush_context, instances):
+    if getattr(session, '_in_audit_listener', False):
+        return
+    session._in_audit_listener = True
     try:
-        state = db.inspect(target)
-        changes = {}
-        for attr in state.attrs:
-            # We track attributes that are dirty/modified
-            hist = attr.history
-            if hist.has_changes():
-                old_val = hist.deleted[0] if hist.deleted else None
-                new_val = hist.added[0] if hist.added else None
+        new_audit_logs = []
+        for obj in session.dirty:
+            model_name = obj.__class__.__name__
+            if model_name not in [
+                'BioData', 'PatientPortalUser', 'ScreeningYearBioData', 
+                'ConsultationData', 'FBCResult', 'KFTResult', 'LipidResult', 
+                'LFTResult', 'SpecialTestsResult', 'DirectorReview'
+            ]:
+                continue
                 
-                # Exclude timestamps or identical values
-                if old_val == new_val:
-                    continue
-                    
-                old_str = str(old_val) if old_val is not None else "None"
-                new_str = str(new_val) if new_val is not None else "None"
-                
-                changes[attr.key] = {
-                    "before": old_str,
-                    "after": new_str
-                }
-        
-        if changes:
-            from flask_jwt_extended import get_jwt_identity
-            try:
-                user_id = get_jwt_identity()
-            except Exception:
-                user_id = None
+            from sqlalchemy.orm import attributes
+            from sqlalchemy import inspect
             
-            user_label = "System"
-            if user_id:
+            state = inspect(obj)
+            before_state = {}
+            after_state = {}
+            changed_fields = []
+            
+            staff_id = getattr(obj, 'staff_id', None)
+            if not staff_id and model_name == 'PatientPortalUser':
+                staff_id = getattr(obj, 'username', None)
+                
+            for attr in state.mapper.column_attrs:
+                hist = attributes.get_history(obj, attr.key)
+                if hist.has_changes():
+                    if attr.key in ['updated_at', 'last_login', 'last_seen_at', 'password_hash', 'otp_code', 'otp_expiry']:
+                        continue
+                        
+                    old_val = hist.deleted[0] if hist.deleted else None
+                    new_val = hist.added[0] if hist.added else getattr(obj, attr.key)
+                    
+                    if old_val == new_val:
+                        continue
+                        
+                    def serialize_val(val):
+                        if val is None:
+                            return None
+                        from datetime import datetime, date
+                        from decimal import Decimal
+                        if isinstance(val, (datetime, date)):
+                            return val.isoformat()
+                        if isinstance(val, Decimal):
+                            return float(val)
+                        return val
+                        
+                    before_state[attr.key] = serialize_val(old_val)
+                    after_state[attr.key] = serialize_val(new_val)
+                    changed_fields.append(attr.key)
+                    
+            if changed_fields:
+                user_id = None
+                ip_address = None
+                portal_type = 'staff'
                 try:
-                    res = connection.execute(db.text("SELECT username FROM users WHERE id = :uid"), {"uid": int(user_id)}).fetchone()
-                    if res:
-                        user_label = res[0]
+                    from flask_jwt_extended import get_jwt_identity, get_jwt
+                    from utils.ip import get_client_ip
+                    user_id = get_jwt_identity()
+                    ip_address = get_client_ip()
+                    claims = get_jwt()
+                    portal_type = claims.get('portal', 'staff')
                 except Exception:
                     pass
-
-            tbl_name = target.__tablename__
-            staff_id_val = getattr(target, 'staff_id', 'Unknown')
-            year_val = getattr(target, 'screening_year', 'Unknown')
-
-            action_desc = f"Edited Patient Data ({tbl_name})"
-            details_json = {
-                "staff_id": staff_id_val,
-                "screening_year": year_val,
-                "edited_by": user_label,
-                "changes": changes
-            }
-            
-            # Write directly to default database using raw SQL statement on current connection
-            # We use target's table session query or execute directly on mapper connection if it fits,
-            # but since connection might be bound to child binds, we execute directly on standard default engine conn.
-            try:
-                default_engine = db.engines.get(None) or db.engine
-                with default_engine.connect() as default_conn:
-                    default_conn.execute(
-                        db.text("INSERT INTO audit_logs (user_id, action, resource, details, created_at) VALUES (:uid, :act, :res, :det, :ts)"),
-                        {
-                            "uid": int(user_id) if user_id else None,
-                            "act": action_desc,
-                            "res": f"{tbl_name}:{getattr(target, 'id', 'new')}",
-                            "det": json.dumps(details_json),
-                            "ts": datetime.now()
-                        }
-                    )
-                    default_conn.commit()
-            except Exception as conn_ex:
-                import sys
-                sys.stderr.write(f"[AUDIT LOG INSERT ERROR] {conn_ex}\n")
-    except Exception as ex:
+                    
+                if not user_id:
+                    try:
+                        from flask import session as flask_session
+                        user_id = flask_session.get('user_id')
+                    except Exception:
+                        pass
+                        
+                details = {
+                    "action_type": "edit",
+                    "model": model_name,
+                    "staff_id": staff_id,
+                    "changed_fields": changed_fields,
+                    "before": before_state,
+                    "after": after_state,
+                    "portal": portal_type
+                }
+                
+                screening_year = getattr(obj, 'screening_year', None)
+                if screening_year:
+                    details["screening_year"] = screening_year
+                    
+                resource_str = f"Patient:{staff_id}" if staff_id else f"{model_name}:{getattr(obj, 'id', 'unknown')}"
+                
+                action_name = f"Edit Patient {model_name.replace('Result', '').replace('Data', '').replace('Review', '')}"
+                if model_name == 'PatientPortalUser':
+                    action_name = "Edit Patient Portal Account"
+                    
+                log = AuditLog(
+                    user_id=user_id,
+                    action=action_name,
+                    resource=resource_str,
+                    details=json.dumps(details),
+                    ip_address=ip_address
+                )
+                new_audit_logs.append(log)
+                
+        for log in new_audit_logs:
+            session.add(log)
+    except Exception as e:
         import sys
-        sys.stderr.write(f"[TRACK_MODEL_CHANGES_ERROR] {ex}\n")
-
-# Listeners for Patient BioData
-event.listen(BioData, 'after_update', track_model_changes)
-event.listen(ScreeningYearBioData, 'after_update', track_model_changes)
-
-# Listeners for Screening/Clinical Records
-event.listen(ConsultationData, 'after_update', track_model_changes)
-event.listen(FBCResult, 'after_update', track_model_changes)
-event.listen(KFTResult, 'after_update', track_model_changes)
-event.listen(LipidResult, 'after_update', track_model_changes)
-event.listen(LFTResult, 'after_update', track_model_changes)
-event.listen(SpecialTestsResult, 'after_update', track_model_changes)
-event.listen(DirectorReview, 'after_update', track_model_changes)
-
+        sys.stderr.write(f"[AUDIT LOG BEFORE FLUSH ERROR] {e}\n")
+    finally:
+        session._in_audit_listener = False

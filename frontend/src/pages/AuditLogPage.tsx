@@ -158,6 +158,46 @@ const AuditLogPage: React.FC = () => {
       const data = typeof details === 'string' ? JSON.parse(details) : details;
       if (typeof data !== 'object' || data === null) return <p className="text-xs font-bold">{String(data)}</p>;
       
+      if (data.before && data.after) {
+        return (
+          <div className="mt-2 space-y-3">
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-[10px] font-black text-slate-500/60 uppercase tracking-wider">
+              {data.model && <span>Model: <b className="text-foreground font-black">{data.model}</b></span>}
+              {data.staff_id && <span>| Staff ID: <b className="text-foreground font-black">{data.staff_id}</b></span>}
+              {data.screening_year && <span>| Screening Year: <b className="text-foreground font-black">{data.screening_year}</b></span>}
+            </div>
+            <div className="overflow-hidden border border-border rounded-xl bg-card">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="bg-muted/40 border-b border-border">
+                    <th className="p-3 font-black uppercase text-[9px] text-muted-foreground tracking-widest">Field</th>
+                    <th className="p-3 font-black uppercase text-[9px] text-rose-500 tracking-widest">Before (Old Value)</th>
+                    <th className="p-3 font-black uppercase text-[9px] text-emerald-500 tracking-widest">After (New Value)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {Object.keys(data.after).map((field) => {
+                    const beforeVal = data.before[field];
+                    const afterVal = data.after[field];
+                    return (
+                      <tr key={field} className="border-b border-border last:border-0 hover:bg-muted/20 transition-colors">
+                        <td className="p-3 font-black text-muted-foreground/80 text-[10px] uppercase tracking-wider">{field.replace(/_/g, ' ')}</td>
+                        <td className="p-3 text-rose-500 font-mono text-[11px] font-medium break-all max-w-[200px]" title={String(beforeVal)}>
+                          {beforeVal === null || beforeVal === '' ? <span className="italic text-rose-500/40">Empty / Null</span> : String(beforeVal)}
+                        </td>
+                        <td className="p-3 text-emerald-600 font-mono text-[11px] font-black break-all max-w-[200px]" title={String(afterVal)}>
+                          {afterVal === null || afterVal === '' ? <span className="italic text-emerald-600/40">Empty / Null</span> : String(afterVal)}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
       const filteredData = Object.entries(data).filter(([key]) => key !== 'device' && key !== 'portal');
       if (filteredData.length === 0) return <p className="text-[10px] text-muted-foreground italic">No additional metadata fields.</p>;
 
