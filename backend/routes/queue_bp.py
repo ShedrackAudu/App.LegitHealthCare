@@ -98,7 +98,11 @@ def get_department_queue(department):
 
     # Join with ScreeningYearBioData to ensure patient is in the screening matrix
     entries_with_bio = db.session.query(
-        QueueEntry, ScreeningYearBioData
+        QueueEntry.staff_id,
+        ScreeningYearBioData.first_name,
+        ScreeningYearBioData.last_name,
+        QueueEntry.created_at,
+        QueueEntry.queue_number
     ).join(
         ScreeningYearBioData,
         (QueueEntry.staff_id == ScreeningYearBioData.staff_id) &
@@ -110,13 +114,13 @@ def get_department_queue(department):
     ).order_by(QueueEntry.created_at.asc()).all()
 
     patients = []
-    for e, bio in entries_with_bio:
+    for staff_id, first_name, last_name, created_at, queue_number in entries_with_bio:
         patients.append({
-            "staff_id": e.staff_id,
-            "first_name": bio.first_name,
-            "last_name": bio.last_name,
-            "created_at": e.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
-            "queue_number": e.queue_number
+            "staff_id": staff_id,
+            "first_name": first_name,
+            "last_name": last_name,
+            "created_at": created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
+            "queue_number": queue_number
         })
 
     return jsonify(patients), 200

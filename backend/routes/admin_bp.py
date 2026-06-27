@@ -167,35 +167,73 @@ def get_users():
     patients = PatientPortalUser.query.all()
     
     all_users = [u.to_dict() for u in staff]
+    
+    patient_staff_ids = [p.username.strip().lower() for p in patients if p.username]
+    bio_data_map = {}
+    
+    if patient_staff_ids:
+        # Bulk query DCP database
+        try:
+            dcp_engine = db.engines.get('dcp')
+            if dcp_engine:
+                from sqlalchemy import text
+                for chunk_start in range(0, len(patient_staff_ids), 1000):
+                    chunk = patient_staff_ids[chunk_start:chunk_start+1000]
+                    sql = text("SELECT staff_id, department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) IN :sids")
+                    with dcp_engine.connect() as conn:
+                        rows = conn.execute(sql, {"sids": tuple(chunk)}).fetchall()
+                        for row in rows:
+                            sid_lower = row[0].strip().lower()
+                            if sid_lower not in bio_data_map:
+                                bio_data_map[sid_lower] = {
+                                    "department": row[1],
+                                    "phone": row[2],
+                                    "first_name": row[3],
+                                    "last_name": row[4],
+                                    "section": "DCP"
+                                }
+        except Exception as e:
+            current_app.logger.error(f"Bulk dcp query failed in get_users: {e}")
+
+        # Bulk query DCT database
+        try:
+            dct_engine = db.engines.get('dct')
+            if dct_engine:
+                from sqlalchemy import text
+                for chunk_start in range(0, len(patient_staff_ids), 1000):
+                    chunk = patient_staff_ids[chunk_start:chunk_start+1000]
+                    sql = text("SELECT staff_id, department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) IN :sids")
+                    with dct_engine.connect() as conn:
+                        rows = conn.execute(sql, {"sids": tuple(chunk)}).fetchall()
+                        for row in rows:
+                            sid_lower = row[0].strip().lower()
+                            if sid_lower not in bio_data_map:
+                                bio_data_map[sid_lower] = {
+                                    "department": row[1],
+                                    "phone": row[2],
+                                    "first_name": row[3],
+                                    "last_name": row[4],
+                                    "section": "DCT"
+                                }
+        except Exception as e:
+            current_app.logger.error(f"Bulk dct query failed in get_users: {e}")
+
     for p in patients:
         p_dict = p.to_dict()
         p_dict['section'] = None
         p_dict['department'] = None
         
-        # Explicitly check each clinical database using its engine
-        for bind_key in ['dcp', 'dct']:
-            try:
-                engine = db.engines.get(bind_key)
-                if not engine: continue
-                
-                from sqlalchemy import text
-                sql = text("SELECT department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
-                with engine.connect() as conn:
-                    result = conn.execute(sql, {"sid": p.username}).fetchone()
-                    if result:
-                        p_dict['section'] = bind_key.upper()
-                        # result is a Row object, access by index or name
-                        p_dict['department'] = result[0] 
-                        if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
-                            p_dict['phone'] = result[1]
-                        if result[2]:
-                            p_dict['first_name'] = result[2]
-                        if result[3]:
-                            p_dict['last_name'] = result[3]
-                        break
-            except Exception as e:
-                current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")
-                continue
+        sid_clean = p.username.strip().lower() if p.username else None
+        if sid_clean and sid_clean in bio_data_map:
+            bio = bio_data_map[sid_clean]
+            p_dict['section'] = bio['section']
+            p_dict['department'] = bio['department']
+            if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
+                p_dict['phone'] = bio['phone']
+            if bio['first_name']:
+                p_dict['first_name'] = bio['first_name']
+            if bio['last_name']:
+                p_dict['last_name'] = bio['last_name']
                 
         p_dict['id'] = f"p{p.id}" 
         all_users.append(p_dict)

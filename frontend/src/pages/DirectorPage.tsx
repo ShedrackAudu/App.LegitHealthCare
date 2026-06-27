@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useForm, Controller } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
@@ -719,6 +720,8 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
 const DirectorPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const [patient, setPatient] = useState<any>(null);
     const [history, setHistory] = useState<any>(null);
     const [searching, setSearching] = useState(false);
@@ -999,6 +1002,12 @@ const DirectorPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            handleSearchWithId(staffIdParam, 'general');
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     const handleSearch = () => {
         // This is primarily for the PatientSearch button

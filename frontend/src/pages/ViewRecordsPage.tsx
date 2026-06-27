@@ -24,6 +24,8 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAppContext } from '@/context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -39,6 +41,8 @@ import {
 
 const ViewRecordsPage: React.FC = () => {
     const { user, activeSection, activeYear } = useAppContext();
+    const navigate = useNavigate();
+    const { hasPermission } = usePermissions();
     const [recordsData, setRecordsData] = useState<any>({
         records: [],
         total: 0,
@@ -54,8 +58,9 @@ const ViewRecordsPage: React.FC = () => {
     const [pendingModal, setPendingModal] = useState<{
         open: boolean;
         patientName: string;
+        staffId: string;
         missing: Array<{ label: string; category: string }>;
-    }>({ open: false, patientName: '', missing: [] });
+    }>({ open: false, patientName: '', staffId: '', missing: [] });
 
     // Advanced Filters State
     const [genderFilter, setGenderFilter] = useState('');
@@ -574,7 +579,7 @@ const ViewRecordsPage: React.FC = () => {
                                                                 </div>
                                                                 {(r.progress?.percentage || 0) < 100 && (
                                                                     <button 
-                                                                        onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, missing: r.progress?.missing_fields || [] })}
+                                                                        onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, staffId: r.staff_id, missing: r.progress?.missing_fields || [] })}
                                                                         className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
                                                                     >
                                                                         View Pending
@@ -751,18 +756,72 @@ const ViewRecordsPage: React.FC = () => {
                                     acc[curr.category].push(curr.label);
                                     return acc;
                                 }, {})
-                            ).map(([category, labels]) => (
-                                <div key={category} className="space-y-2 bg-muted/40 p-3 rounded-xl border border-dashed">
-                                    <h3 className="text-[10px] font-black uppercase tracking-wider text-primary">{category}</h3>
-                                    <div className="flex flex-wrap gap-1.5">
-                                        {labels.map((label: string) => (
-                                            <Badge key={label} variant="outline" className="bg-background text-[11px] font-black text-rose-500 border-rose-500/20 py-0.5 px-2 rounded-md">
-                                                {label}
-                                            </Badge>
-                                        ))}
+                            ).map(([category, labels]) => {
+                                const getNavigationTarget = (catName: string, labelName: string) => {
+                                    const cat = catName.toLowerCase();
+                                    const lbl = labelName.toLowerCase();
+                                    if (['sugar', 'ua', 'psa', 'vitals', 'clinical'].includes(cat)) {
+                                        return { route: '/consultation', permission: 'consultation' };
+                                    }
+                                    if (cat === 'fbc') {
+                                        return { route: '/tests/fbc', permission: 'lab_fbc' };
+                                    }
+                                    if (cat === 'kft') {
+                                        return { route: '/tests/kft', permission: 'lab_kft' };
+                                    }
+                                    if (cat === 'lipid') {
+                                        return { route: '/tests/lipid', permission: 'lab_lipid' };
+                                    }
+                                    if (cat === 'lft') {
+                                        return { route: '/tests/lft', permission: 'lab_lft' };
+                                    }
+                                    if (cat === 'special') {
+                                        if (lbl.includes('ecg')) {
+                                            return { route: '/tests/ecg', permission: 'lab_ecg' };
+                                        }
+                                        if (lbl.includes('spiro')) {
+                                            return { route: '/tests/spirometry', permission: 'lab_spirometry' };
+                                        }
+                                        if (lbl.includes('audio')) {
+                                            return { route: '/tests/audiometry', permission: 'lab_audiometry' };
+                                        }
+                                    }
+                                    if (cat === 'review') {
+                                        return { route: '/director', permission: 'director_review' };
+                                    }
+                                    return null;
+                                };
+
+                                return (
+                                    <div key={category} className="space-y-2 bg-muted/40 p-3 rounded-xl border border-dashed">
+                                        <h3 className="text-[10px] font-black uppercase tracking-wider text-primary">{category}</h3>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {labels.map((label: string) => {
+                                                const target = getNavigationTarget(category, label);
+                                                const canAccess = target ? hasPermission(target.permission) : false;
+                                                if (canAccess && target) {
+                                                    return (
+                                                        <Badge 
+                                                            key={label} 
+                                                            variant="outline" 
+                                                            onClick={() => navigate(`${target.route}?staff_id=${pendingModal.staffId}`)}
+                                                            className="bg-emerald-500/10 text-[11px] font-black text-emerald-600 border-emerald-500/20 py-0.5 px-2 rounded-md cursor-pointer hover:bg-emerald-500/20 hover:text-emerald-700 transition-colors"
+                                                            title="Click to proceed and fill parameter"
+                                                        >
+                                                            {label} →
+                                                        </Badge>
+                                                    );
+                                                }
+                                                return (
+                                                    <Badge key={label} variant="outline" className="bg-background text-[11px] font-black text-rose-500 border-rose-500/20 py-0.5 px-2 rounded-md">
+                                                        {label}
+                                                    </Badge>
+                                                );
+                                            })}
+                                        </div>
                                     </div>
-                                </div>
-                            ))
+                                );
+                            })
                         )}
                     </div>
                 </DialogContent>

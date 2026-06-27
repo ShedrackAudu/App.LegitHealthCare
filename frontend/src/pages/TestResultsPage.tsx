@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
@@ -113,6 +113,8 @@ const TestResultsPage: React.FC = () => {
     const { testType: paramTestType } = useParams<{ testType: string }>();
     const { pathname } = useLocation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const { activeSection, activeYear } = useAppContext();
     const { hasPermission, isAdmin } = usePermissions();
     
@@ -235,14 +237,15 @@ const TestResultsPage: React.FC = () => {
     };
 
     const fetchQueueList = async (dept: string) => {
-        setLoadingQueue(true);
+        setQueueEntries([]);
         setSelectedQueueDept(dept);
+        setIsQueueModalOpen(true);
+        setLoadingQueue(true);
         try {
             const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueEntries(resp.data);
-            setIsQueueModalOpen(true);
         } catch (err) {
             console.error("Queue list fetch failed:", err);
             toast.error("Failed to load patient queue");
@@ -336,6 +339,25 @@ const TestResultsPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            const loadPatientParam = async () => {
+                setSearching(true);
+                try {
+                    const response = await axios.get(`/patient/${staffIdParam}?year=${activeYear}&strict=true&search_type=general`, {
+                        headers: { 'X-Company-Context': activeSection }
+                    });
+                    setPatient(response.data);
+                } catch (err) {
+                    console.error("Failed to load patient from query param:", err);
+                } finally {
+                    setSearching(false);
+                }
+            };
+            loadPatientParam();
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     if (!selectedTest) {
         return (

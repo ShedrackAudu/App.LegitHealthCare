@@ -342,14 +342,15 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchQueueList = async (dept: string) => {
+    setQueueEntries([]);
     setSelectedDept(dept);
+    setIsQueueModalOpen(true);
     setLoadingQueue(true);
     try {
       const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
-      setIsQueueModalOpen(true);
     } catch (err) {
       console.error("Queue list fetch failed:", err);
       toast.error("Failed to load patient queue");

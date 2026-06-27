@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Controller } from 'react-hook-form';
@@ -197,6 +198,8 @@ const ComboField = React.forwardRef(({ label, options, setValue, ...props }: any
 const ConsultationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
   const { hasPermission } = usePermissions();
+  const [searchParams] = useSearchParams();
+  const staffIdParam = searchParams.get('staff_id');
   const [patient, setPatient] = useState<any>(null);
   const [searchId, setSearchId] = useState('');
   const [searching, setSearching] = useState(false);
@@ -259,13 +262,14 @@ const ConsultationPage: React.FC = () => {
   };
 
   const fetchQueueList = async () => {
+    setQueueEntries([]);
+    setIsQueueModalOpen(true);
     setLoadingQueue(true);
     try {
       const resp = await axios.get(`/api/queue/consultation/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
-      setIsQueueModalOpen(true);
     } catch (err) {
       console.error("Queue list fetch failed:", err);
       toast.error("Failed to load patient queue");
@@ -428,6 +432,12 @@ const ConsultationPage: React.FC = () => {
       setSearching(false);
     }
   };
+
+  useEffect(() => {
+    if (staffIdParam) {
+      handleSearch(staffIdParam, 'general');
+    }
+  }, [staffIdParam, activeYear, activeSection]);
 
   const onSubmit = async (data: ConsultationValues) => {
     if (!patient) return;
