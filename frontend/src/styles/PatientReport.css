@@ -87,8 +87,11 @@
 
     /* Reset full-screen height and overflow on root/wrapper containers for print flow */
     html, body, #root,
-    #root > div.h-screen.w-screen.overflow-hidden,
-    #root > div.h-screen.w-screen.overflow-hidden > div.flex-1.min-h-0 {
+    #root > div,
+    #root > div > div,
+    .h-screen,
+    .w-screen,
+    .min-h-0 {
         height: auto !important;
         width: auto !important;
         overflow: visible !important;
@@ -112,6 +115,7 @@
 
     /* Force print container to span page full size and remove visual borders/shadows */
     .print-container {
+        display: block !important;
         position: relative !important;
         left: 0 !important;
         top: 0 !important;
