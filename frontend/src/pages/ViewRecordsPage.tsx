@@ -587,7 +587,7 @@ const ViewRecordsPage: React.FC = () => {
                                                                 ) : (
                                                                     <button 
                                                                         onClick={() => navigate(`/patient-report?staff_id=${r.staff_id}`)}
-                                                                        className="text-[9px] text-emerald-600 hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
+                                                                        className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
                                                                     >
                                                                         View Report
                                                                     </button>

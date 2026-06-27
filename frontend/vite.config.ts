@@ -1,15 +1,18 @@
 import path from "path"
+import fs from "fs"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindv4 from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 import { execSync } from 'child_process'
 
-let gitHash = "dev"
-try {
-  gitHash = execSync("git rev-parse --short HEAD").toString().trim()
-} catch (e) {
-  // git not installed or no commits
+let gitHash = process.env.RENDER_GIT_COMMIT ? process.env.RENDER_GIT_COMMIT.substring(0, 7) : ""
+if (!gitHash) {
+  try {
+    gitHash = execSync("git rev-parse --short HEAD").toString().trim()
+  } catch (e) {
+    gitHash = "dev"
+  }
 }
 
 let gitTag = ""
@@ -27,6 +30,19 @@ export default defineConfig({
   plugins: [
     tailwindv4(),
     react(),
+    {
+      name: 'generate-version-json',
+      closeBundle() {
+        const distDir = path.resolve(__dirname, 'dist');
+        if (!fs.existsSync(distDir)) {
+          fs.mkdirSync(distDir, { recursive: true });
+        }
+        fs.writeFileSync(
+          path.resolve(distDir, 'version.json'),
+          JSON.stringify({ commit: gitHash, version: appVersion, date: buildDate }, null, 2)
+        );
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',

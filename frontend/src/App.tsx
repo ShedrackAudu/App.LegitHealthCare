@@ -96,7 +96,8 @@ const AppUpdateNotifier: React.FC = () => {
   // Perform version check against the server
   const checkVersion = async () => {
     try {
-      const response = await axios.get('/api/webhooks/version-check');
+      // 1. Check static version.json served by the frontend static web server
+      const response = await axios.get(`/version.json?_cb=${Date.now()}`);
       const serverCommit = response.data.commit;
       const localCommit = import.meta.env.VITE_APP_GIT_HASH;
 
@@ -105,11 +106,27 @@ const AppUpdateNotifier: React.FC = () => {
 
       console.log(`[VERSION CHECK] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
 
-      if (serverCommitShort && serverCommitShort !== 'latest') {
+      if (serverCommitShort && serverCommitShort !== 'dev') {
         maybeShowCard(serverCommitShort);
       }
     } catch (err) {
-      console.error("[VERSION CHECK] Failed to check app version:", err);
+      console.warn("[VERSION CHECK] Failed to fetch static version.json, falling back to API check:", err);
+      try {
+        const response = await axios.get('/api/webhooks/version-check');
+        const serverCommit = response.data.commit;
+        const localCommit = import.meta.env.VITE_APP_GIT_HASH;
+
+        const serverCommitShort = serverCommit ? serverCommit.substring(0, 7) : '';
+        const localCommitShort = localCommit ? localCommit.substring(0, 7) : '';
+
+        console.log(`[VERSION CHECK Fallback] Local: ${localCommitShort}, Server: ${serverCommitShort}`);
+
+        if (serverCommitShort && serverCommitShort !== 'latest') {
+          maybeShowCard(serverCommitShort);
+        }
+      } catch (backendErr) {
+        console.error("[VERSION CHECK] Backend version check also failed:", backendErr);
+      }
     }
   };
 
