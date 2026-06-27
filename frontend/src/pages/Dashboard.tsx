@@ -929,7 +929,22 @@ const Dashboard: React.FC = () => {
                 
                 <div className="relative mt-2">
                     <ScrollArea className="h-[400px] px-1">
-                        {queueEntries.length > 0 ? (
+                        {loadingQueue ? (
+                            <div className="space-y-3">
+                                {Array.from({ length: 4 }).map((_, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card gap-3">
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                            <div className="min-w-0 flex-1 flex flex-col gap-2">
+                                                <Skeleton className="h-4 w-32 rounded bg-muted/40 animate-pulse" />
+                                                <Skeleton className="h-3 w-48 rounded bg-muted/40 animate-pulse" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="w-8 h-8 rounded-lg bg-muted/40 animate-pulse shrink-0" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : queueEntries.length > 0 ? (
                             <div className="space-y-3">
                                 {queueEntries.map((entry, idx) => (
                                     <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">

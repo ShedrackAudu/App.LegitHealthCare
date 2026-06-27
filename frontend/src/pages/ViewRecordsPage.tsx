@@ -805,10 +805,11 @@ const ViewRecordsPage: React.FC = () => {
                                                             key={label} 
                                                             variant="outline" 
                                                             onClick={() => navigate(`${target.route}?staff_id=${pendingModal.staffId}`)}
-                                                            className="bg-emerald-500/10 text-[11px] font-black text-emerald-600 border-emerald-500/20 py-0.5 px-2 rounded-md cursor-pointer hover:bg-emerald-500/20 hover:text-emerald-700 transition-colors"
+                                                            className="bg-rose-500/10 text-[11px] font-black text-rose-600 border-rose-500/20 py-0.5 px-2 rounded-md cursor-pointer hover:bg-rose-500/20 hover:text-rose-700 transition-colors flex items-center gap-1"
                                                             title="Click to proceed and fill parameter"
                                                         >
-                                                            {label} →
+                                                            <span>{label}</span>
+                                                            <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3 shrink-0" />
                                                         </Badge>
                                                     );
                                                 }
