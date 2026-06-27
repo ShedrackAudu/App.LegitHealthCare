@@ -35,13 +35,16 @@ const PatientReportPage: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
     const [rangeInput, setRangeInput] = useState('');
+    const [emailRangeInput, setEmailRangeInput] = useState('');
     const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkEmailLoading, setBulkEmailLoading] = useState(false);
     const [bulkDownloadEnabled, setBulkDownloadEnabled] = useState(true);
+    const [bulkEmailEnabled, setBulkEmailEnabled] = useState(true);
     const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
     const [excludeEmail, setExcludeEmail] = useState(true);
 
     useEffect(() => {
-        const checkBulkDownloadStatus = async () => {
+        const checkBulkStatuses = async () => {
             try {
                 const res = await api.get('/api/config/bulk-report-download-status');
                 if (res.data && res.data.bulk_report_download_enabled !== undefined) {
@@ -50,8 +53,16 @@ const PatientReportPage: React.FC = () => {
             } catch (err) {
                 console.error('Failed to fetch bulk report download status:', err);
             }
+            try {
+                const res = await api.get('/api/config/bulk-report-email-status');
+                if (res.data && res.data.bulk_report_email_enabled !== undefined) {
+                    setBulkEmailEnabled(res.data.bulk_report_email_enabled);
+                }
+            } catch (err) {
+                console.error('Failed to fetch bulk report email status:', err);
+            }
         };
-        checkBulkDownloadStatus();
+        checkBulkStatuses();
     }, []);
 
     const handleBulkDownload = async () => {
@@ -151,6 +162,134 @@ const PatientReportPage: React.FC = () => {
             setReportData(originalReportData);
             setBulkProgress(null);
             setBulkLoading(false);
+        }
+    };
+
+    const handleBulkEmail = async () => {
+        if (!bulkEmailEnabled) {
+            toast.error("Bulk report emailing is currently disabled by the system administrator.");
+            return;
+        }
+        if (!emailRangeInput.trim()) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
+            return;
+        }
+        setBulkEmailLoading(true);
+        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports with emails...' });
+        
+        const originalPatient = selectedPatient;
+        const originalReportData = reportData;
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        try {
+            // 1. Get the list of matching patients from the backend
+            const response = await api.get(`/api/patient-report/bulk-download`, {
+                params: {
+                    range: emailRangeInput,
+                    year: activeYear,
+                    company: activeSection,
+                    list_only: 'true',
+                    only_with_email: 'true'
+                },
+                headers: {
+                    'X-Company-Context': activeSection
+                }
+            });
+            
+            const patientsList = response.data.patients || [];
+            if (patientsList.length === 0) {
+                toast.error("No completed reports with email addresses found in the specified range.", { id: 'bulkEmail' });
+                setBulkProgress(null);
+                setBulkEmailLoading(false);
+                return;
+            }
+
+            toast.loading(`Found ${patientsList.length} completed reports with emails. Starting PDF generation & email transmission...`, { id: 'bulkEmail' });
+
+            const blobToBase64 = (b: Blob): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const res = reader.result as string;
+                        const b64 = res.split(',')[1];
+                        resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(b);
+                });
+            };
+
+            // 2. Loop through each patient, load their data, and render/email the PDF
+            for (let i = 0; i < patientsList.length; i++) {
+                const patientInfo = patientsList[i];
+                setBulkProgress({ 
+                    current: i + 1, 
+                    total: patientsList.length, 
+                    name: `Emailing: ${patientInfo.first_name} ${patientInfo.last_name}` 
+                });
+
+                // Fetch details
+                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+
+                // Swap states to trigger rendering of the report pages
+                setSelectedPatient(patientInfo);
+                setReportData(detailRes.data);
+
+                // Wait 400ms for React rendering and browser layout calculations
+                await delay(400);
+
+                // Capture PDF
+                const pdfBlob = await generateFrontendPDF();
+                const b64data = await blobToBase64(pdfBlob);
+
+                const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
+                if (!pEmail || !pEmail.trim()) {
+                    console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
+                    continue;
+                }
+
+                let companyName = 'Legit HealthCare';
+                if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
+                if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
+
+                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
+                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
+                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+
+                const payloadData = {
+                    report_data: {
+                        ...detailRes.data,
+                        bio: {
+                            ...detailRes.data.bio,
+                            section: activeSection,
+                            screening_year: activeYear,
+                        }
+                    },
+                    email: pEmail,
+                    first_name: patientInfo.first_name || 'Patient',
+                    screening_year: activeYear,
+                    company: companyName,
+                    staff_id: patientInfo.staff_id || '',
+                    attachment_data: b64data,
+                    attachment_filename: filename
+                };
+
+                // Send email
+                await api.post('/api/email/report', payloadData);
+            }
+            
+            toast.success(`Bulk reports successfully emailed to ${patientsList.length} patients!`, { id: 'bulkEmail' });
+        } catch (err: any) {
+            console.error('Bulk email error:', err);
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to bulk email reports';
+            toast.error(errorMsg, { id: 'bulkEmail' });
+        } finally {
+            setSelectedPatient(originalPatient);
+            setReportData(originalReportData);
+            setBulkProgress(null);
+            setBulkEmailLoading(false);
         }
     };
 
@@ -951,28 +1090,30 @@ const PatientReportPage: React.FC = () => {
             )}
 
             {!selectedPatient && (
-                <div className="no-print space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        {/* Search Instructions Card */}
-                        <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 p-6 rounded-3xl">
-                            <div className="text-center space-y-3">
-                                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
-                                    <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-muted-foreground/30" />
-                                </div>
-                                <h2 className="text-xl font-black tracking-tight text-foreground/70">
-                                    Search a patient to view report
-                                </h2>
-                                <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
-                                    Use the search bar above to retrieve clinical results
-                                </p>
-                                <div className="flex flex-col items-center gap-2 pt-4">
-                                    <div className="h-px w-12 bg-muted-foreground/20" />
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-                                        Secure Medical Records System
-                                    </p>
-                                </div>
+                <div className="no-print space-y-6 mt-8">
+                    {/* Search Instructions Card */}
+                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 p-6 rounded-3xl w-full">
+                        <div className="text-center space-y-3">
+                            <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
+                                <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-muted-foreground/30" />
                             </div>
-                        </Card>
+                            <h2 className="text-xl font-black tracking-tight text-foreground/70">
+                                Search a patient to view report
+                            </h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
+                                Use the search bar above to retrieve clinical results
+                            </p>
+                            <div className="flex flex-col items-center gap-2 pt-4">
+                                <div className="h-px w-12 bg-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                    Secure Medical Records System
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Bulk Actions Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Bulk Download Card */}
                         <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -1044,6 +1185,59 @@ const PatientReportPage: React.FC = () => {
                             >
                                 {!bulkLoading && <HugeiconsIcon icon={Download01Icon} className="h-4 w-4" />}
                                 Bulk Download (ZIP)
+                            </Button>
+                        </Card>
+
+                        {/* Bulk Email Card */}
+                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <div className="space-y-4">
+                                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                                    <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                        <HugeiconsIcon icon={Mail01Icon} className="text-indigo-600 h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Emailer</h2>
+                                            {!bulkEmailEnabled && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                    Disabled
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Automatically email reports to patients</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-3 text-muted-foreground">
+                                    <p className="font-bold text-foreground">Emails reports meeting these criteria:</p>
+                                    <ul className="list-disc list-inside space-y-1 pl-1">
+                                        <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
+                                        <li>Patient has a valid email address configured</li>
+                                    </ul>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bulk-email-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                    <Input
+                                        id="bulk-email-pid-range"
+                                        placeholder="e.g. 1-100 or 25"
+                                        value={emailRangeInput}
+                                        onChange={(e) => setEmailRangeInput(e.target.value)}
+                                        className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                        disabled={bulkEmailLoading || !bulkEmailEnabled}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and send email reports.</p>
+                                </div>
+                            </div>
+
+                            <Button 
+                                onClick={handleBulkEmail}
+                                loading={bulkEmailLoading}
+                                disabled={!bulkEmailEnabled}
+                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                            >
+                                {!bulkEmailLoading && <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />}
+                                Bulk Email Reports
                             </Button>
                         </Card>
                     </div>

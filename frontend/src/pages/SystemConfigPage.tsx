@@ -196,6 +196,7 @@ const SystemConfigPage: React.FC = () => {
     const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
     const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
     const [bulkReportDownloadEnabled, setBulkReportDownloadEnabled] = useState(true);
+    const [bulkReportEmailEnabled, setBulkReportEmailEnabled] = useState(true);
     const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
@@ -288,6 +289,9 @@ const SystemConfigPage: React.FC = () => {
             }
             if (response.data.bulk_report_download_enabled !== undefined) {
                 setBulkReportDownloadEnabled(response.data.bulk_report_download_enabled === 'true');
+            }
+            if (response.data.bulk_report_email_enabled !== undefined) {
+                setBulkReportEmailEnabled(response.data.bulk_report_email_enabled === 'true');
             }
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
@@ -579,6 +583,28 @@ const SystemConfigPage: React.FC = () => {
             toast.success(`Bulk report download has been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
             toast.error("Failed to update Bulk report download setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
+    const handleToggleBulkReportEmail = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !bulkReportEmailEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_report_email_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkReportEmailEnabled(newValue);
+            toast.success(`Bulk report emailing has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk report emailing setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -1095,6 +1121,42 @@ const SystemConfigPage: React.FC = () => {
                                                     <span
                                                         className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
                                                             bulkReportDownloadEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Bulk Report Emailing</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Enable or disable the Bulk Report PDF Emailing feature on the Patient Report landing page.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkReportEmailEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {bulkReportEmailEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleBulkReportEmail}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    bulkReportEmailEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        bulkReportEmailEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            bulkReportEmailEnabled ? "translate-x-5" : "translate-x-1"
                                                         }`}
                                                     />
                                                 )}

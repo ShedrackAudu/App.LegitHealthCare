@@ -960,9 +960,16 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
 @jwt_required()
 def bulk_download_reports():
     from models import SystemConfig
-    download_config = SystemConfig.query.get('bulk_report_download_enabled')
-    if download_config and download_config.value.lower() != 'true':
-        return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
+    only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
+    
+    if only_with_email:
+        email_config = SystemConfig.query.get('bulk_report_email_enabled')
+        if email_config and email_config.value.lower() != 'true':
+            return jsonify({"error": "Bulk report emailing is currently disabled by the system administrator."}), 403
+    else:
+        download_config = SystemConfig.query.get('bulk_report_download_enabled')
+        if download_config and download_config.value.lower() != 'true':
+            return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
 
     user_id_str = get_jwt_identity()
     if not user_id_str:
@@ -995,6 +1002,7 @@ def bulk_download_reports():
     year = int(year_param) if year_param else datetime.now().year
 
     exclude_email = request.args.get('exclude_email', 'true').lower() == 'true'
+    only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
 
     # Parse range (e.g. 1-100)
     try:
@@ -1028,8 +1036,16 @@ def bulk_download_reports():
         if start_id <= pid_int <= end_id:
             bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
             email = bio.email if bio else None
-            # If exclude_email is true, only include if patient has no email
-            if not exclude_email or not email or not email.strip():
+            
+            email_check_passed = False
+            if only_with_email:
+                if email and email.strip():
+                    email_check_passed = True
+            else:
+                if not exclude_email or not email or not email.strip():
+                    email_check_passed = True
+
+            if email_check_passed:
                 # Check condition 1: Report is 100% complete
                 percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
                 if percentage == 100:
@@ -1046,7 +1062,8 @@ def bulk_download_reports():
                     "staff_id": yr.staff_id,
                     "patient_id": yr.patient_id,
                     "first_name": bio.first_name if bio else yr.first_name,
-                    "last_name": bio.last_name if bio else yr.last_name
+                    "last_name": bio.last_name if bio else yr.last_name,
+                    "email": bio.email if bio else ""
                 } for yr, bio in matching_records
             ]
         }), 200
