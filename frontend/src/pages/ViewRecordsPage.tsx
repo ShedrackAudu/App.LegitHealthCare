@@ -577,12 +577,19 @@ const ViewRecordsPage: React.FC = () => {
                                                                         {r.progress?.percentage || 0}%
                                                                     </span>
                                                                 </div>
-                                                                {(r.progress?.percentage || 0) < 100 && (
+                                                                {(r.progress?.percentage || 0) < 100 ? (
                                                                     <button 
                                                                         onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, staffId: r.staff_id, missing: r.progress?.missing_fields || [] })}
                                                                         className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
                                                                     >
                                                                         View Pending
+                                                                    </button>
+                                                                ) : (
+                                                                    <button 
+                                                                        onClick={() => navigate(`/patient-report?staff_id=${r.staff_id}`)}
+                                                                        className="text-[9px] text-emerald-600 hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
+                                                                    >
+                                                                        View Report
                                                                     </button>
                                                                 )}
                                                             </div>

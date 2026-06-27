@@ -800,7 +800,8 @@ const SignupPage: React.FC = () => {
                              </div>
                              <p className="text-xs text-muted-foreground font-medium">
                                We sent a 6-digit code to <br/>
-                               <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
+                               <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>.
+                               <span className="block mt-1 text-[10px] text-amber-600/90 font-bold">Can't find it? Check your spam or junk folder.</span>
                              </p>
                           </div>
 

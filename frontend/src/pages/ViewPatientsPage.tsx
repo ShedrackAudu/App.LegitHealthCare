@@ -44,6 +44,7 @@ const ViewPatientsPage: React.FC = () => {
     const [perPage, setPerPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
     // Filters State
+    const [departments, setDepartments] = useState<string[]>([]);
     const [genderFilter, setGenderFilter] = useState('');
     const [deptFilter, setDeptFilter] = useState('');
     const [nationFilter, setNationFilter] = useState('');
@@ -101,6 +102,18 @@ const ViewPatientsPage: React.FC = () => {
             setLoading(false);
         }
     };
+
+    useEffect(() => {
+        const fetchConfigDepartments = async () => {
+            try {
+                const res = await axios.get('/api/config/departments');
+                setDepartments(res.data.map((d: any) => d.name));
+            } catch (err) {
+                console.error("Failed to load departments:", err);
+            }
+        };
+        fetchConfigDepartments();
+    }, []);
 
     useEffect(() => {
         fetchPatients(searchQuery, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
@@ -212,15 +225,9 @@ const ViewPatientsPage: React.FC = () => {
                                     className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
                                 >
                                     <option value="">All Departments</option>
-                                    <option value="Admin">Admin</option>
-                                    <option value="Accounts">Accounts</option>
-                                    <option value="Human Resources">Human Resources</option>
-                                    <option value="Engineering">Engineering</option>
-                                    <option value="Operations">Operations</option>
-                                    <option value="Security">Security</option>
-                                    <option value="HSE">HSE</option>
-                                    <option value="Medical">Medical</option>
-                                    <option value="IT">IT</option>
+                                    {departments.map((dept) => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
                                 </select>
                             </div>
 

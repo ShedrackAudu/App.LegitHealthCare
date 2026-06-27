@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   File01Icon, 
@@ -27,6 +28,8 @@ import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
@@ -165,6 +168,12 @@ const PatientReportPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            handleSearchById(staffIdParam, 'general');
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     const handleSelectPatient = async (patient: any) => {
         setLoading(true);
