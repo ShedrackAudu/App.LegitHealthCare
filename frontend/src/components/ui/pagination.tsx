@@ -59,7 +59,6 @@ export const Pagination: React.FC<PaginationProps> = ({
                 key={option}
                 onClick={() => {
                   onPerPageChange(option);
-                  onPageChange(1); // Reset to page 1 on per-page changes
                 }}
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-xl cursor-pointer transition-all outline-none my-0.5",
