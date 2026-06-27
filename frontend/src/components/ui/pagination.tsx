@@ -2,7 +2,7 @@
 
 import * as React from "react"
 import { HugeiconsIcon } from '@hugeicons/react'
-import { ArrowLeft01Icon, ArrowRight01Icon, ArrowDown01Icon } from '@hugeicons/core-free-icons'
+import { ArrowLeft01Icon, ArrowRight01Icon, ArrowDown01Icon, ArrowLeftDoubleIcon, ArrowRightDoubleIcon } from '@hugeicons/core-free-icons'
 import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import {
@@ -64,8 +64,8 @@ export const Pagination: React.FC<PaginationProps> = ({
                 className={cn(
                   "flex items-center w-full px-3 py-2 text-sm font-medium rounded-xl cursor-pointer transition-all outline-none my-0.5",
                   isSelected
-                    ? "bg-primary/10 text-primary font-bold dark:bg-primary/20"
-                    : "text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
+                     ? "bg-primary/10 text-primary font-bold dark:bg-primary/20"
+                     : "text-muted-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground"
                 )}
               >
                 {/* Custom Checkbox */}
@@ -107,6 +107,19 @@ export const Pagination: React.FC<PaginationProps> = ({
         {/* Divider */}
         <div className="w-px h-full bg-input" />
 
+        {/* First Page Button */}
+        <button
+          onClick={() => onPageChange(1)}
+          disabled={currentPage === 1 || loading}
+          className="flex items-center justify-center w-8 sm:w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
+          title="First Page"
+        >
+          <HugeiconsIcon icon={ArrowLeftDoubleIcon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-full bg-input" />
+
         {/* Prev Page Button */}
         <button
           onClick={() => onPageChange(currentPage - 1)}
@@ -128,6 +141,19 @@ export const Pagination: React.FC<PaginationProps> = ({
           title="Next Page"
         >
           <HugeiconsIcon icon={ArrowRight01Icon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+        </button>
+
+        {/* Divider */}
+        <div className="w-px h-full bg-input" />
+
+        {/* Last Page Button */}
+        <button
+          onClick={() => onPageChange(totalPages)}
+          disabled={currentPage === totalPages || loading}
+          className="flex items-center justify-center w-8 sm:w-10 h-full text-muted-foreground hover:bg-accent disabled:opacity-30 disabled:hover:bg-transparent transition-all outline-none"
+          title="Last Page"
+        >
+          <HugeiconsIcon icon={ArrowRightDoubleIcon} className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
         </button>
       </div>
     </div>
