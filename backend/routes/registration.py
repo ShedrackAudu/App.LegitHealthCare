@@ -65,16 +65,17 @@ def get_patient(staff_id):
         
     patient_id = yearly_record.patient_id if yearly_record else None
     
-    # Log view action in audit trail
-    try:
-        AuditLog.log_action(
-            action="View Patient Profile",
-            resource=f"Patient:{patient.staff_id}",
-            details={"screening_year": year, "search_type": search_type, "source": "Registration/Directory"},
-            commit=True
-        )
-    except Exception as audit_err:
-        pass
+    # Log view action in audit trail only if not a search lookup
+    if not request.args.get('search_type'):
+        try:
+            AuditLog.log_action(
+                action="View Patient Profile",
+                resource=f"Patient:{patient.staff_id}",
+                details={"screening_year": year, "source": "Registration/Directory"},
+                commit=True
+            )
+        except Exception as audit_err:
+            pass
         
     return jsonify({
         "staff_id": patient.staff_id,

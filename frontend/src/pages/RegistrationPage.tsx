@@ -929,7 +929,7 @@ const RegistrationPage: React.FC = () => {
                     <Label className="text-primary font-bold">Patient ID {!(isEditMode || isSelecting) && <span className="text-rose-500">*</span>}</Label>
                     <Input 
                       {...register('patient_id', { required: !(isEditMode || isSelecting) })} 
-                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
+                      className="h-11 border-primary/30 font-bold text-lg tracking-wider" 
                       placeholder={(isEditMode || isSelecting) ? "Patient ID (Optional)" : "e.g. 12345"} 
                       inputMode="numeric"
                       required={!(isEditMode || isSelecting)}
