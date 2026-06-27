@@ -432,12 +432,13 @@ def get_patient_profile():
                     row = dict(result._mapping)
                     # Log audit action
                     try:
-                        AuditLog.log_action(
-                            action="View Patient Profile",
-                            resource=f"PatientPortalUser:{user_id}",
-                            details={"staff_id": str(row.get('staff_id')), "section": ctx.upper()},
-                            commit=True
-                        )
+                        if not p_user:
+                            AuditLog.log_action(
+                                action="View Patient Profile",
+                                resource=f"PatientPortalUser:{user_id}",
+                                details={"staff_id": str(row.get('staff_id')), "section": ctx.upper()},
+                                commit=True
+                            )
                     except Exception as ex:
                         current_app.logger.error(f"Audit log failed for profile view: {ex}")
                         

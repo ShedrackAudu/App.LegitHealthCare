@@ -471,6 +471,25 @@ def get_test_result(test_type, staff_id):
         log_test_type = test_type
         if test_type == 'special':
             subtype = request.args.get('subtype')
+            if not subtype or subtype not in ['ecg', 'spirometry', 'audiometry']:
+                # Fallback 1: Check referrer URL path
+                referer = (request.referrer or request.headers.get('Referer', '')).lower()
+                if 'ecg' in referer:
+                    subtype = 'ecg'
+                elif 'spirometry' in referer:
+                    subtype = 'spirometry'
+                elif 'audiometry' in referer:
+                    subtype = 'audiometry'
+            
+            if not subtype or subtype not in ['ecg', 'spirometry', 'audiometry']:
+                # Fallback 2: Check user's granular lab permissions
+                user_perms = []
+                if user.has_permission('lab_ecg'): user_perms.append('ecg')
+                if user.has_permission('lab_spirometry'): user_perms.append('spirometry')
+                if user.has_permission('lab_audiometry'): user_perms.append('audiometry')
+                if len(user_perms) == 1:
+                    subtype = user_perms[0]
+
             if subtype in ['ecg', 'spirometry', 'audiometry']:
                 display_test_type = subtype.upper()
                 log_test_type = subtype

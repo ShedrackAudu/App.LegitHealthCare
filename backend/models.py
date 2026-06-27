@@ -1424,6 +1424,18 @@ def before_flush_audit(session, flush_context, instances):
                 action_name = f"Edit Patient {model_name.replace('Result', '').replace('Data', '').replace('Review', '')}"
                 if model_name == 'PatientPortalUser':
                     action_name = "Edit Patient Portal Account"
+                elif model_name == 'SpecialTestsResult':
+                    edited_tests = []
+                    if any(f in changed_fields for f in ['ecg_result', 'ecg_remark']):
+                        edited_tests.append("ECG")
+                    if any(f in changed_fields for f in ['spirometry_result', 'spirometry_remark', 'weight', 'height']):
+                        edited_tests.append("Spirometry")
+                    if any(f in changed_fields for f in ['audiometry_result', 'audiometry_remark']):
+                        edited_tests.append("Audiometry")
+                    if edited_tests:
+                        action_name = f"Edit Patient {', '.join(edited_tests)}"
+                    else:
+                        action_name = "Edit Patient Special Tests"
                     
                 log = AuditLog(
                     user_id=user_id,
