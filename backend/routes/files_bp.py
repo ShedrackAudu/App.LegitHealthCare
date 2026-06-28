@@ -122,7 +122,8 @@ def view_file(file_id):
     content_type, _ = mimetypes.guess_type(pf.filename)
     if content_type:
         response.headers['Content-Type'] = content_type
-    response.headers['Content-Disposition'] = f'inline; filename="{pf.filename}"'
+    disposition = 'attachment' if request.args.get('download') == 'true' else 'inline'
+    response.headers['Content-Disposition'] = f'{disposition}; filename="{pf.filename}"'
     return _cors_headers(response)
 
 @files_bp.route('/<int:file_id>', methods=['DELETE'])

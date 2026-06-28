@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
     File01Icon,
@@ -7,7 +8,8 @@ import {
     PrinterIcon,
     Calendar03Icon,
     ArrowRight01Icon,
-    Shield01Icon
+    Shield01Icon,
+    Attachment01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
@@ -320,7 +322,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                     <Button
                                         size="default"
-                                        className="h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
+                                        className="w-full sm:w-auto h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
                                         onClick={handleGenerateReport}
                                         loading={loading}
                                         disabled={!selectedYear || fetchingYears}
@@ -340,7 +342,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <HugeiconsIcon icon={Shield01Icon} className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
-                            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
+                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
                                 <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
                                     <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
@@ -349,6 +351,11 @@ const PatientMedicalReport: React.FC = () => {
                                 </Button>
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
                                     <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
+                                </Button>
+                                <Button asChild className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 text-[11px] md:text-xs" variant="outline">
+                                    <Link to="/patient/files">
+                                        <HugeiconsIcon icon={Attachment01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Technical Files</span>
+                                    </Link>
                                 </Button>
                             </div>
                         </div>
