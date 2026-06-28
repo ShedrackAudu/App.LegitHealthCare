@@ -330,6 +330,12 @@ const PatientMedicalReport: React.FC = () => {
                                         {!loading && <HugeiconsIcon icon={ArrowRight01Icon} className="mr-2 h-3.5 w-3.5" />}
                                         Retrieve Report
                                     </Button>
+                                    <Button asChild className="w-full sm:w-auto h-10 rounded-xl px-6 font-black shadow-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 text-xs" variant="outline">
+                                        <Link to="/patient/files">
+                                            <HugeiconsIcon icon={Attachment01Icon} className="mr-2 h-3.5 w-3.5" />
+                                            Technical Files
+                                        </Link>
+                                    </Button>
                                 </div>
                             </div>
                         </CardHeader>
