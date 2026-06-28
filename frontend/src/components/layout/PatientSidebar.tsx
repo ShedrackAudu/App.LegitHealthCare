@@ -11,7 +11,7 @@ import {
   Building02Icon,
   Calendar03Icon,
   Comment01Icon,
-  Activity01Icon,
+  Attachment01Icon,
   Logout02Icon,
   AccountSetting01Icon
 } from '@hugeicons/core-free-icons';
@@ -29,7 +29,7 @@ interface SidebarItem {
 const patientItems: SidebarItem[] = [
   { title: 'Dashboard', path: '/patient/dashboard', icon: DashboardSquare02Icon },
   { title: 'Medical Report', path: '/patient/records', icon: Note01Icon },
-  { title: 'Technical Files', path: '/patient/files', icon: Activity01Icon },
+  { title: 'Technical Files', path: '/patient/files', icon: Attachment01Icon },
   { title: 'Appointments', path: '/patient/appointments', icon: Calendar03Icon },
   { title: 'Contact Us', path: '/patient/contact', icon: Comment01Icon },
 ];
