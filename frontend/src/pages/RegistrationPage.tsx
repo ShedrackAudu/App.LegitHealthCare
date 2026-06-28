@@ -61,7 +61,7 @@ const RegistrationPage: React.FC = () => {
 
   const registrationSchema = z.object({
     staff_id: z.string().min(1, 'Staff ID is required'),
-    patient_id: (isEditMode || isSelecting) ? z.string().nullable().optional() : z.string().min(1, 'Patient ID is required'),
+    patient_id: isEditMode ? z.string().nullable().optional() : z.string().min(1, 'Patient ID is required'),
     first_name: z.string().min(1, 'First Name is required'),
     middle_name: z.string().nullable().optional(),
     last_name: z.string().min(1, 'Last Name is required'),
@@ -926,13 +926,13 @@ const RegistrationPage: React.FC = () => {
                     {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
                   </div>
                   <div className="space-y-2">
-                    <Label className="text-primary font-bold">Patient ID {!(isEditMode || isSelecting) && <span className="text-rose-500">*</span>}</Label>
+                    <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
                     <Input 
-                      {...register('patient_id', { required: !(isEditMode || isSelecting) })} 
+                      {...register('patient_id', { required: !isEditMode })} 
                       className="h-11 border-primary/30 font-bold text-lg tracking-wider" 
-                      placeholder={(isEditMode || isSelecting) ? "Patient ID (Optional)" : "e.g. 12345"} 
+                      placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
                       inputMode="numeric"
-                      required={!(isEditMode || isSelecting)}
+                      required={!isEditMode}
                       onChange={(e) => {
                         const val = e.target.value.replace(/\D/g, '').replace(/^0+/, '');
                         e.target.value = val;
