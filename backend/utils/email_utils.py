@@ -110,8 +110,17 @@ class EmailService:
 
 
     @staticmethod
-    def get_report_template(first_name, screening_year, section, logo_url=None):
+    def get_report_template(first_name, screening_year, section, logo_url=None, app_url=None):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 19px; font-weight: 800; color: #14b8a5; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
+        
+        # Ensure login and signup URLs are correct
+        base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
+        login_url = f"{base_url}/login"
+        signup_url = f"{base_url}/signup"
+        
+        # Escape user-controlled data (SEC-008)
+        e_first_name = escape(first_name)
+        e_screening_year = escape(screening_year)
         
         return f"""
         <!DOCTYPE html>
@@ -121,16 +130,19 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
-                .body-text {{ font-size: 16px; margin-bottom: 25px; }}
-                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
-                .contact-section {{ margin-top: 30px; padding-top: 20px; font-size: 14px; color: #64748b; }}
+                .greeting {{ font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }}
+                .body-text {{ font-size: 14px; margin-bottom: 15px; color: #475569; }}
+                .body-text p {{ margin: 6px 0; }}
+                .cta-container {{ text-align: center; margin: 20px 0; }}
+                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block; }}
+                .signature {{ margin-top: 20px; font-size: 13px; color: #475569; }}
+                .signed-section {{ margin-top: 15px; font-size: 13px; line-height: 1.4; color: #1e293b; }}
+                .contact-section {{ margin-top: 20px; padding-top: 20px; font-size: 13px; color: #64748b; }}
                 .contact-link {{ color: #14b8a5; text-decoration: none; font-weight: 600; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -141,16 +153,32 @@ class EmailService:
                 </div>
                 
                 <div class="header">
-                    <h1>{screening_year} Medical Report</h1>
+                    <h1>{e_screening_year} Medical Report</h1>
                 </div>
                 
                 <div class="content">
-                    <div class="greeting">Dear {first_name},</div>
+                    <div class="greeting">Dear {e_first_name},</div>
                     
                     <div class="body-text">
-                        <p>Thanks for making yourself available for this year's Annual Medical Screening Excercise.</p>
-                        <p>Please find attached your Medical Report for the year {screening_year}.</p>
+                        <p>Thank you for participating in this year's Annual Medical Screening Exercise.</p>
+                        <p>Please find attached your official Medical Report for the {e_screening_year} Annual Medical Screening.</p>
                         <p>The hard copy of your result will be given to the {section} Medical Team for dispatch to your department.</p>
+                    </div>
+
+                    <div class="body-text" style="border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: 15px;">
+                        You can also view your full clinical findings and manage your information online by logging into your patient portal:
+                    </div>
+                    
+                    <div class="cta-container">
+                        <a href="{login_url}" class="cta-button">Login to My Portal</a>
+                    </div>
+
+                    <div class="body-text">
+                        <strong>Don't have an account yet?</strong> Click below to claim your patient profile and set up your login credentials:
+                    </div>
+
+                    <div class="cta-container" style="margin: 15px 0 25px 0;">
+                        <a href="{signup_url}" class="cta-button" style="background-color: #475569;">Claim / Create My Account</a>
                     </div>
                     
                     <div class="signature">
@@ -196,12 +224,15 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .data-table {{ width: 100%; border-collapse: collapse; margin: 20px 0; }}
-                .appointment-box {{ background: rgba(210, 241, 238, 0.4); border: 1px solid rgba(210, 241, 238, 0.8); padding: 15px; border-radius: 8px; margin: 20px 0; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .content p {{ font-size: 14px; color: #475569; }}
+                .content h3 {{ font-size: 16px; margin: 20px 0 10px 0; color: #1e293b; }}
+                .data-table {{ width: 100%; border-collapse: collapse; margin: 15px 0; font-size: 14px; }}
+                .appointment-box {{ background: rgba(210, 241, 238, 0.4); border: 1px solid rgba(210, 241, 238, 0.8); padding: 12px 16px; border-radius: 8px; margin: 15px 0; }}
+                .appointment-box p {{ margin: 4px 0; font-size: 14px; color: #333; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -249,15 +280,15 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
-                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
-                .otp-display {{ font-size: 36px; font-weight: 800; color: #1e293b; margin: 25px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px; letter-spacing: -1px !important; word-spacing: 0 !important; line-height: 1; }}
-                .expiry-text {{ font-size: 15px; color: #64748b; margin-bottom: 30px; }}
-                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .greeting {{ font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }}
+                .body-text {{ font-size: 14px; margin-bottom: 15px; color: #475569; }}
+                .otp-display {{ font-size: 28px; font-weight: 800; color: #1e293b; margin: 15px 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; border-bottom: 2px solid #e2e8f0; display: inline-block; padding-bottom: 5px; letter-spacing: -1px !important; word-spacing: 0 !important; line-height: 1; }}
+                .expiry-text {{ font-size: 13px; color: #64748b; margin-bottom: 15px; }}
+                .signature {{ margin-top: 20px; font-size: 13px; color: #475569; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -330,17 +361,17 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
-                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
-                .details-box {{ background-color: #f8fafc; padding: 20px; border-radius: 8px; border-left: 4px solid #14b8a5; margin-bottom: 25px; }}
-                .details-box p {{ margin: 10px 0; font-size: 16px; }}
-                .cta-container {{ text-align: center; margin: 35px 0; }}
-                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
-                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .greeting {{ font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }}
+                .body-text {{ font-size: 14px; margin-bottom: 15px; color: #475569; }}
+                .details-box {{ background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #14b8a5; margin-bottom: 15px; }}
+                .details-box p {{ margin: 4px 0; font-size: 14px; }}
+                .cta-container {{ text-align: center; margin: 20px 0; }}
+                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block; }}
+                .signature {{ margin-top: 20px; font-size: 13px; color: #475569; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -398,8 +429,9 @@ class EmailService:
     def get_report_ready_template(first_name, screening_year, app_url, logo_url=None):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 19px; font-weight: 800; color: #14b8a5; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
         
-        # Ensure login URL is correct
+        # Ensure login and signup URLs are correct
         login_url = f"{app_url.rstrip('/')}/login"
+        signup_url = f"{app_url.rstrip('/')}/signup"
         
         # Escape user-controlled data (SEC-008)
         e_first_name = escape(first_name)
@@ -413,16 +445,17 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
-                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
-                .cta-container {{ text-align: center; margin: 35px 0; }}
-                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
-                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .signed-section {{ margin-top: 25px; font-size: 15px; line-height: 1.4; color: #1e293b; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .greeting {{ font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }}
+                .body-text {{ font-size: 14px; margin-bottom: 10px; color: #475569; }}
+                .body-text p {{ margin: 4px 0; }}
+                .cta-container {{ text-align: center; margin: 20px 0; }}
+                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block; }}
+                .signature {{ margin-top: 20px; font-size: 13px; color: #475569; }}
+                .signed-section {{ margin-top: 15px; font-size: 13px; line-height: 1.4; color: #1e293b; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
             </style>
         </head>
@@ -450,10 +483,19 @@ class EmailService:
                     <div class="cta-container">
                         <a href="{login_url}" class="cta-button">View My Medical Report</a>
                     </div>
+
+                    <div class="body-text" style="border-top: 1px dashed #e2e8f0; padding-top: 15px; margin-top: 15px;">
+                        <strong>Don't have a portal account yet?</strong> If you haven't registered on our patient portal, click below to claim your profile and set up your login credentials:
+                    </div>
+
+                    <div class="cta-container" style="margin: 15px 0 25px 0;">
+                        <a href="{signup_url}" class="cta-button" style="background-color: #475569;">Claim / Create My Account</a>
+                    </div>
                     
                     <div class="body-text" style="font-size: 14px; color: #64748b; text-align: center;">
-                        If the button doesn't work, copy and paste this link:<br>
-                        <a href="{login_url}" style="color: #14b8a5;">{login_url}</a>
+                        If the buttons don't work, copy and paste the appropriate link:<br>
+                        Login: <a href="{login_url}" style="color: #14b8a5;">{login_url}</a><br>
+                        Claim Account: <a href="{signup_url}" style="color: #14b8a5;">{signup_url}</a>
                     </div>
                     
                     <div class="signature">
@@ -534,17 +576,18 @@ class EmailService:
             <style>
                 body {{ font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; line-height: 1.6; color: #333; }}
                 .container {{ max-width: 600px; margin: 0 auto; padding: 20px; border: 1px solid #eee; border-radius: 10px; }}
-                .header {{ background: #14b8a5; color: #ffffff; padding: 20px; border-radius: 8px 8px 0 0; text-align: center; }}
-                .header h1 {{ margin: 0; font-size: 24px; font-weight: 700; }}
+                .header {{ background: #14b8a5; color: #ffffff; padding: 15px; border-radius: 8px 8px 0 0; text-align: center; }}
+                .header h1 {{ margin: 0; font-size: 20px; font-weight: 700; }}
                 .content {{ padding: 20px; }}
-                .greeting {{ font-size: 18px; font-weight: 700; color: #1e293b; margin-bottom: 20px; }}
-                .body-text {{ font-size: 16px; margin-bottom: 25px; color: #475569; }}
-                .cta-container {{ text-align: center; margin: 35px 0; }}
-                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 14px 28px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 16px; display: inline-block; }}
-                .signature {{ margin-top: 35px; font-size: 15px; color: #475569; }}
-                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 12px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
+                .greeting {{ font-size: 16px; font-weight: 700; color: #1e293b; margin-bottom: 12px; }}
+                .body-text {{ font-size: 14px; margin-bottom: 10px; color: #475569; }}
+                .body-text p {{ margin: 4px 0; }}
+                .cta-container {{ text-align: center; margin: 20px 0; }}
+                .cta-button {{ background-color: #14b8a5; color: #ffffff !important; padding: 12px 24px; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 14px; display: inline-block; }}
+                .signature {{ margin-top: 20px; font-size: 13px; color: #475569; }}
+                .footer {{ background-color: rgba(210, 241, 238, 0.4); font-size: 11px; color: #475569; padding: 15px; border-radius: 6px; border-top: 1px solid rgba(210, 241, 238, 0.8); text-align: center; margin-top: 20px; }}
                 .footer p {{ margin: 2px 0; }}
-                .whatsapp-section {{ margin-top: 25px; padding: 15px; background-color: #f8fafc; border-radius: 8px; font-size: 14px; color: #64748b; }}
+                .whatsapp-section {{ margin-top: 15px; padding: 15px; background-color: #f8fafc; border-radius: 8px; font-size: 13px; color: #64748b; }}
                 .whatsapp-link {{ color: #14b8a5; text-decoration: none; font-weight: 600; }}
             </style>
         </head>
