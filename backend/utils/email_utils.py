@@ -116,7 +116,7 @@ class EmailService:
         # Ensure login and signup URLs are correct
         base_url = app_url.rstrip('/') if app_url else "http://localhost:5173"
         login_url = f"{base_url}/login"
-        signup_url = f"{base_url}/signup"
+        signup_url = f"{base_url}/signup?portal=patient"
         
         # Escape user-controlled data (SEC-008)
         e_first_name = escape(first_name)
@@ -431,7 +431,7 @@ class EmailService:
         
         # Ensure login and signup URLs are correct
         login_url = f"{app_url.rstrip('/')}/login"
-        signup_url = f"{app_url.rstrip('/')}/signup"
+        signup_url = f"{app_url.rstrip('/')}/signup?portal=patient"
         
         # Escape user-controlled data (SEC-008)
         e_first_name = escape(first_name)
