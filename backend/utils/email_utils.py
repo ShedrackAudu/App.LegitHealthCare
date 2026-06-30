@@ -536,22 +536,11 @@ class EmailService:
         # Conditional content based on whether this is a reminder or initial registration email
         if is_reminder:
             header_title = "Account Verification Reminder"
-            intro_text = f"""
-                We noticed that your patient account for the <strong>{e_year} medical screening program</strong> is still pending verification.
-            """
-            detail_text = """
-                Your screening data and medical records are ready and waiting for you. To access your results and track your health information, 
-                you need to complete your account setup by verifying your email address.
-            """
-            cta_text = """
-                Please click the button below to complete your account verification. If you have already started the process, 
-                simply log in and follow the on-screen instructions to finish:
-            """
+            intro_text = "We noticed your patient profile account is pending verification."
+            detail_text = f"To access your {e_year} screening report and view your health records online, please complete your account verification."
+            cta_text = "Click below to verify your email and activate your patient portal account:"
             cta_button_label = "Complete Account Setup"
-            followup_text = """
-                If you have already verified your account, please disregard this email. 
-                You will continue to receive weekly reminders until your account is fully activated.
-            """
+            followup_text = "If you have already verified your account, you can safely disregard this email."
         else:
             header_title = "Registration Successful"
             intro_text = f"""
