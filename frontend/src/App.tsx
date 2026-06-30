@@ -56,7 +56,6 @@ const AppUpdateNotifier: React.FC = () => {
   const { socket, user } = useAppContext();
 
   const lastSeenServerVersion = useRef<string | null>(null);
-  const firstDetectedAt = useRef<{ [version: string]: number }>({});
 
   // Decide whether to show the card for a given server commit hash
   const maybeShowCard = (serverCommitShort: string) => {
@@ -72,26 +71,6 @@ const AppUpdateNotifier: React.FC = () => {
     const acknowledgedVersion = localStorage.getItem(ACKNOWLEDGED_VERSION_KEY);
     if (acknowledgedVersion === serverCommitShort) {
       console.log(`[VERSION CHECK] Server version ${serverCommitShort} already acknowledged. Suppressing card.`);
-      return;
-    }
-
-    // Track when we first saw this version to enforce a 5-minute delay immediately after build deployment
-    if (!firstDetectedAt.current[serverCommitShort]) {
-      firstDetectedAt.current[serverCommitShort] = Date.now();
-      console.log(`[VERSION CHECK] First detected new version ${serverCommitShort}. Delaying update card for 5 minutes.`);
-      
-      // Schedule check to execute exactly after the 5-minute delay completes
-      setTimeout(() => {
-        checkVersion();
-      }, 300000);
-    }
-
-    const timeSinceDetection = Date.now() - firstDetectedAt.current[serverCommitShort];
-    const delayRequired = 300000; // 5 minutes delay in milliseconds
-
-    if (timeSinceDetection < delayRequired) {
-      const remainingSeconds = Math.round((delayRequired - timeSinceDetection) / 1000);
-      console.log(`[VERSION CHECK] Update available for version ${serverCommitShort} but delayed (${remainingSeconds}s remaining).`);
       return;
     }
 
