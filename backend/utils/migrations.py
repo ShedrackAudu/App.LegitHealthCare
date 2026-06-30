@@ -45,8 +45,20 @@ def ensure_schema(app):
                     else:
                         app.logger.debug(f"passport_image column already exists in {name} bio_data table.")
 
-                # 2. Fix AuditLog Foreign Key (Conflict with Patient Portal in Postgres)
+                # 2. Fix AuditLog Foreign Key (Conflict with Patient Portal in Postgres) and Add Geolocation Fields
                 if 'audit_logs' in inspector.get_table_names():
+                    cols = [c['name'] for c in inspector.get_columns('audit_logs')]
+                    with engine.connect() as conn:
+                        if 'country' not in cols:
+                            conn.execute(text("ALTER TABLE audit_logs ADD COLUMN country VARCHAR(100)"))
+                        if 'city' not in cols:
+                            conn.execute(text("ALTER TABLE audit_logs ADD COLUMN city VARCHAR(100)"))
+                        if 'latitude' not in cols:
+                            conn.execute(text("ALTER TABLE audit_logs ADD COLUMN latitude FLOAT"))
+                        if 'longitude' not in cols:
+                            conn.execute(text("ALTER TABLE audit_logs ADD COLUMN longitude FLOAT"))
+                        conn.commit()
+
                     fks = inspector.get_foreign_keys('audit_logs')
                     for fk in fks:
                         if 'user_id' in fk['constrained_columns'] and fk.get('referred_table') == 'users':
@@ -54,28 +66,38 @@ def ensure_schema(app):
                             app.logger.info(f"Detected restrictive FK '{con_name}' on audit_logs in {name}. Removal in progress...")
                             try:
                                 with engine.connect() as conn:
-                                    # We use a literal text block for the drop constraint
-                                    # Since con_name is retrieved from the DB metadata, it is trusted.
                                     conn.execute(text(f"ALTER TABLE audit_logs DROP CONSTRAINT {con_name}"))
                                     conn.commit()
                                 app.logger.info(f"Successfully removed FK '{con_name}' from {name} database.")
                             except Exception as e:
                                 app.logger.debug(f"Could not drop constraint {con_name} (might be SQLite): {e}")
 
-                # 3. Add must_reset_password to users and patient_users
+                # 3. Add must_reset_password and lockout/revision columns to users and patient_users
                 if 'users' in inspector.get_table_names():
                     cols = [c['name'] for c in inspector.get_columns('users')]
-                    if 'must_reset_password' not in cols:
-                        with engine.connect() as conn:
+                    with engine.connect() as conn:
+                        if 'must_reset_password' not in cols:
                             conn.execute(text("ALTER TABLE users ADD COLUMN must_reset_password BOOLEAN DEFAULT FALSE"))
-                            conn.commit()
+                        if 'session_revision' not in cols:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN session_revision INTEGER DEFAULT 1"))
+                        if 'failed_login_attempts' not in cols:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0"))
+                        if 'locked_until' not in cols:
+                            conn.execute(text("ALTER TABLE users ADD COLUMN locked_until TIMESTAMP"))
+                        conn.commit()
 
                 if 'patient_users' in inspector.get_table_names():
                     cols = [c['name'] for c in inspector.get_columns('patient_users')]
-                    if 'must_reset_password' not in cols:
-                        with engine.connect() as conn:
+                    with engine.connect() as conn:
+                        if 'must_reset_password' not in cols:
                             conn.execute(text("ALTER TABLE patient_users ADD COLUMN must_reset_password BOOLEAN DEFAULT FALSE"))
-                            conn.commit()
+                        if 'session_revision' not in cols:
+                            conn.execute(text("ALTER TABLE patient_users ADD COLUMN session_revision INTEGER DEFAULT 1"))
+                        if 'failed_login_attempts' not in cols:
+                            conn.execute(text("ALTER TABLE patient_users ADD COLUMN failed_login_attempts INTEGER DEFAULT 0"))
+                        if 'locked_until' not in cols:
+                            conn.execute(text("ALTER TABLE patient_users ADD COLUMN locked_until TIMESTAMP"))
+                        conn.commit()
 
                 # 4. Add contact fields to app_branding
                 if 'app_branding' in inspector.get_table_names():
