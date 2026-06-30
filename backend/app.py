@@ -234,6 +234,35 @@ def ping():
     return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat()}), 200
 
 
+@app.route('/api/auth/verify', methods=['GET'])
+@jwt_required()
+def verify_auth_token():
+    from flask_jwt_extended import get_jwt
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = Model.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    # Check session_revision
+    jwt_revision = claims.get('session_revision')
+    user_revision = getattr(user, 'session_revision', 1) or 1
+    if jwt_revision is not None and jwt_revision != user_revision:
+        return jsonify({"error": "Session has been revoked or expired. Please log in again."}), 401
+        
+    if not user.is_verified:
+        return jsonify({"error": "Account not verified"}), 403
+        
+    return jsonify({
+        "status": "valid",
+        "user": user.to_dict()
+    }), 200
+
+
 @app.route('/api/config/staff-signup-status', methods=['GET'])
 def signup_status():
     from models import SystemConfig
@@ -470,7 +499,17 @@ def login():
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
 
-    if user and user.check_password(password):
+    # Check if locked out
+    if user.locked_until and user.locked_until > datetime.now():
+        lock_secs = int((user.locked_until - datetime.now()).total_seconds())
+        lock_mins = max(1, lock_secs // 60)
+        return jsonify({"error": f"Account temporarily locked due to too many failed attempts. Try again in {lock_mins} minutes."}), 403
+
+    if user.check_password(password):
+        # Reset counters
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        
         if not user.is_verified:
             # Generate a new OTP so they can continue
             otp = generate_otp()
@@ -494,6 +533,7 @@ def login():
             
         # 2FA Enforcement
         if getattr(user, 'is_2fa_enabled', False):
+            db.session.commit()
             return jsonify({
                 "requires_2fa": True,
                 "user_id": user.id,
@@ -523,10 +563,10 @@ def login():
             db.session.rollback()
             app.logger.error(f"Login audit failed for {identifier}: {e}")
         
-        # Generate JWT with detected portal
+        # Generate JWT with detected portal & session revision
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": detected_portal}
+            additional_claims={"portal": detected_portal, "session_revision": getattr(user, 'session_revision', 1) or 1}
         )
         
         response = jsonify({
@@ -538,6 +578,46 @@ def login():
         set_access_cookies(response, access_token)
         return response, 200
         
+    # Handle password validation failure
+    user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+    if user.failed_login_attempts >= 5:
+        user.locked_until = datetime.now() + timedelta(minutes=15)
+        # Audit log account lock
+        try:
+            lock_log = AuditLog(
+                user_id=user.id,
+                action="ACCOUNT_LOCKED",
+                resource=f"{detected_portal.capitalize()} Portal",
+                details=json.dumps({
+                    "reason": "Too many failed login attempts",
+                    "attempts": user.failed_login_attempts,
+                    "duration_mins": 15,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(lock_log)
+        except Exception as e:
+            app.logger.error(f"Failed to log lockout to audit trail: {e}")
+    else:
+        # Log failed attempt
+        try:
+            fail_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_FAILED",
+                resource=f"{detected_portal.capitalize()} Portal",
+                details=json.dumps({
+                    "identity": identifier,
+                    "attempts": user.failed_login_attempts,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(fail_log)
+        except Exception as e:
+            app.logger.error(f"Failed to log login failure to audit trail: {e}")
+
+    db.session.commit()
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
@@ -716,7 +796,7 @@ def login_2fa():
         # Generate token
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": detected_portal}
+            additional_claims={"portal": detected_portal, "session_revision": getattr(user, 'session_revision', 1) or 1}
         )
         
         response = jsonify({

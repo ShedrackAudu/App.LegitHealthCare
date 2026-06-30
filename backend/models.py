@@ -106,6 +106,11 @@ class StaffUser(db.Model):
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
+    # Security columns (Phase 1 & 2)
+    session_revision = db.Column(db.Integer, default=1, nullable=False)
+    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    
     contacts = db.relationship('UserContact', backref='user', lazy=True, cascade="all, delete-orphan")
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('assigned_users', lazy='dynamic'))
 
@@ -183,6 +188,11 @@ class PatientPortalUser(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
+    
+    # Security columns (Phase 1 & 2)
+    session_revision = db.Column(db.Integer, default=1, nullable=False)
+    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
+    locked_until = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -822,6 +832,12 @@ class AuditLog(db.Model):
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.now)
+    
+    # Location details (Phase 3)
+    country = db.Column(db.String(100), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
@@ -886,6 +902,19 @@ class AuditLog(db.Model):
                 kwargs['details'] = json.dumps(details_data)
         except Exception:
             pass
+
+        # Resolve IP Location (Phase 3)
+        ip = kwargs.get('ip_address')
+        if ip:
+            try:
+                from utils.geoip import resolve_ip_location
+                loc = resolve_ip_location(ip)
+                kwargs['country'] = loc.get('country')
+                kwargs['city'] = loc.get('city')
+                kwargs['latitude'] = loc.get('lat')
+                kwargs['longitude'] = loc.get('lng')
+            except Exception:
+                pass
 
         super().__init__(*args, **kwargs)
 
@@ -1070,7 +1099,11 @@ class AuditLog(db.Model):
             "ip_address": self.ip_address,
             "timestamp": self.timestamp.isoformat(),
             "patient_name": patient_name,
-            "patient_staff_id": patient_staff_id
+            "patient_staff_id": patient_staff_id,
+            "country": self.country,
+            "city": self.city,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 

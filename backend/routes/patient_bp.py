@@ -126,6 +126,25 @@ def claim_account():
     if not is_password_strong(password):
         return jsonify({"error": "Password must be at least 8 chars long with 1 uppercase, 1 lowercase, 1 digit, and 1 special symbol."}), 400
         
+    # Secure pre-registered email check (Phase 2)
+    registered_email = None
+    contexts = ['dcp', 'dct']
+    for ctx in contexts:
+        try:
+            engine = db.engines.get(ctx)
+            if not engine: continue
+            with engine.connect() as conn:
+                sql = text("SELECT email FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                row = conn.execute(sql, {"sid": staff_id}).fetchone()
+                if row and row[0]:
+                    registered_email = row[0].strip()
+                    break
+        except Exception as e:
+            current_app.logger.error(f"Failed to lookup registered email for {staff_id} in {ctx}: {e}")
+
+    if registered_email and email.lower() != registered_email.lower():
+        return jsonify({"error": "The entered email address does not match the registered email address for this Staff ID. Please contact clinic support."}), 400
+
     # Check if user already exists in ISOLATED database
     existing_user = PatientPortalUser.query.filter(
         (PatientPortalUser.username == staff_id) | 
@@ -140,7 +159,10 @@ def claim_account():
             elif existing_user.email == email: msg = "This email is already in use."
             elif existing_user.phone == phone: msg = "This phone number is already in use."
             return jsonify({"error": msg}), 400
-        # If not verified, we can overwrite/reuse
+        # Prevent hijacking of active unverified registrations
+        if existing_user.otp_expiry and existing_user.otp_expiry > datetime.now():
+            return jsonify({"error": "A registration attempt is already in progress for this Staff ID. Please try again later or verify your OTP."}), 409
+        # If not verified and expired, we can overwrite/reuse
         user = existing_user
     else:
         user = PatientPortalUser(username=staff_id, email=email, phone=phone, first_name=first_name, last_name=last_name)

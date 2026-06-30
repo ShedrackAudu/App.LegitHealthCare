@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, send_file
-from flask_jwt_extended import jwt_required, get_jwt_identity
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
 from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig, ReportParameter
 from datetime import datetime
 from decorators import require_permission
@@ -201,6 +201,9 @@ PERM_MAP = {
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
 @jwt_required()
 def save_test_result(test_type):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -414,6 +417,9 @@ def save_test_result(test_type):
 @tests_bp.route('/get-test/<test_type>/<staff_id>', methods=['GET'])
 @jwt_required()
 def get_test_result(test_type, staff_id):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -546,6 +552,9 @@ def download_template(test_type):
 @tests_bp.route('/bulk-upload/<test_type>', methods=['POST'])
 @jwt_required()
 def bulk_upload(test_type):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id: return jsonify({"error": "Unauthorized"}), 401
     user = User.query.get(user_id)
@@ -687,6 +696,9 @@ def bulk_upload(test_type):
 @jwt_required()
 def bulk_ai_remarks(test_type):
     """Start a background bulk AI remarks generation task. Returns a task_id immediately."""
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     try:
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
@@ -1051,6 +1063,9 @@ def bulk_ai_remarks(test_type):
 @jwt_required()
 def bulk_ai_remarks_status(task_id):
     """Poll the progress of a background bulk AI remarks task."""
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     from bulk_tasks import get_task
 
     task = get_task(task_id)

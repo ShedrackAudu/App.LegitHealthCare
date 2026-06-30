@@ -37,6 +37,105 @@ import { useNavigate } from 'react-router-dom';
 
 const COLORS = ['#0d9488', '#0891b2', '#2563eb', '#7c3aed', '#db2777', '#ea580c'];
 
+// Premium Interactive SVG World Threat Map (Phase 3)
+function InteractiveThreatMap({ threatVectors }: { threatVectors: any[] }) {
+  const [hoveredThreat, setHoveredThreat] = useState<any | null>(null);
+
+  const getXY = (lat: number, lng: number) => {
+    // Map longitude (-180 to 180) to X (0 to 450)
+    const x = ((lng + 180) * 450) / 360;
+    // Map latitude (-90 to 90) to Y (220 to 0)
+    const y = ((90 - lat) * 220) / 180;
+    return { x, y };
+  };
+
+  return (
+    <Card className="relative overflow-hidden border border-border shadow-lg rounded-xl bg-card">
+      <CardHeader className="p-6 pb-2 flex flex-row items-center justify-between">
+        <div>
+          <CardTitle className="text-sm font-black uppercase tracking-widest text-rose-500">Live Threat Vector Map</CardTitle>
+          <CardDescription className="text-[10px]">Real-time geolocations of blocked vectors</CardDescription>
+        </div>
+        <div className="flex items-center gap-2 px-3 py-1 bg-rose-500/10 border border-rose-500/20 rounded-full">
+          <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
+          <span className="text-[9px] font-black uppercase tracking-tighter text-rose-500">Active Shield</span>
+        </div>
+      </CardHeader>
+      <CardContent className="p-6 pt-2 relative">
+        <div className="w-full aspect-[2/1] relative bg-slate-950 dark:bg-black rounded-lg border border-border/80 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+          <svg className="w-full h-full opacity-90" viewBox="0 0 450 220" fill="none" xmlns="http://www.w3.org/2000/svg">
+            {/* Grid lines */}
+            <g opacity="0.08" stroke="#2dd4bf" strokeWidth="0.5">
+              <line x1="0" y1="55" x2="450" y2="55" />
+              <line x1="0" y1="110" x2="450" y2="110" />
+              <line x1="0" y1="165" x2="450" y2="165" />
+              <line x1="112.5" y1="0" x2="112.5" y2="220" />
+              <line x1="225" y1="0" x2="225" y2="220" />
+              <line x1="337.5" y1="0" x2="337.5" y2="220" />
+            </g>
+
+            {/* Stylized landmasses (Continents) */}
+            {/* North America */}
+            <ellipse cx="100" cy="70" rx="45" ry="30" fill="currentColor" className="text-muted-foreground/10" />
+            <path d="M70,50 Q110,40 140,65 T80,95 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            
+            {/* South America */}
+            <ellipse cx="140" cy="150" rx="25" ry="40" fill="currentColor" className="text-muted-foreground/10" />
+            <path d="M125,120 Q150,130 150,170 T130,185 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+
+            {/* Africa */}
+            <ellipse cx="230" cy="120" rx="30" ry="40" fill="currentColor" className="text-muted-foreground/10" />
+            <path d="M210,95 Q250,90 255,120 T220,155 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+
+            {/* Eurasia */}
+            <ellipse cx="300" cy="65" rx="75" ry="40" fill="currentColor" className="text-muted-foreground/10" />
+            <path d="M245,55 Q310,35 365,60 T290,95 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+
+            {/* Australia */}
+            <ellipse cx="380" cy="160" rx="25" ry="18" fill="currentColor" className="text-muted-foreground/10" />
+            <path d="M360,150 Q390,145 395,165 T370,173 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+
+            {/* Threat points mapping */}
+            {threatVectors.map((threat, idx) => {
+              if (threat.latitude === undefined || threat.longitude === undefined || threat.latitude === null || threat.longitude === null) return null;
+              const { x, y } = getXY(threat.latitude, threat.longitude);
+              const isLatest = idx === 0;
+
+              return (
+                <g key={threat.id || idx} className="cursor-pointer"
+                   onMouseEnter={() => setHoveredThreat(threat)}
+                   onMouseLeave={() => setHoveredThreat(null)}>
+                  {/* Pulsating ring for latest threat */}
+                  {isLatest && (
+                    <circle cx={x} cy={y} r="10" fill="none" stroke="#f43f5e" strokeWidth="1.5" opacity="0.8">
+                      <animate attributeName="r" values="3;12" dur="1.5s" repeatCount="indefinite" />
+                      <animate attributeName="opacity" values="1;0" dur="1.5s" repeatCount="indefinite" />
+                    </circle>
+                  )}
+                  {/* Solid dot */}
+                  <circle cx={x} cy={y} r={isLatest ? 4.5 : 2.5} fill={isLatest ? "#f43f5e" : "#fb7185"} />
+                </g>
+              );
+            })}
+          </svg>
+
+          {/* Hover overlay/tooltip */}
+          {hoveredThreat && (
+            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/95 text-[9px] font-mono p-2 border border-rose-500/30 text-rose-400 rounded flex justify-between items-center animate-in fade-in slide-in-from-bottom-1">
+              <div>
+                <span className="font-bold text-rose-500">[{hoveredThreat.action}]</span> {hoveredThreat.city}, {hoveredThreat.country} ({hoveredThreat.ip_address})
+              </div>
+              <div className="text-rose-500 font-bold shrink-0 ml-4">
+                BLOCKED
+              </div>
+            </div>
+          )}
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
 export default function SecurityDashboard() {
   const navigate = useNavigate();
   const { socket } = useAppContext();
@@ -355,35 +454,8 @@ export default function SecurityDashboard() {
             </CardContent>
           </Card>
 
-          {/* Threat Intelligence Card */}
-          <div className="relative rounded-xl overflow-hidden shadow-2xl group border border-border bg-card">
-             {/* Abstract Grid Background */}
-             <div className="absolute inset-0 opacity-[0.03] dark:opacity-10 bg-[radial-gradient(#2dd4bf_1px,transparent_1px)] [background-size:20px_20px] transition-transform duration-[10s] group-hover:scale-125 z-0" />
-             
-             <div className="relative z-10 p-6 flex items-center gap-6 h-full">
-                <div className="h-20 w-20 rounded-xl bg-rose-500/20 flex items-center justify-center border border-rose-500/30 group-hover:bg-rose-500/30 transition-colors">
-                   <HugeiconsIcon icon={Shield01Icon} className="h-10 w-10 text-rose-500" />
-                </div>
-                <div className="flex-1">
-                   <p className="text-[9px] font-black text-rose-600 dark:text-rose-400 uppercase tracking-[0.3em]">Threat Alert</p>
-                   <h2 className="text-4xl font-black text-foreground tracking-tighter mt-1">{data.failed_logins_24h as React.ReactNode}</h2>
-                   <p className="text-xs font-bold text-muted-foreground/80 mb-4">Unauthorized access attempts blocked (24h)</p>
-                   <div className="flex gap-2">
-                      <span className="px-2 py-1 rounded bg-secondary/80 dark:bg-white/10 border border-border text-[8px] font-black text-muted-foreground uppercase tracking-widest">WAF Active</span>
-                      <span className="px-2 py-1 rounded bg-secondary/80 dark:bg-white/10 border border-border text-[8px] font-black text-muted-foreground uppercase tracking-widest">Brute-Force Guard</span>
-                   </div>
-                </div>
-                <div>
-                  <button 
-                    onClick={() => navigate('/audit-logs')}
-                    className="p-3 rounded-lg bg-secondary/80 dark:bg-white/10 border border-border hover:bg-secondary/100 transition-colors flex items-center justify-center"
-                    title="Investigate Failed Logins"
-                  >
-                    <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 text-muted-foreground" />
-                  </button>
-                </div>
-             </div>
-          </div>
+          {/* Interactive Threat Map */}
+          <InteractiveThreatMap threatVectors={data.threat_vectors || []} />
         </div>
 
         {/* Active Sessions & Live Activity Stream Block */}

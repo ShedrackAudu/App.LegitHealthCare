@@ -89,6 +89,13 @@ def get_audit_analytics():
         "mfa_adoption_percentage": round((active_2fa_count / max(1, total_users_count)) * 100)
     }
 
+    # 6. Retrieve latest 30 threat/activity vectors with locations
+    vectors_query = AuditLog.query.filter(
+        AuditLog.latitude.isnot(None),
+        AuditLog.longitude.isnot(None)
+    ).order_by(AuditLog.timestamp.desc()).limit(30).all()
+    threat_vectors = [v.to_dict() for v in vectors_query]
+
     return jsonify({
         "timeline": timeline,
         "action_breakdown": action_breakdown,
@@ -96,7 +103,8 @@ def get_audit_analytics():
         "failed_logins_24h": failed_logins,
         "total_logs": AuditLog.query.count(),
         "system_integrity": system_integrity,
-        "security_policies": security_policies
+        "security_policies": security_policies,
+        "threat_vectors": threat_vectors
     })
 
 @admin_bp.route('/api/admin/active-sessions', methods=['GET'])
@@ -140,6 +148,7 @@ def revoke_session(user_id):
     from datetime import datetime, timedelta
     user = User.query.get_or_404(user_id)
     user.last_seen_at = datetime.now() - timedelta(days=1)
+    user.session_revision = (user.session_revision or 1) + 1
     
     admin_id = get_jwt_identity()
     log = AuditLog(

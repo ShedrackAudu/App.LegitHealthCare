@@ -225,6 +225,10 @@ def get_appointments():
 @appointments_bp.route('/patient/appointments', methods=['GET'])
 @jwt_required()
 def get_patient_appointments():
+    from flask_jwt_extended import get_jwt
+    claims = get_jwt()
+    if claims.get('portal') != 'patient':
+        return jsonify({"error": "Patient access required"}), 403
     user_id = get_jwt_identity()
     from models import PatientPortalUser
     user = PatientPortalUser.query.get(user_id)

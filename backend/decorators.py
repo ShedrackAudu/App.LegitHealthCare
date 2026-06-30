@@ -22,6 +22,12 @@ def require_permission(permission_name):
             if not user:
                 return jsonify({"error": "User not found"}), 404
             
+            # Verify session revocation (Phase 1)
+            jwt_revision = claims.get('session_revision')
+            user_revision = getattr(user, 'session_revision', 1) or 1
+            if jwt_revision is not None and jwt_revision != user_revision:
+                return jsonify({"error": "Session has been revoked or expired. Please log in again."}), 401
+                
             if not user.is_verified:
                 return jsonify({"error": "Account not verified"}), 403
                 

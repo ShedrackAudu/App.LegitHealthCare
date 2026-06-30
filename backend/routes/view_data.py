@@ -959,6 +959,11 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
 @view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
 @jwt_required()
 def bulk_download_reports():
+    from flask_jwt_extended import get_jwt
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
+
     from models import SystemConfig
     only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
     
@@ -1113,23 +1118,26 @@ def get_patient_report(staff_id, year):
     if not user_id_str:
         return jsonify({"error": "Authentication required"}), 401
 
+    from flask_jwt_extended import get_jwt
     from models import StaffUser, PatientPortalUser
     
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
     is_authorized = False
+    requester_staff = None
     
     try:
         user_id = int(user_id_str)
     except ValueError:
         user_id = -1
         
-    # 1. Check if Staff with permission
-    requester_staff = StaffUser.query.get(user_id)
-    if requester_staff:
-        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
-            is_authorized = True
-            
-    # 2. Check if Patient requesting self
-    if not is_authorized:
+    # Branch authorization based on portal claim to prevent cross-portal ID collisions
+    if portal == 'staff':
+        requester_staff = StaffUser.query.get(user_id)
+        if requester_staff:
+            if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+                is_authorized = True
+    elif portal == 'patient':
         requester_patient = PatientPortalUser.query.get(user_id)
         if requester_patient and requester_patient.is_verified:
             if requester_patient.username.lower() == staff_id.lower():
