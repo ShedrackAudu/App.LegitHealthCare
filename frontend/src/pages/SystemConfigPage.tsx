@@ -29,6 +29,7 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface ConfigItem {
     id: number;
@@ -82,7 +83,7 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
                         disabled={!newItemName.trim()}
                     >
                         {!adding && <HugeiconsIcon icon={PlusSignIcon} className="mr-2 h-5 w-5" />}
-                        Add {title.slice(0, -1)}
+                        Add {getSingular(title)}
                     </Button>
                 </div>
             </CardContent>
@@ -105,8 +106,13 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
             </CardHeader>
             <CardContent className="p-0">
                 {loading ? (
-                    <div className="h-64 flex items-center justify-center">
-                        <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px bg-muted animate-pulse">
+                        {Array.from({ length: 6 }).map((_, i) => (
+                            <div key={i} className="flex items-center justify-between p-4 bg-background">
+                                <Skeleton className="h-4 w-24 rounded bg-muted/40 animate-pulse" />
+                                <Skeleton className="h-6 w-6 rounded-full bg-muted/40 animate-pulse" />
+                            </div>
+                        ))}
                     </div>
                 ) : items.length === 0 ? (
                     <div className="h-64 flex flex-col items-center justify-center text-muted-foreground opacity-50 space-y-4">
@@ -134,6 +140,15 @@ const ConfigSection: React.FC<ConfigSectionProps> = ({
         </Card>
     </div>
 );
+
+const getSingular = (val: string) => {
+    if (!val) return '';
+    const low = val.toLowerCase();
+    if (low === 'nationalities') {
+        return val[0] === 'N' ? 'Nationality' : 'nationality';
+    }
+    return val.slice(0, -1);
+};
 
 const SystemConfigPage: React.FC = () => {
     const { activeSection, user } = useAppContext();
@@ -181,6 +196,7 @@ const SystemConfigPage: React.FC = () => {
     const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
     const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
     const [bulkReportDownloadEnabled, setBulkReportDownloadEnabled] = useState(true);
+    const [bulkReportEmailEnabled, setBulkReportEmailEnabled] = useState(true);
     const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
@@ -274,6 +290,9 @@ const SystemConfigPage: React.FC = () => {
             if (response.data.bulk_report_download_enabled !== undefined) {
                 setBulkReportDownloadEnabled(response.data.bulk_report_download_enabled === 'true');
             }
+            if (response.data.bulk_report_email_enabled !== undefined) {
+                setBulkReportEmailEnabled(response.data.bulk_report_email_enabled === 'true');
+            }
             if (response.data.default_theme !== undefined) {
                 setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
             }
@@ -331,7 +350,7 @@ const SystemConfigPage: React.FC = () => {
             const resp = await axios.post(`/api/config/${type}`,
                 { name: trimmedName }
             );
-            toast.success(`${type.slice(0, -1)} added successfully`);
+            toast.success(`${getSingular(type)} added successfully`);
 
             if (type === 'departments') setDepartments([...departments, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
             if (type === 'races') setRaces([...races, resp.data].sort((a, b) => a.name.localeCompare(b.name)));
@@ -339,7 +358,7 @@ const SystemConfigPage: React.FC = () => {
 
             setNewItemName('');
         } catch (err: any) {
-            toast.error(err.response?.data?.error || `Failed to add ${type.slice(0, -1)}`);
+            toast.error(err.response?.data?.error || `Failed to add ${getSingular(type)}`);
         } finally {
             setAdding(false);
         }
@@ -569,6 +588,28 @@ const SystemConfigPage: React.FC = () => {
         }
     };
 
+    const handleToggleBulkReportEmail = async () => {
+        setMaintenanceSaving(true);
+        try {
+            const newValue = !bulkReportEmailEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_report_email_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkReportEmailEnabled(newValue);
+            toast.success(`Bulk report emailing has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk report emailing setting.");
+        } finally {
+            setMaintenanceSaving(false);
+        }
+    };
+
     const handleSaveDefaultTheme = async (themeValue: 'light' | 'dark') => {
         setMaintenanceSaving(true);
         try {
@@ -601,7 +642,7 @@ const SystemConfigPage: React.FC = () => {
     };
     return (
         <MainLayout>
-            <div className="max-w-6xl mx-auto space-y-8 pb-10">
+            <div className="w-full space-y-8 pb-10">
                 <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
@@ -698,8 +739,27 @@ const SystemConfigPage: React.FC = () => {
 
                     <TabsContent value="email">
                         {emailLoading ? (
-                            <div className="h-64 flex items-center justify-center">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-pulse">
+                                <div className="lg:col-span-2 space-y-6">
+                                    <Card className="border-2 shadow-lg">
+                                        <div className="bg-muted/10 p-6 border-b space-y-2">
+                                            <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-3.5 w-72 rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                        <CardContent className="pt-6 space-y-4">
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-11 w-full rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-11 w-full rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                            </div>
+                                        </CardContent>
+                                    </Card>
+                                </div>
                             </div>
                         ) : (
                             <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -1034,78 +1094,6 @@ const SystemConfigPage: React.FC = () => {
 
                                     <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
                                         <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Lab Tests AI Remarks Generation</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                When enabled, the system automatically analyzes submitted Full Blood Count (FBC) and Lipid Profile results using AI in the background and writes a brief summary to the remark fields.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
-                                            <span className={`text-xs font-black uppercase tracking-widest ${aiFbcRemarksEnabled ? 'text-primary' : 'text-rose-500'}`}>
-                                                {aiFbcRemarksEnabled ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                disabled={maintenanceSaving || !canManageMaintenance}
-                                                onClick={handleToggleAiFbcRemarks}
-                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                                                    aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
-                                                }`}
-                                            >
-                                                {maintenanceSaving ? (
-                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
-                                                        aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
-                                                    }`}>
-                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
-                                                    </span>
-                                                ) : (
-                                                    <span
-                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
-                                                            aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
-                                                        }`}
-                                                    />
-                                                )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Bulk AI Review Generator</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                Enable or disable the Bulk AI Review Generator feature on the Director Review landing page.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
-                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkAiReviewEnabled ? 'text-primary' : 'text-rose-500'}`}>
-                                                {bulkAiReviewEnabled ? 'Enabled' : 'Disabled'}
-                                            </span>
-                                            <button
-                                                type="button"
-                                                disabled={maintenanceSaving || !canManageMaintenance}
-                                                onClick={handleToggleBulkAiReview}
-                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
-                                                    bulkAiReviewEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
-                                                }`}
-                                            >
-                                                {maintenanceSaving ? (
-                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
-                                                        bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
-                                                    }`}>
-                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
-                                                    </span>
-                                                ) : (
-                                                    <span
-                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
-                                                            bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
-                                                        }`}
-                                                    />
-                                                 )}
-                                            </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
                                             <h4 className="font-bold text-lg text-foreground">Bulk Report Download</h4>
                                             <p className="text-sm text-muted-foreground w-full max-w-lg">
                                                 Enable or disable the Bulk Report PDF Download feature on the Patient Report landing page.
@@ -1133,6 +1121,42 @@ const SystemConfigPage: React.FC = () => {
                                                     <span
                                                         className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
                                                             bulkReportDownloadEnabled ? "translate-x-5" : "translate-x-1"
+                                                        }`}
+                                                    />
+                                                )}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
+                                        <div className="space-y-1">
+                                            <h4 className="font-bold text-lg text-foreground">Bulk Report Emailing</h4>
+                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                Enable or disable the Bulk Report PDF Emailing feature on the Patient Report landing page.
+                                            </p>
+                                        </div>
+                                        <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                            <span className={`text-xs font-black uppercase tracking-widest ${bulkReportEmailEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                                {bulkReportEmailEnabled ? 'Enabled' : 'Disabled'}
+                                            </span>
+                                            <button
+                                                type="button"
+                                                disabled={maintenanceSaving || !canManageMaintenance}
+                                                onClick={handleToggleBulkReportEmail}
+                                                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                                    bulkReportEmailEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                                }`}
+                                            >
+                                                {maintenanceSaving ? (
+                                                    <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                        bulkReportEmailEnabled ? "translate-x-5" : "translate-x-1"
+                                                    }`}>
+                                                        <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                                    </span>
+                                                ) : (
+                                                    <span
+                                                        className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                            bulkReportEmailEnabled ? "translate-x-5" : "translate-x-1"
                                                         }`}
                                                     />
                                                 )}
@@ -1375,7 +1399,7 @@ const SystemConfigPage: React.FC = () => {
                 isOpen={deleteModal.open}
                 onClose={() => setDeleteModal({ ...deleteModal, open: false })}
                 onConfirm={handleDelete}
-                title={`Delete ${deleteModal.type.slice(0, -1)}`}
+                title={`Delete ${getSingular(deleteModal.type)}`}
                 description={`Are you sure you want to delete '${deleteModal.name}'? This change will reflect in all registration dropdowns.`}
                 confirmText="Delete Item"
                 variant="danger"

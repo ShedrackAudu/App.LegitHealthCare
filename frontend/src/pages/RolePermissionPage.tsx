@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const AccordionRole = ({ role, permissions, isAdminRole, onTogglePermission, onSave, onDelete, saving }: any) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -213,8 +214,40 @@ const RolePermissionPage: React.FC = () => {
   if (loading) {
     return (
       <MainLayout>
-        <div className="h-[60vh] flex items-center justify-center">
-          <HugeiconsIcon icon={Loading03Icon} className="w-10 h-10 animate-spin text-primary" />
+        <div className="space-y-6 animate-pulse">
+          {/* Header Skeleton */}
+          <div className="flex flex-col lg:flex-row justify-between items-stretch lg:items-center gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 border-primary/5">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
+              <Skeleton className="h-12 w-12 rounded-xl sm:rounded-2xl bg-muted/40 shrink-0" />
+              <div className="space-y-2 flex-1">
+                <Skeleton className="h-6 w-48 rounded bg-muted/40" />
+                <Skeleton className="h-3 w-72 rounded bg-muted/40" />
+              </div>
+            </div>
+            <Skeleton className="h-10 w-48 rounded-xl bg-muted/40 shrink-0" />
+          </div>
+
+          {/* Tabs List Skeleton */}
+          <div className="w-full md:w-[450px] mb-8 bg-muted/10 p-1.5 border-2 rounded-2xl h-[64px] flex gap-2">
+            <Skeleton className="flex-1 rounded-xl bg-muted/40 h-full" />
+            <Skeleton className="flex-1 rounded-xl bg-muted/40 h-full" />
+          </div>
+
+          {/* Accordion Skeletons */}
+          <div className="space-y-4">
+            {Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="border-2 rounded-2xl overflow-hidden p-4 bg-card flex items-center justify-between">
+                <div className="flex items-center gap-4 w-full">
+                  <Skeleton className="h-10 w-10 rounded-xl bg-muted/40 shrink-0" />
+                  <div className="space-y-2 flex-1">
+                    <Skeleton className="h-5 w-32 rounded bg-muted/40" />
+                    <Skeleton className="h-3 w-48 rounded bg-muted/40" />
+                  </div>
+                </div>
+                <Skeleton className="h-9 w-9 rounded-xl bg-muted/40 shrink-0" />
+              </div>
+            ))}
+          </div>
         </div>
       </MainLayout>
     );

@@ -13,15 +13,15 @@ export function ModeToggle() {
   }, [])
 
   if (!mounted) {
-    return <Button variant="ghost" size="icon" className="rounded-full w-10 h-10" />
+    return <Button variant="outline" size="icon" className="rounded-xl w-10 h-10 border-2 border-primary text-primary" />
   }
 
   return (
     <Button
-      variant="ghost"
+      variant="outline"
       size="icon"
       onClick={() => setTheme(resolvedTheme === "dark" ? "light" : "dark")}
-      className="rounded-full w-10 h-10 hover:bg-primary/10 hover:text-primary transition-all active:scale-95"
+      className="rounded-xl w-10 h-10 border-2 border-primary text-primary hover:bg-primary/10 hover:text-primary transition-all active:scale-95"
     >
       <HugeiconsIcon icon={Sun01Icon} className={`h-[1.2rem] w-[1.2rem] transition-all ${
         resolvedTheme === "dark" 

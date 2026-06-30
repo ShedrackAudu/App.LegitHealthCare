@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   File01Icon, 
@@ -12,6 +13,7 @@ import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useAppContext } from '@/context/AppContext';
@@ -21,20 +23,28 @@ import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { toJpeg } from 'html-to-image';
 import { FileAttachmentSection } from '@/components/FileAttachmentSection';
+import JSZip from 'jszip';
 import '@/styles/PatientReport.css';
 
 const PatientReportPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [searching, setSearching] = useState(false);
     const [rangeInput, setRangeInput] = useState('');
+    const [emailRangeInput, setEmailRangeInput] = useState('');
     const [bulkLoading, setBulkLoading] = useState(false);
+    const [bulkEmailLoading, setBulkEmailLoading] = useState(false);
     const [bulkDownloadEnabled, setBulkDownloadEnabled] = useState(true);
+    const [bulkEmailEnabled, setBulkEmailEnabled] = useState(true);
+    const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
+    const [excludeEmail, setExcludeEmail] = useState(true);
 
     useEffect(() => {
-        const checkBulkDownloadStatus = async () => {
+        const checkBulkStatuses = async () => {
             try {
                 const res = await api.get('/api/config/bulk-report-download-status');
                 if (res.data && res.data.bulk_report_download_enabled !== undefined) {
@@ -43,8 +53,16 @@ const PatientReportPage: React.FC = () => {
             } catch (err) {
                 console.error('Failed to fetch bulk report download status:', err);
             }
+            try {
+                const res = await api.get('/api/config/bulk-report-email-status');
+                if (res.data && res.data.bulk_report_email_enabled !== undefined) {
+                    setBulkEmailEnabled(res.data.bulk_report_email_enabled);
+                }
+            } catch (err) {
+                console.error('Failed to fetch bulk report email status:', err);
+            }
         };
-        checkBulkDownloadStatus();
+        checkBulkStatuses();
     }, []);
 
     const handleBulkDownload = async () => {
@@ -57,22 +75,75 @@ const PatientReportPage: React.FC = () => {
             return;
         }
         setBulkLoading(true);
-        toast.loading('Scanning and generating bulk reports. This may take a moment...', { id: 'bulkDownload' });
+        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
+        
+        const originalPatient = selectedPatient;
+        const originalReportData = reportData;
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
         try {
+            // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
                 params: {
                     range: rangeInput,
                     year: activeYear,
-                    company: activeSection
+                    company: activeSection,
+                    list_only: 'true',
+                    exclude_email: excludeEmail ? 'true' : 'false'
                 },
                 headers: {
                     'X-Company-Context': activeSection
-                },
-                responseType: 'blob'
+                }
             });
             
-            const blob = new Blob([response.data], { type: 'application/zip' });
-            const url = window.URL.createObjectURL(blob);
+            const patientsList = response.data.patients || [];
+            if (patientsList.length === 0) {
+                toast.error("No completed reports found in the specified range.", { id: 'bulkDownload' });
+                setBulkProgress(null);
+                setBulkLoading(false);
+                return;
+            }
+
+            toast.loading(`Found ${patientsList.length} completed reports. Starting pixel-perfect PDF rendering...`, { id: 'bulkDownload' });
+
+            const zip = new JSZip();
+
+            // 2. Loop through each patient, load their data, and render the PDF
+            for (let i = 0; i < patientsList.length; i++) {
+                const patientInfo = patientsList[i];
+                setBulkProgress({ 
+                    current: i + 1, 
+                    total: patientsList.length, 
+                    name: `${patientInfo.first_name} ${patientInfo.last_name}` 
+                });
+
+                // Fetch details
+                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+
+                // Swap states to trigger rendering of the report pages
+                setSelectedPatient(patientInfo);
+                setReportData(detailRes.data);
+
+                // Wait 400ms for React rendering and browser layout calculations
+                await delay(400);
+
+                // Capture PDF
+                const pdfBlob = await generateFrontendPDF();
+
+                // Add to ZIP
+                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
+                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
+                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                
+                zip.file(filename, pdfBlob);
+            }
+
+            setBulkProgress(prev => prev ? { ...prev, name: 'Compiling ZIP package...' } : null);
+            const zipBlob = await zip.generateAsync({ type: 'blob' });
+
+            const url = window.URL.createObjectURL(zipBlob);
             const link = document.createElement('a');
             link.href = url;
             link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeInput.replace(/\s+/g, '')}.zip`;
@@ -80,22 +151,145 @@ const PatientReportPage: React.FC = () => {
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
+            
             toast.success('Bulk reports downloaded successfully', { id: 'bulkDownload' });
         } catch (err: any) {
             console.error('Bulk download error:', err);
-            if (err.response?.data instanceof Blob) {
-                const text = await err.response.data.text();
-                try {
-                    const json = JSON.parse(text);
-                    toast.error(json.error || 'Failed to download reports', { id: 'bulkDownload' });
-                } catch {
-                    toast.error('Failed to download reports. No matching reports found.', { id: 'bulkDownload' });
-                }
-            } else {
-                toast.error(err.response?.data?.error || 'Failed to download reports', { id: 'bulkDownload' });
-            }
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to download reports';
+            toast.error(errorMsg, { id: 'bulkDownload' });
         } finally {
+            setSelectedPatient(originalPatient);
+            setReportData(originalReportData);
+            setBulkProgress(null);
             setBulkLoading(false);
+        }
+    };
+
+    const handleBulkEmail = async () => {
+        if (!bulkEmailEnabled) {
+            toast.error("Bulk report emailing is currently disabled by the system administrator.");
+            return;
+        }
+        if (!emailRangeInput.trim()) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
+            return;
+        }
+        setBulkEmailLoading(true);
+        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports with emails...' });
+        
+        const originalPatient = selectedPatient;
+        const originalReportData = reportData;
+        const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
+
+        try {
+            // 1. Get the list of matching patients from the backend
+            const response = await api.get(`/api/patient-report/bulk-download`, {
+                params: {
+                    range: emailRangeInput,
+                    year: activeYear,
+                    company: activeSection,
+                    list_only: 'true',
+                    only_with_email: 'true'
+                },
+                headers: {
+                    'X-Company-Context': activeSection
+                }
+            });
+            
+            const patientsList = response.data.patients || [];
+            if (patientsList.length === 0) {
+                toast.error("No completed reports with email addresses found in the specified range.", { id: 'bulkEmail' });
+                setBulkProgress(null);
+                setBulkEmailLoading(false);
+                return;
+            }
+
+            toast.loading(`Found ${patientsList.length} completed reports with emails. Starting PDF generation & email transmission...`, { id: 'bulkEmail' });
+
+            const blobToBase64 = (b: Blob): Promise<string> => {
+                return new Promise((resolve, reject) => {
+                    const reader = new FileReader();
+                    reader.onloadend = () => {
+                        const res = reader.result as string;
+                        const b64 = res.split(',')[1];
+                        resolve(b64);
+                    };
+                    reader.onerror = reject;
+                    reader.readAsDataURL(b);
+                });
+            };
+
+            // 2. Loop through each patient, load their data, and render/email the PDF
+            for (let i = 0; i < patientsList.length; i++) {
+                const patientInfo = patientsList[i];
+                setBulkProgress({ 
+                    current: i + 1, 
+                    total: patientsList.length, 
+                    name: `Emailing: ${patientInfo.first_name} ${patientInfo.last_name}` 
+                });
+
+                // Fetch details
+                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+
+                // Swap states to trigger rendering of the report pages
+                setSelectedPatient(patientInfo);
+                setReportData(detailRes.data);
+
+                // Wait 400ms for React rendering and browser layout calculations
+                await delay(400);
+
+                // Capture PDF
+                const pdfBlob = await generateFrontendPDF();
+                const b64data = await blobToBase64(pdfBlob);
+
+                const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
+                if (!pEmail || !pEmail.trim()) {
+                    console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
+                    continue;
+                }
+
+                let companyName = 'Legit HealthCare';
+                if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
+                if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
+
+                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
+                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
+                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+
+                const payloadData = {
+                    report_data: {
+                        ...detailRes.data,
+                        bio: {
+                            ...detailRes.data.bio,
+                            section: activeSection,
+                            screening_year: activeYear,
+                        }
+                    },
+                    email: pEmail,
+                    first_name: patientInfo.first_name || 'Patient',
+                    screening_year: activeYear,
+                    company: companyName,
+                    staff_id: patientInfo.staff_id || '',
+                    attachment_data: b64data,
+                    attachment_filename: filename
+                };
+
+                // Send email
+                await api.post('/api/email/report', payloadData);
+            }
+            
+            toast.success(`Bulk reports successfully emailed to ${patientsList.length} patients!`, { id: 'bulkEmail' });
+        } catch (err: any) {
+            console.error('Bulk email error:', err);
+            const errorMsg = err.response?.data?.error || err.message || 'Failed to bulk email reports';
+            toast.error(errorMsg, { id: 'bulkEmail' });
+        } finally {
+            setSelectedPatient(originalPatient);
+            setReportData(originalReportData);
+            setBulkProgress(null);
+            setBulkEmailLoading(false);
         }
     };
 
@@ -113,6 +307,12 @@ const PatientReportPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            handleSearchById(staffIdParam, 'general');
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     const handleSelectPatient = async (patient: any) => {
         setLoading(true);
@@ -204,6 +404,20 @@ const PatientReportPage: React.FC = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
             toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+
+            // Log download to audit trail
+            try {
+                const sId = selectedPatient?.staff_id;
+                if (sId) {
+                    await api.post('/api/patient/reports/log-download', {
+                        staff_id: sId,
+                        screening_year: activeYear,
+                        section: activeSection
+                    });
+                }
+            } catch (auditErr) {
+                console.error("Failed to log report download audit action", auditErr);
+            }
         } catch (err: any) {
             console.error('PDF error:', err);
             const msg = err.message || String(err) || 'Failed to generate frontend PDF.';
@@ -290,6 +504,25 @@ const PatientReportPage: React.FC = () => {
         return `${y}/${(sec || '').toUpperCase()}/${pid}`;
     };
 
+    const getParam = (id: string, defaultName: string, defaultRange: string, defaultUnit: string) => {
+        const p = reportData?.report_parameters?.[id];
+        return {
+            name: p?.parameter_name || defaultName,
+            range: p?.reference_value || defaultRange,
+            unit: p?.unit !== undefined && p?.unit !== null ? p.unit : defaultUnit
+        };
+    };
+
+    const renderMultiline = (text: string | null | undefined) => {
+        if (!text) return '-';
+        return text.split('\n').map((line, idx) => (
+            <React.Fragment key={idx}>
+                {idx > 0 && <br />}
+                {line}
+            </React.Fragment>
+        ));
+    };
+
     return (
         <MainLayout>
             {/* All UI chrome — hidden on print */}
@@ -343,9 +576,42 @@ const PatientReportPage: React.FC = () => {
                     </div>
 
                     {loading ? (
-                        <div className="flex flex-col items-center justify-center h-[60vh] text-center space-y-4">
-                            <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
-                            <p className="text-muted-foreground font-bold tracking-widest uppercase text-xs">Generating Report Pages...</p>
+                        <div className="w-full max-w-4xl mx-auto space-y-8 animate-pulse mt-6">
+                            {/* Fake A4 Page 1 Skeleton */}
+                            <div className="bg-card border rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+                                {/* Header / Branding */}
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b">
+                                    <Skeleton className="h-12 w-48 bg-muted/40 rounded" />
+                                    <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                </div>
+                                {/* Bio details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-xl">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <Skeleton className="h-3 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Fake Table */}
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-36 bg-muted/40 rounded" />
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <div className="bg-muted/20 h-10 border-b flex items-center px-4 justify-between">
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                        </div>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <div key={i} className="h-12 border-b flex items-center px-4 justify-between last:border-0">
+                                                <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-12 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-20 bg-muted/40 rounded" />
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     ) : reportData ? (
                         <>
@@ -409,78 +675,200 @@ const PatientReportPage: React.FC = () => {
                                         {/* Blood Sugar */}
                                         <tr className="category-row">
                                             <td>Blood Sugar</td>
-                                            <td>FBS</td><td>{reportData.results.consultation?.fbs || '-'}</td><td>70-99</td><td>ml/dL</td><td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
+                                            <td>{getParam('fbs', 'FBS', '70-99', 'ml/dL').name}</td>
+                                            <td>{reportData.results.consultation?.fbs || '-'}</td>
+                                            <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').unit)}</td>
+                                            <td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
                                         </tr>
                                         <tr>
-                                            <td></td><td>RBS</td><td>{reportData.results.consultation?.rbs || '-'}</td><td>&lt;200</td><td>ml/dL</td>
+                                            <td></td>
+                                            <td>{getParam('rbs', 'RBS', '<200', 'ml/dL').name}</td>
+                                            <td>{reportData.results.consultation?.rbs || '-'}</td>
+                                            <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').unit)}</td>
                                         </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* FBC */}
                                         <tr className="category-row">
                                             <td>FBC</td>
-                                            <td>PCV</td><td>{reportData.results.fbc?.pcv || '-'}</td><td>34-53.9</td><td>%</td><td rowSpan={5}>{reportData.results.fbc?.remark || '-'}</td>
+                                            <td>{getParam('pcv', 'PCV', '36-53.9', '%').name}</td>
+                                            <td>{reportData.results.fbc?.pcv || '-'}</td>
+                                            <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').range)}</td>
+                                            <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').unit)}</td>
+                                            <td rowSpan={6}>{reportData.results.fbc?.remark || '-'}</td>
                                         </tr>
-                                        <tr><td></td><td>WBC</td><td>{reportData.results.fbc?.wbc || '-'}</td><td>3-11</td><td>x109/L</td></tr>
-                                        <tr><td></td><td>Lymphocryte</td><td>{reportData.results.fbc?.lymp_percent || '-'}</td><td>19.1-48</td><td>%</td></tr>
-                                        <tr><td></td><td>Neutrophil</td><td>{reportData.results.fbc?.gra_percent || '-'}</td><td>43.6-73.3</td><td>%</td></tr>
-                                        <tr><td></td><td>Mixed</td><td>{reportData.results.fbc?.mid_percent || '-'}</td><td>4.5-12.1</td><td>%</td></tr>
-                                        <tr><td></td><td>Platelets</td><td>{reportData.results.fbc?.plt || '-'}</td><td>100-450</td><td>x109/L</td></tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('wbc', 'WBC', '3-11', 'x109/L').name}</td>
+                                            <td>{reportData.results.fbc?.wbc || '-'}</td>
+                                            <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').range)}</td>
+                                            <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').name}</td>
+                                            <td>{reportData.results.fbc?.lymp_abs || '-'}</td>
+                                            <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').range)}</td>
+                                            <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').name}</td>
+                                            <td>{reportData.results.fbc?.gra_abs || '-'}</td>
+                                            <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').range)}</td>
+                                            <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').name}</td>
+                                            <td>{reportData.results.fbc?.mid_abs || '-'}</td>
+                                            <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').range)}</td>
+                                            <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('platelets', 'Platelets', '100-450', 'x109/L').name}</td>
+                                            <td>{reportData.results.fbc?.plt || '-'}</td>
+                                            <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').range)}</td>
+                                            <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').unit)}</td>
+                                        </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* KFT */}
                                         <tr className="category-row">
                                             <td>Kidney Function</td>
-                                            <td>Potassium</td><td>{reportData.results.kft?.potassium || '-'}</td><td>3.5-5.0</td><td>mmol/L</td><td rowSpan={5}>{reportData.results.kft?.remark || '-'}</td>
+                                            <td>{getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').name}</td>
+                                            <td>{reportData.results.kft?.potassium || '-'}</td>
+                                            <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').unit)}</td>
+                                            <td rowSpan={6}>{reportData.results.kft?.remark || '-'}</td>
                                         </tr>
-                                        <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
-                                        <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
-                                        <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                                        <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-9.33</td><td>mmol/L</td></tr>
                                         <tr>
-                                            <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
-                                            <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
+                                            <td></td>
+                                            <td>{getParam('sodium', 'Sodium', '135-145', 'mmol/L').name}</td>
+                                            <td>{reportData.results.kft?.sodium || '-'}</td>
+                                            <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('chloride', 'Chloride', '97-107', 'mmol/L').name}</td>
+                                            <td>{reportData.results.kft?.chloride || '-'}</td>
+                                            <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').name}</td>
+                                            <td>{reportData.results.kft?.hco3 || '-'}</td>
+                                            <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').name}</td>
+                                            <td>{reportData.results.lft?.urea || '-'}</td>
+                                            <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').name}</td>
+                                            <td>{reportData.results.lft?.creatinine || '-'}</td>
+                                            <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').range)}</td>
+                                            <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').unit)}</td>
                                         </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* Lipid */}
                                         <tr className="category-row">
                                             <td>Lipid Profile</td>
-                                            <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>&lt;200</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
+                                            <td>{getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').name}</td>
+                                            <td>{reportData.results.lipid?.tcho || '-'}</td>
+                                            <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').unit)}</td>
+                                            <td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
                                         </tr>
                                         <tr>
-                                            <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
-                                            <td>Male: &lt;150<br />Female: &lt;150</td><td>mg/dL<br />mg/dL</td>
+                                            <td></td>
+                                            <td>{getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').name}</td>
+                                            <td>{reportData.results.lipid?.tg || '-'}</td>
+                                            <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').unit)}</td>
                                         </tr>
                                         <tr>
-                                            <td></td><td>HDL-c</td><td>{reportData.results.lipid?.hdl || '-'}</td>
-                                            <td>Male: =&gt;40<br />Female: =&gt;40</td><td>mg/dL<br />mg/dL</td>
+                                            <td></td>
+                                            <td>{getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').name}</td>
+                                            <td>{reportData.results.lipid?.hdl || '-'}</td>
+                                            <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').unit)}</td>
                                         </tr>
-                                        <tr><td></td><td>LDL-c</td><td>{reportData.results.lipid?.ldl || '-'}</td><td>&lt;130</td><td>mg/dL</td></tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('ldl', 'LDL-c', '<130', 'mg/dL').name}</td>
+                                            <td>{reportData.results.lipid?.ldl || '-'}</td>
+                                            <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').unit)}</td>
+                                        </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* LFT */}
                                         <tr className="category-row">
                                             <td>Liver Function</td>
-                                            <td>AST</td><td>{reportData.results.lft?.ast || '-'}</td><td>0-46</td><td>U/L</td><td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
+                                            <td>{getParam('ast', 'AST', '0-46', 'U/L').name}</td>
+                                            <td>{reportData.results.lft?.ast || '-'}</td>
+                                            <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').range)}</td>
+                                            <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').unit)}</td>
+                                            <td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
                                         </tr>
-                                        <tr><td></td><td>ALT</td><td>{reportData.results.lft?.alt || '-'}</td><td>0-49</td><td>U/L</td></tr>
                                         <tr>
-                                            <td></td><td>ALP</td><td>{reportData.results.lft?.alp || '-'}</td>
-                                            <td>Male: 80-306<br />Female: 64-306</td><td>U/L<br />U/L</td>
+                                            <td></td>
+                                            <td>{getParam('alt', 'ALT', '0-49', 'U/L').name}</td>
+                                            <td>{reportData.results.lft?.alt || '-'}</td>
+                                            <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').range)}</td>
+                                            <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').unit)}</td>
                                         </tr>
-                                        <tr><td></td><td>TB</td><td>{reportData.results.lft?.tb || '-'}</td><td>0-1.2</td><td>mg/dL</td></tr>
-                                        <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-0.4</td><td>mg/dL</td></tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').name}</td>
+                                            <td>{reportData.results.lft?.alp || '-'}</td>
+                                            <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').range)}</td>
+                                            <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('tb', 'TB', '0-1.2', 'mg/dL').name}</td>
+                                            <td>{reportData.results.lft?.tb || '-'}</td>
+                                            <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').unit)}</td>
+                                        </tr>
+                                        <tr>
+                                            <td></td>
+                                            <td>{getParam('cb', 'CB', '0-0.4', 'mg/dL').name}</td>
+                                            <td>{reportData.results.lft?.cb || '-'}</td>
+                                            <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').range)}</td>
+                                            <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').unit)}</td>
+                                        </tr>
                                         <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                         {/* UA & PSA */}
                                         <tr className="category-row">
                                             <td>Urine Analysis</td>
-                                            <td>Sugar & Protein</td><td>{reportData.results.consultation?.ua_result || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.ua_remark || '-'}</td>
+                                            <td>{getParam('ua', 'Sugar & Protein', 'NA', '').name}</td>
+                                            <td>{reportData.results.consultation?.ua_result || '-'}</td>
+                                            <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').range)}</td>
+                                            <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').unit)}</td>
+                                            <td>{reportData.results.consultation?.ua_remark || '-'}</td>
                                         </tr>
                                         <tr className="category-row">
                                             <td>PSA</td>
-                                            <td>PSA</td><td>{reportData.results.consultation?.psa || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.psa_remark || '-'}</td>
+                                            <td>{getParam('psa', 'PSA', 'NA', '').name}</td>
+                                            <td>{reportData.results.consultation?.psa || '-'}</td>
+                                            <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').range)}</td>
+                                            <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').unit)}</td>
+                                            <td>{reportData.results.consultation?.psa_remark || '-'}</td>
                                         </tr>
                                         <tr><td colSpan={6} style={{ borderTop: '2px solid var(--table-border-color)', height: '10px' }}></td></tr>
                                     </tbody>
@@ -702,28 +1090,30 @@ const PatientReportPage: React.FC = () => {
             )}
 
             {!selectedPatient && (
-                <div className="no-print space-y-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-8">
-                        {/* Search Instructions Card */}
-                        <Card className="border-2 border-dashed flex items-center justify-center min-h-[20rem] bg-muted/5 p-6 rounded-3xl">
-                            <div className="text-center space-y-3">
-                                <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
-                                    <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-muted-foreground/30" />
-                                </div>
-                                <h2 className="text-xl font-black tracking-tight text-foreground/70">
-                                    Search a patient to view report
-                                </h2>
-                                <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
-                                    Use the search bar above to retrieve clinical results
-                                </p>
-                                <div className="flex flex-col items-center gap-2 pt-4">
-                                    <div className="h-px w-12 bg-muted-foreground/20" />
-                                    <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-                                        Secure Medical Records System
-                                    </p>
-                                </div>
+                <div className="no-print space-y-6 mt-8">
+                    {/* Search Instructions Card */}
+                    <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 p-6 rounded-3xl w-full">
+                        <div className="text-center space-y-3">
+                            <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-4 transition-transform hover:scale-110 duration-500">
+                                <HugeiconsIcon icon={File01Icon} className="w-8 h-8 text-muted-foreground/30" />
                             </div>
-                        </Card>
+                            <h2 className="text-xl font-black tracking-tight text-foreground/70">
+                                Search a patient to view report
+                            </h2>
+                            <p className="text-xs sm:text-sm text-muted-foreground font-medium italic">
+                                Use the search bar above to retrieve clinical results
+                            </p>
+                            <div className="flex flex-col items-center gap-2 pt-4">
+                                <div className="h-px w-12 bg-muted-foreground/20" />
+                                <p className="text-[10px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                    Secure Medical Records System
+                                </p>
+                            </div>
+                        </div>
+                    </Card>
+
+                    {/* Bulk Actions Cards Grid */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
 
                         {/* Bulk Download Card */}
                         <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
@@ -745,12 +1135,32 @@ const PatientReportPage: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-3 text-muted-foreground">
                                     <p className="font-bold text-foreground">Downloads reports meeting these criteria:</p>
                                     <ul className="list-disc list-inside space-y-1 pl-1">
                                         <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
-                                        <li>No email address is attached to the patient profile</li>
+                                        {excludeEmail && (
+                                            <li>No email address is attached to the patient profile</li>
+                                        )}
                                     </ul>
+
+                                    <div className="pt-2 border-t flex items-center justify-between gap-4">
+                                        <div className="space-y-0.5">
+                                            <label htmlFor="exclude-email-toggle" className="font-bold text-foreground cursor-pointer">Only patients without email</label>
+                                            <p className="text-[10px] text-muted-foreground">Exclude patients who already have an email address configured.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="exclude-email-toggle"
+                                            onClick={() => setExcludeEmail(!excludeEmail)}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            disabled={bulkLoading || !bulkDownloadEnabled}
+                                        >
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                            />
+                                        </button>
+                                    </div>
                                 </div>
 
                                 <div className="space-y-2">
@@ -777,6 +1187,129 @@ const PatientReportPage: React.FC = () => {
                                 Bulk Download (ZIP)
                             </Button>
                         </Card>
+
+                        {/* Bulk Email Card */}
+                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[20rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                            <div className="space-y-4">
+                                <div className="flex flex-col md:flex-row items-start md:items-center gap-3">
+                                    <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                        <HugeiconsIcon icon={Mail01Icon} className="text-indigo-600 h-6 w-6" />
+                                    </div>
+                                    <div>
+                                        <div className="flex items-center gap-2">
+                                            <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Emailer</h2>
+                                            {!bulkEmailEnabled && (
+                                                <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                    Disabled
+                                                </span>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground">Automatically email reports to patients</p>
+                                    </div>
+                                </div>
+
+                                <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-3 text-muted-foreground">
+                                    <p className="font-bold text-foreground">Emails reports meeting these criteria:</p>
+                                    <ul className="list-disc list-inside space-y-1 pl-1">
+                                        <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
+                                        <li>Patient has a valid email address configured</li>
+                                    </ul>
+                                </div>
+
+                                <div className="space-y-2">
+                                    <Label htmlFor="bulk-email-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                    <Input
+                                        id="bulk-email-pid-range"
+                                        placeholder="e.g. 1-100 or 25"
+                                        value={emailRangeInput}
+                                        onChange={(e) => setEmailRangeInput(e.target.value)}
+                                        className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                        disabled={bulkEmailLoading || !bulkEmailEnabled}
+                                    />
+                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and send email reports.</p>
+                                </div>
+                            </div>
+
+                            <Button 
+                                onClick={handleBulkEmail}
+                                loading={bulkEmailLoading}
+                                disabled={!bulkEmailEnabled}
+                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-600/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                            >
+                                {!bulkEmailLoading && <HugeiconsIcon icon={Mail01Icon} className="h-4 w-4" />}
+                                Bulk Email Reports
+                            </Button>
+                        </Card>
+                    </div>
+                </div>
+            )}
+            {bulkProgress && (
+                <div className="fixed inset-0 bg-background/80 backdrop-blur-md z-[9999] flex flex-col items-center justify-center p-6 text-center animate-in fade-in duration-300">
+                    <div className="max-w-md w-full bg-card border-2 border-primary/10 rounded-3xl p-8 shadow-2xl space-y-6">
+                        <div className="relative w-24 h-24 mx-auto flex items-center justify-center">
+                            {/* Outer Pulsing Glow */}
+                            <div className="absolute inset-0 rounded-full bg-indigo-500/10 animate-ping" style={{ animationDuration: '2s' }} />
+                            
+                            {/* Inner Circle Background */}
+                            <div className="absolute inset-2 rounded-full bg-card border-2 border-indigo-500/5 shadow-inner flex items-center justify-center z-10">
+                                <span className="text-2xl animate-pulse">📄</span>
+                            </div>
+                            
+                            {/* SVG Gradient Spinner */}
+                            <svg className="w-full h-full transform -rotate-90 z-20" viewBox="0 0 100 100">
+                                <defs>
+                                    <linearGradient id="spinnerGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                        <stop offset="0%" stopColor="#4f46e5" />
+                                        <stop offset="100%" stopColor="#ec4899" />
+                                    </linearGradient>
+                                </defs>
+                                <circle 
+                                    cx="50" 
+                                    cy="50" 
+                                    r="42" 
+                                    className="stroke-muted/30" 
+                                    strokeWidth="6" 
+                                    fill="transparent" 
+                                />
+                                <circle 
+                                    cx="50" 
+                                    cy="50" 
+                                    r="42" 
+                                    stroke="url(#spinnerGradient)" 
+                                    className="transition-all duration-300" 
+                                    strokeWidth="6" 
+                                    fill="transparent" 
+                                    strokeDasharray="264"
+                                    strokeDashoffset={264 - (264 * (bulkProgress.current / (bulkProgress.total || 1)))}
+                                    strokeLinecap="round"
+                                />
+                            </svg>
+                        </div>
+                        
+                        <div className="space-y-2">
+                            <h2 className="text-xl font-black tracking-tight text-foreground">Generating Bulk Reports</h2>
+                            <p className="text-sm text-muted-foreground font-semibold">
+                                Please do not close or reload this page.
+                            </p>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+                                <div 
+                                    className="h-full bg-primary transition-all duration-300 rounded-full"
+                                    style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                                />
+                            </div>
+                            <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider text-muted-foreground">
+                                <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
+                                <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                            </div>
+                        </div>
+                        
+                        <div className="p-4 rounded-2xl bg-muted/40 border text-left">
+                            <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 mb-0.5">Processing Patient</p>
+                            <p className="text-sm font-black text-foreground truncate">{bulkProgress.name || 'Initial Scanning...'}</p>
+                        </div>
                     </div>
                 </div>
             )}

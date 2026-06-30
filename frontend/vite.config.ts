@@ -1,14 +1,48 @@
 import path from "path"
+import fs from "fs"
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindv4 from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
+import { execSync } from 'child_process'
+
+let gitHash = process.env.RENDER_GIT_COMMIT ? process.env.RENDER_GIT_COMMIT.substring(0, 7) : ""
+if (!gitHash) {
+  try {
+    gitHash = execSync("git rev-parse --short HEAD").toString().trim()
+  } catch (e) {
+    gitHash = "dev"
+  }
+}
+
+let gitTag = ""
+try {
+  gitTag = execSync("git describe --tags --abbrev=0").toString().trim()
+} catch (e) {
+  // no tags
+}
+
+const appVersion = gitTag || "v1.2.0"
+const buildDate = new Date().toISOString().slice(0, 10)
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     tailwindv4(),
     react(),
+    {
+      name: 'generate-version-json',
+      closeBundle() {
+        const distDir = path.resolve(__dirname, 'dist');
+        if (!fs.existsSync(distDir)) {
+          fs.mkdirSync(distDir, { recursive: true });
+        }
+        fs.writeFileSync(
+          path.resolve(distDir, 'version.json'),
+          JSON.stringify({ commit: gitHash, version: appVersion, date: buildDate }, null, 2)
+        );
+      }
+    },
     VitePWA({
       registerType: 'autoUpdate',
       injectRegister: 'auto',
@@ -108,6 +142,11 @@ export default defineConfig({
     alias: {
       "@": path.resolve(__dirname, "./src"),
     },
+  },
+  define: {
+    'import.meta.env.VITE_APP_VERSION': JSON.stringify(appVersion),
+    'import.meta.env.VITE_APP_GIT_HASH': JSON.stringify(gitHash),
+    'import.meta.env.VITE_APP_BUILD_DATE': JSON.stringify(buildDate),
   },
   optimizeDeps: {
     include: [

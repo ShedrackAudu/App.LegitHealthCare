@@ -211,7 +211,7 @@ const AccessKeysPage = () => {
                                     <SelectTrigger className="rounded-xl border-2 h-12 text-xs font-black uppercase tracking-tight focus:ring-primary/20">
                                         <SelectValue placeholder="Any Authorized User" />
                                     </SelectTrigger>
-                                    <SelectContent className="rounded-xl border-2 shadow-2xl">
+                                    <SelectContent className="rounded-xl border-2 shadow-2xl max-h-[300px] overflow-y-auto">
                                         <SelectItem value="all" className="text-[10px] font-black uppercase tracking-widest py-3 text-primary">Public (Any Unit)</SelectItem>
                                         {users.filter(u => !u.roles.includes('Patient')).map(u => (
                                             <SelectItem key={u.id} value={u.id.toString()} className="text-[10px] font-black uppercase tracking-widest py-3">

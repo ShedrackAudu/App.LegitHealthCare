@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { toast } from 'react-hot-toast';
 import { useForm, Controller } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
@@ -34,6 +35,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 
@@ -79,30 +81,34 @@ const SelectField = ({ label, options, name, control, required = true }: any) =>
       <Controller
         name={name}
         control={control}
-        render={({ field }) => (
-          <Select onValueChange={field.onChange} value={field.value}>
-            <SelectTrigger className="h-10 border rounded-md font-semibold">
-              <SelectValue placeholder={`Select ${label}...`} />
-            </SelectTrigger>
-            <SelectContent>
-              {options.map((opt: string) => (
-                <SelectItem key={opt} value={opt}>{opt}</SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+        rules={required ? { required: `${label} is required` } : undefined}
+        render={({ field, fieldState }) => (
+          <>
+            <Select onValueChange={field.onChange} value={field.value}>
+              <SelectTrigger className={`h-10 border rounded-md font-semibold ${fieldState.error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}>
+                <SelectValue placeholder={`Select ${label}...`} />
+              </SelectTrigger>
+              <SelectContent>
+                {options.map((opt: string) => (
+                  <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            {fieldState.error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{fieldState.error.message}</p>}
+          </>
         )}
       />
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, required = true, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, required = true, setValue, error, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
       <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} {required && <span className="text-red-500">*</span>}</Label>
       <div className="relative group">
           <Input 
               ref={ref}
               {...props}
-              className="h-10 border rounded-md font-semibold pr-10" 
+              className={`h-10 border rounded-md font-semibold pr-10 ${error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
           />
           <div className="absolute right-0 top-0 bottom-0 flex items-center pr-3 cursor-pointer">
               <DropdownMenu>
@@ -116,13 +122,17 @@ const ComboField = React.forwardRef(({ label, options, required = true, ...props
                     <DropdownMenuItem 
                       key={opt} 
                       onClick={() => {
-                        const event = {
-                            target: {
-                                name: props.name,
-                                value: opt
-                            }
-                        };
-                        props.onChange(event as any);
+                        if (setValue) {
+                          setValue(props.name, opt, { shouldDirty: true, shouldValidate: true });
+                        } else {
+                          const event = {
+                              target: {
+                                  name: props.name,
+                                  value: opt
+                              }
+                          };
+                          props.onChange(event as any);
+                        }
                       }}
                     >
                       {opt}
@@ -132,6 +142,7 @@ const ComboField = React.forwardRef(({ label, options, required = true, ...props
               </DropdownMenu>
           </div>
       </div>
+      {error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{error.message}</p>}
   </div>
 ));
 
@@ -141,31 +152,48 @@ const RadioField = ({ label, name, control, required = true }: any) => (
     <Controller
       name={name}
       control={control}
-      render={({ field }) => (
-        <RadioGroup
-          onValueChange={field.onChange}
-          value={field.value}
-          className="flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />
-            <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer">Yes</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="No" id={`${name}-no`} className="text-rose-600 border-2" />
-            <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer">No</Label>
-          </div>
-        </RadioGroup>
+      rules={required ? { required: `${label} is required` } : undefined}
+      render={({ field, fieldState }) => (
+        <>
+          <RadioGroup
+            onValueChange={field.onChange}
+            value={field.value}
+            className={`flex flex-col sm:flex-row gap-2 sm:gap-4 p-2 sm:p-1 bg-muted/30 rounded-xl border-2 min-h-[2.75rem] sm:h-11 sm:items-center px-4 transition-all ${fieldState.error ? 'border-red-500 ring-2 ring-red-500/20' : ''}`}
+          >
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="Yes" id={`${name}-yes`} className="text-primary border-2" />
+              <Label htmlFor={`${name}-yes`} className="font-bold cursor-pointer">Yes</Label>
+            </div>
+            <div className="flex items-center space-x-2">
+              <RadioGroupItem value="No" id={`${name}-no`} className="text-rose-600 border-2" />
+              <Label htmlFor={`${name}-no`} className="font-bold cursor-pointer">No</Label>
+            </div>
+          </RadioGroup>
+          {fieldState.error && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{fieldState.error.message}</p>}
+        </>
       )}
     />
   </div>
 );
 
 const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, activeSection }: any) => {
-    const { register, handleSubmit, setValue, watch, control, reset } = useForm({
+    const hasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
+    const radioDefaults = !hasConsultation ? {
+        luts: 'No',
+        chronic_cough: 'No',
+        chronic_chest_pain: 'No',
+        chest_infection: 'No',
+        heart_dx: 'No',
+        palor: 'No',
+        jaundice: 'No',
+        murmur: 'No'
+    } : {};
+
+    const { register, handleSubmit, setValue, watch, control, reset, getValues, formState: { errors } } = useForm({
         defaultValues: {
-            ...history?.review,
+            ...radioDefaults,
             ...history?.consultation,
+            ...history?.review,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
@@ -175,11 +203,25 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     });
 
     const [generatingAI, setGeneratingAI] = useState(false);
+    const [generatingLabAI, setGeneratingLabAI] = useState(false);
 
     useEffect(() => {
+        const currentHasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
+        const currentRadioDefaults = !currentHasConsultation ? {
+            luts: 'No',
+            chronic_cough: 'No',
+            chronic_chest_pain: 'No',
+            chest_infection: 'No',
+            heart_dx: 'No',
+            palor: 'No',
+            jaundice: 'No',
+            murmur: 'No'
+        } : {};
+
         reset({
-            ...history?.review,
+            ...currentRadioDefaults,
             ...history?.consultation,
+            ...history?.review,
             ...history?.special,
             ...history?.fbc,
             ...history?.kft,
@@ -188,45 +230,90 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
         });
     }, [history, reset]);
 
-    // Live calculation for KFT and Lipids
+    // Watch individual fields for calculations and sync logic
+    const total_cholesterol = watch('total_cholesterol');
+    const triglycerides = watch('triglycerides');
+    const hdl = watch('hdl');
+
+    const psa = watch('psa');
+    const psa_remark = watch('psa_remark');
+    const breast_exam = watch('breast_exam');
+    const breast_remark = watch('breast_remark');
+    const fbs = watch('fbs');
+    const rbs = watch('rbs');
+    const ua_result = watch('ua_result');
+    const ua_remark = watch('ua_remark');
+
+    // Live calculation for HDL and LDL
     useEffect(() => {
-        const subscription = watch((value, { name }) => {
-            // Urea -> Creatinine estimation (sample logic)
-            if (name === 'urea') {
-                const urea = parseFloat(value.urea);
-                if (!isNaN(urea)) {
-                    // Just example logic
-                }
-            }
+        const tcho = parseFloat(total_cholesterol);
+        if (!isNaN(tcho)) {
+            setValue('hdl', (tcho * 0.35).toFixed(2));
+        }
+    }, [total_cholesterol, setValue]);
 
-            // HDL: TCHO * 0.35
-            if (name === 'total_cholesterol') {
-                const tcho = parseFloat(value.total_cholesterol);
-                if (!isNaN(tcho)) {
-                    setValue('hdl', (tcho * 0.35).toFixed(2));
-                }
-            }
+    useEffect(() => {
+        const tcho = parseFloat(total_cholesterol);
+        const tg = parseFloat(triglycerides);
+        const hd = parseFloat(hdl);
+        if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hd)) {
+            const ldl = tcho - ((tg / 5) + hd);
+            setValue('ldl', ldl.toFixed(2));
+        }
+    }, [total_cholesterol, triglycerides, hdl, setValue]);
 
-            // LDL: TCHO - (TRIGLYCERIDES(TG)/5 + HDL)
-            if (name === 'total_cholesterol' || name === 'triglycerides' || name === 'hdl') {
-                const tcho = parseFloat(value.total_cholesterol);
-                const tg = parseFloat(value.triglycerides);
-                const hdl = parseFloat(value.hdl);
-                if (!isNaN(tcho) && !isNaN(tg) && !isNaN(hdl)) {
-                    const ldl = tcho - ((tg / 5) + hdl);
-                    setValue('ldl', ldl.toFixed(2));
-                }
-            }
-        });
-        return () => subscription.unsubscribe();
-    }, [watch, setValue]);
+    // PSA bidirectional sync
+    useEffect(() => {
+        if (psa === 'Not Applicable' && psa_remark !== 'Not Applicable') {
+            setValue('psa_remark', 'Not Applicable', { shouldValidate: true });
+        } else if (psa === 'Negative' && psa_remark !== 'Normal') {
+            setValue('psa_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [psa, setValue]);
+
+    useEffect(() => {
+        if (psa_remark === 'Not Applicable' && psa !== 'Not Applicable') {
+            setValue('psa', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [psa_remark, setValue]);
+
+    // Breast Exam sync
+    useEffect(() => {
+        if (breast_exam === 'Not Applicable' && breast_remark !== 'Not Applicable') {
+            setValue('breast_remark', 'Not Applicable', { shouldValidate: true });
+        } else if (breast_exam === 'Normal' && breast_remark !== 'Normal') {
+            setValue('breast_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [breast_exam, setValue]);
+
+    // FBS / RBS mutual exclusivity sync
+    useEffect(() => {
+        if (fbs && !isNaN(parseFloat(fbs)) && rbs !== 'Not Applicable') {
+            setValue('rbs', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [fbs, setValue]);
+
+    useEffect(() => {
+        if (rbs && !isNaN(parseFloat(rbs)) && fbs !== 'Not Applicable') {
+            setValue('fbs', 'Not Applicable', { shouldValidate: true });
+        }
+    }, [rbs, setValue]);
+
+    // Urine Analysis result/remark sync
+    useEffect(() => {
+        if (ua_result === 'No Abnormality' && ua_remark !== 'Normal') {
+            setValue('ua_remark', 'Normal', { shouldValidate: true });
+        }
+    }, [ua_result, setValue]);
 
     const handleAIGenerate = async () => {
         setGeneratingAI(true);
         try {
+            const formValues = getValues();
             const res = await axios.post('/api/ai/generate', {
                 staff_id: patient.staff_id,
-                screening_year: activeYear
+                screening_year: activeYear,
+                ...formValues
             }, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -249,6 +336,29 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
             toast.error(errorMsg);
         } finally {
             setGeneratingAI(false);
+        }
+    };
+ 
+    const handleAILabRemarkGenerate = async () => {
+        setGeneratingLabAI(true);
+        try {
+            const formValues = getValues();
+            const res = await axios.post('/api/ai/generate-lab-remark', {
+                staff_id: patient.staff_id,
+                screening_year: activeYear,
+                ...formValues
+            }, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            if (res.data.overall_lab_remark) {
+                setValue('overall_lab_remark', res.data.overall_lab_remark);
+                toast.success("AI generated Overall Lab Remark successfully!");
+            }
+        } catch (err: any) {
+            const errorMsg = err.response?.data?.error || "Failed to generate AI lab remark";
+            toast.error(errorMsg);
+        } finally {
+            setGeneratingLabAI(false);
         }
     };
 
@@ -305,11 +415,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             'FBC_REMARK'
                         ].map(f => (
                             <div key={f} className={`space-y-1 ${f.includes('REMARK') ? 'lg:col-span-2' : ''}`}>
-                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">{f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')}</Label>
+                                <Label className="text-[10px] uppercase font-bold text-muted-foreground whitespace-nowrap truncate block">
+                                    {f.replace('_ABS', '').replace('_PERCENT', ' %').replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
                                 {f.includes('REMARK') ? (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                    <Input 
+                                        {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                        className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                    />
                                 ) : (
-                                    <Input {...register(f.toLowerCase())} className="h-9 text-sm font-mono" />
+                                    <Input 
+                                        {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                        className={`h-9 text-sm font-mono ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                    />
+                                )}
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
                                 )}
                             </div>
                         ))}
@@ -319,16 +440,20 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Kidney Function Test" description="Potassium, Sodium, Chloride, and Calcium">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['POTASSIUM', 'SODIUM', 'CHLORIDE', 'HCO3', 'BICARBONATE_CA', 'KFT_REMARK'].map(f => {
-                            const displayName = f === 'BICARBONATE_CA' ? 'CALCIUM CA' : f.replace('_', ' ');
+                            const isCalcium = f === 'BICARBONATE_CA';
+                            const displayName = isCalcium ? 'CALCIUM CA' : f.replace('_', ' ');
                             return (
                                 <div key={f} className="space-y-1">
                                     <Label className="text-xs whitespace-nowrap truncate block">
-                                        {displayName}
+                                        {displayName} {!isCalcium && <span className="text-red-500">*</span>}
                                     </Label>
                                     <Input 
-                                        {...register(f.toLowerCase())} 
-                                        className="h-9 text-sm font-mono" 
+                                        {...register(f.toLowerCase(), isCalcium ? {} : { required: `${displayName} is required` })} 
+                                        className={`h-9 text-sm font-mono ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
                                     />
+                                    {(errors as any)[f.toLowerCase()] && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                    )}
                                 </div>
                             );
                         })}
@@ -339,8 +464,16 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-4 p-4">
                         {['TOTAL_CHOLESTEROL', 'TRIGLYCERIDES', 'HDL', 'LDL', 'LP_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">
+                                    {f.replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input 
+                                    {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -350,8 +483,16 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {['AST', 'ALT', 'ALP', 'TB', 'CB', 'UREA', 'CREATININE', 'LFT_REMARK'].map(f => (
                             <div key={f} className="space-y-1">
-                                <Label className="text-xs whitespace-nowrap truncate block">{f.replace('_', ' ')}</Label>
-                                <Input {...register(f.toLowerCase())} className="h-9 text-sm" />
+                                <Label className="text-xs whitespace-nowrap truncate block">
+                                    {f.replace('_', ' ')} <span className="text-red-500">*</span>
+                                </Label>
+                                <Input 
+                                    {...register(f.toLowerCase(), { required: `${f.replace('_', ' ')} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.toLowerCase()] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.toLowerCase()] && (
+                                    <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.toLowerCase()]?.message}</p>
+                                )}
                             </div>
                         ))}
                     </div>
@@ -360,18 +501,22 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                 <AccordionSection title="Special Diagnostic Tests" description="ECG, Spirometry, Audiometry, and Vitals">
                     <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 p-4">
                         {[
-                            { id: 'ecg_result', label: 'ECG Status', optional: true },
-                            { id: 'ecg_remark', label: 'ECG Remark', optional: true },
-                            { id: 'spirometry_result', label: 'Spirometry' },
-                            { id: 'spirometry_remark', label: 'Spiro Remark' },
-                            { id: 'audiometry_result', label: 'Audiometry' },
-                            { id: 'audiometry_remark', label: 'Audio Remark' },
-                            { id: 'weight', label: 'Weight (kg)' },
-                            { id: 'height', label: 'Height (m)' }
+                            { id: 'ecg_result', label: 'ECG Status', optional: false },
+                            { id: 'ecg_remark', label: 'ECG Remark', optional: false },
+                            { id: 'spirometry_result', label: 'Spirometry', optional: false },
+                            { id: 'spirometry_remark', label: 'Spiro Remark', optional: false },
+                            { id: 'audiometry_result', label: 'Audiometry', optional: false },
+                            { id: 'audiometry_remark', label: 'Audio Remark', optional: false },
+                            { id: 'weight', label: 'Weight (kg)', optional: false },
+                            { id: 'height', label: 'Height (m)', optional: false }
                         ].map(f => (
                             <div key={f.id} className="space-y-1">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">{f.label} {!f.optional && <span className="text-red-500">*</span>}</Label>
-                                <Input {...register(f.id, f.optional ? {} : { required: true })} className="h-9 text-sm" required={!f.optional} />
+                                <Input 
+                                    {...register(f.id, f.optional ? {} : { required: `${f.label} is required` })} 
+                                    className={`h-9 text-sm ${(errors as any)[f.id] ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} 
+                                />
+                                {(errors as any)[f.id] && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any)[f.id]?.message}</p>}
                             </div>
                         ))}
                     </div>
@@ -426,28 +571,55 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             <div className="md:col-span-1">
                                 <SelectField name="htn_status" control={control} label="HTN" options={['No', 'Yes - On Regular Medication', 'Yes - Not on Regular Medication', 'Yes - Not on Medication']} />
                             </div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label><Input {...register('bp', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label><Input {...register('pulse', { required: true })} required /></div>
-                            <div className="space-y-1"><Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label><Input {...register('spo2', { required: true })} required /></div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">B.P (mm/Hg) <span className="text-red-500">*</span></Label>
+                                <Input {...register('bp', { required: 'B.P is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).bp ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).bp && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).bp.message}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">PULSE (b/m) <span className="text-red-500">*</span></Label>
+                                <Input {...register('pulse', { required: 'PULSE is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).pulse ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).pulse && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).pulse.message}</p>}
+                            </div>
+                            <div className="space-y-1">
+                                <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">SPO2 (%) <span className="text-red-500">*</span></Label>
+                                <Input {...register('spo2', { required: 'SPO2 is required' })} className={`h-10 border rounded-md font-semibold ${(errors as any).spo2 ? 'border-red-500 ring-2 ring-red-500/20' : ''}`} />
+                                {(errors as any).spo2 && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).spo2.message}</p>}
+                            </div>
                         </div>
 
                         <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4 pt-4 border-t border-dashed">
                              <SelectField name="psa" control={control} label="PSA RESULT" options={['Negative', 'Not Applicable', 'Positive']} />
                              <SelectField name="psa_remark" control={control} label="PSA REMARK" options={['Normal', 'Abnormal', 'Not Applicable']} />
-                             <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} />
-                             <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} />
-                             <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                              <ComboField {...register('fbs', { required: 'FBS is required' })} label="FBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).fbs} />
+                             <ComboField {...register('rbs', { required: 'RBS is required' })} label="RBS" options={['Not Applicable']} setValue={setValue} error={(errors as any).rbs} />
+                             <SelectField name="sugar_remark" control={control} label="FBS/RBS REMARK" options={['Abnormal', 'Impaired', 'Normal']} />
                              <SelectField name="ua_result" control={control} label="Urine Analysis" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                              <SelectField name="ua_remark" control={control} label="UA REMARK" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                              <div className="space-y-1">
                                 <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1">U/A Remark Others</Label>
                                 <Input {...register('ua_remark_others')} placeholder="Specify if others..." className="h-10 border rounded-md font-semibold" />
                              </div>
-                             <SelectField name="assessment_hx_pe" control={control} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
-                             <div className="space-y-1 col-span-full lg:col-span-4">
-                                <Label className="text-xs font-bold uppercase tracking-tight text-primary ml-1">Overall Lab Remark</Label>
-                                <textarea {...register('overall_lab_remark')} className="w-full min-h-[80px] border-2 border-primary/10 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none" placeholder="Enter comprehensive lab findings..." />
-                             </div>
+                             <ComboField {...register('assessment_hx_pe', { required: 'Assessment Hx & PE is required' })} label="Assessment Hx & PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} setValue={setValue} error={(errors as any).assessment_hx_pe} />
+                              <div className="space-y-1 col-span-full lg:col-span-4">
+                                 <div className="flex items-center justify-between ml-1 mb-1">
+                                    <Label className="text-xs font-bold uppercase tracking-tight text-primary">Overall Lab Remark <span className="text-red-500">*</span></Label>
+                                    <Button
+                                        type="button"
+                                        variant="outline"
+                                        size="sm"
+                                        className="h-7 text-[10px] font-black uppercase tracking-wider rounded-lg border-primary/20 hover:bg-primary/10 text-primary flex items-center gap-1.5"
+                                        onClick={handleAILabRemarkGenerate}
+                                        loading={generatingLabAI}
+                                        disabled={generatingAI}
+                                    >
+                                        <HugeiconsIcon icon={SparklesIcon} className="h-3 w-3" />
+                                        AI Generate
+                                    </Button>
+                                 </div>
+                                 <textarea {...register('overall_lab_remark', { required: 'Overall Lab Remark is required' })} className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-primary/10 bg-primary/[0.01] outline-none ${(errors as any).overall_lab_remark ? 'border-red-500 ring-2 ring-red-500/20' : 'border-primary/10'}`} placeholder="Enter comprehensive lab findings..." />
+                                 {(errors as any).overall_lab_remark && <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).overall_lab_remark.message}</p>}
+                              </div>
                         </div>
 
                         <div className="space-y-4 pt-4 border-t">
@@ -468,20 +640,48 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
                             
                             <div className="grid grid-cols-2 md:grid-cols-2 gap-4 pt-4 border-t border-dashed">
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One</Label>
-                                    <textarea {...register('comment_one')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="First comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment One <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_one', { required: 'Comment One is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_one ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="First comment..." 
+                                    />
+                                    {(errors as any).comment_one && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_one.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two</Label>
-                                    <textarea {...register('comment_two')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Second comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Two <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_two', { required: 'Comment Two is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_two ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Second comment..." 
+                                    />
+                                    {(errors as any).comment_two && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_two.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three</Label>
-                                    <textarea {...register('comment_three')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Third comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Three <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_three', { required: 'Comment Three is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_three ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Third comment..." 
+                                    />
+                                    {(errors as any).comment_three && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_three.message}</p>
+                                    )}
                                 </div>
                                 <div className="space-y-1">
-                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four</Label>
-                                    <textarea {...register('comment_four')} className="w-full min-h-[80px] border-2 border-rose-200 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium" placeholder="Fourth comment..." />
+                                    <Label className="text-[10px] uppercase font-black text-rose-600 ml-1">Comment Four <span className="text-red-500">*</span></Label>
+                                    <textarea 
+                                        {...register('comment_four', { required: 'Comment Four is required' })} 
+                                        className={`w-full min-h-[80px] border-2 rounded-xl p-3 text-sm focus:ring-4 ring-rose-500/10 outline-none font-medium ${(errors as any).comment_four ? 'border-red-500 ring-2 ring-red-500/20' : 'border-rose-200'}`} 
+                                        placeholder="Fourth comment..." 
+                                    />
+                                    {(errors as any).comment_four && (
+                                        <p className="text-[10px] text-red-500 font-bold ml-1 mt-0.5">{(errors as any).comment_four.message}</p>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -520,11 +720,21 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
 const DirectorPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const [patient, setPatient] = useState<any>(null);
     const [history, setHistory] = useState<any>(null);
     const [searching, setSearching] = useState(false);
     const [loading, setLoading] = useState(false);
     const [bulkAiEnabled, setBulkAiEnabled] = useState(true);
+    const [lastReviewed, setLastReviewed] = useState<{ patientId: string | number; staffId: string } | null>(() => {
+        try {
+            const saved = localStorage.getItem('last_reviewed_director');
+            return saved ? JSON.parse(saved) : null;
+        } catch {
+            return null;
+        }
+    });
 
     // Batch AI Processing states
     const [batchOpen, setBatchOpen] = useState(false);
@@ -533,6 +743,12 @@ const DirectorPage: React.FC = () => {
     const [batchProcessing, setBatchProcessing] = useState(false);
     const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
     const [batchLogs, setBatchLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
+
+    // Batch AI Lab Remarks states
+    const [batchLabStartId, setBatchLabStartId] = useState('');
+    const [batchLabProcessing, setBatchLabProcessing] = useState(false);
+    const [batchLabProgress, setBatchLabProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
+    const [batchLabLogs, setBatchLabLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
 
     useEffect(() => {
         const fetchBulkAiStatus = async () => {
@@ -624,8 +840,8 @@ const DirectorPage: React.FC = () => {
 
                 // 4. Submit save payload
                 const savePayload = {
-                    ...patientHistory?.review,
                     ...patientHistory?.consultation,
+                    ...patientHistory?.review,
                     ...patientHistory?.special,
                     ...patientHistory?.fbc,
                     ...patientHistory?.kft,
@@ -657,6 +873,108 @@ const DirectorPage: React.FC = () => {
         setBatchProcessing(false);
         toast.success("Batch processing completed!");
     };
+
+    const startBatchLabProcess = async () => {
+        const val = batchLabStartId.trim();
+        let start = 0;
+        let end = 0;
+        
+        if (val.includes('-')) {
+            const parts = val.split('-');
+            start = parseInt(parts[0]);
+            end = parseInt(parts[1]);
+        } else {
+            start = parseInt(val);
+            end = parseInt(val);
+        }
+        
+        if (isNaN(start) || isNaN(end) || start > end || start <= 0) {
+            toast.error("Please enter a valid Patient ID range (e.g. 1-100 or 25).");
+            return;
+        }
+        
+        setBatchLabProcessing(true);
+        const total = end - start + 1;
+        setBatchLabProgress({ current: 0, total, successCount: 0, failCount: 0 });
+        
+        const initialLogs = [];
+        for (let i = start; i <= end; i++) {
+            initialLogs.push({ id: i, status: 'pending' as const, message: 'Queued' });
+        }
+        setBatchLabLogs(initialLogs);
+        
+        for (let i = start; i <= end; i++) {
+            setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
+            
+            try {
+                // 1. Resolve patient using PID
+                const pRes = await axios.get(`/patient/${i}?year=${activeYear}&strict=true&search_type=pid`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientData = pRes.data;
+                const staffId = patientData.staff_id;
+                
+                // 2. Fetch history
+                const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const patientHistory = hRes.data;
+
+                const review = patientHistory?.review;
+                const hasExistingLabRemark = review && review.overall_lab_remark && review.overall_lab_remark.trim();
+                
+                if (hasExistingLabRemark) {
+                    setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: 'Skipped: Overall lab remark already exists' } : log));
+                    setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                    continue;
+                }
+                
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Lab Remark...' } : log));
+
+                // 3. Generate AI Overall Lab Remark
+                const aiRes = await axios.post('/api/ai/generate-lab-remark', {
+                    staff_id: staffId,
+                    screening_year: activeYear
+                }, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                const generatedRemark = aiRes.data.overall_lab_remark || '';
+                
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Saving director review...' } : log));
+
+                // 4. Submit save payload
+                const savePayload = {
+                    ...patientHistory?.consultation,
+                    ...patientHistory?.review,
+                    ...patientHistory?.special,
+                    ...patientHistory?.fbc,
+                    ...patientHistory?.kft,
+                    ...patientHistory?.lipid,
+                    ...patientHistory?.lft,
+                    overall_lab_remark: generatedRemark,
+                    staff_id: staffId,
+                    screening_year: activeYear
+                };
+                
+                await axios.post('/api/director/save-director-review', savePayload, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                
+                // Success log
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: `Completed: ${patientData.first_name} ${patientData.last_name}` } : log));
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                
+            } catch (err: any) {
+                const errMsg = err.response?.data?.error || err.message || "Failed to process";
+                setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: errMsg } : log));
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, failCount: prev.failCount + 1 }));
+            }
+        }
+        
+        setBatchLabProcessing(false);
+        toast.success("Batch processing completed!");
+    };
     const selectPatient = (p: any) => {
         handleSearchWithId(p.staff_id, 'general');
     };
@@ -672,7 +990,8 @@ const DirectorPage: React.FC = () => {
             });
             setPatient(pRes.data);
             
-            const hRes = await axios.get(`/api/director/get-patient-history/${id}?year=${activeYear}`, {
+            const staffId = pRes.data.staff_id;
+            const hRes = await axios.get(`/api/director/get-patient-history/${staffId}?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setHistory(hRes.data);
@@ -683,6 +1002,12 @@ const DirectorPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            handleSearchWithId(staffIdParam, 'general');
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     const handleSearch = () => {
         // This is primarily for the PatientSearch button
@@ -700,6 +1025,14 @@ const DirectorPage: React.FC = () => {
                 headers: { 'X-Company-Context': activeSection }
             });
             toast.success("Director Review saved successfully!");
+            
+            const info = {
+                patientId: patient.patient_id || 'N/A',
+                staffId: patient.staff_id
+            };
+            setLastReviewed(info);
+            localStorage.setItem('last_reviewed_director', JSON.stringify(info));
+
             setPatient(null);
             setHistory(null);
         } catch (err) {
@@ -736,10 +1069,67 @@ const DirectorPage: React.FC = () => {
                     />
                 </div>
 
-                {!patient ? (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-8 mt-8">
+                {searching ? (
+                    <div className="flex-1 flex flex-col overflow-hidden min-h-0 h-full gap-6 pb-0 mt-8 animate-in fade-in duration-500">
+                        {/* Patient Profile Card Skeleton */}
+                        <Card className="border-2 border-primary/10 shadow-lg bg-muted/5 shrink-0">
+                            <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                                <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                                    <div className="lg:col-span-2 space-y-2">
+                                        <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                                        <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                                    </div>
+                                    {Array.from({ length: 6 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-2">
+                                            <Skeleton className="h-3 w-12 bg-muted/30 rounded" />
+                                            <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </CardContent>
+                        </Card>
+
+                        {/* Content Area Skeleton */}
+                        <div className="flex-1 grid grid-cols-1 lg:grid-cols-2 gap-6 min-h-0 overflow-hidden">
+                            {/* Left Panel */}
+                            <Card className="border-2 shadow-2xl flex flex-col h-full overflow-hidden">
+                                <div className="p-4 bg-muted/5 border-b shrink-0">
+                                    <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                                    {Array.from({ length: 3 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-3">
+                                            <Skeleton className="h-4 w-32 bg-muted/30 rounded" />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                                <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+
+                            {/* Right Panel */}
+                            <Card className="border-2 shadow-2xl flex flex-col h-full overflow-hidden">
+                                <div className="p-4 bg-muted/5 border-b shrink-0">
+                                    <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                                <div className="p-6 space-y-6 flex-1 overflow-y-auto">
+                                    {Array.from({ length: 3 }).map((_, idx) => (
+                                        <div key={idx} className="space-y-2">
+                                            <Skeleton className="h-4 w-24 bg-muted/30 rounded" />
+                                            <Skeleton className="h-24 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </Card>
+                        </div>
+                    </div>
+                ) : !patient ? (
+                    <div className="flex flex-col gap-8 mt-8">
                         {/* Single Patient Review Placeholder Card */}
-                        <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[22rem] bg-muted/5 p-8 text-center rounded-3xl">
+                        <Card className="border-2 border-dashed flex flex-col items-center justify-center min-h-[16rem] bg-muted/5 p-8 text-center rounded-3xl">
                             <div className="space-y-4">
                                 <div className="w-16 h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto transition-transform hover:scale-110 duration-300">
                                     <HugeiconsIcon icon={Activity01Icon} className="w-8 h-8 text-muted-foreground/50" />
@@ -748,6 +1138,28 @@ const DirectorPage: React.FC = () => {
                                 <p className="text-muted-foreground font-medium text-sm italic max-w-sm mx-auto leading-snug">
                                     Search for a patient using the search bar at the top to begin individual clinical review.
                                 </p>
+                                {lastReviewed && (
+                                    <div 
+                                        onClick={() => handleSearchWithId(lastReviewed.staffId, 'general')}
+                                        className="p-4 bg-primary/5 hover:bg-primary/10 border-2 border-primary/15 rounded-2xl max-w-xs mx-auto transition-all cursor-pointer active:scale-95 group/last shadow-sm mt-2"
+                                    >
+                                        <p className="text-[10px] font-black uppercase tracking-widest text-primary mb-1">
+                                            Last Patient Reviewed
+                                        </p>
+                                        <div className="flex justify-center items-center gap-2 text-xs">
+                                            <span className="font-semibold text-muted-foreground">
+                                                Patient ID: <strong className="font-bold text-foreground font-mono">#{lastReviewed.patientId}</strong>
+                                            </span>
+                                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                                            <span className="font-semibold text-muted-foreground">
+                                                Staff ID: <strong className="font-bold text-foreground font-mono">#{lastReviewed.staffId}</strong>
+                                            </span>
+                                        </div>
+                                        <p className="text-[9px] text-primary/70 group-hover/last:text-primary transition-colors font-bold mt-1.5 leading-none">
+                                            Click to reload patient details
+                                        </p>
+                                    </div>
+                                )}
                                 <div className="flex flex-col items-center gap-1">
                                     <div className="h-px w-8 bg-muted-foreground/20" />
                                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em] font-black">
@@ -757,123 +1169,243 @@ const DirectorPage: React.FC = () => {
                             </div>
                         </Card>
 
-                        {/* Bulk AI Review Generator Card */}
-                        <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
-                                <div className="space-y-4">
-                                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                                        <div className="p-3 bg-primary/10 rounded-2xl">
-                                            <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                            {/* Bulk AI Review Generator Card */}
+                            <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <div className="p-3 bg-primary/10 rounded-2xl">
+                                                <HugeiconsIcon icon={SparklesIcon} className="text-primary h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
+                                                    {!bulkAiEnabled && (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                            Disabled
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
+                                            </div>
                                         </div>
-                                        <div>
-                                            <div className="flex items-center gap-2">
-                                                <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
-                                                {!bulkAiEnabled && (
-                                                    <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
-                                                        Disabled
-                                                    </span>
+
+                                        <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
+                                            <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
+                                            <ul className="list-disc list-inside space-y-1 pl-1">
+                                                <li>Patient has been registered for the screening year.</li>
+                                                <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
+                                            </ul>
+                                        </div>
+
+                                        {!batchProcessing && batchProgress.total === 0 ? (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="bulk-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                    <Input
+                                                        id="bulk-pid-range"
+                                                        placeholder="e.g. 1-100 or 25"
+                                                        value={batchStartId}
+                                                        onChange={(e) => setBatchStartId(e.target.value)}
+                                                        disabled={!bulkAiEnabled}
+                                                        className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
+                                                </div>
+                                                <Button 
+                                                    onClick={startBatchProcess}
+                                                    disabled={!bulkAiEnabled}
+                                                    className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
+                                                >
+                                                    <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                    Bulk Generate AI Reviews
+                                                </Button>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                        <p className="text-lg font-black mt-1 text-primary">{batchProgress.current} / {batchProgress.total}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                        <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchProgress.successCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                        <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchProgress.failCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                        <p className="text-lg font-black mt-1 text-foreground">
+                                                            {batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                    <div 
+                                                        className="bg-primary h-full transition-all duration-300 rounded-full"
+                                                        style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                    <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                        {batchLogs.map(log => (
+                                                            <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                                <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                                <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                                <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                    log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                    log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                    'bg-muted-foreground/10 text-muted-foreground'
+                                                                }`}>
+                                                                    {log.status}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                {!batchProcessing && (
+                                                    <Button 
+                                                        onClick={() => {
+                                                            setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                            setBatchLogs([]);
+                                                        }}
+                                                        variant="outline"
+                                                        className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    >
+                                                        Reset & Start Another Range
+                                                    </Button>
                                                 )}
                                             </div>
-                                            <p className="text-xs text-muted-foreground">Generate AI reviews and submit comments in bulk</p>
-                                        </div>
+                                        )}
                                     </div>
+                                </Card>
 
-                                    <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground">
-                                        <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
-                                        <ul className="list-disc list-inside space-y-1 pl-1">
-                                            <li>Patient has been registered for the screening year.</li>
-                                            <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
-                                        </ul>
-                                    </div>
-
-                                    {!batchProcessing && batchProgress.total === 0 ? (
-                                        <div className="space-y-4">
-                                            <div className="space-y-2">
-                                                <Label htmlFor="bulk-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
-                                                <Input
-                                                    id="bulk-pid-range"
-                                                    placeholder="e.g. 1-100 or 25"
-                                                    value={batchStartId}
-                                                    onChange={(e) => setBatchStartId(e.target.value)}
-                                                    disabled={!bulkAiEnabled}
-                                                    className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
-                                                />
-                                                <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and automatically generate and save AI remarks.</p>
+                                {/* Bulk AI Lab Remark Generator Card */}
+                                <Card className="border-2 border-border bg-card p-8 rounded-3xl flex flex-col justify-between min-h-[22rem] shadow-xl hover:shadow-2xl transition-all duration-300">
+                                    <div className="space-y-4">
+                                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                                            <div className="p-3 bg-indigo-500/10 rounded-2xl">
+                                                <HugeiconsIcon icon={SparklesIcon} className="text-indigo-500 h-6 w-6" />
                                             </div>
-                                            <Button 
-                                                onClick={startBatchProcess}
-                                                disabled={!bulkAiEnabled}
-                                                className="w-full mt-6 py-5 rounded-2xl font-bold bg-primary hover:bg-primary/95 text-white shadow-lg shadow-primary/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
-                                            >
-                                                <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
-                                                Bulk Generate AI Reviews
-                                            </Button>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
+                                                    {!bulkAiEnabled && (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
+                                                            Disabled
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <p className="text-xs text-muted-foreground font-semibold">Generate AI Overall Lab Remarks in bulk</p>
+                                            </div>
                                         </div>
-                                    ) : (
-                                        <div className="space-y-6">
-                                            <div className="grid grid-cols-4 gap-2 text-center text-xs">
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
-                                                    <p className="text-lg font-black mt-1 text-primary">{batchProgress.current} / {batchProgress.total}</p>
-                                                </div>
-                                                <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
-                                                    <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchProgress.successCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
-                                                    <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchProgress.failCount}</p>
-                                                </div>
-                                                <div className="p-2 bg-muted/40 rounded-xl">
-                                                    <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
-                                                    <p className="text-lg font-black mt-1 text-foreground">
-                                                        {batchProgress.total > 0 ? Math.round((batchProgress.current / batchProgress.total) * 100) : 0}%
-                                                    </p>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
-                                                <div 
-                                                    className="bg-primary h-full transition-all duration-300 rounded-full"
-                                                    style={{ width: `${batchProgress.total > 0 ? (batchProgress.current / batchProgress.total) * 100 : 0}%` }}
-                                                />
-                                            </div>
 
-                                            <div className="space-y-1">
-                                                <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
-                                                <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
-                                                    {batchLogs.map(log => (
-                                                        <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
-                                                            <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
-                                                            <span className="flex-1 text-left px-1 truncate">{log.message}</span>
-                                                            <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
-                                                                log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
-                                                                log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
-                                                                log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
-                                                                'bg-muted-foreground/10 text-muted-foreground'
-                                                            }`}>
-                                                                {log.status}
-                                                            </span>
-                                                        </div>
-                                                    ))}
+                                        <div className="p-4 bg-muted/40 rounded-2xl border text-xs space-y-2 text-muted-foreground font-medium">
+                                            <p className="font-bold text-foreground">Generates remarks meeting these criteria:</p>
+                                            <ul className="list-disc list-inside space-y-1 pl-1">
+                                                <li>Patient is registered for the screening year.</li>
+                                                <li>Prior lab data (FBC, LFT, KFT, Lipids) exists.</li>
+                                            </ul>
+                                        </div>
+
+                                        {!batchLabProcessing && batchLabProgress.total === 0 ? (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label htmlFor="bulk-lab-pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
+                                                    <Input
+                                                        id="bulk-lab-pid-range"
+                                                        placeholder="e.g. 1-50 or 25"
+                                                        value={batchLabStartId}
+                                                        onChange={(e) => setBatchLabStartId(e.target.value)}
+                                                        disabled={!bulkAiEnabled}
+                                                        className="rounded-xl border-2 border-border focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-55"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">Specify range of Patient IDs to automatically generate and save Overall Lab Remarks.</p>
                                                 </div>
-                                            </div>
-                                            
-                                            {!batchProcessing && (
                                                 <Button 
-                                                    onClick={() => {
-                                                        setBatchProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
-                                                        setBatchLogs([]);
-                                                    }}
-                                                    variant="outline"
-                                                    className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    onClick={startBatchLabProcess}
+                                                    disabled={!bulkAiEnabled}
+                                                    className="w-full mt-6 py-5 rounded-2xl font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg shadow-indigo-500/20 hover:scale-[1.02] active:scale-95 disabled:scale-100 disabled:active:scale-100 transition-all duration-200 flex items-center justify-center gap-2 text-sm"
                                                 >
-                                                    Reset & Start Another Range
+                                                    <HugeiconsIcon icon={SparklesIcon} className="h-4 w-4" />
+                                                    Bulk Generate Lab Remarks
                                                 </Button>
-                                            )}
-                                        </div>
-                                    )}
-                                </div>
-                            </Card>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-6">
+                                                <div className="grid grid-cols-4 gap-2 text-center text-xs">
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Processed</p>
+                                                        <p className="text-lg font-black mt-1 text-primary">{batchLabProgress.current} / {batchLabProgress.total}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-emerald-50 dark:bg-emerald-950/20 border border-emerald-100 dark:border-emerald-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-emerald-600 dark:text-emerald-400 leading-none">Success</p>
+                                                        <p className="text-lg font-black mt-1 text-emerald-600 dark:text-emerald-400">{batchLabProgress.successCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-rose-50 dark:bg-rose-950/20 border border-rose-100 dark:border-rose-900/30 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-rose-600 dark:text-rose-400 leading-none">Failed</p>
+                                                        <p className="text-lg font-black mt-1 text-rose-600 dark:text-rose-400">{batchLabProgress.failCount}</p>
+                                                    </div>
+                                                    <div className="p-2 bg-muted/40 rounded-xl">
+                                                        <p className="text-[8px] uppercase font-bold text-muted-foreground leading-none">Progress</p>
+                                                        <p className="text-lg font-black mt-1 text-foreground">
+                                                            {batchLabProgress.total > 0 ? Math.round((batchLabProgress.current / batchLabProgress.total) * 100) : 0}%
+                                                        </p>
+                                                    </div>
+                                                </div>
+                                                
+                                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden border">
+                                                    <div 
+                                                        className="bg-indigo-600 h-full transition-all duration-300 rounded-full"
+                                                        style={{ width: `${batchLabProgress.total > 0 ? (batchLabProgress.current / batchLabProgress.total) * 100 : 0}%` }}
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-1">
+                                                    <Label className="text-[10px] font-bold uppercase tracking-tight text-muted-foreground">Execution Status Logs</Label>
+                                                    <div className="border rounded-xl p-3 max-h-40 overflow-y-auto space-y-1 bg-muted/10 font-mono text-[10px] custom-scrollbar">
+                                                        {batchLabLogs.map(log => (
+                                                            <div key={log.id} className="flex items-start justify-between py-0.5 border-b border-muted/30 last:border-0">
+                                                                <span className="font-bold shrink-0 w-20">Patient #{log.id}:</span>
+                                                                <span className="flex-1 text-left px-1 truncate">{log.message}</span>
+                                                                <span className={`shrink-0 text-[8px] uppercase font-black px-1.5 py-0.5 rounded-md ${
+                                                                    log.status === 'success' ? 'bg-emerald-500/10 text-emerald-500' :
+                                                                    log.status === 'failed' ? 'bg-rose-500/10 text-rose-500' :
+                                                                    log.status === 'processing' ? 'bg-blue-500/10 text-blue-500 animate-pulse' :
+                                                                    'bg-muted-foreground/10 text-muted-foreground'
+                                                                }`}>
+                                                                    {log.status}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                {!batchLabProcessing && (
+                                                    <Button 
+                                                        onClick={() => {
+                                                            setBatchLabProgress({ current: 0, total: 0, successCount: 0, failCount: 0 });
+                                                            setBatchLabLogs([]);
+                                                        }}
+                                                        variant="outline"
+                                                        className="w-full h-10 font-bold rounded-xl text-xs"
+                                                    >
+                                                        Reset & Start Another Range
+                                                    </Button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </Card>
+                        </div>
                     </div>
                 ) : (
                     <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar pb-10">

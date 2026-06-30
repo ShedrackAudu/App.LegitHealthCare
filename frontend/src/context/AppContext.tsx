@@ -23,6 +23,7 @@ interface AppContextType {
   playGlobalSound: (type?: 'message' | 'alert') => void;
   activeChatId: string | null;
   setActiveChatId: (id: string | null) => void;
+  verifyingAuth: boolean;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -49,6 +50,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     }
     return u;
   });
+
+  const [verifyingAuth, setVerifyingAuth] = useState<boolean>(() => {
+    return !!localStorage.getItem('token');
+  });
+
+  useEffect(() => {
+    const verifyToken = async () => {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setVerifyingAuth(false);
+        return;
+      }
+      try {
+        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        const resp = await axios.get('/api/auth/verify');
+        setUser(resp.data.user);
+        localStorage.setItem('user', JSON.stringify(resp.data.user));
+      } catch (err: any) {
+        console.error("Auth verification failed:", err);
+        setUser(null);
+        localStorage.removeItem('user');
+        localStorage.removeItem('token');
+        delete axios.defaults.headers.common['Authorization'];
+        
+        // Redirect if not on a public path
+        const publicPaths = ['/login', '/signup', '/verify-otp', '/forgot-password', '/verify/'];
+        const isPublic = publicPaths.some(path => window.location.pathname.startsWith(path)) || window.location.pathname === '/';
+        if (!isPublic) {
+          window.location.href = '/login?reason=session_expired';
+        }
+      } finally {
+        setVerifyingAuth(false);
+      }
+    };
+
+    verifyToken();
+  }, []);
 
   const [socket, setSocket] = useState<Socket | null>(null);
   const [unreadMessagesCount, setUnreadMessagesCount] = useState(0);
@@ -339,7 +377,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       branding, brandingError, fetchBranding,
       socket, unreadMessagesCount, setUnreadMessagesCount,
       isMuted, setIsMuted: handleSetIsMuted, playGlobalSound,
-      activeChatId, setActiveChatId
+      activeChatId, setActiveChatId,
+      verifyingAuth
     }}>
       {children}
     </AppContext.Provider>

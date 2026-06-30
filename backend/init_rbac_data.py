@@ -29,6 +29,7 @@ def init_rbac(app):
             ('manage_departments', 'Manage clinic departments'),
             ('manage_patient_accounts', 'Create and onboard patient portal accounts'),
             ('manage_queues', 'Manage patient departmental queues'),
+            ('manage_report_customization', 'Configure report parameters, reference ranges, and units'),
             ('manage_roles', 'Manage system roles and permissions'),
             ('manage_staff_accounts', 'Create and manage clinical staff accounts'),
             ('messaging', 'Access to internal messaging system'),

@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, g
+from flask import Blueprint, request, jsonify, g, send_file
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from models import db, BioData, ScreeningYearBioData, QueueTracker, QueueEntry, AuditLog
 from datetime import datetime
@@ -65,6 +65,18 @@ def get_patient(staff_id):
         
     patient_id = yearly_record.patient_id if yearly_record else None
     
+    # Log view action in audit trail only if not a search lookup
+    if not request.args.get('search_type'):
+        try:
+            AuditLog.log_action(
+                action="View Patient Profile",
+                resource=f"Patient:{patient.staff_id}",
+                details={"screening_year": year, "source": "Registration/Directory"},
+                commit=True
+            )
+        except Exception as audit_err:
+            pass
+        
     return jsonify({
         "staff_id": patient.staff_id,
         "patient_id": patient_id, # Added
@@ -289,3 +301,199 @@ def get_registration_stats():
         "department_stats": dept_counts,
         "daily_stats": daily_stats
     }), 200
+
+@registration_bp.route('/download-registered', methods=['GET'])
+@jwt_required()
+def download_registered_excel():
+    bind = get_bind()
+    if not bind: 
+        return jsonify({"error": "Invalid section context"}), 400
+        
+    year = request.args.get('year')
+    if not year:
+        return jsonify({"error": "Year is required"}), 400
+        
+    date_str = request.args.get('date') # Format: YYYY-MM-DD
+    
+    query = db.session.query(
+        ScreeningYearBioData, BioData
+    ).join(
+        BioData, 
+        ScreeningYearBioData.staff_id == BioData.staff_id
+    ).filter(
+        ScreeningYearBioData.screening_year == int(year)
+    )
+    
+    if date_str:
+        from datetime import datetime, time
+        try:
+            target_date = datetime.strptime(date_str, '%Y-%m-%d').date()
+            day_start = datetime.combine(target_date, time.min)
+            day_end = datetime.combine(target_date, time.max)
+            query = query.filter(
+                ScreeningYearBioData.created_at >= day_start,
+                ScreeningYearBioData.created_at <= day_end
+            )
+        except ValueError:
+            return jsonify({"error": "Invalid date format. Use YYYY-MM-DD"}), 400
+            
+    records = query.order_by(
+        ScreeningYearBioData.department.asc(),
+        ScreeningYearBioData.last_name.asc(),
+        ScreeningYearBioData.first_name.asc()
+    ).all()
+    
+    import pandas as pd
+    import io
+    
+    download_filename = f"Registered_Patients_{year}_{date_str}.xlsx" if date_str else f"Registered_Patients_{year}.xlsx"
+    
+    if not records:
+        output = io.BytesIO()
+        df = pd.DataFrame(columns=["Staff ID", "Patient ID", "First Name", "Middle Name", "Last Name", "Department", "Gender", "Age", "Phone", "Email", "Race", "Nationality"])
+        with pd.ExcelWriter(output, engine='openpyxl') as writer:
+            df.to_excel(writer, index=False, sheet_name='No Registrations')
+        output.seek(0)
+        return send_file(output, download_name=download_filename, as_attachment=True)
+        
+    data_list = []
+    for yr, bio in records:
+        data_list.append({
+            "Staff ID": yr.staff_id,
+            "Patient ID": yr.patient_id,
+            "First Name": yr.first_name,
+            "Middle Name": bio.middle_name or "",
+            "Last Name": yr.last_name,
+            "Department": yr.department or "Unknown",
+            "Gender": yr.gender,
+            "Age": yr.age,
+            "Phone": bio.phone or "N/A",
+            "Email": bio.email or "N/A",
+            "Race": bio.race or "N/A",
+            "Nationality": bio.nationality or "N/A",
+            "Registration Date": yr.created_at.strftime('%Y-%m-%d %H:%M') if yr.created_at else "N/A"
+        })
+        
+    df_all = pd.DataFrame(data_list)
+    output = io.BytesIO()
+    
+    with pd.ExcelWriter(output, engine='xlsxwriter') as writer:
+        workbook = writer.book
+        
+        # 1. Create a Department Summary Sheet with a chart
+        dept_counts = df_all["Department"].value_counts().reset_index()
+        dept_counts.columns = ["Department", "Patient Count"]
+        total_patients = len(df_all)
+        dept_counts["Percentage"] = (dept_counts["Patient Count"] / total_patients)
+        
+        dept_counts.to_excel(writer, sheet_name="Department Summary", index=False)
+        worksheet_summary = writer.sheets["Department Summary"]
+        
+        # Formatting for summary sheet
+        header_format = workbook.add_format({
+            'bold': True,
+            'text_wrap': True,
+            'valign': 'top',
+            'fg_color': '#008080',
+            'font_color': 'white',
+            'border': 1
+        })
+        
+        percent_format = workbook.add_format({'num_format': '0.0%'})
+        
+        # Rewrite headers & format columns
+        for col_num, value in enumerate(dept_counts.columns.values):
+            worksheet_summary.write(0, col_num, value, header_format)
+            max_len = max(dept_counts[value].astype(str).map(len).max(), len(value)) + 3
+            worksheet_summary.set_column(col_num, col_num, max_len)
+            
+        # Format the percentage column
+        worksheet_summary.set_column(2, 2, 12, percent_format)
+        
+        # Add total row to summary
+        total_row_idx = len(dept_counts) + 1
+        worksheet_summary.write(total_row_idx, 0, "Total", workbook.add_format({'bold': True}))
+        worksheet_summary.write(total_row_idx, 1, f"=SUM(B2:B{total_row_idx})", workbook.add_format({'bold': True}))
+        worksheet_summary.write(total_row_idx, 2, f"=SUM(C2:C{total_row_idx})", workbook.add_format({'bold': True, 'num_format': '0.0%'}))
+        
+        # Create a Pie Chart to display percentages
+        chart = workbook.add_chart({'type': 'pie'})
+        chart.add_series({
+            'name': 'Department Distribution',
+            'categories': f"='Department Summary'!$A$2:$A${total_row_idx}",
+            'values':     f"='Department Summary'!$C$2:$C${total_row_idx}",
+            'data_labels': {'percentage': True, 'leader_lines': True},
+        })
+        chart.set_title({'name': 'Registered Patients by Department (%)'})
+        chart.set_style(10)
+        worksheet_summary.insert_chart('E2', chart, {'x_offset': 25, 'y_offset': 10})
+        
+        # 2. Write the details sheet
+        df_all.to_excel(writer, sheet_name="All Registered", index=False)
+        worksheet_all = writer.sheets["All Registered"]
+        
+        for col_num, value in enumerate(df_all.columns.values):
+            worksheet_all.write(0, col_num, value, header_format)
+            max_len = max(df_all[value].astype(str).map(len).max(), len(value)) + 3
+            worksheet_all.set_column(col_num, col_num, max_len)
+            
+        # 3. Write individual department sheets
+        departments = df_all["Department"].unique()
+        for dept in departments:
+            sheet_title = str(dept)[:30]
+            df_dept = df_all[df_all["Department"] == dept]
+            df_dept.to_excel(writer, sheet_name=sheet_title, index=False)
+            
+            worksheet_dept = writer.sheets[sheet_title]
+            for col_num, value in enumerate(df_dept.columns.values):
+                worksheet_dept.write(0, col_num, value, header_format)
+                max_len = max(df_dept[value].astype(str).map(len).max(), len(value)) + 3
+                worksheet_dept.set_column(col_num, col_num, max_len)
+                
+    output.seek(0)
+    return send_file(
+        output, 
+        download_name=download_filename, 
+        as_attachment=True,
+        mimetype="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+    )
+
+@registration_bp.route('/department-patients', methods=['GET'])
+@require_permission('registration')
+def get_department_patients():
+    bind = get_bind()
+    if not bind:
+        return jsonify({"error": "Invalid section context"}), 400
+        
+    year = request.args.get('year')
+    department = request.args.get('department')
+    if not year or not department:
+        return jsonify({"error": "Year and department are required"}), 400
+        
+    if department == "Unknown":
+        patients = ScreeningYearBioData.query.filter(
+            ScreeningYearBioData.screening_year == int(year),
+            (ScreeningYearBioData.department == None) | (ScreeningYearBioData.department == "")
+        ).order_by(ScreeningYearBioData.last_name.asc(), ScreeningYearBioData.first_name.asc()).all()
+    else:
+        patients = ScreeningYearBioData.query.filter_by(
+            screening_year=int(year),
+            department=department
+        ).order_by(ScreeningYearBioData.last_name.asc(), ScreeningYearBioData.first_name.asc()).all()
+        
+    result = []
+    for p in patients:
+        result.append({
+            "id": p.id,
+            "staff_id": p.staff_id,
+            "patient_id": p.patient_id,
+            "first_name": p.first_name,
+            "last_name": p.last_name,
+            "department": p.department or "Unknown",
+            "gender": p.gender,
+            "age": p.age,
+            "created_at": p.created_at.strftime('%Y-%m-%d %H:%M') if p.created_at else "N/A"
+        })
+        
+    return jsonify(result), 200
+

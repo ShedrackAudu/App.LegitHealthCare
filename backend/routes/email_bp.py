@@ -117,8 +117,13 @@ def send_patient_report():
                 base_url = base_url.replace('http:', 'https:')
             logo_url = f"{base_url}{logo_url}"
 
+        # Resolve frontend URL
+        app_url = data.get('app_url')
+        if not app_url:
+            app_url = request.url_root.replace('5000', '5173').rstrip('/')
+
         html_content = EmailService.get_report_template(
-            first_name, screening_year, company, logo_url=logo_url
+            first_name, screening_year, company, logo_url=logo_url, app_url=app_url
         )
 
         success = EmailService.send_email(

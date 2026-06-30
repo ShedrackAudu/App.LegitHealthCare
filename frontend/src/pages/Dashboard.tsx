@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 // Removed Loader2 lucide-react import
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -206,6 +207,14 @@ const adminActions = [
     color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
     permission: 'manage_departments'
   },
+  { 
+    title: 'Report Customization', 
+    description: 'Customize reference ranges, parameter names, and units on patient reports.',
+    icon: Note01Icon, 
+    path: '/report-customization',
+    color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    permission: 'manage_report_customization'
+  },
 ];
 
 const LiveClock: React.FC = () => {
@@ -232,6 +241,7 @@ const Dashboard: React.FC = () => {
   const { isAdmin, hasPermission } = usePermissions();
   const [stats, setStats] = React.useState<any>(null);
   const [queueStats, setQueueStats] = React.useState<any>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
   const [queueEntries, setQueueEntries] = React.useState<any[]>([]);
   const [selectedDept, setSelectedDept] = React.useState<string | null>(null);
   const [isQueueModalOpen, setIsQueueModalOpen] = React.useState(false);
@@ -332,14 +342,15 @@ const Dashboard: React.FC = () => {
   };
 
   const fetchQueueList = async (dept: string) => {
+    setQueueEntries([]);
     setSelectedDept(dept);
+    setIsQueueModalOpen(true);
     setLoadingQueue(true);
     try {
       const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
-      setIsQueueModalOpen(true);
     } catch (err) {
       console.error("Queue list fetch failed:", err);
       toast.error("Failed to load patient queue");
@@ -373,8 +384,20 @@ const Dashboard: React.FC = () => {
   };
 
   React.useEffect(() => {
-    fetchDashboardStats();
-    fetchQueueStats();
+    const loadData = async () => {
+      setIsLoading(true);
+      try {
+        await Promise.all([
+          fetchDashboardStats(),
+          fetchQueueStats()
+        ]);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    loadData();
     
     const interval = setInterval(() => {
         fetchDashboardStats();
@@ -428,7 +451,7 @@ const Dashboard: React.FC = () => {
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}</h1>
+            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}!</h1>
             <p className="text-muted-foreground mt-1">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
@@ -610,45 +633,62 @@ const Dashboard: React.FC = () => {
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {[
-              { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
-              { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: VolumeHighIcon },
-              { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: FastWindIcon },
-              { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: FavouriteIcon }
-            ].map((dept) => (
-              <Card 
-                key={dept.id} 
-                className="group cursor-pointer transition-all duration-300 border border-border/80 hover:border-primary/30 overflow-hidden bg-card/45 backdrop-blur-sm relative"
-                onClick={() => fetchQueueList(dept.label)}
-              >
-                <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative z-10">
-                  <div className="flex items-center gap-2.5 min-w-0">
-                    <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
-                      <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="text-xs sm:text-sm font-bold tracking-tight text-foreground truncate">{dept.label}</h4>
-                      <div className="flex items-center gap-1.5 mt-0.5">
-                        <span className="relative flex h-1.5 w-1.5 shrink-0">
-                          <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-primary/70' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
-                          <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-primary' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
-                        </span>
-                        <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/80">Waiting</span>
+            {isLoading ? (
+              Array.from({ length: 4 }).map((_, i) => (
+                <Card key={i} className="border border-border/80 bg-card/45 backdrop-blur-sm">
+                  <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2.5 min-w-0 w-full animate-pulse">
+                      <Skeleton className="h-8 w-8 rounded-xl shrink-0 bg-muted/40" />
+                      <div className="space-y-1.5 w-full flex-1">
+                        <Skeleton className="h-4 w-24 rounded bg-muted/40" />
+                        <Skeleton className="h-3 w-12 rounded bg-muted/40" />
                       </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
-                      {queueStats?.[dept.id] || 0}
-                    </span>
-                    <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors">
-                      <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                    <Skeleton className="h-7 w-7 rounded-lg shrink-0 bg-muted/40" />
+                  </CardContent>
+                </Card>
+              ))
+            ) : (
+              [
+                { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
+                { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: VolumeHighIcon },
+                { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: FastWindIcon },
+                { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: FavouriteIcon }
+              ].map((dept) => (
+                <Card 
+                  key={dept.id} 
+                  className="group cursor-pointer transition-all duration-300 border border-border/80 hover:border-primary/30 overflow-hidden bg-card/45 backdrop-blur-sm relative"
+                  onClick={() => fetchQueueList(dept.label)}
+                >
+                  <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative z-10">
+                    <div className="flex items-center gap-2.5 min-w-0">
+                      <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
+                        <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
+                      </div>
+                      <div className="min-w-0">
+                        <h4 className="text-xs sm:text-sm font-bold tracking-tight text-foreground truncate">{dept.label}</h4>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="relative flex h-1.5 w-1.5 shrink-0">
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-primary/70' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-primary' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                          </span>
+                          <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/80">Waiting</span>
+                        </div>
+                      </div>
                     </div>
-                  </div>
-                </CardContent>
-                <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-              </Card>
-            ))}
+                    <div className="flex items-center gap-2 shrink-0">
+                      <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
+                        {queueStats?.[dept.id] || 0}
+                      </span>
+                      <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors">
+                        <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
+                      </div>
+                    </div>
+                  </CardContent>
+                  <div className="absolute inset-0 -z-0 bg-gradient-to-tr from-transparent via-transparent to-primary/5 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
+                </Card>
+              ))
+            )}
           </div>
         </div>
 
@@ -666,24 +706,36 @@ const Dashboard: React.FC = () => {
                     <div className="space-y-6">
                         {/* Summary Metrics */}
                         <div className="grid grid-cols-2 gap-4">
-                            {[
-                                { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: UserGroupIcon, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                                { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity01Icon, color: 'text-primary', bg: 'bg-primary/10' }
-                            ].map((s) => (
-                                <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border border-transparent hover:border-primary/10 transition-all group/stat cursor-default overflow-hidden relative">
-                                    <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
-                                    <div className="flex items-center gap-2 mb-2 relative z-10">
-                                        <div className={`p-1.5 rounded-lg ${s.bg}`}>
-                                            <HugeiconsIcon icon={s.icon} className={`h-4 w-4 ${s.color}`} />
+                            {isLoading ? (
+                                Array.from({ length: 2 }).map((_, i) => (
+                                    <div key={i} className="p-4 rounded-xl border bg-muted/5 flex items-center gap-3 animate-pulse">
+                                        <Skeleton className="h-8 w-8 rounded-lg bg-muted/40 animate-pulse" />
+                                        <div className="space-y-2 flex-1">
+                                            <Skeleton className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-5 w-16 rounded bg-muted/40 animate-pulse" />
                                         </div>
-                                        <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
                                     </div>
-                                    <div className="flex items-baseline gap-1 relative z-10">
-                                        <h4 className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{s.count?.toLocaleString() || '0'}</h4>
-                                        <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Records</span>
+                                ))
+                            ) : (
+                                [
+                                    { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: UserGroupIcon, color: 'text-blue-600', bg: 'bg-blue-500/10' },
+                                    { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity01Icon, color: 'text-primary', bg: 'bg-primary/10' }
+                                ].map((s) => (
+                                    <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border border-transparent hover:border-primary/10 transition-all group/stat cursor-default overflow-hidden relative">
+                                        <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
+                                        <div className="flex items-center gap-2 mb-2 relative z-10">
+                                            <div className={`p-1.5 rounded-lg ${s.bg}`}>
+                                                <HugeiconsIcon icon={s.icon} className={`h-4 w-4 ${s.color}`} />
+                                            </div>
+                                            <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
+                                        </div>
+                                        <div className="flex items-baseline gap-1 relative z-10">
+                                            <h4 className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{s.count?.toLocaleString() || '0'}</h4>
+                                            <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-tight">Records</span>
+                                        </div>
                                     </div>
-                                </div>
-                            ))}
+                                ))
+                            )}
                         </div>
 
                         {/* Charts */}
@@ -691,82 +743,114 @@ const Dashboard: React.FC = () => {
                             {/* Gender Distribution Chart */}
                             <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border flex flex-col items-center">
                                 <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
-                                <div className="h-[150px] md:h-[140px] w-full mt-2">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <PieChart>
-                                            <Pie
-                                                data={[
-                                                    { name: 'Male Patients', value: stats?.registration_stats?.males || 0 },
-                                                    { name: 'Female Patients', value: stats?.registration_stats?.females || 0 }
-                                                ]}
-                                                cx={isMobile ? "50%" : "40%"}
-                                                cy={isMobile ? "46%" : "50%"}
-                                                innerRadius={isMobile ? 32 : 45}
-                                                outerRadius={isMobile ? 45 : 65}
-                                                paddingAngle={5}
-                                                dataKey="value"
-                                                stroke="none"
-                                            >
-                                                <Cell fill="#4f46e5" /> {/* Indigo for Males */}
-                                                <Cell fill="#e11d48" /> {/* Rose for Females */}
-                                            </Pie>
-                                            <Tooltip 
-                                                contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                                itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                                            />
-                                            <Legend 
-                                                layout={isMobile ? "horizontal" : "vertical"}
-                                                verticalAlign={isMobile ? "bottom" : "middle"}
-                                                align={isMobile ? "left" : "right"}
-                                                iconType="circle"
-                                                content={isMobile ? (props: any) => {
-                                                    const { payload } = props;
-                                                    return (
-                                                        <div className="flex flex-col gap-1 pl-2">
-                                                            {payload?.map((entry: any, index: number) => (
-                                                                <div key={`item-${index}`} className="flex items-center gap-2 text-[10px] font-bold">
-                                                                    <span 
-                                                                        className="w-2.5 h-2.5 rounded-full inline-block shrink-0" 
-                                                                        style={{ backgroundColor: entry.color }}
-                                                                    />
-                                                                    <span style={{ color: entry.color }}>{entry.value}</span>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                } : undefined}
-                                                wrapperStyle={isMobile ? { bottom: '0px', left: '10px' } : { fontSize: '10px', fontWeight: 'bold', lineHeight: '24px', right: '5%' }}
-                                            />
-                                        </PieChart>
-                                    </ResponsiveContainer>
+                                <div className="h-[150px] md:h-[140px] w-full mt-2 flex items-center justify-center">
+                                    {isLoading ? (
+                                        <div className="flex items-center gap-6 w-full px-4 animate-pulse">
+                                            <div className="relative flex items-center justify-center shrink-0">
+                                                <Skeleton className="h-[100px] w-[100px] rounded-full bg-muted/40 animate-pulse" />
+                                                <div className="absolute h-[50px] w-[50px] rounded-full bg-background" />
+                                            </div>
+                                            <div className="space-y-3 flex-1">
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="w-2.5 h-2.5 rounded-full bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-3 w-16 rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                    <Skeleton className="w-2.5 h-2.5 rounded-full bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-3 w-16 rounded bg-muted/40 animate-pulse" />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <PieChart>
+                                                <Pie
+                                                    data={[
+                                                        { name: 'Male Patients', value: stats?.registration_stats?.males || 0 },
+                                                        { name: 'Female Patients', value: stats?.registration_stats?.females || 0 }
+                                                    ]}
+                                                    cx={isMobile ? "50%" : "40%"}
+                                                    cy={isMobile ? "46%" : "50%"}
+                                                    innerRadius={isMobile ? 32 : 45}
+                                                    outerRadius={isMobile ? 45 : 65}
+                                                    paddingAngle={5}
+                                                    dataKey="value"
+                                                    stroke="none"
+                                                >
+                                                    <Cell fill="#4f46e5" /> {/* Indigo for Males */}
+                                                    <Cell fill="#e11d48" /> {/* Rose for Females */}
+                                                </Pie>
+                                                <Tooltip 
+                                                    contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                    itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                                />
+                                                <Legend 
+                                                    layout={isMobile ? "horizontal" : "vertical"}
+                                                    verticalAlign={isMobile ? "bottom" : "middle"}
+                                                    align={isMobile ? "left" : "right"}
+                                                    iconType="circle"
+                                                    content={isMobile ? (props: any) => {
+                                                        const { payload } = props;
+                                                        return (
+                                                            <div className="flex flex-col gap-1 pl-2">
+                                                                {payload?.map((entry: any, index: number) => (
+                                                                    <div key={`item-${index}`} className="flex items-center gap-2 text-[10px] font-bold">
+                                                                        <span 
+                                                                            className="w-2.5 h-2.5 rounded-full inline-block shrink-0" 
+                                                                            style={{ backgroundColor: entry.color }}
+                                                                        />
+                                                                        <span style={{ color: entry.color }}>{entry.value}</span>
+                                                                    </div>
+                                                                ))}
+                                                            </div>
+                                                        );
+                                                    } : undefined}
+                                                    wrapperStyle={isMobile ? { bottom: '0px', left: '10px' } : { fontSize: '10px', fontWeight: 'bold', lineHeight: '24px', right: '5%' }}
+                                                />
+                                            </PieChart>
+                                        </ResponsiveContainer>
+                                    )}
                                 </div>
                             </div>
 
                             {/* Age Distribution Chart */}
                             <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border flex flex-col items-center">
                                 <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Age Demographics</h4>
-                                <div className="h-[140px] w-full mt-2">
-                                    <ResponsiveContainer width="100%" height="100%">
-                                        <BarChart
-                                            data={[
-                                                { name: 'Below 40', value: stats?.registration_stats?.age_below_40 || 0 },
-                                                { name: '40 & Above', value: stats?.registration_stats?.age_40_above || 0 }
-                                            ]}
-                                            margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
-                                        >
-                                            <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
-                                            <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
-                                            <Tooltip 
-                                                cursor={{ fill: 'var(--primary)', opacity: 0.1 }}
-                                                contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
-                                                itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
-                                            />
-                                            <Bar dataKey="value" radius={0} maxBarSize={50}>
-                                                <Cell fill="#d97706" /> {/* Amber */}
-                                                <Cell fill="#9333ea" /> {/* Purple */}
-                                            </Bar>
-                                        </BarChart>
-                                    </ResponsiveContainer>
+                                <div className="h-[140px] w-full mt-2 flex items-end justify-center">
+                                    {isLoading ? (
+                                        <div className="flex items-end justify-around w-full h-[120px] px-8 pb-2 animate-pulse">
+                                            <div className="flex flex-col items-center gap-2 w-12">
+                                                <Skeleton className="h-[70px] w-8 rounded-t bg-muted/40 animate-pulse" />
+                                                <Skeleton className="h-3 w-10 rounded bg-muted/40 animate-pulse" />
+                                            </div>
+                                            <div className="flex flex-col items-center gap-2 w-12">
+                                                <Skeleton className="h-[40px] w-8 rounded-t bg-muted/40 animate-pulse" />
+                                                <Skeleton className="h-3 w-10 rounded bg-muted/40 animate-pulse" />
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <ResponsiveContainer width="100%" height="100%">
+                                            <BarChart
+                                                data={[
+                                                    { name: 'Below 40', value: stats?.registration_stats?.age_below_40 || 0 },
+                                                    { name: '40 & Above', value: stats?.registration_stats?.age_40_above || 0 }
+                                                ]}
+                                                margin={{ top: 10, right: 10, left: -25, bottom: 0 }}
+                                            >
+                                                <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
+                                                <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
+                                                <Tooltip 
+                                                    cursor={{ fill: 'var(--primary)', opacity: 0.1 }}
+                                                    contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                    itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
+                                                />
+                                                <Bar dataKey="value" radius={0} maxBarSize={50}>
+                                                    <Cell fill="#d97706" /> {/* Amber */}
+                                                    <Cell fill="#9333ea" /> {/* Purple */}
+                                                </Bar>
+                                            </BarChart>
+                                        </ResponsiveContainer>
+                                    )}
                                 </div>
                             </div>
                         </div>
@@ -784,7 +868,23 @@ const Dashboard: React.FC = () => {
                 </CardHeader>
                 <CardContent className="p-0">
                     <div className="divide-y border-t max-h-[350px] overflow-y-auto">
-                        {stats?.recent_registrations?.length > 0 ? (
+                        {isLoading ? (
+                            Array.from({ length: 4 }).map((_, i) => (
+                                <div key={i} className="flex items-center justify-between p-4 px-6 hover:bg-muted/50 transition-colors animate-pulse">
+                                    <div className="flex items-center gap-3">
+                                        <Skeleton className="w-9 h-9 rounded-full bg-muted/40 animate-pulse" />
+                                        <div className="space-y-2">
+                                            <Skeleton className="h-3.5 w-28 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-3 w-16 rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-3 w-16 rounded bg-muted/40 ml-auto animate-pulse" />
+                                        <Skeleton className="h-2.5 w-12 rounded bg-muted/40 ml-auto animate-pulse" />
+                                    </div>
+                                </div>
+                            ))
+                        ) : stats?.recent_registrations?.length > 0 ? (
                             stats.recent_registrations.map((reg: any) => (
                                 <div key={reg.staff_id} className="flex items-center justify-between p-4 px-6 hover:bg-muted/50 transition-colors group/row">
                                     <div className="flex items-center gap-3">
@@ -829,7 +929,22 @@ const Dashboard: React.FC = () => {
                 
                 <div className="relative mt-2">
                     <ScrollArea className="h-[400px] px-1">
-                        {queueEntries.length > 0 ? (
+                        {loadingQueue ? (
+                            <div className="space-y-3">
+                                {Array.from({ length: 4 }).map((_, idx) => (
+                                    <div key={idx} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card gap-3">
+                                        <div className="flex items-center gap-3 min-w-0 flex-1">
+                                            <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                            <div className="min-w-0 flex-1 flex flex-col gap-2">
+                                                <Skeleton className="h-4 w-32 rounded bg-muted/40 animate-pulse" />
+                                                <Skeleton className="h-3 w-48 rounded bg-muted/40 animate-pulse" />
+                                            </div>
+                                        </div>
+                                        <Skeleton className="w-8 h-8 rounded-lg bg-muted/40 animate-pulse shrink-0" />
+                                    </div>
+                                ))}
+                            </div>
+                        ) : queueEntries.length > 0 ? (
                             <div className="space-y-3">
                                 {queueEntries.map((entry, idx) => (
                                     <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">

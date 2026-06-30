@@ -117,12 +117,30 @@ def view_file(file_id):
     directory = os.path.dirname(full_path)
     filename = os.path.basename(full_path)
     
+    # Log download action if download parameter is set
+    if request.args.get('download') == 'true':
+        requester_label = f"Patient ({patient.username})" if portal == 'patient' and 'patient' in locals() and patient else f"Staff ({staff.username})" if portal == 'staff' and 'staff' in locals() and staff else "Staff (admin)"
+        AuditLog.log_action(
+            action=f"Download Patient File ({pf.department})" if pf.department in ['Spirometry', 'Audiometry', 'ECG'] else 'Download Patient File',
+            resource=f"Patient:{pf.staff_id}",
+            details={
+                "message": f"{requester_label} downloaded file '{pf.filename}' for Patient {pf.staff_id} (Department: {pf.department}, Year: {pf.screening_year}).",
+                "filename": pf.filename,
+                "department": pf.department,
+                "screening_year": pf.screening_year,
+                "downloaded_by": requester_label,
+                "requester_id": user_id
+            }
+        )
+        db.session.commit()
+
     response = send_from_directory(directory, filename)
     # Set headers based on file type
     content_type, _ = mimetypes.guess_type(pf.filename)
     if content_type:
         response.headers['Content-Type'] = content_type
-    response.headers['Content-Disposition'] = f'inline; filename="{pf.filename}"'
+    disposition = 'attachment' if request.args.get('download') == 'true' else 'inline'
+    response.headers['Content-Disposition'] = f'{disposition}; filename="{pf.filename}"'
     return _cors_headers(response)
 
 @files_bp.route('/<int:file_id>', methods=['DELETE'])

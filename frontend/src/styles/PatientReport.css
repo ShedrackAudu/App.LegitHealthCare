@@ -1,5 +1,19 @@
 @import url('https://fonts.googleapis.com/css2?family=Open+Sans:ital,wght@0,300..800;1,300..800&display=swap');
 
+@font-face {
+  font-family: 'Open Sans';
+  src: url('/fonts/OpenSans-Regular.ttf') format('truetype');
+  font-weight: normal;
+  font-style: normal;
+}
+
+@font-face {
+  font-family: 'Open Sans';
+  src: url('/fonts/OpenSans-Bold.ttf') format('truetype');
+  font-weight: bold;
+  font-style: normal;
+}
+
 :root {
   --table-border-color: #000;
   --report-text: #000;
@@ -73,8 +87,11 @@
 
     /* Reset full-screen height and overflow on root/wrapper containers for print flow */
     html, body, #root,
-    #root > div.h-screen.w-screen.overflow-hidden,
-    #root > div.h-screen.w-screen.overflow-hidden > div.flex-1.min-h-0 {
+    #root > div,
+    #root > div > div,
+    .h-screen,
+    .w-screen,
+    .min-h-0 {
         height: auto !important;
         width: auto !important;
         overflow: visible !important;
@@ -98,11 +115,12 @@
 
     /* Force print container to span page full size and remove visual borders/shadows */
     .print-container {
-        position: absolute !important;
+        display: block !important;
+        position: relative !important;
         left: 0 !important;
         top: 0 !important;
         width: 210mm !important;
-        margin: 0 !important;
+        margin: 0 auto !important;
         padding: 0 !important;
         border: none !important;
         background: transparent !important;

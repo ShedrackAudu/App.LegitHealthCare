@@ -38,7 +38,7 @@ if 'http://localhost:5173' in frontend_urls and 'http://localhost:5174' not in f
 from flask_cors import CORS
 CORS(app, resources={r"/*": {"origins": frontend_urls}}, supports_credentials=True)
 
-socketio.init_app(app, cors_allowed_origins=frontend_urls, ping_timeout=60, ping_interval=25)
+socketio.init_app(app, cors_allowed_origins=frontend_urls, ping_timeout=60, ping_interval=25, async_mode='gevent')
 
 # Configuration
 raw_db_url = os.getenv('DATABASE_URL')
@@ -145,6 +145,8 @@ from routes.appointments import appointments_bp
 from routes.patient_bp import patient_bp
 from routes.files_bp import files_bp
 from routes.inventory_bp import inventory_bp
+from routes.report_customization_bp import report_customization_bp
+from routes.webhooks import webhooks_bp
 
 app.register_blueprint(registration_bp)
 app.register_blueprint(consultation_bp)
@@ -167,6 +169,8 @@ app.register_blueprint(appointments_bp, url_prefix='/api')
 app.register_blueprint(patient_bp)
 app.register_blueprint(files_bp, url_prefix='/api/files')
 app.register_blueprint(inventory_bp, url_prefix='/api/inventory')
+app.register_blueprint(report_customization_bp, url_prefix='/api/report-customization')
+app.register_blueprint(webhooks_bp, url_prefix='/api/webhooks')
 
 
 
@@ -191,6 +195,22 @@ def init_db():
             engine = db.engines[bind_name]
             db.metadata.create_all(bind=engine)
 
+        # Dynamic migrations: alter columns to TEXT for assessment_hx_pe in postgresql
+        for engine_key, engine_instance in ([('default', db.engine)] + list(db.engines.items())):
+            if engine_instance.dialect.name == 'postgresql':
+                with engine_instance.connect() as conn:
+                    from sqlalchemy import text
+                    try:
+                        conn.execute(text("ALTER TABLE consultation_data ALTER COLUMN assessment_hx_pe TYPE TEXT;"))
+                        conn.commit()
+                    except Exception:
+                        pass
+                    try:
+                        conn.execute(text("ALTER TABLE director_reviews ALTER COLUMN assessment_hx_pe TYPE TEXT;"))
+                        conn.commit()
+                    except Exception:
+                        pass
+
 from werkzeug.exceptions import HTTPException
 
 @app.errorhandler(Exception)
@@ -212,6 +232,35 @@ def set_db_context():
 @app.route('/api/ping', methods=['GET'])
 def ping():
     return jsonify({"status": "healthy", "timestamp": datetime.utcnow().isoformat()}), 200
+
+
+@app.route('/api/auth/verify', methods=['GET'])
+@jwt_required()
+def verify_auth_token():
+    from flask_jwt_extended import get_jwt
+    user_id = get_jwt_identity()
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    
+    from models import StaffUser, PatientPortalUser
+    Model = PatientPortalUser if portal == 'patient' else StaffUser
+    user = Model.query.get(user_id)
+    if not user:
+        return jsonify({"error": "User not found"}), 404
+        
+    # Check session_revision
+    jwt_revision = claims.get('session_revision')
+    user_revision = getattr(user, 'session_revision', 1) or 1
+    if jwt_revision is not None and jwt_revision != user_revision:
+        return jsonify({"error": "Session has been revoked or expired. Please log in again."}), 401
+        
+    if not user.is_verified:
+        return jsonify({"error": "Account not verified"}), 403
+        
+    return jsonify({
+        "status": "valid",
+        "user": user.to_dict()
+    }), 200
 
 
 @app.route('/api/config/staff-signup-status', methods=['GET'])
@@ -245,6 +294,14 @@ def get_bulk_report_download_status():
     # Default to true if not set
     is_enabled = config.value.lower() == 'true' if config else True
     return jsonify({"bulk_report_download_enabled": is_enabled}), 200
+
+@app.route('/api/config/bulk-report-email-status', methods=['GET'])
+def get_bulk_report_email_status():
+    from models import SystemConfig
+    config = SystemConfig.query.get('bulk_report_email_enabled')
+    # Default to true if not set
+    is_enabled = config.value.lower() == 'true' if config else True
+    return jsonify({"bulk_report_email_enabled": is_enabled}), 200
 
 @app.route('/api/config/ticker', methods=['GET'])
 def get_ticker_config():
@@ -442,7 +499,17 @@ def login():
     if not user:
         return jsonify({"error": "Invalid credentials"}), 401
 
-    if user and user.check_password(password):
+    # Check if locked out
+    if user.locked_until and user.locked_until > datetime.now():
+        lock_secs = int((user.locked_until - datetime.now()).total_seconds())
+        lock_mins = max(1, lock_secs // 60)
+        return jsonify({"error": f"Account temporarily locked due to too many failed attempts. Try again in {lock_mins} minutes."}), 403
+
+    if user.check_password(password):
+        # Reset counters
+        user.failed_login_attempts = 0
+        user.locked_until = None
+        
         if not user.is_verified:
             # Generate a new OTP so they can continue
             otp = generate_otp()
@@ -466,6 +533,7 @@ def login():
             
         # 2FA Enforcement
         if getattr(user, 'is_2fa_enabled', False):
+            db.session.commit()
             return jsonify({
                 "requires_2fa": True,
                 "user_id": user.id,
@@ -495,10 +563,10 @@ def login():
             db.session.rollback()
             app.logger.error(f"Login audit failed for {identifier}: {e}")
         
-        # Generate JWT with detected portal
+        # Generate JWT with detected portal & session revision
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": detected_portal}
+            additional_claims={"portal": detected_portal, "session_revision": getattr(user, 'session_revision', 1) or 1}
         )
         
         response = jsonify({
@@ -510,6 +578,46 @@ def login():
         set_access_cookies(response, access_token)
         return response, 200
         
+    # Handle password validation failure
+    user.failed_login_attempts = (user.failed_login_attempts or 0) + 1
+    if user.failed_login_attempts >= 5:
+        user.locked_until = datetime.now() + timedelta(minutes=15)
+        # Audit log account lock
+        try:
+            lock_log = AuditLog(
+                user_id=user.id,
+                action="ACCOUNT_LOCKED",
+                resource=f"{detected_portal.capitalize()} Portal",
+                details=json.dumps({
+                    "reason": "Too many failed login attempts",
+                    "attempts": user.failed_login_attempts,
+                    "duration_mins": 15,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(lock_log)
+        except Exception as e:
+            app.logger.error(f"Failed to log lockout to audit trail: {e}")
+    else:
+        # Log failed attempt
+        try:
+            fail_log = AuditLog(
+                user_id=user.id,
+                action="LOGIN_FAILED",
+                resource=f"{detected_portal.capitalize()} Portal",
+                details=json.dumps({
+                    "identity": identifier,
+                    "attempts": user.failed_login_attempts,
+                    "timestamp": datetime.now().isoformat()
+                }),
+                ip_address=get_client_ip()
+            )
+            db.session.add(fail_log)
+        except Exception as e:
+            app.logger.error(f"Failed to log login failure to audit trail: {e}")
+
+    db.session.commit()
     return jsonify({"error": "Invalid credentials"}), 401
 
 @app.route('/forgot-password', methods=['POST'])
@@ -688,7 +796,7 @@ def login_2fa():
         # Generate token
         access_token = create_access_token(
             identity=str(user.id),
-            additional_claims={"portal": detected_portal}
+            additional_claims={"portal": detected_portal, "session_revision": getattr(user, 'session_revision', 1) or 1}
         )
         
         response = jsonify({

@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify, send_file
-from flask_jwt_extended import jwt_required, get_jwt_identity
-from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig
+from flask_jwt_extended import jwt_required, get_jwt_identity, get_jwt
+from models import db, BioData, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult, User, ScreeningYearBioData, ConsultationData, AuditLog, SystemConfig, ReportParameter
 from datetime import datetime
 from decorators import require_permission
 from sqlalchemy import func
@@ -8,11 +8,22 @@ import pandas as pd
 from io import BytesIO
 import json
 
+def get_param_prompt(params, param_id, default_name, default_val, default_unit, current_val):
+    p = params.get(param_id)
+    name = p.parameter_name if p else default_name
+    val_range = p.reference_value if p else default_val
+    unit = p.unit if p else default_unit
+    unit_str = f" {unit}" if unit else ""
+    # Strip newlines for prompt clarity
+    val_range_clean = str(val_range).replace('\n', ' ').strip()
+    unit_str_clean = str(unit_str).replace('\n', ' ').strip()
+    return f"{name}: {current_val or '-'} {unit_str_clean} (Ref Range: {val_range_clean} {unit_str_clean})\n"
+
 def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, company_context):
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, FBCResult
+                from models import db, AISettings, FBCResult, ReportParameter, BioData
                 from openai import OpenAI
                 import os
                 
@@ -24,30 +35,45 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                     
                 client = OpenAI(api_key=api_key)
                 
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+                
+                params = {p.id: p for p in ReportParameter.query.all()}
                 prompt_data = (
-                    f"PCV: {fbc_data.get('pcv') or '-'} % (Ref Range: 34-53.9 %)\n"
-                    f"WBC: {fbc_data.get('wbc') or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
-                    f"Lymphocyte: {fbc_data.get('lymp_percent') or '-'} % (Ref Range: 19.1-48 %)\n"
-                    f"Neutrophil (Granulocyte): {fbc_data.get('gra_percent') or '-'} % (Ref Range: 43.6-73.3 %)\n"
-                    f"Mixed (MID): {fbc_data.get('mid_percent') or '-'} % (Ref Range: 4.5-12.1 %)\n"
-                    f"Platelets (PLT): {fbc_data.get('plt') or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
+                    f"Patient Gender: {gender_str}\n" +
+                    get_param_prompt(params, 'pcv', 'PCV', '36-53.9', '%', fbc_data.get('pcv')) +
+                    get_param_prompt(params, 'wbc', 'WBC', '3-11', 'x10^9/L', fbc_data.get('wbc')) +
+                    get_param_prompt(params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', fbc_data.get('lymp_abs')) +
+                    get_param_prompt(params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', fbc_data.get('gra_abs')) +
+                    get_param_prompt(params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', fbc_data.get('mid_abs')) +
+                    get_param_prompt(params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', fbc_data.get('plt'))
                 )
                 
-                system_prompt = (
-                    "You are a medical assistant analyzing patient Full Blood Count (FBC) results."
-                    "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                    "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (
+                    "You are a medical assistant analyzing patient Full Blood Count (FBC) results. "
+                    "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                    "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+                    "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
                 
-                response = client.chat.completions.create(
-                    model=settings.model_selection if (settings and settings.model_selection) else "gpt-4o",
-                    messages=[
+                model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
+                api_params = {
+                    "model": model_name,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"FBC Results:\n{prompt_data}"}
-                    ],
-                    max_tokens=60
-                )
+                    ]
+                }
+                if model_name.startswith("o1") or model_name.startswith("o3"):
+                    api_params["max_completion_tokens"] = 60
+                else:
+                    api_params["max_tokens"] = 60
+
+                response = client.chat.completions.create(**api_params)
                 
                 remark = response.choices[0].message.content.strip()
                 # Clean up wrapping quotes if the AI output includes them
@@ -73,7 +99,7 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
     with app.app_context():
         with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
             try:
-                from models import db, AISettings, LipidResult
+                from models import db, AISettings, LipidResult, ReportParameter, ConsultationData, BioData
                 from openai import OpenAI
                 import os
                 
@@ -85,28 +111,63 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                     
                 client = OpenAI(api_key=api_key)
                 
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+                
+                report_params = {p.id: p for p in ReportParameter.query.all()}
+
+                # Determine blood sugar type (FBS=Fasting vs RBS=Non-Fasting) from consultation data
+                consultation = ConsultationData.query.filter(
+                    func.lower(func.trim(ConsultationData.staff_id)) == func.lower(func.trim(staff_id)),
+                    ConsultationData.screening_year == screening_year
+                ).first()
+                blood_sugar_type = "Unknown"
+                blood_sugar_details = ""
+                if consultation:
+                    fbs_val = consultation.fbs
+                    rbs_val = consultation.rbs
+                    if fbs_val and fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                        blood_sugar_type = "Fasting (FBS)"
+                        blood_sugar_details = get_param_prompt(report_params, 'fbs', 'FBS', '70-99', 'mg/dL', fbs_val)
+                    elif rbs_val and rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                        blood_sugar_type = "Non-Fasting (RBS)"
+                        blood_sugar_details = get_param_prompt(report_params, 'rbs', 'RBS', '70-140', 'mg/dL', rbs_val)
+                
                 prompt_data = (
-                    f"Total Cholesterol: {lipid_data.get('total_cholesterol') or '-'} mg/dL (Ref Range: <200 mg/dL)\n"
-                    f"Triglycerides: {lipid_data.get('triglycerides') or '-'} mg/dL (Ref Range: <150 mg/dL)\n"
-                    f"HDL-c: {lipid_data.get('hdl') or '-'} mg/dL (Ref Range: >=40 mg/dL)\n"
-                    f"LDL-c: {lipid_data.get('ldl') or '-'} mg/dL (Ref Range: <130 mg/dL)\n"
+                    f"Patient Gender: {gender_str}\n" +
+                    f"Blood Sugar Type: {blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
+                    (blood_sugar_details if blood_sugar_details else "Blood Sugar: Not Entered\n") +
+                    get_param_prompt(report_params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', lipid_data.get('total_cholesterol')) +
+                    get_param_prompt(report_params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', lipid_data.get('triglycerides')) +
+                    get_param_prompt(report_params, 'hdl', 'HDL-c', '>=40', 'mg/dL', lipid_data.get('hdl')) +
+                    get_param_prompt(report_params, 'ldl', 'LDL-c', '<130', 'mg/dL', lipid_data.get('ldl'))
                 )
                 
-                system_prompt = (
-                    "You are a medical assistant analyzing patient Lipid Profile results."
-                    "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                    "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
+                    "You are a medical assistant analyzing patient Lipid Profile results. "
+                    "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                    "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+                    "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                     "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                 )
                 
-                response = client.chat.completions.create(
-                    model=settings.model_selection if (settings and settings.model_selection) else "gpt-4o",
-                    messages=[
+                model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
+                api_params = {
+                    "model": model_name,
+                    "messages": [
                         {"role": "system", "content": system_prompt},
                         {"role": "user", "content": f"Lipid Results:\n{prompt_data}"}
-                    ],
-                    max_tokens=60
-                )
+                    ]
+                }
+                if model_name.startswith("o1") or model_name.startswith("o3"):
+                    api_params["max_completion_tokens"] = 60
+                else:
+                    api_params["max_tokens"] = 60
+ 
+                response = client.chat.completions.create(**api_params)
                 
                 remark = response.choices[0].message.content.strip()
                 if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
@@ -140,6 +201,9 @@ PERM_MAP = {
 @tests_bp.route('/save-test/<test_type>', methods=['POST'])
 @jwt_required()
 def save_test_result(test_type):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -214,11 +278,21 @@ def save_test_result(test_type):
 
     if test_type == 'lft':
         import random
-        record.tb = f"{random.uniform(0.01, 1.2):.2f}"
-        record.cb = f"{random.uniform(0.01, 0.4):.2f}"
-        record.ast = f"{random.uniform(0.1, 46.0):.1f}"
-        record.alp = str(random.randint(64, 306))
-        record.urea = f"{random.uniform(2.5, 9.33):.2f}"
+        if not record.tb:
+            record.tb = f"{random.uniform(0.1, 1.2):.2f}"
+        if not record.cb:
+            tb_val = float(record.tb)
+            # Ensure CB is not higher than TB, capped at 0.4 clinical max bound
+            max_cb_bound = min(0.4, tb_val)
+            # Ensure lower bound is valid in case TB is extremely low (e.g. 0.1)
+            min_cb_bound = min(0.1, max_cb_bound)
+            record.cb = f"{random.uniform(min_cb_bound, max_cb_bound):.2f}"
+        if not record.ast:
+            record.ast = f"{random.uniform(10.1, 46.0):.1f}"
+        if not record.alp:
+            record.alp = str(random.randint(80, 200))
+        if not record.urea:
+            record.urea = f"{random.uniform(3.5, 8.33):.2f}"
 
     if test_type == 'special':
         from models import QueueEntry
@@ -269,6 +343,38 @@ def save_test_result(test_type):
             resource=f"Patient:{staff_id}",
             details={"message": f"Saved/Updated {test_name} diagnostic test results for Patient {staff_id} for screening year {screening_year}.", "screening_year": screening_year, "test_type": log_test_type}
         )
+
+        if test_type == 'special' and user_id:
+            current_test_type = data.get('current_test_type')
+            dept_name = None
+            if current_test_type == 'ecg':
+                dept_name = 'ECG'
+            elif current_test_type == 'spirometry':
+                dept_name = 'Spirometry'
+            elif current_test_type == 'audiometry':
+                dept_name = 'Audiometry'
+                
+            if dept_name:
+                try:
+                    from models import StaffPatientSeen
+                    existing_seen = StaffPatientSeen.query.filter_by(
+                        user_id=int(user_id),
+                        staff_id=staff_id,
+                        screening_year=int(screening_year),
+                        department=dept_name
+                    ).first()
+                    if not existing_seen:
+                        new_seen = StaffPatientSeen(
+                            user_id=int(user_id),
+                            staff_id=staff_id,
+                            screening_year=int(screening_year),
+                            department=dept_name
+                        )
+                        db.session.add(new_seen)
+                except Exception as seen_err:
+                    import sys
+                    sys.stderr.write(f"[DEBUG] Error recording seen special test: {seen_err}\n")
+
         db.session.commit()
 
         # Generate FBC remark in the background if enabled
@@ -311,6 +417,9 @@ def save_test_result(test_type):
 @tests_bp.route('/get-test/<test_type>/<staff_id>', methods=['GET'])
 @jwt_required()
 def get_test_result(test_type, staff_id):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id:
         return jsonify({"error": "Unauthorized"}), 401
@@ -360,6 +469,59 @@ def get_test_result(test_type, staff_id):
         
     # Convert to dict
     result = {c.name: getattr(record, c.name) for c in record.__table__.columns}
+    
+    # Log view action in audit trail
+    try:
+        from models import AuditLog
+        display_test_type = test_type.upper()
+        log_test_type = test_type
+        if test_type == 'special':
+            subtype = request.args.get('subtype')
+            if not subtype or subtype not in ['ecg', 'spirometry', 'audiometry']:
+                # Fallback 1: Check referrer URL path
+                referer = (request.referrer or request.headers.get('Referer', '')).lower()
+                if 'ecg' in referer:
+                    subtype = 'ecg'
+                elif 'spirometry' in referer:
+                    subtype = 'spirometry'
+                elif 'audiometry' in referer:
+                    subtype = 'audiometry'
+            
+            if not subtype or subtype not in ['ecg', 'spirometry', 'audiometry']:
+                # Fallback 2: Check user's granular lab permissions
+                user_perms = []
+                if user.has_permission('lab_ecg'): user_perms.append('ecg')
+                if user.has_permission('lab_spirometry'): user_perms.append('spirometry')
+                if user.has_permission('lab_audiometry'): user_perms.append('audiometry')
+                if len(user_perms) == 1:
+                    subtype = user_perms[0]
+
+            if subtype in ['ecg', 'spirometry', 'audiometry']:
+                display_test_type = subtype.upper()
+                log_test_type = subtype
+            else:
+                special_types = []
+                if record:
+                    if getattr(record, 'ecg_result', None) or getattr(record, 'ecg_remark', None):
+                        special_types.append("ECG")
+                    if getattr(record, 'spirometry_result', None) or getattr(record, 'spirometry_remark', None):
+                        special_types.append("Spirometry")
+                    if getattr(record, 'audiometry_result', None) or getattr(record, 'audiometry_remark', None):
+                        special_types.append("Audiometry")
+                if special_types:
+                    display_test_type = ", ".join(special_types)
+                else:
+                    display_test_type = "SPECIAL"
+
+        AuditLog.log_action(
+            action=f"View Patient {display_test_type} Result",
+            resource=f"Patient:{staff_id}",
+            details={"screening_year": screening_year, "test_type": log_test_type},
+            commit=True
+        )
+    except Exception as audit_err:
+        pass
+        
     return jsonify(result), 200
 
 @tests_bp.route('/download-template/<test_type>', methods=['GET'])
@@ -390,6 +552,9 @@ def download_template(test_type):
 @tests_bp.route('/bulk-upload/<test_type>', methods=['POST'])
 @jwt_required()
 def bulk_upload(test_type):
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     user_id = get_jwt_identity()
     if not user_id: return jsonify({"error": "Unauthorized"}), 401
     user = User.query.get(user_id)
@@ -530,6 +695,10 @@ def bulk_upload(test_type):
 @tests_bp.route('/bulk-ai-remarks/<test_type>', methods=['POST'])
 @jwt_required()
 def bulk_ai_remarks(test_type):
+    """Start a background bulk AI remarks generation task. Returns a task_id immediately."""
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
     try:
         user_id = get_jwt_identity()
         user = User.query.get(user_id)
@@ -547,11 +716,16 @@ def bulk_ai_remarks(test_type):
         if not range_str or not screening_year:
             return jsonify({"error": "Range and Screening Year are required"}), 400
 
-        from models import db, AISettings, FBCResult, KFTResult, LipidResult, LFTResult, ScreeningYearBioData
+        from models import db, AISettings, FBCResult, KFTResult, LipidResult, LFTResult, ScreeningYearBioData, BioData
         from openai import OpenAI
         import os
         import re
-        from gevent.pool import Pool
+        import uuid
+        import gevent
+        from bulk_tasks import create_task, update_task_success, update_task_error, complete_task, fail_task, cleanup_old_tasks
+
+        # Clean up old tasks on each new request
+        cleanup_old_tasks()
 
         settings = AISettings.query.first()
         api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
@@ -596,11 +770,7 @@ def bulk_ai_remarks(test_type):
         if not matched_pids:
             return jsonify({"error": "No patients found in the specified range."}), 400
 
-        client = OpenAI(api_key=api_key)
         model_name = settings.model_selection if (settings and settings.model_selection) else "gpt-4o"
-
-        processed = []
-        errors = []
 
         model_map = {
             'fbc': FBCResult,
@@ -621,25 +791,34 @@ def bulk_ai_remarks(test_type):
         target_remark_field = target_remark_fields.get(test_type)
 
         # Step 1: Collect prompt data in the main thread (100% thread-safe database access)
+        report_params = {p.id: p for p in ReportParameter.query.all()}
         records_to_process = []
+        initial_errors = []
         for pid in matched_pids:
             try:
                 sb = ScreeningYearBioData.query.filter_by(patient_id=pid, screening_year=int(screening_year)).first()
                 if not sb:
-                    errors.append({"patient_id": pid, "error": "Patient ID not found in database for this year."})
+                    initial_errors.append({"patient_id": pid, "error": "Patient ID not found in database for this year."})
                     continue
                 
                 staff_id = sb.staff_id
+                
+                # Fetch patient gender
+                patient_bio = BioData.query.filter(
+                    func.lower(func.trim(BioData.staff_id)) == func.lower(func.trim(staff_id))
+                ).first()
+                gender_str = patient_bio.gender if (patient_bio and patient_bio.gender) else "Unknown"
+
                 record = model_class.query.filter_by(staff_id=staff_id, screening_year=int(screening_year)).first()
                 if not record:
-                    errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
+                    initial_errors.append({"patient_id": pid, "error": "No test result record found for this patient."})
                     continue
 
                 # Skip if patient already has a remark for this test type and override is not enabled
                 if target_remark_field and not override:
                     existing_remark = getattr(record, target_remark_field, None)
                     if existing_remark and existing_remark.strip():
-                        errors.append({"patient_id": pid, "error": "Skipped: remark already exists."})
+                        initial_errors.append({"patient_id": pid, "error": "Skipped: remark already exists."})
                         continue
 
                 # Determine fields
@@ -649,48 +828,70 @@ def bulk_ai_remarks(test_type):
 
                 if test_type == 'fbc':
                     prompt_data = (
-                        f"PCV: {record.pcv or '-'} % (Ref Range: 34-53.9 %)\n"
-                        f"WBC: {record.wbc or '-'} x10^9/L (Ref Range: 3-11 x10^9/L)\n"
-                        f"Lymphocyte: {record.lymp_percent or '-'} % (Ref Range: 19.1-48 %)\n"
-                        f"Neutrophil (Granulocyte): {record.gra_percent or '-'} % (Ref Range: 43.6-73.3 %)\n"
-                        f"Mixed (MID): {record.mid_percent or '-'} % (Ref Range: 4.5-12.1 %)\n"
-                        f"Platelets (PLT): {record.plt or '-'} x10^9/L (Ref Range: 100-450 x10^9/L)\n"
+                        get_param_prompt(report_params, 'pcv', 'PCV', '36-53.9', '%', record.pcv) +
+                        get_param_prompt(report_params, 'wbc', 'WBC', '3-11', 'x10^9/L', record.wbc) +
+                        get_param_prompt(report_params, 'lymphocyte', 'Lymphocyte', '0.6-4.1', 'x10⁹/L', record.lymp_abs) +
+                        get_param_prompt(report_params, 'neutrophil', 'Neutrophil (Granulocyte)', '1.5-8.0', 'x10⁹/L', record.gra_abs) +
+                        get_param_prompt(report_params, 'mixed', 'Mixed (MID)', '0.1-1.8', 'x10⁹/L', record.mid_abs) +
+                        get_param_prompt(report_params, 'platelets', 'Platelets (PLT)', '100-450', 'x10^9/L', record.plt)
                     )
-                    system_prompt = (
-                        "You are a medical assistant analyzing patient Full Blood Count (FBC) results."
-                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                    system_prompt = settings.prompt_fbc if (settings and settings.prompt_fbc) else (
+                        "You are a medical assistant analyzing patient Full Blood Count (FBC) results. "
+                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+                        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
                     remark_field = "fbc_remark"
 
                 elif test_type == 'lipid':
+                    # Determine blood sugar type (FBS=Fasting vs RBS=Non-Fasting) from consultation data
+                    lipid_consultation = ConsultationData.query.filter(
+                        func.lower(func.trim(ConsultationData.staff_id)) == func.lower(func.trim(record.staff_id)),
+                        ConsultationData.screening_year == record.screening_year
+                    ).first()
+                    lipid_blood_sugar_type = "Unknown"
+                    lipid_blood_sugar_details = ""
+                    if lipid_consultation:
+                        lipid_fbs_val = lipid_consultation.fbs
+                        lipid_rbs_val = lipid_consultation.rbs
+                        if lipid_fbs_val and lipid_fbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                            lipid_blood_sugar_type = "Fasting (FBS)"
+                            lipid_blood_sugar_details = get_param_prompt(report_params, 'fbs', 'FBS', '70-99', 'mg/dL', lipid_fbs_val)
+                        elif lipid_rbs_val and lipid_rbs_val.strip().lower() not in ('', 'not applicable', 'n/a'):
+                            lipid_blood_sugar_type = "Non-Fasting (RBS)"
+                            lipid_blood_sugar_details = get_param_prompt(report_params, 'rbs', 'RBS', '70-140', 'mg/dL', lipid_rbs_val)
+                    
                     prompt_data = (
-                        f"Total Cholesterol: {record.total_cholesterol or '-'} mg/dL (Ref Range: <200 mg/dL)\n"
-                        f"Triglycerides: {record.triglycerides or '-'} mg/dL (Ref Range: <150 mg/dL)\n"
-                        f"HDL-c: {record.hdl or '-'} mg/dL (Ref Range: >=40 mg/dL)\n"
-                        f"LDL-c: {record.ldl or '-'} mg/dL (Ref Range: <130 mg/dL)\n"
+                        f"Blood Sugar Type: {lipid_blood_sugar_type} (indicates whether the patient was fasting or non-fasting when the sample was collected)\n" +
+                        (lipid_blood_sugar_details if lipid_blood_sugar_details else "Blood Sugar: Not Entered\n") +
+                        get_param_prompt(report_params, 'total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL', record.total_cholesterol) +
+                        get_param_prompt(report_params, 'triglycerides', 'Triglycerides', '<150', 'mg/dL', record.triglycerides) +
+                        get_param_prompt(report_params, 'hdl', 'HDL-c', '>=40', 'mg/dL', record.hdl) +
+                        get_param_prompt(report_params, 'ldl', 'LDL-c', '<130', 'mg/dL', record.ldl)
                     )
-                    system_prompt = (
-                        "You are a medical assistant analyzing patient Lipid Profile results."
-                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                    system_prompt = settings.prompt_lipid if (settings and settings.prompt_lipid) else (
+                        "You are a medical assistant analyzing patient Lipid Profile results. "
+                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+                        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
                     remark_field = "lp_remark"
 
                 elif test_type == 'lft':
                     prompt_data = (
-                        f"AST: {record.ast or '-'} U/L (Ref Range: 0-46 U/L)\n"
-                        f"ALT: {record.alt or '-'} U/L (Ref Range: 0-49 U/L)\n"
-                        f"ALP: {record.alp or '-'} U/L (Ref Range: Male: 80-306 U/L, Female: 64-306 U/L)\n"
-                        f"TB: {record.tb or '-'} mg/dL (Ref Range: 0-1.2 mg/dL)\n"
-                        f"CB: {record.cb or '-'} mg/dL (Ref Range: 0-0.4 mg/dL)\n"
+                        get_param_prompt(report_params, 'ast', 'AST', '0-46', 'U/L', record.ast) +
+                        get_param_prompt(report_params, 'alt', 'ALT', '0-49', 'U/L', record.alt) +
+                        get_param_prompt(report_params, 'alp', 'ALP', 'Male: 80-306, Female: 64-306', 'U/L', record.alp) +
+                        get_param_prompt(report_params, 'tb', 'TB', '0-1.2', 'mg/dL', record.tb) +
+                        get_param_prompt(report_params, 'cb', 'CB', '0-0.4', 'mg/dL', record.cb)
                     )
-                    system_prompt = (
-                        "You are a medical assistant analyzing patient Liver Function Test (LFT) results."
-                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                    system_prompt = settings.prompt_lft if (settings and settings.prompt_lft) else (
+                        "You are a medical assistant analyzing patient Liver Function Test (LFT) results. "
+                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. For example, if Conjugated Bilirubin (CB) is 0.35 mg/dL and the reference range is 0-0.4 mg/dL, it is NORMAL. Treat all values within the ranges as normal. "
+                        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
                     remark_field = "lft_remark"
@@ -700,17 +901,18 @@ def bulk_ai_remarks(test_type):
                     urea_val = lft_record.urea if lft_record else '-'
                     creatinine_val = lft_record.creatinine if lft_record else '-'
                     prompt_data = (
-                        f"Potassium: {record.potassium or '-'} mmol/L (Ref Range: 3.5-5.0 mmol/L)\n"
-                        f"Sodium: {record.sodium or '-'} mmol/L (Ref Range: 135-145 mmol/L)\n"
-                        f"Chloride: {record.chloride or '-'} mmol/L (Ref Range: 97-107 mmol/L)\n"
-                        f"Bicarbonate (HCO3): {record.hco3 or '-'} mmol/L (Ref Range: 20-31 mmol/L)\n"
-                        f"Urea: {urea_val or '-'} mmol/L (Ref Range: 2.5-9.33 mmol/L)\n"
-                        f"Creatinine: {creatinine_val or '-'} umol/L (Ref Range: Male: 80-133 umol/L, Female: 62-115 umol/L)\n"
+                        get_param_prompt(report_params, 'potassium', 'Potassium', '3.5-5.0', 'mmol/L', record.potassium) +
+                        get_param_prompt(report_params, 'sodium', 'Sodium', '135-145', 'mmol/L', record.sodium) +
+                        get_param_prompt(report_params, 'chloride', 'Chloride', '97-107', 'mmol/L', record.chloride) +
+                        get_param_prompt(report_params, 'bicarbonate', 'Bicarbonate (HCO3)', '20-31', 'mmol/L', record.hco3) +
+                        get_param_prompt(report_params, 'urea', 'Urea', '2.5-8.33', 'mmol/L', urea_val) +
+                        get_param_prompt(report_params, 'creatinine', 'Creatinine', 'Male: 80-133, Female: 62-115', 'umol/L', creatinine_val)
                     )
-                    system_prompt = (
-                        "You are a medical assistant analyzing patient Kidney Function Test (KFT) results."
-                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field."
-                        "Avoid mentioning the test type and anything about the ranges in the comments/remark."
+                    system_prompt = settings.prompt_kft if (settings and settings.prompt_kft) else (
+                        "You are a medical assistant analyzing patient Kidney Function Test (KFT) results. "
+                        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+                        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+                        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
                         "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
                     )
                     remark_field = "kft_remark"
@@ -723,8 +925,11 @@ def bulk_ai_remarks(test_type):
                         break
 
                 if not has_any_value:
-                    errors.append({"patient_id": pid, "error": "No results have been entered for this patient yet."})
+                    initial_errors.append({"patient_id": pid, "error": "No results have been entered for this patient yet."})
                     continue
+
+                if prompt_data:
+                    prompt_data = f"Patient Gender: {gender_str}\n" + prompt_data
 
                 records_to_process.append({
                     "pid": pid,
@@ -734,53 +939,116 @@ def bulk_ai_remarks(test_type):
                     "remark_field": remark_field
                 })
             except Exception as ex:
-                errors.append({"patient_id": pid, "error": f"Failed database lookup: {str(ex)}"})
+                initial_errors.append({"patient_id": pid, "error": f"Failed database lookup: {str(ex)}"})
 
-        # Step 2: Make OpenAI API calls concurrently (No database access in threads)
-        def call_openai(item):
-            try:
-                response = client.chat.completions.create(
-                    model=model_name,
-                    messages=[
-                        {"role": "system", "content": item["system_prompt"]},
-                        {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
-                    ],
-                    max_tokens=60
-                )
-                remark = response.choices[0].message.content.strip()
-                if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
-                    remark = remark[1:-1].strip()
-                if len(remark) > 130:
-                    remark = remark[:127] + "..."
-                return item["pid"], item["record_id"], item["remark_field"], True, remark
-            except Exception as ex:
-                return item["pid"], item["record_id"], item["remark_field"], False, str(ex)
+        # If there are no records to process, return results immediately (no background task needed)
+        if not records_to_process:
+            return jsonify({
+                "message": "Bulk AI Remarks processing complete.",
+                "task_id": None,
+                "total": 0,
+                "processed_count": 0,
+                "error_count": len(initial_errors),
+                "processed": [],
+                "errors": initial_errors,
+                "status": "completed"
+            }), 200
 
-        pool = Pool(5)
-        api_results = pool.map(call_openai, records_to_process)
+        # Step 2: Create a background task and return task_id immediately
+        task_id = str(uuid.uuid4())
+        total_to_process = len(records_to_process)
+        create_task(task_id, total_to_process)
 
-        # Step 3: Save and commit remarks in the main thread (100% thread-safe)
-        for pid, record_id, remark_field, success, detail in api_results:
-            if success:
-                try:
-                    rec = model_class.query.get(record_id)
-                    if rec:
-                        setattr(rec, remark_field, detail)
-                        processed.append({"patient_id": pid, "remark": detail})
-                except Exception as ex:
-                    errors.append({"patient_id": pid, "error": f"Failed to save remark: {str(ex)}"})
-            else:
-                errors.append({"patient_id": pid, "error": detail})
 
-        db.session.commit()
+        # Get the Flask app for app_context in the background greenlet
+        from flask import current_app
+        app = current_app._get_current_object()
+        company_context = request.headers.get('X-Company-Context', '')
+
+        # Capture model class name for re-import in background context
+        model_class_name = model_class.__name__
+
+        def _run_bulk_ai_task():
+            """Background greenlet that processes OpenAI calls and saves results."""
+            with app.app_context():
+                with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
+                    try:
+                        from models import db, FBCResult, KFTResult, LipidResult, LFTResult
+                        from openai import OpenAI as BGOpenAI
+                        from gevent.pool import Pool as GeventPool
+
+                        bg_model_map = {
+                            'FBCResult': FBCResult,
+                            'KFTResult': KFTResult,
+                            'LipidResult': LipidResult,
+                            'LFTResult': LFTResult
+                        }
+                        bg_model_class = bg_model_map[model_class_name]
+                        bg_client = BGOpenAI(api_key=api_key)
+
+                        def call_openai_and_save(item):
+                            """Process a single patient: call OpenAI, save to DB, update task."""
+                            with app.app_context():
+                                with app.test_request_context(environ_base={'HTTP_X_COMPANY_CONTEXT': company_context}):
+                                    try:
+                                        ai_params = {
+                                            "model": model_name,
+                                            "messages": [
+                                                {"role": "system", "content": item["system_prompt"]},
+                                                {"role": "user", "content": f"{test_type.upper()} Results:\n{item['prompt_data']}"}
+                                            ]
+                                        }
+                                        if model_name.startswith("o1") or model_name.startswith("o3"):
+                                            ai_params["max_completion_tokens"] = 60
+                                        else:
+                                            ai_params["max_tokens"] = 60
+
+                                        response = bg_client.chat.completions.create(**ai_params)
+                                        remark = response.choices[0].message.content.strip()
+                                        if (remark.startswith('"') and remark.endswith('"')) or (remark.startswith("'") and remark.endswith("'")):
+                                            remark = remark[1:-1].strip()
+                                        if len(remark) > 130:
+                                            remark = remark[:127] + "..."
+
+                                        # Save to DB
+                                        rec = bg_model_class.query.get(item["record_id"])
+                                        if rec:
+                                            setattr(rec, item["remark_field"], remark)
+                                            db.session.commit()
+
+                                        update_task_success(task_id, item["pid"], remark)
+                                    except Exception as ex:
+                                        try:
+                                            db.session.rollback()
+                                        except Exception:
+                                            pass
+                                        update_task_error(task_id, item["pid"], str(ex))
+
+                        # Process with concurrency pool of 5
+                        pool = GeventPool(5)
+                        pool.map(call_openai_and_save, records_to_process)
+
+                        complete_task(task_id)
+                    except Exception as e:
+                        import traceback
+                        traceback.print_exc()
+                        try:
+                            db.session.rollback()
+                        except Exception:
+                            pass
+                        fail_task(task_id, str(e))
+
+        # Spawn the background greenlet
+        gevent.spawn(_run_bulk_ai_task)
 
         return jsonify({
-            "message": f"Bulk AI Remarks processing complete.",
-            "processed_count": len(processed),
-            "error_count": len(errors),
-            "processed": processed,
-            "errors": errors
-        }), 200
+            "task_id": task_id,
+            "total": total_to_process,
+            "skipped_count": len(initial_errors),
+            "skipped": initial_errors,
+            "message": "Bulk AI remarks generation started in background."
+        }), 202
+
     except Exception as e:
         import traceback
         traceback.print_exc()
@@ -789,3 +1057,28 @@ def bulk_ai_remarks(test_type):
         except Exception:
             pass
         return jsonify({"error": f"Server processing error: {str(e)}"}), 500
+
+
+@tests_bp.route('/bulk-ai-remarks/status/<task_id>', methods=['GET'])
+@jwt_required()
+def bulk_ai_remarks_status(task_id):
+    """Poll the progress of a background bulk AI remarks task."""
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
+    from bulk_tasks import get_task
+
+    task = get_task(task_id)
+    if not task:
+        return jsonify({"error": "Task not found or expired."}), 404
+
+    return jsonify({
+        "task_id": task_id,
+        "status": task["status"],
+        "total": task["total"],
+        "processed_count": task["processed_count"],
+        "error_count": task["error_count"],
+        "processed": task["processed"],
+        "errors": task["errors"],
+        "error_message": task.get("error_message"),
+    }), 200

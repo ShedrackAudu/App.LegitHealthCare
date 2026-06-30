@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useForm } from 'react-hook-form';
-import { useParams, useNavigate, useLocation } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, useSearchParams } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import { 
   Activity01Icon, 
@@ -50,6 +50,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import { Badge } from '@/components/ui/badge';
 import axios from 'axios';
@@ -112,6 +113,8 @@ const TestResultsPage: React.FC = () => {
     const { testType: paramTestType } = useParams<{ testType: string }>();
     const { pathname } = useLocation();
     const navigate = useNavigate();
+    const [searchParams] = useSearchParams();
+    const staffIdParam = searchParams.get('staff_id');
     const { activeSection, activeYear } = useAppContext();
     const { hasPermission, isAdmin } = usePermissions();
     
@@ -213,6 +216,8 @@ const TestResultsPage: React.FC = () => {
     }, [searchId, activeSection, isSelecting, searchByPid]);
 
     const [queueData, setQueueData] = useState<any>({});
+    const [seenStats, setSeenStats] = useState<any>({});
+    
     const fetchQueue = async () => {
         try {
             const resp = await axios.get(`/api/queue/?year=${activeYear}`, {
@@ -222,15 +227,25 @@ const TestResultsPage: React.FC = () => {
         } catch (err) {}
     };
 
+    const fetchSeenStats = async () => {
+        try {
+            const resp = await axios.get(`/api/queue/seen-stats?year=${activeYear}`, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            setSeenStats(resp.data);
+        } catch (err) {}
+    };
+
     const fetchQueueList = async (dept: string) => {
-        setLoadingQueue(true);
+        setQueueEntries([]);
         setSelectedQueueDept(dept);
+        setIsQueueModalOpen(true);
+        setLoadingQueue(true);
         try {
             const resp = await axios.get(`/api/queue/${dept.toLowerCase()}/?year=${activeYear}`, {
                 headers: { 'X-Company-Context': activeSection }
             });
             setQueueEntries(resp.data);
-            setIsQueueModalOpen(true);
         } catch (err) {
             console.error("Queue list fetch failed:", err);
             toast.error("Failed to load patient queue");
@@ -256,7 +271,11 @@ const TestResultsPage: React.FC = () => {
 
     useEffect(() => {
         fetchQueue();
-        const interval = setInterval(fetchQueue, 30000);
+        fetchSeenStats();
+        const interval = setInterval(() => {
+            fetchQueue();
+            fetchSeenStats();
+        }, 30000);
         return () => clearInterval(interval);
     }, [activeYear, activeSection]);
 
@@ -320,6 +339,25 @@ const TestResultsPage: React.FC = () => {
             setSearching(false);
         }
     };
+
+    useEffect(() => {
+        if (staffIdParam) {
+            const loadPatientParam = async () => {
+                setSearching(true);
+                try {
+                    const response = await axios.get(`/patient/${staffIdParam}?year=${activeYear}&strict=true&search_type=general`, {
+                        headers: { 'X-Company-Context': activeSection }
+                    });
+                    setPatient(response.data);
+                } catch (err) {
+                    console.error("Failed to load patient from query param:", err);
+                } finally {
+                    setSearching(false);
+                }
+            };
+            loadPatientParam();
+        }
+    }, [staffIdParam, activeYear, activeSection]);
 
     if (!selectedTest) {
         return (
@@ -419,29 +457,58 @@ const TestResultsPage: React.FC = () => {
                             
                             <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
                                 {(selectedTest === 'ecg' || selectedTest === 'spirometry' || selectedTest === 'audiometry') && (
+                                <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+                                    {/* Queue Status Card */}
                                     <Card 
-                                        className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
+                                        className="flex-1 md:flex-none md:w-36 relative overflow-hidden cursor-pointer bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 h-16 flex items-center rounded-xl shrink-0 group select-none"
                                         onClick={() => fetchQueueList(selectedTest || '')}
                                     >
-                                        <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
-                                            <div className="flex items-center gap-2.5">
-                                                <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                                                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
-                                                </div>
-                                                <div>
-                                                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
-                                                    <h3 className="text-lg font-black tracking-tighter leading-none">
-                                                        {selectedTest === 'ecg' ? queueData.ecg || 0 : 
-                                                        selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
-                                                        queueData.audiometry || 0}
-                                                    </h3>
-                                                </div>
+                                        <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-xl text-primary group-hover:bg-primary/20 transition-all shrink-0">
+                                                <HugeiconsIcon icon={UserGroupIcon} className="h-4.5 w-4.5" />
                                             </div>
-                                            <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                                                VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
-                                            </div>
+                                            <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                                                 <span className="text-lg font-black tracking-tighter text-foreground leading-none">
+                                                     {selectedTest === 'ecg' ? queueData.ecg || 0 : 
+                                                     selectedTest === 'spirometry' ? queueData.spirometry || 0 : 
+                                                     queueData.audiometry || 0}
+                                                 </span>
+                                                 <div className="flex items-center gap-1 mt-0">
+                                                     <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/80 leading-none">Waiting</span>
+                                                     <span className="relative flex h-1.5 w-1.5 shrink-0">
+                                                         <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                                                     </span>
+                                                 </div>
+                                             </div>
                                         </CardContent>
+                                        {/* Subtle glass overlay shine */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
                                     </Card>
+
+                                    {/* Seen Status Card */}
+                                    <Card 
+                                        className="flex-1 md:flex-none md:w-36 relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-sm h-16 flex items-center rounded-xl shrink-0 group select-none"
+                                    >
+                                        <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                                            <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                                                <HugeiconsIcon icon={UserIcon} className="h-4.5 w-4.5" />
+                                            </div>
+                                            <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                                                 <span className="text-lg font-black tracking-tighter text-foreground leading-none">
+                                                     {selectedTest === 'ecg' ? seenStats.ecg || 0 : 
+                                                     selectedTest === 'spirometry' ? seenStats.spirometry || 0 : 
+                                                     seenStats.audiometry || 0}
+                                                 </span>
+                                                 <div className="flex items-center gap-1 mt-0">
+                                                     <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/85 leading-none">Seen</span>
+                                                 </div>
+                                             </div>
+                                        </CardContent>
+                                        {/* Subtle glass overlay shine */}
+                                        <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+                                    </Card>
+                                </div>
                                 )}
 
                                 {/* Search Section Redesign */}
@@ -561,6 +628,8 @@ const TestResultsPage: React.FC = () => {
                             toast.success("Tests saved successfully!");
                             setPatient(null);
                             setSearchId('');
+                            fetchQueue();
+                            fetchSeenStats();
                         }}
                     />
                 )}
@@ -592,8 +661,19 @@ const TestResultsPage: React.FC = () => {
                     <div className="relative mt-2">
                         <ScrollArea className="h-[400px] px-1">
                             {loadingQueue ? (
-                                <div className="flex items-center justify-center h-full">
-                                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                                <div className="space-y-3">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={i} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/50 animate-pulse gap-3">
+                                            <div className="flex items-center gap-3 min-w-0 flex-1">
+                                                <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                                <div className="space-y-2 flex-1">
+                                                    <Skeleton className="h-4 w-32 bg-muted/40 animate-pulse" />
+                                                    <Skeleton className="h-3.5 w-24 bg-muted/40 animate-pulse" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-8 w-20 bg-muted/40 rounded-lg animate-pulse" />
+                                        </div>
+                                    ))}
                                 </div>
                             ) : queueEntries.length > 0 ? (
                                 <div className="space-y-3">
@@ -936,7 +1016,7 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
             setFetching(true);
             try {
                 const type = testType === 'ecg' || testType === 'spirometry' || testType === 'audiometry' ? 'special' : testType;
-                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}`, {
+                const resp = await axios.get(`/api/tests/get-test/${type}/${patient.staff_id}?year=${activeYear}&subtype=${testType}`, {
                     headers: { 'X-Company-Context': activeSection }
                 });
                 setInitialData(resp.data);
@@ -982,12 +1062,46 @@ const TestFormContainer = ({ testType, patient, activeYear, activeSection, onSuc
 
     if (fetching) {
         return (
-            <Card className="border-2 border-dashed flex items-center justify-center h-64 bg-muted/5">
-                <div className="flex flex-col items-center gap-4">
-                    <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" />
-                    <p className="text-sm font-bold text-muted-foreground animate-pulse">Fetching existing records...</p>
-                </div>
-            </Card>
+            <div className="space-y-6 animate-in fade-in duration-500">
+                <Card className="border-2 border-primary/10 shadow-lg bg-muted/5">
+                    <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                        <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                        <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                            <div className="lg:col-span-2 space-y-2">
+                                <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                                <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                            </div>
+                            {Array.from({ length: 6 }).map((_, idx) => (
+                                <div key={idx} className="space-y-2">
+                                    <Skeleton className="h-3 w-12 bg-muted/30 rounded" />
+                                    <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                </div>
+                            ))}
+                        </div>
+                    </CardContent>
+                </Card>
+
+                <Card className="border-2 shadow-2xl relative overflow-hidden">
+                    <CardHeader className="border-b bg-muted/5 py-4">
+                        <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+                    </CardHeader>
+                    <CardContent className="p-8">
+                        <div className="space-y-6">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {Array.from({ length: 6 }).map((_, idx) => (
+                                    <div key={idx} className="space-y-2">
+                                        <Skeleton className="h-4 w-28 bg-muted/30 rounded" />
+                                        <Skeleton className="h-12 w-full bg-muted/40 rounded-xl animate-pulse" />
+                                    </div>
+                                ))}
+                            </div>
+                            <div className="flex justify-end pt-4 border-t">
+                                <Skeleton className="h-11 w-32 bg-muted/40 rounded-xl animate-pulse" />
+                            </div>
+                        </div>
+                    </CardContent>
+                </Card>
+            </div>
         );
     }
 
@@ -1462,7 +1576,63 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
     const [range, setRange] = useState('');
     const [override, setOverride] = useState(false);
     const [loading, setLoading] = useState(false);
+    const [taskId, setTaskId] = useState<string | null>(null);
+    const [progress, setProgress] = useState<any>(null);
     const [result, setResult] = useState<any>(null);
+    const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+    const skippedRef = useRef<any[]>([]);
+
+    // Cleanup polling on unmount
+    useEffect(() => {
+        return () => {
+            if (pollRef.current) clearInterval(pollRef.current);
+        };
+    }, []);
+
+    const stopPolling = () => {
+        if (pollRef.current) {
+            clearInterval(pollRef.current);
+            pollRef.current = null;
+        }
+    };
+
+    const startPolling = (tid: string) => {
+        stopPolling();
+        pollRef.current = setInterval(async () => {
+            try {
+                const resp = await axios.get(`/api/tests/bulk-ai-remarks/status/${tid}`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                const data = resp.data;
+                setProgress(data);
+
+                if (data.status === 'completed' || data.status === 'failed') {
+                    stopPolling();
+                    setLoading(false);
+                    setTaskId(null);
+                    const allErrors = [...(skippedRef.current || []), ...(data.errors || [])];
+                    const totalErrors = allErrors.length;
+                    setResult({
+                        processed_count: data.processed_count,
+                        error_count: totalErrors,
+                        processed: data.processed,
+                        errors: allErrors,
+                        status: data.status,
+                        error_message: data.error_message,
+                    });
+                    skippedRef.current = [];
+                    if (data.status === 'completed') {
+                        toast.success(`Bulk AI remarks complete! ${data.processed_count} succeeded, ${totalErrors} failed/skipped.`);
+                    } else {
+                        toast.error(data.error_message || "Bulk AI remarks task failed.");
+                    }
+                }
+            } catch (err) {
+                console.error("Polling error:", err);
+                // Don't stop polling on transient network errors
+            }
+        }, 1000);
+    };
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -1472,28 +1642,60 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
         }
         setLoading(true);
         setResult(null);
+        setProgress(null);
         try {
             const resp = await axios.post(`/api/tests/bulk-ai-remarks/${testType}`, 
                 { range: range.trim(), screening_year: activeYear, override },
                 { headers: { 'X-Company-Context': activeSection } }
             );
-            setResult(resp.data);
-            toast.success("Bulk AI remarks generation completed!");
+            const data = resp.data;
+
+            // If no records to process (all skipped), show results immediately
+            if (!data.task_id) {
+                setLoading(false);
+                setResult({
+                    processed_count: data.processed_count || 0,
+                    error_count: data.error_count || 0,
+                    processed: data.processed || [],
+                    errors: data.errors || [],
+                    status: 'completed',
+                });
+                if ((data.error_count || 0) > 0) {
+                    toast(`No records to process. ${data.error_count} skipped.`);
+                }
+                return;
+            }
+
+            // Store initial skipped errors for merging later
+            skippedRef.current = data.skipped || [];
+
+            // Task started — begin polling
+            setTaskId(data.task_id);
+            setProgress({
+                status: 'running',
+                total: data.total,
+                processed_count: 0,
+                error_count: 0,
+            });
+            startPolling(data.task_id);
         } catch (err: any) {
             console.error(err);
-            toast.error(err.response?.data?.error || "Failed to generate bulk AI remarks");
-        } finally {
             setLoading(false);
+            toast.error(err.response?.data?.error || "Failed to start bulk AI remarks");
         }
     };
 
     if (!['fbc', 'kft', 'lipid', 'lft'].includes(testType || '')) return null;
 
+    const progressPercent = progress && progress.total > 0
+        ? Math.min(100, Math.round(((progress.processed_count + progress.error_count) / progress.total) * 100))
+        : 0;
+
     return (
         <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md mt-6">
             <CardHeader className="p-6 pb-4">
                 <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
-                    <div className="p-2 bg-indigo-500/10 rounded-xl text-indigo-500 self-start">
+                    <div className="p-2 bg-primary/10 rounded-xl text-primary self-start">
                         <HugeiconsIcon icon={Brain02Icon} className="h-6 w-6" />
                     </div>
                     <div>
@@ -1519,12 +1721,12 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                         <Button 
                             type="submit" 
                             disabled={loading || !range.trim()}
-                            className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
+                            className="bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg px-8 whitespace-nowrap font-bold h-11 rounded-xl w-full sm:w-auto"
                         >
                             {loading ? (
                                 <>
                                     <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin mr-2" />
-                                    Processing AI...
+                                    Processing...
                                 </>
                             ) : 'Generate Remarks'}
                         </Button>
@@ -1536,17 +1738,56 @@ const BulkAIRemarksSection = ({ testType, activeYear, activeSection }: any) => {
                             onCheckedChange={(checked: boolean) => setOverride(checked)}
                             disabled={loading}
                         />
-                        <Label htmlFor="override-remarks" className="text-xs font-bold text-slate-600 cursor-pointer select-none">
+                        <Label htmlFor="override-remarks" className="text-xs font-bold text-muted-foreground cursor-pointer select-none">
                             Override existing remarks
                         </Label>
                     </div>
                 </form>
 
-                {result && (
+                {/* Live progress section */}
+                {loading && progress && (
+                    <div className="p-4 bg-primary/5 dark:bg-primary/10 border border-primary/20 rounded-xl space-y-3 animate-in fade-in duration-300">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                                <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-primary" />
+                                <span className="text-sm font-bold text-primary">Generating AI remarks...</span>
+                            </div>
+                            <span className="text-sm font-black text-primary tabular-nums">{progressPercent}%</span>
+                        </div>
+                        
+                        {/* Progress bar */}
+                        <div className="w-full bg-primary/10 dark:bg-primary/20 rounded-full h-3 overflow-hidden">
+                            <div 
+                                className="h-full bg-primary rounded-full transition-all duration-500 ease-out"
+                                style={{ width: `${progressPercent}%` }}
+                            />
+                        </div>
+
+                        {/* Live counters */}
+                        <div className="flex flex-wrap items-center gap-3 text-xs font-bold">
+                            <span className="text-primary bg-primary/10 px-2.5 py-1 rounded-full tabular-nums">
+                                Progress: {progress.processed_count + progress.error_count} / {progress.total}
+                            </span>
+                            {progress.processed_count > 0 && (
+                                <span className="text-emerald-600 bg-emerald-50 dark:bg-emerald-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                                    ✅ {progress.processed_count} succeeded
+                                </span>
+                            )}
+                            {progress.error_count > 0 && (
+                                <span className="text-rose-600 bg-rose-50 dark:bg-rose-900/30 px-2.5 py-1 rounded-full tabular-nums">
+                                    ❌ {progress.error_count} failed
+                                </span>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Final results */}
+                {result && !loading && (
                     <div className="p-4 bg-muted/30 border rounded-xl space-y-2 text-sm animate-in fade-in duration-300">
                         <div className="flex flex-wrap items-center gap-4 text-xs font-black uppercase tracking-wider">
                             <span className="text-emerald-600 bg-emerald-50 px-2.5 py-1 rounded-full">Succeeded: {result.processed_count}</span>
-                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed: {result.error_count}</span>
+                            <span className="text-rose-600 bg-rose-50 px-2.5 py-1 rounded-full">Failed/Skipped: {result.error_count}</span>
                         </div>
                         {result.errors && result.errors.length > 0 && (
                             <div className="space-y-1.5 pt-2">

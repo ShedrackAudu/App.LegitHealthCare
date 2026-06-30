@@ -3,7 +3,7 @@ from models import db, QueueEntry, BioData, ScreeningYearBioData, AuditLog
 from sqlalchemy import func
 from zoneinfo import ZoneInfo
 from decorators import require_permission
-from flask_jwt_extended import get_jwt_identity, get_jwt
+from flask_jwt_extended import get_jwt_identity, get_jwt, jwt_required
 
 queue_bp = Blueprint('queue_bp', __name__)
 
@@ -98,7 +98,11 @@ def get_department_queue(department):
 
     # Join with ScreeningYearBioData to ensure patient is in the screening matrix
     entries_with_bio = db.session.query(
-        QueueEntry, ScreeningYearBioData
+        QueueEntry.staff_id,
+        ScreeningYearBioData.first_name,
+        ScreeningYearBioData.last_name,
+        QueueEntry.created_at,
+        QueueEntry.queue_number
     ).join(
         ScreeningYearBioData,
         (QueueEntry.staff_id == ScreeningYearBioData.staff_id) &
@@ -110,13 +114,13 @@ def get_department_queue(department):
     ).order_by(QueueEntry.created_at.asc()).all()
 
     patients = []
-    for e, bio in entries_with_bio:
+    for staff_id, first_name, last_name, created_at, queue_number in entries_with_bio:
         patients.append({
-            "staff_id": e.staff_id,
-            "first_name": bio.first_name,
-            "last_name": bio.last_name,
-            "created_at": e.created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
-            "queue_number": e.queue_number
+            "staff_id": staff_id,
+            "first_name": first_name,
+            "last_name": last_name,
+            "created_at": created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
+            "queue_number": queue_number
         })
 
     return jsonify(patients), 200
@@ -237,4 +241,39 @@ def delete_patient_from_queue(department, staff_id):
     )
 
     return jsonify({"message": f"Patient {staff_id} successfully removed from {target_dept} queue"}), 200
+
+@queue_bp.route('/seen-stats', methods=['GET'], strict_slashes=False)
+@jwt_required()
+def get_seen_stats():
+    user_id = get_jwt_identity()
+    if not user_id:
+        return jsonify({"error": "Unauthorized"}), 401
+        
+    year = request.args.get('year')
+    if not year:
+        return jsonify({"error": "Year required"}), 400
+        
+    from models import StaffPatientSeen
+    
+    counts = db.session.query(
+        StaffPatientSeen.department,
+        func.count(StaffPatientSeen.id)
+    ).filter(
+        StaffPatientSeen.user_id == int(user_id),
+        StaffPatientSeen.screening_year == int(year)
+    ).group_by(StaffPatientSeen.department).all()
+    
+    result = {
+        "consultation": 0,
+        "audiometry": 0,
+        "spirometry": 0,
+        "ecg": 0
+    }
+    
+    for dept, count in counts:
+        dept_key = dept.strip().lower()
+        if dept_key in result:
+            result[dept_key] = count
+            
+    return jsonify(result), 200
 

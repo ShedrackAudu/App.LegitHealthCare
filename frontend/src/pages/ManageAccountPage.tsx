@@ -148,10 +148,19 @@ const ManageAccountPage = () => {
 
     return (
         <MainLayout>
-            <div className="max-w-4xl mx-auto space-y-6 animate-in fade-in duration-500">
-                <div className="flex items-center gap-3 mb-6">
-                    <HugeiconsIcon icon={UserIcon} className="h-8 w-8 text-primary" />
-                    <h1 className="text-3xl font-bold tracking-tight">Manage Account</h1>
+            <div className="w-full space-y-6 animate-in fade-in duration-500">
+                <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border transition-all mb-6">
+                    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+                        <div className="p-1.5 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl shrink-0">
+                            <HugeiconsIcon icon={UserIcon} className="text-primary h-5 w-5 sm:h-8 sm:w-8" />
+                        </div>
+                        <div>
+                            <h1 className="text-base sm:text-2xl font-black tracking-tight text-foreground leading-tight">Manage Account</h1>
+                            <p className="text-[9px] sm:text-sm text-muted-foreground font-medium">
+                                Manage your personal profile, contacts, and account security settings.
+                            </p>
+                        </div>
+                    </div>
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

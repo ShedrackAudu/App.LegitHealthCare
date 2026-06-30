@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, send_file
+from flask import Blueprint, request, jsonify, send_file, current_app
 from flask_jwt_extended import jwt_required, get_jwt_identity
 import os
 import zipfile
@@ -7,7 +7,7 @@ from models import (
     db, BioData, ScreeningYearBioData, ConsultationData,
     FBCResult, KFTResult, LipidResult, LFTResult, 
     SpecialTestsResult, DirectorReview, AuditLog, QueueEntry,
-    ReportVerification, AppBranding
+    ReportVerification, AppBranding, ReportParameter
 )
 import uuid
 
@@ -16,7 +16,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from decorators import require_permission
 from utils.ip import get_client_ip
-from utils.progress_utils import calculate_report_progress
+from utils.progress_utils import calculate_report_progress, calculate_batch_progress
 
 view_data_bp = Blueprint('view_data', __name__)
 
@@ -104,6 +104,13 @@ def search_patients():
     search_type = request.args.get('search_type', 'general').lower()
     query_lower = query.lower().strip()
     
+    # Parse filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    nationality = request.args.get('nationality', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
     # 1. Base Query with Filtering (cap at 100 to keep sorting efficient)
     MAX_RESULTS = 100
     if search_type == 'pid':
@@ -148,6 +155,18 @@ def search_patients():
             (BioData.phone.ilike(search)) |
             (BioData.email.ilike(search))
         )
+
+    # Apply advanced filters to base_query
+    if gender:
+        base_query = base_query.filter(func.lower(BioData.gender) == func.lower(gender))
+    if department:
+        base_query = base_query.filter(func.lower(BioData.department) == func.lower(department))
+    if nationality:
+        base_query = base_query.filter(BioData.nationality.ilike(f"%{nationality}%"))
+    if min_age is not None:
+        base_query = base_query.filter(BioData.age >= min_age)
+    if max_age is not None:
+        base_query = base_query.filter(BioData.age <= max_age)
 
     all_matches = base_query.limit(MAX_RESULTS).all()
 
@@ -233,7 +252,27 @@ def get_all_patients():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 20, type=int)
     
-    pagination = BioData.query.order_by(BioData.created_at.desc()).paginate(
+    # Advanced filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    nationality = request.args.get('nationality', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
+    query = BioData.query
+    
+    if gender:
+        query = query.filter(func.lower(BioData.gender) == func.lower(gender))
+    if department:
+        query = query.filter(func.lower(BioData.department) == func.lower(department))
+    if nationality:
+        query = query.filter(BioData.nationality.ilike(f"%{nationality}%"))
+    if min_age is not None:
+        query = query.filter(BioData.age >= min_age)
+    if max_age is not None:
+        query = query.filter(BioData.age <= max_age)
+        
+    pagination = query.order_by(BioData.created_at.desc()).paginate(
         page=page, per_page=per_page, error_out=False
     )
     
@@ -312,6 +351,83 @@ def handle_patient(staff_id):
         
     if request.method == 'PUT':
         data = request.json
+        
+        # Check and handle Staff ID modification
+        new_staff_id = data.get('staff_id')
+        if new_staff_id:
+            new_staff_id = new_staff_id.strip()
+            if new_staff_id.lower() != clean_staff_id.lower():
+                # Verify conflict
+                conflict = BioData.query.filter(func.lower(BioData.staff_id) == func.lower(new_staff_id)).first()
+                if conflict:
+                    return jsonify({"error": f"Staff ID '{new_staff_id}' is already in use by another patient."}), 400
+                
+                old_id = patient.staff_id
+                
+                # List of models where staff_id needs to be updated
+                models_to_update = [
+                    ScreeningYearBioData, ConsultationData, FBCResult, KFTResult, 
+                    LipidResult, LFTResult, SpecialTestsResult, DirectorReview, 
+                    QueueEntry, ReportVerification
+                ]
+                
+                try:
+                    from models import StaffPatientSeen
+                    models_to_update.append(StaffPatientSeen)
+                except ImportError:
+                    pass
+                
+                # 1. Create a new patient record with the new staff ID to satisfy foreign key constraints during child updates
+                new_patient = BioData(
+                    staff_id=new_staff_id,
+                    first_name=patient.first_name,
+                    middle_name=patient.middle_name,
+                    last_name=patient.last_name,
+                    department=patient.department,
+                    gender=patient.gender,
+                    dob=patient.dob,
+                    age=patient.age,
+                    phone=patient.phone,
+                    email=patient.email,
+                    race=patient.race,
+                    nationality=patient.nationality,
+                    passport_image=patient.passport_image,
+                    created_at=patient.created_at
+                )
+                db.session.add(new_patient)
+                db.session.flush() # Ensure the new row is in the database session
+                
+                # 2. Update referencing tables
+                for model in models_to_update:
+                    db.session.query(model).filter(func.lower(model.staff_id) == func.lower(old_id)).update(
+                        {model.staff_id: new_staff_id}, 
+                        synchronize_session=False
+                    )
+                
+                # 3. Update in patient_users (patients bind)
+                try:
+                    from sqlalchemy import text
+                    patients_engine = db.engines.get('patients')
+                    if patients_engine:
+                        with patients_engine.connect() as conn:
+                            check_query = text("SELECT id FROM patient_users WHERE LOWER(username) = LOWER(:sid)")
+                            row = conn.execute(check_query, {"sid": old_id}).fetchone()
+                            if row:
+                                update_username_query = text("""
+                                    UPDATE patient_users 
+                                    SET username = :new_sid 
+                                    WHERE LOWER(username) = LOWER(:sid)
+                                """)
+                                conn.execute(update_username_query, {"new_sid": new_staff_id, "sid": old_id})
+                                conn.commit()
+                except Exception as ex:
+                    print(f"Failed to update patient_users username: {str(ex)}")
+
+                # 4. Delete the old patient record since it is no longer referenced
+                db.session.delete(patient)
+                patient = new_patient
+                clean_staff_id = new_staff_id
+        
         # Update fields
         first_name = data.get('first_name', patient.first_name)
         last_name = data.get('last_name', patient.last_name)
@@ -429,6 +545,12 @@ def get_screening_records(year):
     search_query = request.args.get('q', '').strip()
     search_type = request.args.get('search_type', 'general').lower()
     
+    # Advanced filters
+    gender = request.args.get('gender', '').strip()
+    department = request.args.get('department', '').strip()
+    min_age = request.args.get('min_age', type=int)
+    max_age = request.args.get('max_age', type=int)
+    
     query = ScreeningYearBioData.query.filter_by(screening_year=year)
     
     if search_query:
@@ -440,14 +562,74 @@ def get_screening_records(year):
                 (ScreeningYearBioData.first_name.ilike(f"%{search_query}%")) |
                 (ScreeningYearBioData.last_name.ilike(f"%{search_query}%"))
             )
+            
+    # Apply advanced filters
+    if gender:
+        query = query.filter(func.lower(ScreeningYearBioData.gender) == func.lower(gender))
+    if department:
+        query = query.filter(func.lower(ScreeningYearBioData.department) == func.lower(department))
+    if min_age is not None:
+        query = query.filter(ScreeningYearBioData.age >= min_age)
+    if max_age is not None:
+        query = query.filter(ScreeningYearBioData.age <= max_age)
     
-    # Sort by created_at desc to show newest first
-    query = query.order_by(ScreeningYearBioData.created_at.desc())
+    engine = db.engines[bind]
+    sort_by = request.args.get('sort_by', '').strip().lower()
+    sort_order = request.args.get('sort_order', 'desc').strip().lower()
     
-    pagination = query.paginate(page=page, per_page=per_page, error_out=False)
-    
+    if sort_by == 'completion':
+        all_records = query.all()
+        # Sort naturally first so identical percentages are stable
+        all_records.sort(key=lambda x: (len(x.patient_id or ''), x.patient_id or ''), reverse=True)
+        
+        # Get all staff_ids for batch calculation
+        staff_ids = [yp.staff_id for yp in all_records]
+        progress_map = calculate_batch_progress(staff_ids, year, engine)
+        
+        records_with_progress = []
+        for yp in all_records:
+            percentage, points, status, missing_fields = progress_map.get(
+                yp.staff_id, (0, 0, "Registration Data Preparing", [])
+            )
+            records_with_progress.append((yp, {
+                "percentage": percentage,
+                "status": status,
+                "missing_fields": missing_fields
+            }))
+        
+        reverse_sort = (sort_order == 'desc')
+        records_with_progress.sort(key=lambda x: x[1]["percentage"], reverse=reverse_sort)
+        
+        total = len(records_with_progress)
+        import math
+        pages = math.ceil(total / per_page)
+        start_idx = (page - 1) * per_page
+        end_idx = start_idx + per_page
+        paginated_items = records_with_progress[start_idx:end_idx]
+    else:
+        # Sort naturally by patient_id descending (newest/highest serial first)
+        query = query.order_by(db.func.length(ScreeningYearBioData.patient_id).desc(), ScreeningYearBioData.patient_id.desc())
+        pagination = query.paginate(page=page, per_page=per_page, error_out=False)
+        total = pagination.total
+        pages = pagination.pages
+        
+        # Get staff_ids for the current page only
+        staff_ids = [yp.staff_id for yp in pagination.items]
+        progress_map = calculate_batch_progress(staff_ids, year, engine)
+        
+        paginated_items = []
+        for yp in pagination.items:
+            percentage, points, status, missing_fields = progress_map.get(
+                yp.staff_id, (0, 0, "Registration Data Preparing", [])
+            )
+            paginated_items.append((yp, {
+                "percentage": percentage,
+                "status": status,
+                "missing_fields": missing_fields
+            }))
+
     results = []
-    for yp in pagination.items:
+    for yp, progress_data in paginated_items:
         # Aggregated Patient Data
         record = {
             "id": yp.id,
@@ -458,7 +640,8 @@ def get_screening_records(year):
             "department": yp.department,
             "gender": yp.gender,
             "age": yp.age,
-            "created_at": yp.created_at.isoformat() if yp.created_at else None
+            "created_at": yp.created_at.isoformat() if yp.created_at else None,
+            "progress": progress_data
         }
         
         # robust bio-data lookup inside current section only
@@ -543,9 +726,9 @@ def get_screening_records(year):
         
     return jsonify({
         "records": results,
-        "total": pagination.total,
-        "pages": pagination.pages,
-        "current_page": pagination.page
+        "total": total,
+        "pages": pages,
+        "current_page": page
     }), 200
 
 @view_data_bp.route('/records/screening/<int:id>', methods=['DELETE'])
@@ -622,13 +805,22 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     
     c = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if c:
+        hx_parts = []
+        if c.assessment_hx_pe and str(c.assessment_hx_pe).strip():
+            hx_parts.append(str(c.assessment_hx_pe).strip())
+        if c.other_remarks and str(c.other_remarks).strip():
+            hx_parts.append(str(c.other_remarks).strip())
+        if c.other_assessments and str(c.other_assessments).strip():
+            hx_parts.append(str(c.other_assessments).strip())
+        consult_hx_pe = "; ".join(hx_parts) if hx_parts else None
+
         results["consultation"] = {
             "bp": c.bp, "pulse": c.pulse, "spo2": c.spo2, "luts": c.luts,
             "chest": c.chest_status, "abdomen": c.abdomen, "abdomen_others": c.abdomen_others, "assessment": c.overall_assessment,
             "fbs": c.fbs, "rbs": c.rbs, "sugar_remark": c.sugar_remark,
             "ua_result": c.ua_result, "ua_remark": c.ua_remark, "ua_remark_others": c.ua_remark_others,
             "psa": c.psa, "psa_remark": c.psa_remark,
-            "hx_pe": c.assessment_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
+            "hx_pe": consult_hx_pe, "lab_remark": c.overall_lab_remark, "breast": c.breast_exam, "breast_others": c.breast_others,
             "chronic_cough": c.chronic_cough, "chronic_chest_pain": c.chronic_chest_pain,
             "chest_infection": c.chest_infection, "heart_dx": c.heart_dx, "palor": c.palor, 
             "jaundice": c.jaundice, "murmur": c.murmur, "dm": c.dm_status, "htn": c.htn_status,
@@ -640,7 +832,8 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     if f:
         results["fbc"] = {
             "pcv": f.pcv, "wbc": f.wbc, "plt": f.plt, "hgb": f.hgb, "rbc": f.rbc, "remark": f.fbc_remark,
-            "lymp_percent": f.lymp_percent, "gra_percent": f.gra_percent, "mid_percent": f.mid_percent
+            "lymp_percent": f.lymp_percent, "lymp_abs": f.lymp_abs, "gra_percent": f.gra_percent,
+            "gra_abs": f.gra_abs, "mid_percent": f.mid_percent, "mid_abs": f.mid_abs
         }
     
     k = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year).first()
@@ -673,9 +866,18 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "audiometry": s.audiometry_result, "audiometry_remark": s.audiometry_remark,
             "weight": s.weight, "height": s.height
         }
-
+ 
     d = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year).first()
     if d:
+        hx_parts_dir = []
+        if d.assessment_hx_pe and str(d.assessment_hx_pe).strip():
+            hx_parts_dir.append(str(d.assessment_hx_pe).strip())
+        if d.other_remarks and str(d.other_remarks).strip():
+            hx_parts_dir.append(str(d.other_remarks).strip())
+        if d.other_assessments and str(d.other_assessments).strip():
+            hx_parts_dir.append(str(d.other_assessments).strip())
+        director_hx_pe = "; ".join(hx_parts_dir) if hx_parts_dir else None
+
         results["director"] = {
             "assessment": d.overall_assessment,
             "comment_one": d.comment_one,
@@ -683,7 +885,7 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "comment_three": d.comment_three,
             "comment_four": d.comment_four,
             "lab_remark": d.overall_lab_remark,
-            "hx_pe": d.assessment_hx_pe,
+            "hx_pe": director_hx_pe,
             "other_remarks": d.other_remarks,
             "other_assessments": d.other_assessments,
             "dm_status": d.dm_status,
@@ -736,6 +938,10 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
     branding = AppBranding.query.first()
     branding_data = branding.to_dict() if branding else {}
     
+    # Custom Report Parameters
+    params = ReportParameter.query.all()
+    params_dict = {p.id: p.to_dict() for p in params}
+    
     return {
         "bio": bio_info,
         "results": results,
@@ -746,16 +952,29 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
             "report_date_time": report_date_time,
             "gen_date_time": datetime.now().isoformat()
         },
-        "branding": branding_data
+        "branding": branding_data,
+        "report_parameters": params_dict
     }
 
 @view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
 @jwt_required()
 def bulk_download_reports():
+    from flask_jwt_extended import get_jwt
+    claims = get_jwt()
+    if claims.get('portal') != 'staff':
+        return jsonify({"error": "Staff access required"}), 403
+
     from models import SystemConfig
-    download_config = SystemConfig.query.get('bulk_report_download_enabled')
-    if download_config and download_config.value.lower() != 'true':
-        return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
+    only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
+    
+    if only_with_email:
+        email_config = SystemConfig.query.get('bulk_report_email_enabled')
+        if email_config and email_config.value.lower() != 'true':
+            return jsonify({"error": "Bulk report emailing is currently disabled by the system administrator."}), 403
+    else:
+        download_config = SystemConfig.query.get('bulk_report_download_enabled')
+        if download_config and download_config.value.lower() != 'true':
+            return jsonify({"error": "Bulk report downloading is currently disabled by the system administrator."}), 403
 
     user_id_str = get_jwt_identity()
     if not user_id_str:
@@ -787,6 +1006,9 @@ def bulk_download_reports():
     year_param = request.args.get('year')
     year = int(year_param) if year_param else datetime.now().year
 
+    exclude_email = request.args.get('exclude_email', 'true').lower() == 'true'
+    only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
+
     # Parse range (e.g. 1-100)
     try:
         if '-' in range_str:
@@ -817,10 +1039,18 @@ def bulk_download_reports():
             continue
 
         if start_id <= pid_int <= end_id:
-            # Check condition 2: Does not have email address
             bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
             email = bio.email if bio else None
-            if not email or not email.strip():
+            
+            email_check_passed = False
+            if only_with_email:
+                if email and email.strip():
+                    email_check_passed = True
+            else:
+                if not exclude_email or not email or not email.strip():
+                    email_check_passed = True
+
+            if email_check_passed:
                 # Check condition 1: Report is 100% complete
                 percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
                 if percentage == 100:
@@ -828,6 +1058,20 @@ def bulk_download_reports():
 
     if not matching_records:
         return jsonify({"error": "No completed reports matching the conditions found in the specified range."}), 404
+
+    list_only = request.args.get('list_only', 'false').lower() == 'true'
+    if list_only:
+        return jsonify({
+            "patients": [
+                {
+                    "staff_id": yr.staff_id,
+                    "patient_id": yr.patient_id,
+                    "first_name": bio.first_name if bio else yr.first_name,
+                    "last_name": bio.last_name if bio else yr.last_name,
+                    "email": bio.email if bio else ""
+                } for yr, bio in matching_records
+            ]
+        }), 200
 
     # Create ZIP file in memory
     zip_buffer = io.BytesIO()
@@ -851,7 +1095,7 @@ def bulk_download_reports():
             user_id=user_id,
             action='Bulk Download Reports',
             resource=f"Range:{range_str}:Year:{year}",
-            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, no email) in range {range_str} for year {year}.",
+            details=f"Bulk downloaded {len(matching_records)} reports (100% progress, exclude_email={exclude_email}) in range {range_str} for year {year}.",
             ip_address=get_client_ip()
         )
         db.session.add(audit)
@@ -874,23 +1118,26 @@ def get_patient_report(staff_id, year):
     if not user_id_str:
         return jsonify({"error": "Authentication required"}), 401
 
+    from flask_jwt_extended import get_jwt
     from models import StaffUser, PatientPortalUser
     
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
     is_authorized = False
+    requester_staff = None
     
     try:
         user_id = int(user_id_str)
     except ValueError:
         user_id = -1
         
-    # 1. Check if Staff with permission
-    requester_staff = StaffUser.query.get(user_id)
-    if requester_staff:
-        if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
-            is_authorized = True
-            
-    # 2. Check if Patient requesting self
-    if not is_authorized:
+    # Branch authorization based on portal claim to prevent cross-portal ID collisions
+    if portal == 'staff':
+        requester_staff = StaffUser.query.get(user_id)
+        if requester_staff:
+            if requester_staff.username == 'admin' or requester_staff.has_permission('view_records'):
+                is_authorized = True
+    elif portal == 'patient':
         requester_patient = PatientPortalUser.query.get(user_id)
         if requester_patient and requester_patient.is_verified:
             if requester_patient.username.lower() == staff_id.lower():
@@ -920,6 +1167,27 @@ def get_patient_report(staff_id, year):
         return jsonify({"error": "Clinical data not found for the selected year"}), 404
     
     report_data = _get_report_data_dict(staff_id, year, bind, patient, yearly)
+    
+    # Audit log entry for viewing report
+    try:
+        from models import AuditLog
+        requester_label = "Patient" if not requester_staff else f"Staff ({requester_staff.username})"
+        action_name = "View Patient Report"
+        AuditLog.log_action(
+            action=action_name,
+            resource=f"ScreeningYearBioData:{yearly.id}",
+            details={
+                "staff_id": staff_id,
+                "screening_year": year,
+                "section": bind.upper(),
+                "viewed_by": requester_label,
+                "requester_id": user_id
+            },
+            commit=True
+        )
+    except Exception as audit_err:
+        current_app.logger.error(f"Audit log failed for report view: {audit_err}")
+
     return jsonify(report_data), 200
 
 @view_data_bp.route('/public/verify/<token>', methods=['GET'])

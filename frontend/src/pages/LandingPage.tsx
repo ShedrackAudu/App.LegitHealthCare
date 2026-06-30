@@ -37,9 +37,10 @@ import {
 import axios from 'axios';
 import { motion, useScroll, useTransform, AnimatePresence } from 'framer-motion';
 import { SafeImage } from '@/components/common/SafeImage';
+import { useAppContext } from '@/context/AppContext';
 
 const LandingPage = () => {
-  const [branding, setBranding] = useState<any>(null);
+  const { branding } = useAppContext();
   const [menuOpen, setMenuOpen] = useState(false);
   const [showScrollTop, setShowScrollTop] = useState(false);
   const { scrollY } = useScroll();
@@ -57,18 +58,6 @@ const LandingPage = () => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
-
-  useEffect(() => {
-    const fetchBranding = async () => {
-      try {
-        const res = await axios.get('/api/branding');
-        setBranding(res.data);
-      } catch (err) {
-        console.error("Failed to fetch branding", err);
-      }
-    };
-    fetchBranding();
-  }, []);
 
   const getImageUrl = (path: string, fallback: string) => {
     if (!path) return fallback;
@@ -126,11 +115,6 @@ const LandingPage = () => {
             <div className="hidden md:flex items-center space-x-8 text-sm font-semibold text-muted-foreground">
               <a href="#services" className="hover:text-primary transition-colors">Services</a>
               <a href="#about" className="hover:text-primary transition-colors">About</a>
-              <Link to="/login">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 font-bold px-6 rounded-xl border-2">
-                  Patient Portal
-                </Button>
-              </Link>
               <div className="flex items-center space-x-4 pl-4 border-l">
                 <ModeToggle />
                 <Link to="/login">
@@ -161,9 +145,6 @@ const LandingPage = () => {
             <div className="flex flex-col space-y-4 text-lg font-bold">
               <a href="#services" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">Services</a>
               <a href="#about" onClick={() => setMenuOpen(false)} className="hover:text-primary transition-colors">About</a>
-              <Link to="/login" onClick={() => setMenuOpen(false)} className="text-primary">
-                Patient Portal
-              </Link>
             </div>
             <div className="pt-6 border-t border-border flex flex-col gap-4">
               <Link to="/login" onClick={() => setMenuOpen(false)}>
@@ -186,7 +167,7 @@ const LandingPage = () => {
             animate={{ scale: 1, opacity: 0.07 }}
             transition={{ duration: 1.5 }}
             className="absolute inset-0 bg-cover bg-center"
-            style={{ backgroundImage: `url(${getImageUrl(branding?.auth_branding_image, "/images/medical_equipment_1.png")})` }}
+            style={{ backgroundImage: `url(${getImageUrl(branding?.auth_branding_image, "/images/medical_equipment_1.webp")})` }}
           />
           <div className="absolute inset-0 bg-gradient-to-b from-background via-background/90 to-background" />
           <div className="absolute -top-1/4 -right-1/4 w-1/2 h-1/2 bg-primary/20 rounded-full blur-[160px] animate-pulse" />
@@ -295,7 +276,7 @@ const LandingPage = () => {
                     className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
                   >
                      <SafeImage 
-                      src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.png")} 
+                      src={getImageUrl(branding?.hero_image_1, "/images/medical_equipment_1.webp")} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
                       alt="Diagnostics"
                     />
@@ -314,7 +295,7 @@ const LandingPage = () => {
                     className="h-48 sm:h-56 rounded-xl overflow-hidden border border-white/20 shadow-xl relative group/card cursor-pointer"
                   >
                      <SafeImage 
-                      src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.png")} 
+                      src={getImageUrl(branding?.hero_image_2, "/images/medical_equipment_2.webp")} 
                       className="w-full h-full object-cover transition-transform duration-700 group-hover/card:scale-110" 
                       alt="Bio-Analytics"
                     />
@@ -333,7 +314,7 @@ const LandingPage = () => {
                     className="sm:col-span-2 h-64 sm:h-80 rounded-xl overflow-hidden border border-white/20 shadow-2xl relative group/card cursor-pointer"
                   >
                      <SafeImage 
-                      src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.png")} 
+                      src={getImageUrl(branding?.hero_image_team, "/images/african_american_doctors.webp")} 
                       className="w-full h-full object-cover transition-transform duration-1000 group-hover/card:scale-105" 
                       alt="Medical Team"
                     />

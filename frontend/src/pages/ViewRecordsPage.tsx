@@ -6,12 +6,14 @@ import {
   Delete02Icon, 
   Loading03Icon,
   ArrowRight01Icon,
-  ArrowLeft01Icon
+  ArrowLeft01Icon,
+  FilterIcon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Badge } from "@/components/ui/badge";
 import { 
     Table,
     TableBody,
@@ -22,12 +24,25 @@ import {
 } from "@/components/ui/table";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { useAppContext } from '@/context/AppContext';
+import { useNavigate } from 'react-router-dom';
+import { usePermissions } from '@/hooks/usePermissions';
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { Pagination } from '@/components/ui/pagination';
+import { Skeleton } from '@/components/ui/skeleton';
+import { 
+    Dialog, 
+    DialogContent, 
+    DialogDescription, 
+    DialogHeader, 
+    DialogTitle 
+} from '@/components/ui/dialog';
 
 const ViewRecordsPage: React.FC = () => {
     const { user, activeSection, activeYear } = useAppContext();
+    const navigate = useNavigate();
+    const { hasPermission } = usePermissions();
     const [recordsData, setRecordsData] = useState<any>({
         records: [],
         total: 0,
@@ -37,14 +52,66 @@ const ViewRecordsPage: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [currentPage, setCurrentPage] = useState(1);
+    const [perPage, setPerPage] = useState(25);
     const [deleteModal, setDeleteModal] = useState({ open: false, id: 0 });
     const [deleting, setDeleting] = useState(false);
+    const [pendingModal, setPendingModal] = useState<{
+        open: boolean;
+        patientName: string;
+        staffId: string;
+        missing: Array<{ label: string; category: string }>;
+    }>({ open: false, patientName: '', staffId: '', missing: [] });
 
-    const fetchRecords = async (page = 1, query = '', searchType?: 'pid' | 'general') => {
+    // Advanced Filters State
+    const [genderFilter, setGenderFilter] = useState('');
+    const [deptFilter, setDeptFilter] = useState('');
+    const [minAge, setMinAge] = useState('');
+    const [maxAge, setMaxAge] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    const [departments, setDepartments] = useState<string[]>([]);
+
+    useEffect(() => {
+        const fetchDepartments = async () => {
+            try {
+                const response = await axios.get('/api/config/departments');
+                setDepartments(response.data.map((d: any) => d.name));
+            } catch (err) {
+                console.error("Failed to fetch departments", err);
+            }
+        };
+        fetchDepartments();
+    }, []);
+
+    // Sorting State
+    const [sortBy, setSortBy] = useState('');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+
+    const activeFiltersCount = [
+        genderFilter,
+        deptFilter,
+        minAge,
+        maxAge
+    ].filter(Boolean).length;
+
+    const fetchRecords = async (
+        page = 1, 
+        query = '', 
+        searchType?: 'pid' | 'general', 
+        pageSize = perPage, 
+        filters = { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge },
+        sort = sortBy,
+        order = sortOrder
+    ) => {
         setLoading(true);
         try {
-            const url = `/api/records/screening/${activeYear}?page=${page}&per_page=25&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
+            let url = `/api/records/screening/${activeYear}?page=${page}&per_page=${pageSize}&q=${query}${searchType ? `&search_type=${searchType}` : ''}`;
             
+            if (filters.gender) url += `&gender=${filters.gender}`;
+            if (filters.dept) url += `&department=${filters.dept}`;
+            if (filters.minA) url += `&min_age=${filters.minA}`;
+            if (filters.maxA) url += `&max_age=${filters.maxA}`;
+            if (sort) url += `&sort_by=${sort}&sort_order=${order}`;
+
             const response = await axios.get(url, {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -59,16 +126,28 @@ const ViewRecordsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchRecords(1, searchTerm);
-    }, [activeSection, activeYear, user]);
+        fetchRecords(1, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge }, sortBy, sortOrder);
+    }, [activeSection, activeYear, user, genderFilter, deptFilter, minAge, maxAge, sortBy, sortOrder]);
+
+    const toggleSortByCompletion = () => {
+        if (sortBy === 'completion') {
+            setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc');
+        } else {
+            setSortBy('completion');
+            setSortOrder('desc');
+        }
+    };
 
     // REMOVED deprecated ad-hoc search logic
 
-
-
-
     const handlePageChange = (newPage: number) => {
-        fetchRecords(newPage, searchTerm);
+        fetchRecords(newPage, searchTerm, undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+    };
+
+    const handlePerPageChange = (newPerPage: number) => {
+        setPerPage(newPerPage);
+        setCurrentPage(1);
+        fetchRecords(1, searchTerm, undefined, newPerPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
     };
 
     const handleDelete = async () => {
@@ -93,6 +172,15 @@ const ViewRecordsPage: React.FC = () => {
         }
     };
 
+    const clearFilters = () => {
+        setGenderFilter('');
+        setDeptFilter('');
+        setMinAge('');
+        setMaxAge('');
+        setSearchTerm('');
+        fetchRecords(1, '', undefined, perPage, { gender: '', dept: '', minA: '', maxA: '' });
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500 pb-10">
@@ -108,33 +196,146 @@ const ViewRecordsPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <PatientSearch
-                        activeSection={activeSection}
-                        onSearch={(query, searchType) => {
-                            setSearchTerm(query);
-                            fetchRecords(1, query, searchType);
-                        }}
-                        onSelect={(p) => {
-                            setSearchTerm(p.staff_id);
-                            fetchRecords(1, p.staff_id, 'general');
-                        }}
-                        searching={loading}
-                        themeColor="primary"
-                        placeholder="Search Staff ID or Name..."
-                        year={activeYear}
-                        strict={true}
-                        showPidToggle={true}
-                    />
+                    <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
+                        <div className="flex-1 min-w-[280px]">
+                            <PatientSearch
+                                activeSection={activeSection}
+                                onSearch={(query, searchType) => {
+                                    setSearchTerm(query);
+                                    fetchRecords(1, query, searchType, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                onSelect={(p) => {
+                                    setSearchTerm(p.staff_id);
+                                    fetchRecords(1, p.staff_id, 'general', perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                searching={loading}
+                                themeColor="primary"
+                                placeholder="Search Staff ID or Name..."
+                                year={activeYear}
+                                strict={true}
+                                showPidToggle={true}
+                            />
+                        </div>
+                        <Button
+                            variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                        >
+                            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                            <span>Filters</span>
+                            {activeFiltersCount > 0 && (
+                                <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                    {activeFiltersCount}
+                                </Badge>
+                            )}
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Collapsible Filters Panel */}
+                {showFilters && (
+                    <div className="bg-card/45 backdrop-blur-md p-6 rounded-2xl border border-slate-500/10 shadow-lg animate-in slide-in-from-top-4 duration-300 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
+                                <select 
+                                    value={genderFilter} 
+                                    onChange={(e) => setGenderFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Genders</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
+                                <select 
+                                    value={deptFilter} 
+                                    onChange={(e) => setDeptFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Departments</option>
+                                    {departments.map((dept) => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Min Age" 
+                                    value={minAge} 
+                                    onChange={(e) => setMinAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Max Age" 
+                                    value={maxAge} 
+                                    onChange={(e) => setMaxAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t pt-4 border-dashed border-slate-500/15">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={clearFilters}
+                                className="h-9 px-4 text-xs font-bold rounded-xl"
+                            >
+                                Reset All
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Filter Badges */}
+                {activeFiltersCount > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center bg-muted/20 p-3 rounded-xl border border-dashed border-slate-500/10">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Active Filters:</span>
+                        {genderFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Gender: {genderFilter}</span>
+                                <button onClick={() => setGenderFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {deptFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Dept: {deptFilter}</span>
+                                <button onClick={() => setDeptFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {minAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Min Age: {minAge}</span>
+                                <button onClick={() => setMinAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {maxAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Max Age: {maxAge}</span>
+                                <button onClick={() => setMaxAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors underline ml-auto">
+                            Clear all
+                        </button>
+                    </div>
+                )}
 
                 <Card className="border-2 shadow-xl bg-card overflow-hidden">
                     <CardContent className="p-0">
-                        {loading && recordsData.records.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center p-20 gap-4">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 text-primary animate-spin" />
-                                <p className="font-bold text-muted-foreground animate-pulse">Gathering diagnostic data...</p>
-                            </div>
-                        ) : recordsData.records.length === 0 ? (
+                        {recordsData.records.length === 0 && !loading ? (
                             <div className="flex flex-col items-center justify-center min-h-[24rem] p-8 text-center space-y-4">
                                 <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
                                     <HugeiconsIcon icon={Search01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
@@ -159,14 +360,14 @@ const ViewRecordsPage: React.FC = () => {
                                         <Table>
                                             <TableHeader className="bg-muted/80 backdrop-blur-sm sticky top-0 z-10">
                                                 <TableRow className="hover:bg-transparent border-b-2 font-black uppercase text-[12px]">
-                                                    <TableHead className="min-w-[1400px] bg-muted/90 border-r text-center" colSpan={14}>Patient Profile</TableHead>
-                                                    <TableHead className="min-w-[2500px] bg-primary/10 text-primary border-r text-center" colSpan={31}>Consultation & Vitals</TableHead>
-                                                    <TableHead className="min-w-[1500px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-blue-50 text-blue-600 border-r text-center" colSpan={8}>Kidney Function (KFT)</TableHead>
-                                                    <TableHead className="min-w-[600px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-primary/5 text-primary border-r text-center" colSpan={6}>Liver Function (LFT)</TableHead>
-                                                    <TableHead className="min-w-[800px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
-                                                    <TableHead className="min-w-[1200px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={9}>Director's Review</TableHead>
+                                                    <TableHead className="min-w-[1670px] bg-muted/90 border-r text-center" colSpan={15}>Patient Profile</TableHead>
+                                                    <TableHead className="min-w-[3580px] bg-primary/10 text-primary border-r text-center" colSpan={33}>Consultation & Vitals</TableHead>
+                                                    <TableHead className="min-w-[1270px] bg-rose-50 text-rose-600 border-r text-center" colSpan={17}>Hematology (FBC)</TableHead>
+                                                    <TableHead className="min-w-[530px] bg-blue-50 text-blue-600 border-r text-center" colSpan={6}>Kidney Function (KFT)</TableHead>
+                                                    <TableHead className="min-w-[550px] bg-amber-50 text-amber-600 border-r text-center" colSpan={5}>Lipid Profile</TableHead>
+                                                    <TableHead className="min-w-[750px] bg-primary/5 text-primary border-r text-center" colSpan={8}>Liver Function (LFT)</TableHead>
+                                                    <TableHead className="min-w-[970px] bg-red-50 text-red-600 border-r text-center" colSpan={8}>Special Tests</TableHead>
+                                                    <TableHead className="min-w-[1400px] bg-indigo-50 text-indigo-600 border-r text-center" colSpan={9}>Director's Review</TableHead>
                                                     <TableHead className="min-w-[100px] text-right bg-muted/90">Actions</TableHead>
                                                 </TableRow>
                                                 <TableRow className="hover:bg-transparent border-b text-[11px] font-bold">
@@ -185,6 +386,19 @@ const ViewRecordsPage: React.FC = () => {
                                                     <TableHead className="min-w-[120px]">Department</TableHead>
                                                     <TableHead className="min-w-[120px]">Race / Continent</TableHead>
                                                     <TableHead className="min-w-[120px] border-r">Reg. Date</TableHead>
+                                                    <TableHead 
+                                                        className="min-w-[140px] border-r text-center select-none cursor-pointer hover:bg-muted/80 transition-colors" 
+                                                        onClick={toggleSortByCompletion}
+                                                    >
+                                                        <div className="flex items-center justify-center gap-1.5 font-black">
+                                                            <span>Completion</span>
+                                                            {sortBy === 'completion' ? (
+                                                                <span className="text-primary font-black text-xs">{sortOrder === 'desc' ? '↓' : '↑'}</span>
+                                                            ) : (
+                                                                <span className="text-muted-foreground/30 font-black text-xs">↕</span>
+                                                            )}
+                                                        </div>
+                                                    </TableHead>
                                                     
                                                     {/* Consultation */}
                                                     <TableHead className="min-w-[100px]">Blood Pressure</TableHead>
@@ -290,8 +504,22 @@ const ViewRecordsPage: React.FC = () => {
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
-                                                {recordsData.records.map((r: any) => (
-                                                    <TableRow key={r.id} className="group hover:bg-muted/30 transition-colors border-b text-xs">
+                                                {loading && recordsData.records.length === 0 ? (
+                                                    Array.from({ length: 5 }).map((_, rowIndex) => (
+                                                        <TableRow key={rowIndex} className="animate-pulse">
+                                                            {Array.from({ length: 102 }).map((_, colIndex) => (
+                                                                <TableCell 
+                                                                    key={colIndex} 
+                                                                    className={`py-3 ${colIndex === 14 || colIndex === 47 || colIndex === 64 || colIndex === 70 || colIndex === 75 || colIndex === 83 || colIndex === 91 || colIndex === 100 ? "border-r" : ""} ${colIndex === 101 ? "text-right" : ""}`}
+                                                                >
+                                                                    <Skeleton className={`h-4 bg-muted/40 rounded animate-pulse ${colIndex === 0 || colIndex === 1 ? "w-16" : colIndex === 2 || colIndex === 4 ? "w-24" : "w-12"}`} />
+                                                                </TableCell>
+                                                            ))}
+                                                        </TableRow>
+                                                    ))
+                                                ) : (
+                                                    recordsData.records.map((r: any) => (
+                                                        <TableRow key={r.id} className="group hover:bg-muted/30 transition-colors border-b text-xs">
                                                         <TableCell className="uppercase font-bold text-[11px]">{r.patient_id || '-'}</TableCell>
                                                         <TableCell><code className="font-black text-primary text-[11px]">{r.staff_id}</code></TableCell>
                                                         <TableCell className="font-bold text-[11px]">{r.first_name}</TableCell>
@@ -306,6 +534,66 @@ const ViewRecordsPage: React.FC = () => {
                                                         <TableCell className="text-[11px]">{r.department}</TableCell>
                                                         <TableCell className="text-[11px] uppercase">{r.race || '-'}</TableCell>
                                                         <TableCell className="border-r text-[11px] font-mono">{r.created_at ? new Date(r.created_at).toLocaleDateString() : '-'}</TableCell>
+                                                        <TableCell className="border-r text-center font-bold bg-muted/5">
+                                                            <div className="flex flex-col items-center gap-1.5 py-1">
+                                                                <div className="flex items-center gap-2">
+                                                                    {/* Compact Circular Progress */}
+                                                                    <div className="relative h-7 w-7 shrink-0">
+                                                                        <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+                                                                            <circle 
+                                                                                className="text-muted/10 dark:text-muted/20" 
+                                                                                strokeWidth="14" 
+                                                                                stroke="currentColor" 
+                                                                                fill="transparent" 
+                                                                                r="38" 
+                                                                                cx="50" 
+                                                                                cy="50" 
+                                                                            />
+                                                                            <circle 
+                                                                                strokeWidth="14" 
+                                                                                strokeDasharray={238.76}
+                                                                                strokeDashoffset={238.76 - (238.76 * (r.progress?.percentage || 0)) / 100}
+                                                                                strokeLinecap="round" 
+                                                                                stroke={
+                                                                                    (r.progress?.percentage || 0) === 100 ? '#10b981' : 
+                                                                                    (r.progress?.percentage || 0) > 50 ? '#f59e0b' : 
+                                                                                    '#ef4444'
+                                                                                } 
+                                                                                fill="transparent" 
+                                                                                r="38" 
+                                                                                cx="50" 
+                                                                                cy="50" 
+                                                                            />
+                                                                        </svg>
+                                                                    </div>
+                                                                    {/* Percentage Badge */}
+                                                                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full font-black ${
+                                                                        (r.progress?.percentage || 0) === 100 
+                                                                        ? 'bg-emerald-500/10 text-emerald-500' 
+                                                                        : (r.progress?.percentage || 0) > 50 
+                                                                        ? 'bg-amber-500/10 text-amber-500' 
+                                                                        : 'bg-rose-500/10 text-rose-500'
+                                                                    }`}>
+                                                                        {r.progress?.percentage || 0}%
+                                                                    </span>
+                                                                </div>
+                                                                {(r.progress?.percentage || 0) < 100 ? (
+                                                                    <button 
+                                                                        onClick={() => setPendingModal({ open: true, patientName: `${r.first_name} ${r.last_name}`, staffId: r.staff_id, missing: r.progress?.missing_fields || [] })}
+                                                                        className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
+                                                                    >
+                                                                        View Pending
+                                                                    </button>
+                                                                ) : (
+                                                                    <button 
+                                                                        onClick={() => navigate(`/patient-report?staff_id=${r.staff_id}`)}
+                                                                        className="text-[9px] text-primary hover:underline font-black mt-0.5 cursor-pointer whitespace-nowrap"
+                                                                    >
+                                                                        View Report
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </TableCell>
                                                         
                                                         {/* Consultation */}
                                                         <TableCell className="font-bold bg-primary/5 text-[11px]">{r.consultation?.bp || '-'}</TableCell>
@@ -422,7 +710,7 @@ const ViewRecordsPage: React.FC = () => {
                                                             </div>
                                                         </TableCell>
                                                     </TableRow>
-                                                ))}
+                                                )))}
                                             </TableBody>
                                         </Table>
                                     </div>
@@ -430,37 +718,15 @@ const ViewRecordsPage: React.FC = () => {
                                 </ScrollArea>
 
                                 {/* Pagination Controls */}
-                                <div className="p-4 bg-muted/20 border-t flex items-center justify-between no-print">
-                                    <div className="flex items-center gap-4">
-                                        <p className="text-sm font-bold text-muted-foreground">
-                                            Total: <span className="text-foreground">{recordsData.total}</span>
-                                        </p>
-                                        <div className="h-4 w-px bg-border" />
-                                        <p className="text-sm font-bold text-muted-foreground">
-                                            Page <span className="text-foreground">{recordsData.current_page}</span> of <span className="text-foreground">{recordsData.pages}</span>
-                                        </p>
-                                    </div>
-                                    
-                                    <div className="flex items-center gap-2">
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl border-2 font-bold px-4"
-                                            disabled={currentPage === 1 || loading}
-                                            onClick={() => handlePageChange(currentPage - 1)}
-                                        >
-                                            <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
-                                        </Button>
-                                        <Button 
-                                            variant="outline" 
-                                            size="sm" 
-                                            className="rounded-xl border-2 font-bold px-4"
-                                            disabled={currentPage === recordsData.pages || loading}
-                                            onClick={() => handlePageChange(currentPage + 1)}
-                                        >
-                                            Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
-                                        </Button>
-                                    </div>
+                                <div className="bg-muted/20 border-t px-8 py-2 no-print">
+                                    <Pagination
+                                        currentPage={currentPage}
+                                        totalItems={recordsData.total}
+                                        perPage={perPage}
+                                        onPageChange={handlePageChange}
+                                        onPerPageChange={handlePerPageChange}
+                                        loading={loading}
+                                    />
                                 </div>
                             </div>
                         )}
@@ -478,6 +744,96 @@ const ViewRecordsPage: React.FC = () => {
                 variant="danger"
                 loading={deleting}
             />
+
+            <Dialog open={pendingModal.open} onOpenChange={(open) => setPendingModal(prev => ({ ...prev, open }))}>
+                <DialogContent className="max-w-md">
+                    <DialogHeader>
+                        <DialogTitle className="text-xl font-black tracking-tight">Pending Parameters</DialogTitle>
+                        <DialogDescription className="text-xs font-bold text-muted-foreground">
+                            Screening report checklist for <span className="text-foreground">{pendingModal.patientName}</span>
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 max-h-[350px] overflow-auto py-2">
+                        {pendingModal.missing.length === 0 ? (
+                            <p className="text-xs text-muted-foreground font-bold text-center py-4">No pending parameters found.</p>
+                        ) : (
+                            Object.entries(
+                                pendingModal.missing.reduce((acc: Record<string, string[]>, curr: { label: string; category: string }) => {
+                                    if (!acc[curr.category]) acc[curr.category] = [];
+                                    acc[curr.category].push(curr.label);
+                                    return acc;
+                                }, {})
+                            ).map(([category, labels]) => {
+                                const getNavigationTarget = (catName: string, labelName: string) => {
+                                    const cat = catName.toLowerCase();
+                                    const lbl = labelName.toLowerCase();
+                                    if (['sugar', 'ua', 'psa', 'vitals', 'clinical'].includes(cat)) {
+                                        return { route: '/consultation', permission: 'consultation' };
+                                    }
+                                    if (cat === 'fbc') {
+                                        return { route: '/tests/fbc', permission: 'lab_fbc' };
+                                    }
+                                    if (cat === 'kft') {
+                                        return { route: '/tests/kft', permission: 'lab_kft' };
+                                    }
+                                    if (cat === 'lipid') {
+                                        return { route: '/tests/lipid', permission: 'lab_lipid' };
+                                    }
+                                    if (cat === 'lft') {
+                                        return { route: '/tests/lft', permission: 'lab_lft' };
+                                    }
+                                    if (cat === 'special') {
+                                        if (lbl.includes('ecg')) {
+                                            return { route: '/tests/ecg', permission: 'lab_ecg' };
+                                        }
+                                        if (lbl.includes('spiro')) {
+                                            return { route: '/tests/spirometry', permission: 'lab_spirometry' };
+                                        }
+                                        if (lbl.includes('audio')) {
+                                            return { route: '/tests/audiometry', permission: 'lab_audiometry' };
+                                        }
+                                    }
+                                    if (cat === 'review') {
+                                        return { route: '/director', permission: 'director_review' };
+                                    }
+                                    return null;
+                                };
+
+                                return (
+                                    <div key={category} className="space-y-2 bg-muted/40 p-3 rounded-xl border border-dashed">
+                                        <h3 className="text-[10px] font-black uppercase tracking-wider text-primary">{category}</h3>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {labels.map((label: string) => {
+                                                const target = getNavigationTarget(category, label);
+                                                const canAccess = target ? hasPermission(target.permission) : false;
+                                                if (canAccess && target) {
+                                                    return (
+                                                        <Badge 
+                                                            key={label} 
+                                                            variant="outline" 
+                                                            onClick={() => navigate(`${target.route}?staff_id=${pendingModal.staffId}`)}
+                                                            className="bg-rose-500/10 text-[11px] font-black text-rose-600 border-rose-500/20 py-0.5 px-2 rounded-md cursor-pointer hover:bg-rose-500/20 hover:text-rose-700 transition-colors flex items-center gap-1"
+                                                            title="Click to proceed and fill parameter"
+                                                        >
+                                                            <span>{label}</span>
+                                                            <HugeiconsIcon icon={ArrowRight01Icon} className="w-3 h-3 shrink-0" />
+                                                        </Badge>
+                                                    );
+                                                }
+                                                return (
+                                                    <Badge key={label} variant="outline" className="bg-background text-[11px] font-black text-rose-500 border-rose-500/20 py-0.5 px-2 rounded-md">
+                                                        {label}
+                                                    </Badge>
+                                                );
+                                            })}
+                                        </div>
+                                    </div>
+                                );
+                            })
+                        )}
+                    </div>
+                </DialogContent>
+            </Dialog>
         </MainLayout>
     );
 };

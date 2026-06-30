@@ -22,6 +22,7 @@ import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
@@ -187,9 +188,41 @@ const PatientAppointmentsPage = () => {
         </div>
 
         {loadingProfile ? (
-            <div className="flex flex-col items-center justify-center py-40">
-                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-amber-500 mb-4" />
-                <p className="text-sm font-black uppercase tracking-widest text-muted-foreground animate-pulse">Synchronizing Patient ID...</p>
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
+                {/* Left Side: Profile Summary Skeleton */}
+                <div className="lg:col-span-1 space-y-4">
+                    <Card className="border border-border/80 bg-card/45 p-5 space-y-4">
+                        <div className="flex items-center gap-4">
+                            <Skeleton className="h-10 w-10 rounded-xl bg-muted/40 shrink-0" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                <Skeleton className="h-3 w-20 bg-muted/40 rounded" />
+                            </div>
+                        </div>
+                        <div className="space-y-3 pt-4 border-t">
+                            <Skeleton className="h-3 w-full bg-muted/40 rounded" />
+                            <Skeleton className="h-3 w-full bg-muted/40 rounded" />
+                            <Skeleton className="h-3 w-full bg-muted/40 rounded" />
+                        </div>
+                    </Card>
+                </div>
+                {/* Right Side: Appointment Section Skeleton */}
+                <div className="lg:col-span-2 space-y-6">
+                    <Card className="border border-border/80 bg-card/45 p-6 space-y-4">
+                        <Skeleton className="h-6 w-48 bg-muted/40 rounded" />
+                        <div className="space-y-4">
+                            {Array.from({ length: 3 }).map((_, i) => (
+                                <div key={i} className="flex justify-between items-center p-4 border rounded-xl">
+                                    <div className="space-y-2">
+                                        <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                        <Skeleton className="h-3 w-24 bg-muted/40 rounded" />
+                                    </div>
+                                    <Skeleton className="h-8 w-20 bg-muted/40 rounded-lg" />
+                                </div>
+                            ))}
+                        </div>
+                    </Card>
+                </div>
             </div>
         ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

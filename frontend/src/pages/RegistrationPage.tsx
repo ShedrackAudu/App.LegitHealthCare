@@ -19,6 +19,7 @@ import {
   ArrowRight01Icon,
   Camera01Icon,
   Upload01Icon,
+  Download01Icon,
   EyeIcon,
   Video01Icon,
   ImageAdd01Icon,
@@ -60,7 +61,7 @@ const RegistrationPage: React.FC = () => {
 
   const registrationSchema = z.object({
     staff_id: z.string().min(1, 'Staff ID is required'),
-    patient_id: isEditMode ? z.string().optional() : z.string().min(1, 'Patient ID is required'),
+    patient_id: isEditMode ? z.string().nullable().optional() : z.string().min(1, 'Patient ID is required'),
     first_name: z.string().min(1, 'First Name is required'),
     middle_name: z.string().nullable().optional(),
     last_name: z.string().min(1, 'Last Name is required'),
@@ -91,7 +92,13 @@ const RegistrationPage: React.FC = () => {
   const [isCameraOpen, setIsCameraOpen] = useState(false);
   const [isPreviewOpen, setIsPreviewOpen] = useState(false);
   const [isDeptDialogOpen, setIsDeptDialogOpen] = useState(false);
+  const [isDeptPatientsDialogOpen, setIsDeptPatientsDialogOpen] = useState(false);
+  const [selectedDepartment, setSelectedDepartment] = useState('');
+  const [deptPatients, setDeptPatients] = useState<any[]>([]);
+  const [isLoadingDeptPatients, setIsLoadingDeptPatients] = useState(false);
+  const [deptPatientsSearchQuery, setDeptPatientsSearchQuery] = useState('');
   const [isDailyDialogOpen, setIsDailyDialogOpen] = useState(false);
+  const [downloadingDayDate, setDownloadingDayDate] = useState<string>('');
   const [isTargetHistoryDialogOpen, setIsTargetHistoryDialogOpen] = useState(false);
   const [cameraReady, setCameraReady] = useState(false);
   const [capturedImage, setCapturedImage] = useState<string | null>(null);
@@ -217,6 +224,7 @@ const RegistrationPage: React.FC = () => {
 
           reset({
             ...p,
+            patient_id: p.patient_id || '',
             passport_image: p.passport_image || '',
             middle_name: p.middle_name || '',
             email: p.email || '',
@@ -264,6 +272,78 @@ const RegistrationPage: React.FC = () => {
       });
       setStats(response.data);
     } catch (err) {
+    }
+  };
+
+  const fetchDepartmentPatients = async (deptName: string) => {
+    setIsLoadingDeptPatients(true);
+    setSelectedDepartment(deptName);
+    setDeptPatientsSearchQuery('');
+    try {
+      const response = await api.get(`/department-patients?year=${activeYear}&department=${encodeURIComponent(deptName)}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      setDeptPatients(response.data);
+      setIsDeptPatientsDialogOpen(true);
+    } catch (err) {
+      console.error(err);
+      toast.error('Failed to fetch patients for department');
+    } finally {
+      setIsLoadingDeptPatients(false);
+    }
+  };
+
+  const [downloading, setDownloading] = useState(false);
+
+  const handleDownloadExcel = async () => {
+    setDownloading(true);
+    try {
+      const response = await api.get(`/download-registered?year=${activeYear}`, {
+        responseType: 'blob',
+        headers: { 'X-Company-Context': activeSection }
+      });
+      
+      const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Registered_Patients_${activeYear}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success("Excel report downloaded successfully!");
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to download Excel report");
+    } finally {
+      setDownloading(false);
+    }
+  };
+
+  const handleDownloadExcelForDay = async (dateStr: string) => {
+    setDownloadingDayDate(dateStr);
+    try {
+      const response = await api.get(`/download-registered?year=${activeYear}&date=${dateStr}`, {
+        responseType: 'blob',
+        headers: { 'X-Company-Context': activeSection }
+      });
+      
+      const blob = new Blob([response.data], { type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Registered_Patients_${activeYear}_${dateStr}.xlsx`);
+      document.body.appendChild(link);
+      link.click();
+      link.parentNode?.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      toast.success(`Excel report for ${dateStr} downloaded successfully!`);
+    } catch (err) {
+      console.error(err);
+      toast.error(`Failed to download Excel report for ${dateStr}`);
+    } finally {
+      setDownloadingDayDate('');
     }
   };
 
@@ -422,6 +502,7 @@ const RegistrationPage: React.FC = () => {
     setIsSelecting(true);
     reset({
       ...p,
+      patient_id: p.patient_id || '',
       passport_image: p.passport_image || '',
       middle_name: p.middle_name || '',
       email: p.email || '',
@@ -841,7 +922,6 @@ const RegistrationPage: React.FC = () => {
                         e.target.value = val;
                         register('staff_id').onChange(e);
                       }}
-                      disabled={isEditMode}
                     />
                     {errors.staff_id && <p className="text-xs text-destructive">{errors.staff_id.message}</p>}
                   </div>
@@ -849,7 +929,7 @@ const RegistrationPage: React.FC = () => {
                     <Label className="text-primary font-bold">Patient ID {!isEditMode && <span className="text-rose-500">*</span>}</Label>
                     <Input 
                       {...register('patient_id', { required: !isEditMode })} 
-                      className="h-11 border-primary/30 font-bold text-lg uppercase tracking-wider" 
+                      className="h-11 border-primary/30 font-bold text-lg tracking-wider" 
                       placeholder={isEditMode ? "Patient ID (Optional)" : "e.g. 12345"} 
                       inputMode="numeric"
                       required={!isEditMode}
@@ -1338,10 +1418,17 @@ const RegistrationPage: React.FC = () => {
                     const total = stats.year_total || 1;
                     const percentage = Math.round((dept.count / total) * 100);
                     return (
-                      <div key={index} className="space-y-1.5 p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300">
+                      <div 
+                        key={index} 
+                        onClick={() => fetchDepartmentPatients(dept.department)}
+                        className="space-y-1.5 p-3.5 rounded-xl border bg-card hover:bg-primary/5 cursor-pointer hover:border-primary/30 transition-all duration-300 active:scale-[0.99] group"
+                      >
                         <div className="flex items-center justify-between text-sm">
-                          <span className="font-bold text-foreground capitalize">{dept.department}</span>
-                          <span className="font-black text-primary">{dept.count.toLocaleString()} ({percentage}%)</span>
+                          <span className="font-bold text-foreground capitalize group-hover:text-primary transition-colors">{dept.department}</span>
+                          <span className="font-black text-primary flex items-center gap-1">
+                            {dept.count.toLocaleString()} ({percentage}%)
+                            <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 opacity-0 group-hover:opacity-100 transition-opacity ml-1" />
+                          </span>
                         </div>
                         <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                           <div 
@@ -1363,11 +1450,139 @@ const RegistrationPage: React.FC = () => {
             </ScrollArea>
           </div>
 
-          <div className="mt-6 flex justify-end">
+          <div className="mt-6 flex justify-end gap-2.5">
             <Button
-              variant="ghost"
+              onClick={handleDownloadExcel}
+              disabled={downloading}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground font-black text-xs uppercase tracking-widest flex items-center gap-1.5 rounded-xl h-9"
+            >
+              {downloading ? (
+                <HugeiconsIcon icon={Loading03Icon} className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
+              )}
+              Download
+            </Button>
+            <Button
+              variant="outline"
               onClick={() => setIsDeptDialogOpen(false)}
-              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5"
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5 rounded-xl h-9"
+            >
+              Close
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
+
+      {/* Department Patients List Dialog */}
+      <Dialog open={isDeptPatientsDialogOpen} onOpenChange={setIsDeptPatientsDialogOpen}>
+        <DialogContent className="max-w-2xl sm:max-w-[550px] border-primary/20 p-4 sm:p-6">
+          <DialogHeader className="text-left">
+            <div className="flex items-center gap-3 mb-2 text-left">
+              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                <HugeiconsIcon icon={UserIcon} className="w-6 h-6" />
+              </div>
+              <div className="flex-1">
+                <DialogTitle className="text-lg sm:text-xl font-black tracking-tight capitalize">
+                  {selectedDepartment} Patients
+                </DialogTitle>
+                <DialogDescription className="text-[11px] sm:text-xs font-medium">
+                  {deptPatients.length} registered {deptPatients.length === 1 ? 'person' : 'people'} in {selectedDepartment} ({activeYear})
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+
+          {/* Search bar inside the patient list */}
+          <div className="relative my-3">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-muted-foreground">
+              <HugeiconsIcon icon={Search01Icon} className="h-4 w-4" />
+            </div>
+            <Input
+              type="text"
+              placeholder="Search by name or Staff ID..."
+              value={deptPatientsSearchQuery}
+              onChange={(e) => setDeptPatientsSearchQuery(e.target.value)}
+              className="pl-9 h-10 rounded-xl bg-muted/20 border-primary/10 focus-visible:ring-primary/20"
+            />
+          </div>
+
+          <div className="relative mt-2">
+            <ScrollArea className="h-[350px] pr-2">
+              {isLoadingDeptPatients ? (
+                <div className="flex flex-col items-center justify-center h-[200px] text-center">
+                  <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary mb-2" />
+                  <p className="text-xs text-muted-foreground uppercase font-black tracking-widest">Loading patients...</p>
+                </div>
+              ) : (() => {
+                const filtered = deptPatients.filter(p => {
+                  const q = deptPatientsSearchQuery.toLowerCase();
+                  return (
+                    p.first_name.toLowerCase().includes(q) ||
+                    p.last_name.toLowerCase().includes(q) ||
+                    p.staff_id.toLowerCase().includes(q) ||
+                    (p.patient_id && p.patient_id.toLowerCase().includes(q))
+                  );
+                });
+
+                if (filtered.length === 0) {
+                  return (
+                    <div className="flex flex-col items-center justify-center h-[200px] text-center opacity-50">
+                      <HugeiconsIcon icon={UserIcon} className="h-10 w-10 mb-2 text-muted-foreground" />
+                      <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground">No Patients Found</p>
+                    </div>
+                  );
+                }
+
+                return (
+                  <div className="space-y-2">
+                    {filtered.map((patient: any) => (
+                      <div 
+                        key={patient.id} 
+                        className="p-3.5 rounded-xl border bg-card/50 hover:bg-muted/10 transition-all duration-300 flex items-center justify-between gap-3"
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center overflow-hidden font-black text-primary text-sm uppercase">
+                            {patient.first_name[0]}{patient.last_name[0]}
+                          </div>
+                          <div>
+                            <p className="font-bold text-foreground text-sm capitalize">
+                              {patient.first_name} {patient.last_name}
+                            </p>
+                            <div className="flex items-center gap-2 mt-1">
+                              <span className="text-[10px] bg-muted px-1.5 py-0.5 rounded uppercase font-semibold text-muted-foreground">
+                                {patient.staff_id}
+                              </span>
+                              {patient.patient_id && (
+                                <span className="text-[10px] bg-primary/10 text-primary px-1.5 py-0.5 rounded uppercase font-bold">
+                                  PID: {patient.patient_id}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-primary/5 text-primary">
+                            {patient.gender} • {patient.age} Yrs
+                          </span>
+                          <p className="text-[10px] text-muted-foreground mt-1.5">
+                            Reg: {patient.created_at}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+            </ScrollArea>
+          </div>
+
+          <div className="mt-6 flex justify-end gap-2.5">
+            <Button
+              variant="outline"
+              onClick={() => setIsDeptPatientsDialogOpen(false)}
+              className="font-black text-xs uppercase tracking-widest hover:bg-primary/5 rounded-xl h-9"
             >
               Close
             </Button>
@@ -1401,11 +1616,24 @@ const RegistrationPage: React.FC = () => {
                       ? new Date(day.date).toLocaleDateString(undefined, { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' })
                       : 'Unknown Date';
                     return (
-                      <div key={index} className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3">
-                        <span className="font-bold text-sm text-foreground">{dateFormatted}</span>
-                        <span className="font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full text-xs shrink-0">
-                          {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
-                        </span>
+                      <div 
+                        key={index} 
+                        onClick={() => { if (day.date && day.date !== 'Unknown') handleDownloadExcelForDay(day.date); }}
+                        className="flex items-center justify-between p-3.5 rounded-xl border bg-card hover:bg-primary/5 hover:border-primary/30 cursor-pointer active:scale-[0.99] transition-all duration-300 gap-3 group"
+                      >
+                        <span className="font-bold text-sm text-foreground group-hover:text-primary transition-colors">{dateFormatted}</span>
+                        <div className="flex items-center gap-2">
+                          <span className="font-black text-primary bg-primary/10 px-2.5 py-1 rounded-full text-xs shrink-0">
+                            {day.count.toLocaleString()} {day.count === 1 ? 'Patient' : 'Patients'}
+                          </span>
+                          <div className="text-primary w-5 h-5 flex items-center justify-center">
+                            {downloadingDayDate === day.date ? (
+                              <HugeiconsIcon icon={Loading03Icon} className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <HugeiconsIcon icon={Download01Icon} className="w-4 h-4 opacity-0 group-hover:opacity-100 transition-opacity" />
+                            )}
+                          </div>
+                        </div>
                       </div>
                     );
                   })}

@@ -19,6 +19,8 @@ import {
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
 import { useAppContext } from '@/context/AppContext';
+import { usePermissions } from '@/hooks/usePermissions';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const PARAMETERS = [
     { id: 'FBC', label: 'Full Blood Count (FBC)' },
@@ -66,17 +68,22 @@ const CONSULTATION_PARAMETERS = [
 const AI_MODELS = [
     { id: 'gpt-4o', label: 'GPT-4o (Omni - Latest & Smartest)' },
     { id: 'gpt-4o-mini', label: 'GPT-4o Mini (Fast & Cost-Efficient)' },
-    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
-    { id: 'gpt-4', label: 'GPT-4 (Standard)' },
-    { id: 'o1-preview', label: 'OpenAI o1-preview (Advanced Reasoning)' },
+    { id: 'o1', label: 'OpenAI o1 (Advanced Reasoning)' },
     { id: 'o1-mini', label: 'OpenAI o1-mini (Faster Reasoning)' },
-    { id: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo (Legacy)' }
+    { id: 'o3-mini', label: 'OpenAI o3-mini (Latest Reasoning & Fast)' },
+    { id: 'gpt-4-turbo', label: 'GPT-4 Turbo' },
+    { id: 'gpt-4', label: 'GPT-4 (Standard)' }
 ];
 
 export const AISettingsPage = () => {
-    const { activeSection } = useAppContext();
+    const { activeSection, user } = useAppContext();
+    const { hasPermission } = usePermissions();
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
+    const [configSaving, setConfigSaving] = useState(false);
+    const [aiFbcRemarksEnabled, setAiFbcRemarksEnabled] = useState(true);
+    const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
+    const canManageMaintenance = hasPermission('system_maintenance');
     
     const [settings, setSettings] = useState({
         api_key: '',
@@ -84,7 +91,11 @@ export const AISettingsPage = () => {
         response_format: 'Bullet Points',
         system_prompt: 'You are a highly experienced occupational health physician. Analyze the provided clinical findings, lab results, and patient history to generate a concise, professional, and actionable overview. Point out any critical abnormalities, suggest follow-up actions if necessary, and summarize the overall health status of the staff member.',
         medical_parameters: ['Consultation:bp', 'Consultation:pulse'] as string[],
-        sample_comments: [] as string[]
+        sample_comments: [] as string[],
+        prompt_fbc: '',
+        prompt_lipid: '',
+        prompt_lft: '',
+        prompt_kft: ''
     });
     
     const [newSample, setNewSample] = useState('');
@@ -95,6 +106,7 @@ export const AISettingsPage = () => {
 
     const fetchSettings = async () => {
         try {
+            // First fetch the main AI settings
             const res = await axios.get('/api/ai/settings', {
                 headers: { 'X-Company-Context': activeSection }
             });
@@ -104,8 +116,27 @@ export const AISettingsPage = () => {
                 response_format: res.data.response_format || 'Bullet Points',
                 system_prompt: res.data.system_prompt || 'You are a highly experienced occupational health physician. Analyze the provided clinical findings, lab results, and patient history to generate a concise, professional, and actionable overview. Point out any critical abnormalities, suggest follow-up actions if necessary, and summarize the overall health status of the staff member.',
                 medical_parameters: res.data.medical_parameters || [],
-                sample_comments: res.data.sample_comments || []
+                sample_comments: res.data.sample_comments || [],
+                prompt_fbc: res.data.prompt_fbc || '',
+                prompt_lipid: res.data.prompt_lipid || '',
+                prompt_lft: res.data.prompt_lft || '',
+                prompt_kft: res.data.prompt_kft || ''
             });
+
+            // Separately fetch the system config to prevent entire page loading failures
+            try {
+                const configRes = await axios.get('/api/admin/config', {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                if (configRes.data.ai_fbc_remarks_enabled !== undefined) {
+                    setAiFbcRemarksEnabled(configRes.data.ai_fbc_remarks_enabled === 'true');
+                }
+                if (configRes.data.bulk_ai_review_enabled !== undefined) {
+                    setBulkAiReviewEnabled(configRes.data.bulk_ai_review_enabled === 'true');
+                }
+            } catch (configErr) {
+                console.error("Failed to load system config values:", configErr);
+            }
         } catch (err) {
             toast.error("Failed to load AI Settings");
         } finally {
@@ -128,6 +159,50 @@ export const AISettingsPage = () => {
         }
     };
 
+    const handleToggleAiFbcRemarks = async () => {
+        setConfigSaving(true);
+        try {
+            const newValue = !aiFbcRemarksEnabled;
+            await axios.post('/api/admin/config', 
+                { ai_fbc_remarks_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setAiFbcRemarksEnabled(newValue);
+            toast.success(`Lab tests AI remarks have been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Lab tests AI remarks setting.");
+        } finally {
+            setConfigSaving(false);
+        }
+    };
+
+    const handleToggleBulkAiReview = async () => {
+        setConfigSaving(true);
+        try {
+            const newValue = !bulkAiReviewEnabled;
+            await axios.post('/api/admin/config', 
+                { bulk_ai_review_enabled: newValue.toString() },
+                { 
+                    headers: { 
+                        'X-Company-Context': activeSection,
+                        'X-User-ID': user?.id?.toString()
+                    } 
+                }
+            );
+            setBulkAiReviewEnabled(newValue);
+            toast.success(`Bulk AI review generator has been ${newValue ? 'enabled' : 'disabled'}.`);
+        } catch (err) {
+            toast.error("Failed to update Bulk AI review generator setting.");
+        } finally {
+            setConfigSaving(false);
+        }
+    };
+
     const handleParamToggle = (paramId: string) => {
         setSettings(prev => ({
             ...prev,
@@ -137,12 +212,65 @@ export const AISettingsPage = () => {
         }));
     };
 
-    if (loading) return <MainLayout><div className="flex justify-center py-20"><HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary" /></div></MainLayout>;
+    if (loading) {
+        return (
+            <MainLayout>
+                <div className="w-full space-y-6 animate-pulse">
+                    {/* Header Skeleton */}
+                    <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border mb-8 border-primary/5">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 w-full">
+                            <Skeleton className="h-12 w-12 rounded-xl sm:rounded-2xl bg-muted/40 shrink-0" />
+                            <div className="space-y-2 flex-1">
+                                <Skeleton className="h-6 w-48 rounded bg-muted/40 animate-pulse" />
+                                <Skeleton className="h-3.5 w-80 rounded bg-muted/40 animate-pulse" />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Config Cards Skeletons */}
+                    <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        <div className="lg:col-span-2 space-y-6">
+                            <Card className="border-2 shadow-lg">
+                                <div className="bg-muted/10 p-6 border-b space-y-2">
+                                    <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-3 w-72 rounded bg-muted/40 animate-pulse" />
+                                </div>
+                                <CardContent className="pt-6 space-y-4">
+                                    {Array.from({ length: 4 }).map((_, i) => (
+                                        <div key={i} className="space-y-2">
+                                            <Skeleton className="h-4 w-28 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-10 w-full rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </div>
+                        <div className="col-span-1 space-y-6">
+                            <Card className="border-2 shadow-lg">
+                                <div className="bg-muted/10 p-6 border-b space-y-2">
+                                    <Skeleton className="h-5 w-32 rounded bg-muted/40 animate-pulse" />
+                                    <Skeleton className="h-3 w-48 rounded bg-muted/40 animate-pulse" />
+                                </div>
+                                <CardContent className="pt-6 space-y-4">
+                                    {Array.from({ length: 6 }).map((_, i) => (
+                                        <div key={i} className="flex items-center gap-3">
+                                            <Skeleton className="h-5 w-5 rounded bg-muted/40 animate-pulse" />
+                                            <Skeleton className="h-4 w-36 rounded bg-muted/40 animate-pulse" />
+                                        </div>
+                                    ))}
+                                </CardContent>
+                            </Card>
+                        </div>
+                    </div>
+                </div>
+            </MainLayout>
+        );
+    }
 
     return (
         <MainLayout>
-            <div className="max-w-4xl mx-auto space-y-6 animate-in slide-in-from-bottom-4 duration-500">
-                <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border-2 shadow-xl border-blue-500/10 mb-8 transition-all">
+            <div className="w-full space-y-6 animate-in slide-in-from-bottom-4 duration-500">
+                <div className="flex flex-col justify-between items-stretch gap-4 sm:gap-6 bg-card p-4 sm:p-6 rounded-2xl border mb-8 transition-all">
                     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
                         <div className="p-1.5 sm:p-3 bg-blue-500/10 rounded-xl sm:rounded-2xl shrink-0">
                             <HugeiconsIcon icon={MachineRobotIcon} className="text-blue-600 h-5 w-5 sm:h-8 sm:w-8" />
@@ -158,6 +286,92 @@ export const AISettingsPage = () => {
 
                 <form onSubmit={handleSave} className="space-y-6 pb-20">
                     
+                    {/* AI Automation Features */}
+                    <Card className="border-2 shadow-xl relative overflow-hidden">
+                        <CardHeader className="border-b bg-muted/5 p-6">
+                            <CardTitle className="text-xl flex items-center gap-2">
+                                <HugeiconsIcon icon={Activity01Icon} className="h-6 w-6 text-primary" />
+                                AI Automation Features
+                            </CardTitle>
+                            <CardDescription>
+                                Enable or disable specific background AI analysis features.
+                            </CardDescription>
+                        </CardHeader>
+                        <CardContent className="p-8 space-y-6">
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border bg-muted/5">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-lg text-foreground">Lab Tests AI Remarks Generation</h4>
+                                    <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                        When enabled, the system automatically analyzes submitted Full Blood Count (FBC) and Lipid Profile results using AI in the background and writes a brief summary to the remark fields.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                    <span className={`text-xs font-black uppercase tracking-widest ${aiFbcRemarksEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                        {aiFbcRemarksEnabled ? 'Enabled' : 'Disabled'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        disabled={configSaving || !canManageMaintenance}
+                                        onClick={handleToggleAiFbcRemarks}
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                            aiFbcRemarksEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                        }`}
+                                    >
+                                        {configSaving ? (
+                                            <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
+                                            }`}>
+                                                <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                    aiFbcRemarksEnabled ? "translate-x-5" : "translate-x-1"
+                                                }`}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border bg-muted/5">
+                                <div className="space-y-1">
+                                    <h4 className="font-bold text-lg text-foreground">Bulk AI Review Generator</h4>
+                                    <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                        Enable or disable the Bulk AI Review Generator feature on the Director Review landing page.
+                                    </p>
+                                </div>
+                                <div className="flex items-center gap-4 bg-background p-2 px-4 rounded-xl border-2 shadow-sm">
+                                    <span className={`text-xs font-black uppercase tracking-widest ${bulkAiReviewEnabled ? 'text-primary' : 'text-rose-500'}`}>
+                                        {bulkAiReviewEnabled ? 'Enabled' : 'Disabled'}
+                                    </span>
+                                    <button
+                                        type="button"
+                                        disabled={configSaving || !canManageMaintenance}
+                                        onClick={handleToggleBulkAiReview}
+                                        className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors focus-visible:outline-none disabled:cursor-not-allowed disabled:opacity-50 ${
+                                            bulkAiReviewEnabled ? "bg-primary" : "bg-zinc-200 dark:bg-zinc-700"
+                                        }`}
+                                    >
+                                        {configSaving ? (
+                                            <span className={`pointer-events-none flex items-center justify-center h-5 w-5 rounded-full bg-white shadow-lg transition-all duration-200 ${
+                                                bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                            }`}>
+                                                <HugeiconsIcon icon={Loading03Icon} className="h-3 w-3 animate-spin text-primary" />
+                                            </span>
+                                        ) : (
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-white shadow-lg ring-0 transition-all duration-200 ${
+                                                    bulkAiReviewEnabled ? "translate-x-5" : "translate-x-1"
+                                                }`}
+                                            />
+                                        )}
+                                    </button>
+                                </div>
+                            </div>
+                        </CardContent>
+                    </Card>
+
                     {/* API Configuration */}
                     <Card className="border-2 shadow-xl shadow-blue-500/5 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -z-10 pointer-events-none"></div>
@@ -211,11 +425,11 @@ export const AISettingsPage = () => {
                         <CardContent className="p-8 space-y-8">
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Laboratory & Diagnostics</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {PARAMETERS.map((param) => (
                                         <div 
                                             key={param.id} 
-                                            className={`flex items-center space-x-3 p-4 border-2 rounded-xl transition-colors ${
+                                            className={`flex items-center space-x-3 p-3 border rounded-lg h-11 transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
                                                 ? 'border-primary bg-primary/5' 
                                                 : 'hover:bg-muted/50'
@@ -225,9 +439,9 @@ export const AISettingsPage = () => {
                                                 id={param.id} 
                                                 checked={(settings.medical_parameters || []).includes(param.id)}
                                                 onCheckedChange={() => handleParamToggle(param.id)}
-                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5"
+                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5 shrink-0"
                                             />
-                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-none">{param.label}</Label>
+                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-tight text-xs line-clamp-2 select-none" title={param.label}>{param.label}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -235,23 +449,23 @@ export const AISettingsPage = () => {
 
                             <div>
                                 <h3 className="text-sm font-black uppercase tracking-widest text-muted-foreground mb-4">Granular Consultation Details</h3>
-                                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                                <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
                                     {CONSULTATION_PARAMETERS.map((param) => (
                                         <div 
                                             key={param.id} 
-                                            className={`flex items-center space-x-2 p-3 border rounded-lg transition-colors ${
+                                            className={`flex items-center space-x-3 p-3 border rounded-lg h-11 transition-colors ${
                                                 (settings.medical_parameters || []).includes(param.id) 
-                                                ? 'border-primary/50 bg-primary/5' 
-                                                : 'hover:bg-muted/30'
+                                                ? 'border-primary bg-primary/5' 
+                                                : 'hover:bg-muted/50'
                                             }`}
                                         >
                                             <Checkbox 
                                                 id={param.id} 
                                                 checked={(settings.medical_parameters || []).includes(param.id)}
                                                 onCheckedChange={() => handleParamToggle(param.id)}
-                                                className="h-4 w-4"
+                                                className="data-[state=checked]:bg-primary data-[state=checked]:text-white h-5 w-5 shrink-0"
                                             />
-                                            <Label htmlFor={param.id} className="text-xs font-bold cursor-pointer flex-1 leading-tight">{param.label}</Label>
+                                            <Label htmlFor={param.id} className="font-bold cursor-pointer flex-1 leading-tight text-xs line-clamp-2 select-none" title={param.label}>{param.label}</Label>
                                         </div>
                                     ))}
                                 </div>
@@ -290,6 +504,50 @@ export const AISettingsPage = () => {
                                     value={settings.system_prompt}
                                     onChange={(e) => setSettings({...settings, system_prompt: e.target.value})}
                                     placeholder="You are an AI assistant..."
+                                />
+                            </div>
+
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <Label className="font-bold text-sm">Full Blood Count (FBC) Prompt Instruction</Label>
+                                <p className="text-xs text-muted-foreground mb-2">Used specifically to generate remarks for FBC results.</p>
+                                <textarea 
+                                    className="w-full min-h-[100px] border-2 rounded-xl p-4 text-sm focus:ring-4 ring-purple-500/20 bg-muted/10 outline-none leading-relaxed"
+                                    value={settings.prompt_fbc}
+                                    onChange={(e) => setSettings({...settings, prompt_fbc: e.target.value})}
+                                    placeholder="Enter FBC custom prompt instruction..."
+                                />
+                            </div>
+
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <Label className="font-bold text-sm">Lipid Profile Prompt Instruction</Label>
+                                <p className="text-xs text-muted-foreground mb-2">Used specifically to generate remarks for Lipid Profile results.</p>
+                                <textarea 
+                                    className="w-full min-h-[100px] border-2 rounded-xl p-4 text-sm focus:ring-4 ring-purple-500/20 bg-muted/10 outline-none leading-relaxed"
+                                    value={settings.prompt_lipid}
+                                    onChange={(e) => setSettings({...settings, prompt_lipid: e.target.value})}
+                                    placeholder="Enter Lipid Profile custom prompt instruction..."
+                                />
+                            </div>
+
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <Label className="font-bold text-sm">Liver Function Test (LFT) Prompt Instruction</Label>
+                                <p className="text-xs text-muted-foreground mb-2">Used specifically to generate remarks for LFT results.</p>
+                                <textarea 
+                                    className="w-full min-h-[100px] border-2 rounded-xl p-4 text-sm focus:ring-4 ring-purple-500/20 bg-muted/10 outline-none leading-relaxed"
+                                    value={settings.prompt_lft}
+                                    onChange={(e) => setSettings({...settings, prompt_lft: e.target.value})}
+                                    placeholder="Enter LFT custom prompt instruction..."
+                                />
+                            </div>
+
+                            <div className="space-y-3 pt-4 border-t border-dashed">
+                                <Label className="font-bold text-sm">Kidney Function Test (KFT) Prompt Instruction</Label>
+                                <p className="text-xs text-muted-foreground mb-2">Used specifically to generate remarks for KFT results.</p>
+                                <textarea 
+                                    className="w-full min-h-[100px] border-2 rounded-xl p-4 text-sm focus:ring-4 ring-purple-500/20 bg-muted/10 outline-none leading-relaxed"
+                                    value={settings.prompt_kft}
+                                    onChange={(e) => setSettings({...settings, prompt_kft: e.target.value})}
+                                    placeholder="Enter KFT custom prompt instruction..."
                                 />
                             </div>
                         </CardContent>

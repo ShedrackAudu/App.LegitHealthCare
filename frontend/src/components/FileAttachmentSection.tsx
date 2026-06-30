@@ -45,7 +45,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
   const [deleteId, setDeleteId] = useState<number | null>(null);
   const [deleting, setDeleting] = useState(false);
 
-  const getFileUrl = useCallback((path: string) => {
+  const getFileUrl = useCallback((path: string, download = false) => {
     if (!path) return '';
     const token = localStorage.getItem('token');
     if (!token) return path;
@@ -56,7 +56,11 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
     // Include company context so browser-initiated requests (iframe/img/a)
     // can route to the correct tenant database without custom headers
     const company = axios.defaults.headers.common['X-Company-Context'] || localStorage.getItem('activeSection') || '';
-    return `${baseUrl}${path}${separator}jwt=${token}&company=${company}`;
+    let url = `${baseUrl}${path}${separator}jwt=${token}&company=${company}`;
+    if (download) {
+      url += '&download=true';
+    }
+    return url;
   }, []);
 
   const fetchFiles = async () => {
@@ -273,7 +277,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                   </div>
                   <div className={cn("flex items-center gap-0.5 shrink-0 ml-2", !compact && "lg:opacity-0 lg:group-hover:opacity-100 transition-opacity")}>
                     {allowDownload && (
-                     <a href={getFileUrl(file.file_path)} download={file.filename} onClick={(e) => e.stopPropagation()}>
+                     <a href={getFileUrl(file.file_path, true)} download={file.filename} onClick={(e) => e.stopPropagation()}>
                        <Button 
                          type="button"
                          size="icon" 
@@ -360,7 +364,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             </div>
             <div className="flex items-center gap-2">
             {allowDownload && (
-                 <a href={getFileUrl(selectedFile?.file_path)} download={selectedFile?.filename} className="w-full sm:w-auto">
+                 <a href={getFileUrl(selectedFile?.file_path, true)} download={selectedFile?.filename} className="w-full sm:w-auto">
                    <Button variant="outline" size="sm" className="w-full sm:w-auto gap-2 h-8 text-[9px] sm:text-[10px] font-black uppercase border-2 shadow-sm bg-background/50">
                      <HugeiconsIcon icon={Download01Icon} className="h-3 w-3 text-primary" /> Download Report
                    </Button>

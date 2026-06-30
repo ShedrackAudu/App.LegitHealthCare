@@ -3,14 +3,15 @@ import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Sun01Icon,
   Moon01Icon,
-  Logout01Icon,
+  Logout02Icon,
   UserIcon,
   Notification01Icon,
   Delete02Icon,
   Tick01Icon,
   Building02Icon,
   Clock01Icon,
-  Settings02Icon
+  Settings02Icon,
+  AccountSetting01Icon
 } from '@hugeicons/core-free-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -61,6 +62,8 @@ const getPageTitle = (pathname: string, branding: any, brandingError: boolean) =
   if (pathname.includes('/departments')) return 'Clinic Departments';
   if (pathname.includes('/appointments')) return 'Appointment Scheduler';
   if (pathname.includes('/security-analytics')) return 'Security Command Center';
+  if (pathname.includes('/report-customization')) return 'Report Customization';
+  if (pathname.includes('/inventory')) return 'Inventory & Stock Management';
   
   return (branding?.clinic_name && !brandingError) ? branding.clinic_name : 'Legit HealthCare';
 };
@@ -456,7 +459,8 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>
                 <div className="flex flex-col space-y-0.5">
-                  <span className="text-sm font-bold text-foreground truncate">
+                  <span className="text-sm font-bold text-foreground truncate flex items-center gap-2">
+                    <HugeiconsIcon icon={UserIcon} className="h-4 w-4 text-muted-foreground" />
                     {user ? `${user.first_name} ${user.last_name}` : 'My Account'}
                   </span>
                   {user?.role && (
@@ -468,14 +472,14 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem className="cursor-pointer" onClick={() => navigate('/account')}>
-                <HugeiconsIcon icon={Settings02Icon} className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" /> Manage Account
+                <HugeiconsIcon icon={AccountSetting01Icon} className="mr-2 h-4 w-4 text-muted-foreground group-hover:text-foreground transition-colors" /> Manage Account
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 className="text-destructive cursor-pointer"
                 onClick={handleLogout}
               >
-                <HugeiconsIcon icon={Logout01Icon} className="mr-2 h-4 w-4" /> Log out
+                <HugeiconsIcon icon={Logout02Icon} className="mr-2 h-4 w-4" /> Log out
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

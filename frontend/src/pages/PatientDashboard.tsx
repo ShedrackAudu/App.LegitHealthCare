@@ -15,6 +15,7 @@ import {
 } from '@hugeicons/core-free-icons';
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import { useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
@@ -322,9 +323,16 @@ const PatientDashboard = () => {
           <Card className="border shadow-lg rounded-xl overflow-hidden bg-gradient-to-br from-card to-primary/5 border-primary/10 transition-colors hover:bg-muted/30">
             <CardContent className="p-3 md:p-5">
               {!reportProgress ? (
-                <div className="flex items-center justify-center h-24">
-                  <HugeiconsIcon icon={Activity01Icon} className="h-4 w-4 animate-spin text-primary/30" />
-                  <span className="ml-2.5 text-[10px] font-black text-muted-foreground uppercase tracking-wider">Analyzing...</span>
+                <div className="flex flex-row items-center gap-3 md:gap-10 animate-pulse w-full">
+                  <Skeleton className="h-16 w-16 md:h-28 md:w-28 rounded-full bg-muted/40 shrink-0" />
+                  <div className="flex-1 space-y-3">
+                    <Skeleton className="h-3.5 w-32 bg-muted/40 rounded" />
+                    <Skeleton className="h-5 w-48 bg-muted/40 rounded" />
+                    <div className="flex gap-2 pt-1">
+                      <Skeleton className="h-5 w-20 bg-muted/40 rounded-md" />
+                      <Skeleton className="h-5 w-20 bg-muted/40 rounded-md" />
+                    </div>
+                  </div>
                 </div>
               ) : (
                 <div className="flex flex-row items-center gap-3 md:gap-10">

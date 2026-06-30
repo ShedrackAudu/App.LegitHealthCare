@@ -331,7 +331,7 @@ const SignupPage: React.FC = () => {
           style={{ 
             backgroundImage: branding?.auth_branding_image 
               ? `url(${(window as any).API_BASE_URL}${branding.auth_branding_image})` 
-              : `url('https://images.unsplash.com/photo-1579684385127-1ef15d508118?q=80&w=2080&auto=format&fit=crop')` 
+              : `url('/images/auth_branding.webp')` 
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-primary/90 via-primary/40 to-transparent mix-blend-multiply" />
@@ -800,7 +800,8 @@ const SignupPage: React.FC = () => {
                              </div>
                              <p className="text-xs text-muted-foreground font-medium">
                                We sent a 6-digit code to <br/>
-                               <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>
+                               <span className="text-foreground font-bold">{claimData.email || patientData?.email}</span>.
+                               <span className="block mt-1 text-[10px] text-amber-600/90 font-bold">Can't find it? Check your spam or junk folder.</span>
                              </p>
                           </div>
 

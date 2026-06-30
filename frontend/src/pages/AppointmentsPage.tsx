@@ -31,6 +31,7 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import { Badge } from '@/components/ui/badge';
+import { Skeleton } from '@/components/ui/skeleton';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -469,9 +470,36 @@ const AppointmentsPage = () => {
 
                     <TabsContent value="pending" className="mt-0">
                         <div className="md:hidden space-y-4">
-                            {filteredAppointments.length === 0 ? (
+                            {fetchingAppointments ? (
+                                Array.from({ length: 3 }).map((_, i) => (
+                                    <Card key={i} className="border-2 shadow-lg rounded-2xl overflow-hidden p-5 space-y-4 animate-pulse">
+                                        <div className="flex justify-between items-start">
+                                            <div className="flex items-center gap-3">
+                                                <Skeleton className="h-12 w-12 rounded-2xl bg-muted/40 animate-pulse shrink-0" />
+                                                <div className="space-y-2">
+                                                    <Skeleton className="h-4 w-28 bg-muted/40 rounded animate-pulse" />
+                                                    <Skeleton className="h-3.5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                </div>
+                                            </div>
+                                            <Skeleton className="h-10 w-10 rounded-xl bg-muted/40 animate-pulse" />
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-3">
+                                            {Array.from({ length: 3 }).map((_, idx) => (
+                                                <div key={idx} className="p-3 bg-muted/20 rounded-xl space-y-2">
+                                                    <Skeleton className="h-2.5 w-8 bg-muted/30 rounded" />
+                                                    <Skeleton className="h-3.5 w-12 bg-muted/40 rounded animate-pulse" />
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="p-4 bg-muted/10 rounded-xl border">
+                                            <Skeleton className="h-3.5 w-10 bg-muted/30 rounded mb-1" />
+                                            <Skeleton className="h-10 w-full bg-muted/40 rounded animate-pulse" />
+                                        </div>
+                                    </Card>
+                                ))
+                            ) : filteredAppointments.length === 0 ? (
                                 <div className="p-12 text-center text-muted-foreground font-medium italic bg-card rounded-2xl border-2 border-dashed">
-                                    {fetchingAppointments ? "Loading..." : "No pending appointments found."}
+                                    No pending appointments found.
                                 </div>
                             ) : (
                                 filteredAppointments.map(app => (
@@ -550,10 +578,45 @@ const AppointmentsPage = () => {
                                 </TableHeader>
                                 <TableBody>
                                     <AnimatePresence mode="popLayout">
-                                        {filteredAppointments.length === 0 ? (
+                                        {fetchingAppointments ? (
+                                            Array.from({ length: 5 }).map((_, i) => (
+                                                <TableRow key={i} className="animate-pulse">
+                                                    <TableCell className="py-4">
+                                                        <div className="flex items-center gap-3">
+                                                            <Skeleton className="h-10 w-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                                            <div className="space-y-2">
+                                                                <Skeleton className="h-3.5 w-24 bg-muted/40 rounded animate-pulse" />
+                                                                <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                            </div>
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <div className="space-y-2">
+                                                            <Skeleton className="h-3.5 w-28 bg-muted/40 rounded animate-pulse" />
+                                                            <Skeleton className="h-3 w-20 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <Skeleton className="h-5 w-16 bg-muted/40 rounded-full animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <div className="space-y-2">
+                                                            <Skeleton className="h-4 w-12 bg-muted/40 rounded animate-pulse" />
+                                                            <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell className="py-4">
+                                                        <Skeleton className="h-3 w-32 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell className="py-4 text-right">
+                                                        <Skeleton className="h-8 w-8 bg-muted/40 rounded animate-pulse ml-auto" />
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : filteredAppointments.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={6} className="h-32 text-center text-muted-foreground font-medium italic">
-                                                    {fetchingAppointments ? "Loading appointments..." : "No pending appointments found."}
+                                                    No pending appointments found.
                                                 </TableCell>
                                             </TableRow>
                                         ) : (

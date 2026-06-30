@@ -196,6 +196,13 @@ def create_appointment():
                 subject=f"New Appointment: {patient_name} ({staff_id})",
                 html_content=email_content
             )
+            
+            if email:
+                EmailService.send_email(
+                    to_email=email,
+                    subject=f"Appointment Confirmation: {patient_name} ({staff_id})",
+                    html_content=email_content
+                )
         except Exception as e:
             print(f"Appointment Email Error: {e}")
             # Don't fail the request if email fails, but log it
@@ -218,6 +225,10 @@ def get_appointments():
 @appointments_bp.route('/patient/appointments', methods=['GET'])
 @jwt_required()
 def get_patient_appointments():
+    from flask_jwt_extended import get_jwt
+    claims = get_jwt()
+    if claims.get('portal') != 'patient':
+        return jsonify({"error": "Patient access required"}), 403
     user_id = get_jwt_identity()
     from models import PatientPortalUser
     user = PatientPortalUser.query.get(user_id)

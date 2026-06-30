@@ -61,6 +61,8 @@ import { usePermissions } from '@/hooks/usePermissions';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
 import { UserProfileDialog } from '@/components/UserProfileDialog';
 import { UserTimelineDialog } from '@/components/UserTimelineDialog';
+import { Skeleton } from '@/components/ui/skeleton';
+import { Pagination } from '@/components/ui/pagination';
 
 interface User {
   id: number | string;
@@ -139,6 +141,7 @@ const UserManagementPage: React.FC = () => {
   const [isUserProfileOpen, setIsUserProfileOpen] = useState(false);
   const [selectedUserProfile, setSelectedUserProfile] = useState<any>(null);
   const [copied, setCopied] = useState(false);
+  const [sendingReminder, setSendingReminder] = useState<string | number | null>(null);
 
   const handlePatientSearch = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -220,6 +223,38 @@ const UserManagementPage: React.FC = () => {
       u.phone.toLowerCase().includes(searchTerm.toLowerCase())
     );
   }, [users, searchTerm]);
+
+  // Staff Pagination State
+  const [staffPage, setStaffPage] = useState(1);
+  const [staffPerPage, setStaffPerPage] = useState(25);
+
+  // Patients Pagination State
+  const [patientsPage, setPatientsPage] = useState(1);
+  const [patientsPerPage, setPatientsPerPage] = useState(25);
+
+  // Reset page numbers when search term changes
+  useEffect(() => {
+    setStaffPage(1);
+    setPatientsPage(1);
+  }, [searchTerm]);
+
+  const staffUsers = useMemo(() => {
+    return filteredUsers.filter(u => !u.roles.includes('Patient'));
+  }, [filteredUsers]);
+
+  const patientUsers = useMemo(() => {
+    return filteredUsers.filter(u => u.roles.includes('Patient'));
+  }, [filteredUsers]);
+
+  const paginatedStaff = useMemo(() => {
+    const startIndex = (staffPage - 1) * staffPerPage;
+    return staffUsers.slice(startIndex, startIndex + staffPerPage);
+  }, [staffUsers, staffPage, staffPerPage]);
+
+  const paginatedPatients = useMemo(() => {
+    const startIndex = (patientsPage - 1) * patientsPerPage;
+    return patientUsers.slice(startIndex, startIndex + patientsPerPage);
+  }, [patientUsers, patientsPage, patientsPerPage]);
 
   const handleResetPassword = async () => {
     if (!selectedUser || !newPassword) return;
@@ -356,6 +391,19 @@ const UserManagementPage: React.FC = () => {
     }
   };
 
+  const handleSendReminder = async (targetUserId: string | number) => {
+    setSendingReminder(targetUserId);
+    try {
+      const headers = { 'X-User-ID': user?.id?.toString() || '' };
+      await axios.post(`/api/admin/users/${targetUserId}/send-reminder`, {}, { headers });
+      toast.success("Verification reminder sent successfully!");
+    } catch (err: any) {
+      toast.error(err.response?.data?.error || "Failed to send reminder.");
+    } finally {
+      setSendingReminder(null);
+    }
+  };
+
   const viewProfile = async (uId: number | string) => {
     try {
       const headers = { 'X-User-ID': user?.id?.toString() || '' };
@@ -419,7 +467,7 @@ const UserManagementPage: React.FC = () => {
                       <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Staff Directory
                     </CardTitle>
-                    <CardDescription>Filtering {filteredUsers.filter(u => !u.roles.includes('Patient')).length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
+                    <CardDescription>Filtering {staffUsers.length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
                     <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
@@ -434,14 +482,31 @@ const UserManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
-                  users={filteredUsers.filter(u => !u.roles.includes('Patient'))}
+                  users={paginatedStaff}
                   loading={loading}
                   handleAction={handleAction}
                   onViewProfile={viewProfile}
                   setSelectedUserForTimeline={setSelectedUserForTimeline}
                   setIsTimelineOpen={setIsTimelineOpen}
+                  handleSendReminder={handleSendReminder}
+                  sendingReminder={sendingReminder}
                 />
               </CardContent>
+              {/* Pagination Footer */}
+              {!loading && staffUsers.length > 0 && (
+                <div className="bg-muted/30 border-t px-8 py-2">
+                  <Pagination
+                    currentPage={staffPage}
+                    totalItems={staffUsers.length}
+                    perPage={staffPerPage}
+                    onPageChange={setStaffPage}
+                    onPerPageChange={(newPerPage) => {
+                      setStaffPerPage(newPerPage);
+                      setStaffPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </Card>
           </TabsContent>
 
@@ -454,7 +519,7 @@ const UserManagementPage: React.FC = () => {
                       <HugeiconsIcon icon={UserGroupIcon} className="h-5 w-5" />
                       Patient Registry
                     </CardTitle>
-                    <CardDescription>Filtering {filteredUsers.filter(u => u.roles.includes('Patient')).length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
+                    <CardDescription>Filtering {patientUsers.length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
                   </div>
                   <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
                     <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
@@ -469,14 +534,31 @@ const UserManagementPage: React.FC = () => {
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
-                  users={filteredUsers.filter(u => u.roles.includes('Patient'))}
+                  users={paginatedPatients}
                   loading={loading}
                   handleAction={handleAction}
                   onViewProfile={viewProfile}
                   setSelectedUserForTimeline={setSelectedUserForTimeline}
                   setIsTimelineOpen={setIsTimelineOpen}
+                  handleSendReminder={handleSendReminder}
+                  sendingReminder={sendingReminder}
                 />
               </CardContent>
+              {/* Pagination Footer */}
+              {!loading && patientUsers.length > 0 && (
+                <div className="bg-muted/30 border-t px-8 py-2">
+                  <Pagination
+                    currentPage={patientsPage}
+                    totalItems={patientUsers.length}
+                    perPage={patientsPerPage}
+                    onPageChange={setPatientsPage}
+                    onPerPageChange={(newPerPage) => {
+                      setPatientsPerPage(newPerPage);
+                      setPatientsPage(1);
+                    }}
+                  />
+                </div>
+              )}
             </Card>
           </TabsContent>
         </Tabs>
@@ -1157,8 +1239,19 @@ const UserTable: React.FC<{
   handleAction: (action: string, u: User) => void, 
   onViewProfile: (id: number | string) => void,
   setSelectedUserForTimeline: (user: User) => void,
-  setIsTimelineOpen: (open: boolean) => void
-}> = ({ users, loading, handleAction, onViewProfile, setSelectedUserForTimeline, setIsTimelineOpen }) => (
+  setIsTimelineOpen: (open: boolean) => void,
+  handleSendReminder?: (id: number | string) => void,
+  sendingReminder?: number | string | null
+}> = ({ 
+  users, 
+  loading, 
+  handleAction, 
+  onViewProfile, 
+  setSelectedUserForTimeline, 
+  setIsTimelineOpen,
+  handleSendReminder,
+  sendingReminder
+}) => (
   <div className="overflow-x-auto">
     <Table>
       <TableHeader className="bg-muted/50">
@@ -1173,14 +1266,40 @@ const UserTable: React.FC<{
       </TableHeader>
       <TableBody>
         {loading ? (
-          <TableRow>
-            <TableCell colSpan={6} className="h-64 text-center">
-              <div className="flex flex-col items-center gap-2">
-                <HugeiconsIcon icon={ReloadIcon} className="h-8 w-8 animate-spin text-primary/40" />
-                <p className="text-muted-foreground animate-pulse font-medium">Synchronizing Secure Directory...</p>
-              </div>
-            </TableCell>
-          </TableRow>
+          Array.from({ length: 6 }).map((_, i) => (
+            <TableRow key={i} className="animate-pulse">
+              <TableCell className="py-4">
+                <div className="flex items-center gap-3">
+                  <Skeleton className="w-10 h-10 rounded-full bg-muted/40 animate-pulse" />
+                  <div className="space-y-1.5 flex-1">
+                    <Skeleton className="h-3.5 w-24 rounded bg-muted/40 animate-pulse" />
+                    <Skeleton className="h-3 w-16 rounded bg-muted/40 animate-pulse" />
+                  </div>
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="space-y-1.5">
+                  <Skeleton className="h-3 w-32 rounded bg-muted/40 animate-pulse" />
+                  <Skeleton className="h-3 w-20 rounded bg-muted/40 animate-pulse" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <div className="flex gap-1">
+                  <Skeleton className="h-5 w-14 rounded-full bg-muted/40 animate-pulse" />
+                  <Skeleton className="h-5 w-14 rounded-full bg-muted/40 animate-pulse" />
+                </div>
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-4 w-16 rounded bg-muted/40 animate-pulse" />
+              </TableCell>
+              <TableCell>
+                <Skeleton className="h-5 w-16 rounded bg-muted/40 animate-pulse" />
+              </TableCell>
+              <TableCell className="text-right pr-6">
+                <Skeleton className="h-8 w-8 rounded-lg bg-muted/40 ml-auto animate-pulse" />
+              </TableCell>
+            </TableRow>
+          ))
         ) : users.length === 0 ? (
           <TableRow>
             <TableCell colSpan={6} className="h-96 border-0">
@@ -1306,6 +1425,19 @@ const UserTable: React.FC<{
                       <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4" />
                       View Timeline
                     </DropdownMenuItem>
+                    {user.roles.includes('Patient') && !user.is_verified && (
+                      <DropdownMenuItem 
+                        onClick={() => handleSendReminder?.(user.id)} 
+                        disabled={sendingReminder === user.id}
+                        className="cursor-pointer gap-2"
+                      >
+                        <HugeiconsIcon 
+                          icon={sendingReminder === user.id ? Loading03Icon : Mail01Icon} 
+                          className={`h-4 w-4 ${sendingReminder === user.id ? 'animate-spin' : ''}`} 
+                        />
+                        {sendingReminder === user.id ? 'Sending...' : 'Send Reminder'}
+                      </DropdownMenuItem>
+                    )}
                     <DropdownMenuSeparator />
                     <DropdownMenuItem
                       onClick={() => handleAction('deactivate', user)}

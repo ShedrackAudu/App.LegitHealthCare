@@ -1,16 +1,19 @@
-import React, { useState, useEffect } from 'react';
-import { NavLink } from 'react-router-dom';
+import React, { useState, useEffect, useRef } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
+import axios from 'axios';
 import {
   DashboardSquare02Icon,
   Note01Icon,
   UserIcon,
-  ArrowLeft01Icon,
-  ArrowRight01Icon,
+  SidebarLeft01Icon,
+  SidebarRight01Icon,
   Building02Icon,
   Calendar03Icon,
   Comment01Icon,
-  Activity01Icon
+  Attachment01Icon,
+  Logout02Icon,
+  AccountSetting01Icon
 } from '@hugeicons/core-free-icons';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -26,10 +29,9 @@ interface SidebarItem {
 const patientItems: SidebarItem[] = [
   { title: 'Dashboard', path: '/patient/dashboard', icon: DashboardSquare02Icon },
   { title: 'Medical Report', path: '/patient/records', icon: Note01Icon },
-  { title: 'Technical Files', path: '/patient/files', icon: Activity01Icon },
+  { title: 'Technical Files', path: '/patient/files', icon: Attachment01Icon },
   { title: 'Appointments', path: '/patient/appointments', icon: Calendar03Icon },
   { title: 'Contact Us', path: '/patient/contact', icon: Comment01Icon },
-  { title: 'Profile', path: '/patient/account', icon: UserIcon },
 ];
 
 export const PatientSidebar: React.FC = () => {
@@ -38,7 +40,23 @@ export const PatientSidebar: React.FC = () => {
     // Default to uncollapsed (false), but respect saved preference
     return saved !== null ? JSON.parse(saved) : false;
   });
-  const { branding, brandingError } = useAppContext();
+  const { branding, brandingError, user, setUser } = useAppContext();
+  const navigate = useNavigate();
+
+  const handleLogout = async () => {
+    if (user) {
+      try {
+        await axios.post('/api/logout', { 
+          user_id: user.id,
+          portal: 'patient' 
+        });
+      } catch (err) {
+        console.error("Logout logging failed", err);
+      }
+    }
+    setUser(null);
+    navigate('/login');
+  };
 
   useEffect(() => {
     const handleResize = () => {
@@ -59,6 +77,26 @@ export const PatientSidebar: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  const sidebarRef = useRef<HTMLElement>(null);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent | TouchEvent) => {
+      if (!isCollapsed) {
+        if (sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
+          setIsCollapsed(true);
+          localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+        }
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    document.addEventListener('touchstart', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isCollapsed]);
+
   const toggleSidebar = () => {
     const newState = !isCollapsed;
     setIsCollapsed(newState);
@@ -67,6 +105,7 @@ export const PatientSidebar: React.FC = () => {
 
   return (
     <aside
+      ref={sidebarRef}
       className={cn(
         "h-full border-r bg-card transition-all duration-300 ease-in-out z-40 group flex flex-col no-print overflow-x-hidden",
         isCollapsed ? "w-16" : "w-64"
@@ -108,6 +147,10 @@ export const PatientSidebar: React.FC = () => {
             <NavLink
               key={item.path}
               to={item.path}
+              onClick={() => {
+                setIsCollapsed(true);
+                localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+              }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 group/item relative",
                 isCollapsed ? "justify-center w-10 h-10 mx-auto" : "px-3 py-2.5 gap-3",
@@ -133,16 +176,79 @@ export const PatientSidebar: React.FC = () => {
           ))}
         </div>
 
-        <div className="px-3 mt-auto">
-          <Button
-            variant="ghost"
-            size="icon"
+        <div className="px-3 mt-auto space-y-1.5">
+          {/* Versioning */}
+          <div className={cn(
+            "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none",
+            isCollapsed ? "text-center" : "px-3"
+          )}>
+            <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
+          </div>
+
+          {/* Manage Account Link */}
+          <NavLink
+            to="/patient/account"
+            onClick={() => {
+              setIsCollapsed(true);
+              localStorage.setItem('legit_sidebar_collapsed', JSON.stringify(true));
+            }}
+            className={({ isActive }) => cn(
+              "flex items-center rounded-lg transition-all duration-200 group/manage relative h-10",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3",
+              isActive
+                ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                : "text-muted-foreground hover:bg-primary/10 hover:text-primary"
+            )}
+            title="Manage Account"
+          >
+            <HugeiconsIcon icon={AccountSetting01Icon} className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
+            {isCollapsed && (
+              <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
+                Manage Account
+              </div>
+            )}
+          </NavLink>
+
+          {/* Logout Button */}
+          <button
+            onClick={handleLogout}
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-rose-500 hover:bg-rose-500/10 hover:text-rose-600 border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/logout",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
+            title="Log out"
+          >
+            <HugeiconsIcon icon={Logout02Icon} className="h-5 w-5 shrink-0" />
+            {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
+            {isCollapsed && (
+              <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">
+                Log out
+              </div>
+            )}
+          </button>
+
+          {/* Separator */}
+          <div className="h-px bg-border my-1.5 mx-1" />
+
+          {/* Collapse/Expand Button */}
+          <button
             onClick={toggleSidebar}
-            className="w-full h-10 border-2 border-dashed border-primary/20 hover:border-primary/50 text-primary rounded-xl"
+            className={cn(
+              "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none",
+              isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
+            )}
             title={isCollapsed ? "Expand Sidebar" : "Collapse Sidebar"}
           >
-            {isCollapsed ? <HugeiconsIcon icon={ArrowRight01Icon} className="h-5 w-5" /> : <HugeiconsIcon icon={ArrowLeft01Icon} className="h-5 w-5" />}
-          </Button>
+            {isCollapsed ? (
+              <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />
+            ) : (
+              <>
+                <HugeiconsIcon icon={SidebarLeft01Icon} className="h-5 w-5 shrink-0" />
+                <span className="font-semibold text-sm">Collapse</span>
+              </>
+            )}
+          </button>
         </div>
       </div>
     </aside>

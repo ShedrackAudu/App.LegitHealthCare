@@ -1,5 +1,5 @@
 from flask import Blueprint, request, jsonify, current_app
-from flask_jwt_extended import get_jwt_identity
+from flask_jwt_extended import get_jwt_identity, jwt_required, get_jwt
 from models import (
     db, User, Role, Permission, AuditLog, SystemConfig, AccessRequest, TempAccessCode, 
     Notification, PatientPortalUser, BioData, ScreeningYearBioData, ConsultationData,
@@ -89,6 +89,13 @@ def get_audit_analytics():
         "mfa_adoption_percentage": round((active_2fa_count / max(1, total_users_count)) * 100)
     }
 
+    # 6. Retrieve latest 30 threat/activity vectors with locations
+    vectors_query = AuditLog.query.filter(
+        AuditLog.latitude.isnot(None),
+        AuditLog.longitude.isnot(None)
+    ).order_by(AuditLog.timestamp.desc()).limit(30).all()
+    threat_vectors = [v.to_dict() for v in vectors_query]
+
     return jsonify({
         "timeline": timeline,
         "action_breakdown": action_breakdown,
@@ -96,7 +103,8 @@ def get_audit_analytics():
         "failed_logins_24h": failed_logins,
         "total_logs": AuditLog.query.count(),
         "system_integrity": system_integrity,
-        "security_policies": security_policies
+        "security_policies": security_policies,
+        "threat_vectors": threat_vectors
     })
 
 @admin_bp.route('/api/admin/active-sessions', methods=['GET'])
@@ -140,6 +148,7 @@ def revoke_session(user_id):
     from datetime import datetime, timedelta
     user = User.query.get_or_404(user_id)
     user.last_seen_at = datetime.now() - timedelta(days=1)
+    user.session_revision = (user.session_revision or 1) + 1
     
     admin_id = get_jwt_identity()
     log = AuditLog(
@@ -167,35 +176,73 @@ def get_users():
     patients = PatientPortalUser.query.all()
     
     all_users = [u.to_dict() for u in staff]
+    
+    patient_staff_ids = [p.username.strip().lower() for p in patients if p.username]
+    bio_data_map = {}
+    
+    if patient_staff_ids:
+        # Bulk query DCP database
+        try:
+            dcp_engine = db.engines.get('dcp')
+            if dcp_engine:
+                from sqlalchemy import text
+                for chunk_start in range(0, len(patient_staff_ids), 1000):
+                    chunk = patient_staff_ids[chunk_start:chunk_start+1000]
+                    sql = text("SELECT staff_id, department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) IN :sids")
+                    with dcp_engine.connect() as conn:
+                        rows = conn.execute(sql, {"sids": tuple(chunk)}).fetchall()
+                        for row in rows:
+                            sid_lower = row[0].strip().lower()
+                            if sid_lower not in bio_data_map:
+                                bio_data_map[sid_lower] = {
+                                    "department": row[1],
+                                    "phone": row[2],
+                                    "first_name": row[3],
+                                    "last_name": row[4],
+                                    "section": "DCP"
+                                }
+        except Exception as e:
+            current_app.logger.error(f"Bulk dcp query failed in get_users: {e}")
+
+        # Bulk query DCT database
+        try:
+            dct_engine = db.engines.get('dct')
+            if dct_engine:
+                from sqlalchemy import text
+                for chunk_start in range(0, len(patient_staff_ids), 1000):
+                    chunk = patient_staff_ids[chunk_start:chunk_start+1000]
+                    sql = text("SELECT staff_id, department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) IN :sids")
+                    with dct_engine.connect() as conn:
+                        rows = conn.execute(sql, {"sids": tuple(chunk)}).fetchall()
+                        for row in rows:
+                            sid_lower = row[0].strip().lower()
+                            if sid_lower not in bio_data_map:
+                                bio_data_map[sid_lower] = {
+                                    "department": row[1],
+                                    "phone": row[2],
+                                    "first_name": row[3],
+                                    "last_name": row[4],
+                                    "section": "DCT"
+                                }
+        except Exception as e:
+            current_app.logger.error(f"Bulk dct query failed in get_users: {e}")
+
     for p in patients:
         p_dict = p.to_dict()
         p_dict['section'] = None
         p_dict['department'] = None
         
-        # Explicitly check each clinical database using its engine
-        for bind_key in ['dcp', 'dct']:
-            try:
-                engine = db.engines.get(bind_key)
-                if not engine: continue
-                
-                from sqlalchemy import text
-                sql = text("SELECT department, phone, first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
-                with engine.connect() as conn:
-                    result = conn.execute(sql, {"sid": p.username}).fetchone()
-                    if result:
-                        p_dict['section'] = bind_key.upper()
-                        # result is a Row object, access by index or name
-                        p_dict['department'] = result[0] 
-                        if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
-                            p_dict['phone'] = result[1]
-                        if result[2]:
-                            p_dict['first_name'] = result[2]
-                        if result[3]:
-                            p_dict['last_name'] = result[3]
-                        break
-            except Exception as e:
-                current_app.logger.error(f"Manual bind check failed for {bind_key}: {e}")
-                continue
+        sid_clean = p.username.strip().lower() if p.username else None
+        if sid_clean and sid_clean in bio_data_map:
+            bio = bio_data_map[sid_clean]
+            p_dict['section'] = bio['section']
+            p_dict['department'] = bio['department']
+            if not p_dict.get('phone') or p_dict.get('phone') == 'N/A':
+                p_dict['phone'] = bio['phone']
+            if bio['first_name']:
+                p_dict['first_name'] = bio['first_name']
+            if bio['last_name']:
+                p_dict['last_name'] = bio['last_name']
                 
         p_dict['id'] = f"p{p.id}" 
         all_users.append(p_dict)
@@ -267,6 +314,62 @@ def get_user_timeline(user_id):
         final_logs.append(log_dict)
             
     return jsonify(final_logs)
+
+@admin_bp.route('/api/admin/users/<string:user_id>/send-reminder', methods=['POST'])
+@require_permission('view_users')
+def send_reminder(user_id):
+    if not user_id.startswith('p'):
+        return jsonify({"error": "Only patient accounts can receive verification reminders."}), 400
+        
+    real_id = int(user_id[1:])
+    patient = PatientPortalUser.query.get_or_404(real_id)
+    
+    if patient.is_verified:
+        return jsonify({"error": "This patient account is already verified."}), 400
+
+    try:
+        from utils.email_utils import EmailService
+        from models import AppBranding
+        from datetime import datetime
+        
+        branding = AppBranding.query.first()
+        clinic_name = branding.clinic_name if branding and branding.clinic_name else "Legit HealthCare"
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+
+        app_url = current_app.config.get('FRONTEND_URL', current_app.config.get('APP_URL', 'http://localhost:5173'))
+        if logo_url and logo_url.startswith('/'):
+            backend_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+            logo_url = f"{backend_url.rstrip('/')}{logo_url}"
+
+        screening_year = str(datetime.now().year)
+
+        subject = f"Reminder: Complete Your Patient Account Verification - Legit HealthCare"
+        html_content = EmailService.get_registration_success_template(
+            first_name=patient.first_name,
+            year=screening_year,
+            clinic_name=clinic_name,
+            app_url=app_url,
+            logo_url=logo_url,
+            is_reminder=True
+        )
+
+        success = EmailService.send_email(patient.email, subject, html_content)
+        if success:
+            patient.last_reminder_sent = datetime.now()
+            db.session.commit()
+            
+            AuditLog.log_action(
+                action="MANUAL_SEND_VERIFICATION_REMINDER",
+                resource=f"Patient:{patient.username}",
+                details={"email": patient.email},
+                commit=True
+            )
+            return jsonify({"message": f"Verification reminder sent successfully to {patient.email}"}), 200
+        else:
+            return jsonify({"error": "Failed to send email. Check your SMTP settings."}), 500
+
+    except Exception as e:
+        return jsonify({"error": f"Error initiating reminder: {str(e)}"}), 500
 
 @admin_bp.route('/api/admin/users/<string:user_id>/roles', methods=['POST'])
 @require_permission('change_roles')
@@ -391,8 +494,52 @@ def get_audit_logs():
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 50, type=int)
     
-    # Fetch logs with user joined for performance if needed, but to_dict handles it
-    logs_pagination = AuditLog.query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page)
+    # Advanced filters
+    action = request.args.get('action', '').strip()
+    username = request.args.get('username', '').strip()
+    q = request.args.get('q', '').strip()
+    start_date = request.args.get('start_date', '').strip()
+    end_date = request.args.get('end_date', '').strip()
+    
+    from models import User
+    from datetime import datetime
+    
+    query = AuditLog.query
+    
+    if q:
+        query = query.outerjoin(User, AuditLog.user_id == User.id).filter(
+            (AuditLog.action.ilike(f"%{q}%")) |
+            (User.first_name.ilike(f"%{q}%")) |
+            (User.last_name.ilike(f"%{q}%")) |
+            (User.username.ilike(f"%{q}%"))
+        )
+        
+    if action:
+        query = query.filter(AuditLog.action.ilike(f"%{action}%"))
+        
+    if username:
+        query = query.join(User, AuditLog.user_id == User.id).filter(
+            (User.first_name.ilike(f"%{username}%")) |
+            (User.last_name.ilike(f"%{username}%")) |
+            (User.username.ilike(f"%{username}%"))
+        )
+        
+    if start_date:
+        try:
+            start_dt = datetime.fromisoformat(start_date.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp >= start_dt)
+        except ValueError:
+            pass
+            
+    if end_date:
+        try:
+            end_dt = datetime.fromisoformat(end_date.replace('Z', '+00:00'))
+            query = query.filter(AuditLog.timestamp <= end_dt)
+        except ValueError:
+            pass
+            
+    # Fetch logs ordered by newest first
+    logs_pagination = query.order_by(AuditLog.timestamp.desc()).paginate(page=page, per_page=per_page, error_out=False)
     
     return jsonify({
         "logs": [log.to_dict() for log in logs_pagination.items],
@@ -520,8 +667,14 @@ def request_access():
     return jsonify({"message": "Access request sent to hospital administration"}), 201
 
 @admin_bp.route('/api/admin/verify-access-code', methods=['POST'])
+@jwt_required()
 @limiter.limit("5 per minute")
 def verify_access_code():
+    claims = get_jwt()
+    portal = claims.get('portal', 'staff')
+    if portal == 'patient':
+        return jsonify({"error": "Patients cannot activate access keys"}), 403
+
     data = request.json
     code_str = data.get('code')
     user_id = get_jwt_identity()
@@ -567,6 +720,9 @@ def verify_access_code():
     )
     db.session.add(audit)
     db.session.commit()
+
+    # Force SQL Alchemy to refresh relationship collections (temp_codes) to include the new code
+    db.session.refresh(user)
     
     # Real-time notification to frontend
     try:
@@ -683,8 +839,33 @@ def export_screening_matrix():
         year = request.args.get('year', datetime.now().year, type=int)
         context = request.headers.get('X-Company-Context', 'General').upper()
         
-        # 1. Fetch all screening base records for the year
-        screening_base = ScreeningYearBioData.query.filter_by(screening_year=year).all()
+        # 1. Fetch all screening base records for the year, sorted naturally by patient_id ascending
+        screening_base = ScreeningYearBioData.query.filter_by(screening_year=year)\
+            .order_by(db.func.length(ScreeningYearBioData.patient_id).asc(), ScreeningYearBioData.patient_id.asc())\
+            .all()
+        
+        # Get all staff_ids to query other tables in bulk
+        staff_ids = [yp.staff_id for yp in screening_base]
+        
+        # Query other tables in bulk
+        bio_list = BioData.query.filter(BioData.staff_id.in_(staff_ids)).all() if staff_ids else []
+        consultation_list = ConsultationData.query.filter(ConsultationData.staff_id.in_(staff_ids), ConsultationData.screening_year == year).all() if staff_ids else []
+        fbc_list = FBCResult.query.filter(FBCResult.staff_id.in_(staff_ids), FBCResult.screening_year == year).all() if staff_ids else []
+        kft_list = KFTResult.query.filter(KFTResult.staff_id.in_(staff_ids), KFTResult.screening_year == year).all() if staff_ids else []
+        lipid_list = LipidResult.query.filter(LipidResult.staff_id.in_(staff_ids), LipidResult.screening_year == year).all() if staff_ids else []
+        lft_list = LFTResult.query.filter(LFTResult.staff_id.in_(staff_ids), LFTResult.screening_year == year).all() if staff_ids else []
+        special_list = SpecialTestsResult.query.filter(SpecialTestsResult.staff_id.in_(staff_ids), SpecialTestsResult.screening_year == year).all() if staff_ids else []
+        director_list = DirectorReview.query.filter(DirectorReview.staff_id.in_(staff_ids), DirectorReview.screening_year == year).all() if staff_ids else []
+        
+        # Map them using dictionaries for quick O(1) lookup
+        bio_dict = {b.staff_id: b for b in bio_list}
+        consultation_dict = {c.staff_id: c for c in consultation_list}
+        fbc_dict = {f.staff_id: f for f in fbc_list}
+        kft_dict = {k.staff_id: k for k in kft_list}
+        lipid_dict = {l.staff_id: l for l in lipid_list}
+        lft_dict = {l.staff_id: l for l in lft_list}
+        special_dict = {s.staff_id: s for s in special_list}
+        director_dict = {d.staff_id: d for d in director_list}
         
         data = []
         for yp in screening_base:
@@ -716,37 +897,35 @@ def export_screening_matrix():
                 "Overall Assessment": "", "Director Review Date": ""
             }
             
-            bio = BioData.query.filter_by(staff_id=yp.staff_id).first()
+            bio = bio_dict.get(yp.staff_id)
             if bio:
                 row.update({ "Middle Name": getattr(bio, 'middle_name', ''), "Gender": getattr(bio, 'gender', ''), "Age": getattr(bio, 'age', ''), "DOB": getattr(bio, 'dob').strftime('%Y-%m-%d') if getattr(bio, 'dob', None) else '', "Phone": getattr(bio, 'phone', ''), "Email": getattr(bio, 'email', ''), "Department": getattr(bio, 'department', ''), "Race": getattr(bio, 'race', ''), "Nationality": getattr(bio, 'nationality', '') })
                 
-            c = ConsultationData.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            c = consultation_dict.get(yp.staff_id)
             if c:
                 row.update({ "BP": c.bp, "Pulse": c.pulse, "SPO2": c.spo2, "HS": c.hs_status, "Palor": c.palor, "Jaundice": c.jaundice, "Murmur": c.murmur, "Chest Status": c.chest_status, "LUTS": c.luts, "Chronic Cough": c.chronic_cough, "Chest Pain": c.chronic_chest_pain, "Chest Infection": c.chest_infection, "Heart Dx": c.heart_dx, "DM Status": c.dm_status, "HTN Status": c.htn_status, "PSA": c.psa, "PSA Remark": c.psa_remark, "FBS": c.fbs, "RBS": c.rbs, "Sugar Remark": c.sugar_remark, "UA Result": c.ua_result, "UA Remark": c.ua_remark, "UA Remark Others": c.ua_remark_others, "Breast Exam": c.breast_exam, "Breast Remark": c.breast_remark, "Breast Others": c.breast_others, "Abdomen": c.abdomen, "Abdomen Others": c.abdomen_others, "Assessment HX PE": c.assessment_hx_pe, "Overall Lab Remark": c.overall_lab_remark, "Other Assessments": c.other_assessments, "Other Remarks": c.other_remarks, "Overall Assessment": c.overall_assessment, "Consulted By": c.consulted_by_name, "Consultation Date": c.created_at.strftime('%Y-%m-%d %H:%M') if c.created_at else '' })
-
-
                 
-            f = FBCResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            f = fbc_dict.get(yp.staff_id)
             if f:
                 row.update({ "PCV": f.pcv, "WBC": f.wbc, "HGB": f.hgb, "PLT": f.plt, "RBC": f.rbc, "LYMP PCT": f.lymp_percent, "LYMP ABS": f.lymp_abs, "GRA PCT": f.gra_percent, "GRA ABS": f.gra_abs, "MID PCT": f.mid_percent, "MID ABS": f.mid_abs, "MCV": f.mcv, "MCH": f.mch, "MCHC": f.mchc, "RDW": f.rdw, "PDW": f.pdw, "FBC Remark": f.fbc_remark })
                 
-            k = KFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            k = kft_dict.get(yp.staff_id)
             if k:
                 row.update({ "Potassium": k.potassium, "Sodium": k.sodium, "Chloride": k.chloride, "Calcium": k.bicarbonate_ca, "HCO3": k.hco3, "KFT Remark": k.kft_remark })
                 
-            li = LipidResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            li = lipid_dict.get(yp.staff_id)
             if li:
                 row.update({ "Total Cholesterol": li.total_cholesterol, "Triglycerides": li.triglycerides, "HDL": li.hdl, "LDL": li.ldl, "Lipid Remark": li.lp_remark })
                 
-            lf = LFTResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            lf = lft_dict.get(yp.staff_id)
             if lf:
                 row.update({ "AST": lf.ast, "ALT": lf.alt, "ALP": lf.alp, "TB": lf.tb, "CB": lf.cb, "Urea": lf.urea, "Creatinine": lf.creatinine, "LFT Remark": lf.lft_remark })
                 
-            s = SpecialTestsResult.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            s = special_dict.get(yp.staff_id)
             if s:
                 row.update({ "ECG": s.ecg_result, "ECG Remark": s.ecg_remark, "Spirometry": s.spirometry_result, "Spirometry Remark": s.spirometry_remark, "Audiometry": s.audiometry_result, "Audiometry Remark": s.audiometry_remark, "Weight": s.weight, "Height": s.height })
                 
-            dr = DirectorReview.query.filter_by(staff_id=yp.staff_id, screening_year=year).first()
+            dr = director_dict.get(yp.staff_id)
             if dr:
                 # Director overrides for vitals/assessments if populated
                 overrides = {

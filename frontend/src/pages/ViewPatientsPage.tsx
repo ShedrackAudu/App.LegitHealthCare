@@ -9,7 +9,8 @@ import {
   PlusSignIcon,
   EyeIcon,
   ArrowLeft01Icon,
-  ArrowRight01Icon
+  ArrowRight01Icon,
+  FilterIcon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -26,8 +27,10 @@ import {
     TableRow 
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
+import { Pagination } from '@/components/ui/pagination';
 import { toast } from 'react-hot-toast';
 
 const ViewPatientsPage: React.FC = () => {
@@ -38,22 +41,45 @@ const ViewPatientsPage: React.FC = () => {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
     const [totalItems, setTotalItems] = useState(0);
-    const [perPage] = useState(25);
+    const [perPage, setPerPage] = useState(25);
     const [searchQuery, setSearchQuery] = useState('');
+    // Filters State
+    const [departments, setDepartments] = useState<string[]>([]);
+    const [genderFilter, setGenderFilter] = useState('');
+    const [deptFilter, setDeptFilter] = useState('');
+    const [nationFilter, setNationFilter] = useState('');
+    const [minAge, setMinAge] = useState('');
+    const [maxAge, setMaxAge] = useState('');
+    const [showFilters, setShowFilters] = useState(false);
+    
+    const activeFiltersCount = [
+        genderFilter,
+        deptFilter,
+        nationFilter,
+        minAge,
+        maxAge
+    ].filter(Boolean).length;
     
     const [deleteModal, setDeleteModal] = useState({ open: false, staffId: '' });
     const [selectedPatient, setSelectedPatient] = useState<any>(null);
     const [detailsModalOpen, setDetailsModalOpen] = useState(false);
     const [deleting, setDeleting] = useState(false);
 
-    const fetchPatients = async (query = searchQuery, targetPage = page) => {
+    const fetchPatients = async (query = searchQuery, targetPage = page, pageSize = perPage, filters = { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge }) => {
         setLoading(true);
         try {
-            const url = query 
-                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${perPage}`
-                : `/api/patients/all?page=${targetPage}&per_page=${perPage}`;
+            let baseUrl = query 
+                ? `/api/patients/search?q=${query}&page=${targetPage}&per_page=${pageSize}`
+                : `/api/patients/all?page=${targetPage}&per_page=${pageSize}`;
             
-            const response = await axios.get(url, {
+            // Append filters
+            if (filters.gender) baseUrl += `&gender=${filters.gender}`;
+            if (filters.dept) baseUrl += `&department=${filters.dept}`;
+            if (filters.nation) baseUrl += `&nationality=${filters.nation}`;
+            if (filters.minA) baseUrl += `&min_age=${filters.minA}`;
+            if (filters.maxA) baseUrl += `&max_age=${filters.maxA}`;
+            
+            const response = await axios.get(baseUrl, {
                 headers: { 'X-Company-Context': activeSection }
             });
 
@@ -78,8 +104,20 @@ const ViewPatientsPage: React.FC = () => {
     };
 
     useEffect(() => {
-        fetchPatients(searchQuery, 1);
-    }, [activeSection, activeYear, user]);
+        const fetchConfigDepartments = async () => {
+            try {
+                const res = await axios.get('/api/config/departments');
+                setDepartments(res.data.map((d: any) => d.name));
+            } catch (err) {
+                console.error("Failed to load departments:", err);
+            }
+        };
+        fetchConfigDepartments();
+    }, []);
+
+    useEffect(() => {
+        fetchPatients(searchQuery, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+    }, [activeSection, activeYear, user, genderFilter, deptFilter, nationFilter, minAge, maxAge]);
 
     const handlePatientClick = (patient: any) => {
         setSelectedPatient(patient);
@@ -103,6 +141,16 @@ const ViewPatientsPage: React.FC = () => {
         }
     };
 
+    const clearFilters = () => {
+        setGenderFilter('');
+        setDeptFilter('');
+        setNationFilter('');
+        setMinAge('');
+        setMaxAge('');
+        setSearchQuery('');
+        fetchPatients('', 1, perPage, { gender: '', dept: '', nation: '', minA: '', maxA: '' });
+    };
+
     return (
         <MainLayout>
             <div className="space-y-6 animate-in fade-in duration-500">
@@ -118,22 +166,157 @@ const ViewPatientsPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <PatientSearch
-                        activeSection={activeSection}
-                        onSearch={(q) => {
-                            setSearchQuery(q);
-                            fetchPatients(q, 1);
-                        }}
-                        onSelect={(p) => {
-                            setSearchQuery(p.staff_id);
-                            fetchPatients(p.staff_id, 1);
-                        }}
-                        searching={loading}
-                        themeColor="emerald"
-                        placeholder="Search Staff ID or Name..."
-                        initialValue={searchQuery}
-                    />
+                    <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
+                        <div className="flex-1 min-w-[280px]">
+                            <PatientSearch
+                                activeSection={activeSection}
+                                onSearch={(q) => {
+                                    setSearchQuery(q);
+                                    fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                onSelect={(p) => {
+                                    setSearchQuery(p.staff_id);
+                                    fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                }}
+                                searching={loading}
+                                themeColor="emerald"
+                                placeholder="Search Staff ID or Name..."
+                                initialValue={searchQuery}
+                            />
+                        </div>
+                        <Button
+                            variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                        >
+                            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                            <span>Filters</span>
+                            {activeFiltersCount > 0 && (
+                                <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                    {activeFiltersCount}
+                                </Badge>
+                            )}
+                        </Button>
+                    </div>
                 </div>
+
+                {/* Collapsible Filters Panel */}
+                {showFilters && (
+                    <div className="bg-card/45 backdrop-blur-md p-6 rounded-2xl border border-slate-500/10 shadow-lg animate-in slide-in-from-top-4 duration-300 space-y-4">
+                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4">
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Gender</label>
+                                <select 
+                                    value={genderFilter} 
+                                    onChange={(e) => setGenderFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Genders</option>
+                                    <option value="Male">Male</option>
+                                    <option value="Female">Female</option>
+                                </select>
+                            </div>
+                            
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Department</label>
+                                <select 
+                                    value={deptFilter} 
+                                    onChange={(e) => setDeptFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all cursor-pointer"
+                                >
+                                    <option value="">All Departments</option>
+                                    {departments.map((dept) => (
+                                        <option key={dept} value={dept}>{dept}</option>
+                                    ))}
+                                </select>
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Nationality</label>
+                                <input 
+                                    type="text" 
+                                    placeholder="Nationality..." 
+                                    value={nationFilter} 
+                                    onChange={(e) => setNationFilter(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Min Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Min Age" 
+                                    value={minAge} 
+                                    onChange={(e) => setMinAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+
+                            <div className="flex flex-col gap-1.5">
+                                <label className="text-[10px] font-black uppercase text-muted-foreground tracking-wider">Max Age</label>
+                                <input 
+                                    type="number" 
+                                    placeholder="Max Age" 
+                                    value={maxAge} 
+                                    onChange={(e) => setMaxAge(e.target.value)}
+                                    className="bg-background/80 border border-slate-500/15 rounded-xl px-3 py-1.5 text-xs font-bold outline-none h-10 text-foreground hover:border-primary/50 focus:border-primary focus:ring-1 focus:ring-primary/20 transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="flex justify-end gap-2 border-t pt-4 border-dashed border-slate-500/15">
+                            <Button 
+                                variant="outline" 
+                                size="sm" 
+                                onClick={clearFilters}
+                                className="h-9 px-4 text-xs font-bold rounded-xl"
+                            >
+                                Reset All
+                            </Button>
+                        </div>
+                    </div>
+                )}
+
+                {/* Active Filter Badges */}
+                {activeFiltersCount > 0 && (
+                    <div className="flex flex-wrap gap-2 items-center bg-muted/20 p-3 rounded-xl border border-dashed border-slate-500/10">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground mr-1">Active Filters:</span>
+                        {genderFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Gender: {genderFilter}</span>
+                                <button onClick={() => setGenderFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {deptFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Dept: {deptFilter}</span>
+                                <button onClick={() => setDeptFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {nationFilter && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Nationality: {nationFilter}</span>
+                                <button onClick={() => setNationFilter('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {minAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Min Age: {minAge}</span>
+                                <button onClick={() => setMinAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        {maxAge && (
+                            <Badge variant="secondary" className="px-2.5 py-1 rounded-lg flex items-center gap-1.5 text-xs font-bold border bg-background text-foreground shadow-sm">
+                                <span>Max Age: {maxAge}</span>
+                                <button onClick={() => setMaxAge('')} className="hover:text-red-500 transition-colors">✕</button>
+                            </Badge>
+                        )}
+                        <button onClick={clearFilters} className="text-xs font-bold text-red-500 hover:text-red-600 transition-colors underline ml-auto">
+                            Clear all
+                        </button>
+                    </div>
+                )}
 
                 <Card className="border-2 shadow-xl overflow-hidden bg-card">
                     <div className="bg-muted/30 border-b p-4 flex justify-between items-center">
@@ -147,13 +330,7 @@ const ViewPatientsPage: React.FC = () => {
                         </Button>
                     </div>
                     <CardContent className="p-0">
-                        {loading && patients.length === 0 ? (
-                            <div className="flex flex-col items-center justify-center p-20 space-y-4">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 animate-spin text-primary" />
-                                <p className="text-muted-foreground font-bold animate-pulse uppercase tracking-[0.2em] text-xs">Loading Directory...</p>
-                            </div>
-                        ) : (
-                            <div className="overflow-x-auto">
+                        <div className="overflow-x-auto">
                                 <Table>
                                     <TableHeader className="bg-muted/50">
                                         <TableRow className="hover:bg-transparent border-b-2">
@@ -173,7 +350,57 @@ const ViewPatientsPage: React.FC = () => {
                                         </TableRow>
                                     </TableHeader>
                                     <TableBody>
-                                        {patients.length === 0 ? (
+                                        {loading ? (
+                                            Array.from({ length: 8 }).map((_, i) => (
+                                                <TableRow key={i} className="animate-pulse">
+                                                    <TableCell>
+                                                        <Skeleton className="h-5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <div className="flex items-center gap-2">
+                                                            <Skeleton className="w-6 h-6 rounded-full bg-muted/40 animate-pulse shrink-0" />
+                                                            <Skeleton className="h-3.5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-12 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3.5 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-5 w-16 bg-muted/40 rounded-full animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-4 w-12 bg-muted/40 rounded-full animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-6 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-20 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-28 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-12 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell>
+                                                        <Skeleton className="h-3 w-16 bg-muted/40 rounded animate-pulse" />
+                                                    </TableCell>
+                                                    <TableCell className="text-right">
+                                                        <div className="flex justify-end gap-1">
+                                                            <Skeleton className="h-8 w-8 bg-muted/40 rounded animate-pulse" />
+                                                            <Skeleton className="h-8 w-8 bg-muted/40 rounded animate-pulse" />
+                                                        </div>
+                                                    </TableCell>
+                                                </TableRow>
+                                            ))
+                                        ) : patients.length === 0 ? (
                                             <TableRow>
                                                 <TableCell colSpan={13} className="h-[28rem] border-0">
                                                     <div className="flex flex-col items-center justify-center p-8 text-center space-y-4">
@@ -281,34 +508,26 @@ const ViewPatientsPage: React.FC = () => {
                                     </TableBody>
                                 </Table>
                             </div>
-                        )}
+                        
                     </CardContent>
                     
                     {/* Pagination Footer */}
-                    <div className="bg-muted/30 border-t p-4 flex items-center justify-between">
-                        <div className="text-xs font-bold text-muted-foreground uppercase tracking-widest">
-                            Page {page} of {totalPages}
-                        </div>
-                        <div className="flex gap-2">
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={page <= 1 || loading}
-                                onClick={() => fetchPatients(searchQuery, page - 1)}
-                                className="font-bold border-2"
-                            >
-                                <HugeiconsIcon icon={ArrowLeft01Icon} className="mr-2 h-4 w-4" /> Prev
-                            </Button>
-                            <Button 
-                                variant="outline" 
-                                size="sm" 
-                                disabled={page >= totalPages || loading}
-                                onClick={() => fetchPatients(searchQuery, page + 1)}
-                                className="font-bold border-2"
-                            >
-                                Next <HugeiconsIcon icon={ArrowRight01Icon} className="ml-2 h-4 w-4" />
-                            </Button>
-                        </div>
+                    <div className="bg-muted/30 border-t px-8 py-2">
+                        <Pagination
+                            currentPage={page}
+                            totalItems={totalItems}
+                            perPage={perPage}
+                            onPageChange={(newPage) => {
+                                setPage(newPage);
+                                fetchPatients(searchQuery, newPage, perPage);
+                            }}
+                            onPerPageChange={(newPerPage) => {
+                                setPerPage(newPerPage);
+                                setPage(1);
+                                fetchPatients(searchQuery, 1, newPerPage);
+                            }}
+                            loading={loading}
+                        />
                     </div>
                 </Card>
 

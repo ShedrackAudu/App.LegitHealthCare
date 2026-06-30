@@ -58,7 +58,7 @@ services:
     name: legit-healthcare-api
     runtime: python
     buildCommand: pip install -r requirements.txt
-    startCommand: gunicorn --worker-class gevent -w 1 app:app
+    startCommand: gunicorn -k geventwebsocket.gunicorn.workers.GeventWebSocketWorker -w 1 app:app
     rootDir: backend
     plan: starter
     disk:

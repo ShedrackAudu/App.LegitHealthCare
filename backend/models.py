@@ -31,7 +31,8 @@ class RoutingSession(Session):
                     'temp_access_codes', 'access_requests', 'system_config', 
                     'report_verifications', 'chat_messages', 
                     'chat_groups', 'chat_group_members', 'user_contacts', 'notifications',
-                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions'
+                    'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions',
+                    'report_parameters'
                 ]:
                     return _db.engine
                 
@@ -105,6 +106,11 @@ class StaffUser(db.Model):
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
     created_at = db.Column(db.DateTime, default=datetime.now)
     
+    # Security columns (Phase 1 & 2)
+    session_revision = db.Column(db.Integer, default=1, nullable=False)
+    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
+    locked_until = db.Column(db.DateTime, nullable=True)
+    
     contacts = db.relationship('UserContact', backref='user', lazy=True, cascade="all, delete-orphan")
     roles = db.relationship('Role', secondary=user_roles, backref=db.backref('assigned_users', lazy='dynamic'))
 
@@ -119,7 +125,7 @@ class StaffUser(db.Model):
             now = datetime.now()
             for t in self.temp_codes:
                 if t.permission and t.permission.name == permission_name:
-                    if not t.is_revoked:
+                    if not t.is_revoked and t.times_used > 0:
                         if not t.expires_at or t.expires_at > now:
                             return True
         return False
@@ -151,7 +157,7 @@ class StaffUser(db.Model):
                     "permission_name": t.permission.name if t.permission else "Unknown",
                     "is_revoked": t.is_revoked,
                     "expires_at": t.expires_at.isoformat() if t.expires_at else None
-                } for t in self.temp_codes if t.permission
+                } for t in self.temp_codes if t.permission and t.times_used > 0
             ] if hasattr(self, 'temp_codes') else []
         }
 
@@ -182,6 +188,11 @@ class PatientPortalUser(db.Model):
     
     created_at = db.Column(db.DateTime, default=datetime.now)
     last_seen_at = db.Column(db.DateTime, default=datetime.now)
+    
+    # Security columns (Phase 1 & 2)
+    session_revision = db.Column(db.Integer, default=1, nullable=False)
+    failed_login_attempts = db.Column(db.Integer, default=0, nullable=False)
+    locked_until = db.Column(db.DateTime, nullable=True)
 
     def set_password(self, password):
         self.password_hash = bcrypt.generate_password_hash(password).decode('utf-8')
@@ -310,6 +321,37 @@ class AISettings(db.Model):
     api_key = db.Column(db.String(255), nullable=True)
     model_selection = db.Column(db.String(50), default="gpt-4o")
     sample_comments = db.Column(db.Text, default="[]") 
+    
+    # New columns for test-specific prompts
+    prompt_fbc = db.Column(db.Text, default=(
+        "You are a medical assistant analyzing patient Full Blood Count (FBC) results. "
+        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
+        "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
+    ))
+    prompt_lipid = db.Column(db.Text, default=(
+        "You are a medical assistant analyzing patient Lipid Profile results. "
+        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
+        "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
+    ))
+    prompt_lft = db.Column(db.Text, default=(
+        "You are a medical assistant analyzing patient Liver Function Test (LFT) results. "
+        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. For example, if Conjugated Bilirubin (CB) is 0.35 mg/dL and the reference range is 0-0.4 mg/dL, it is NORMAL. Treat all values within the ranges as normal. "
+        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
+        "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
+    ))
+    prompt_kft = db.Column(db.Text, default=(
+        "You are a medical assistant analyzing patient Kidney Function Test (KFT) results. "
+        "With your expert knowledge on laboratory tests and general health related matters, review the values against their reference ranges and write a very short summary (maximum of 130 characters) for the remark field. "
+        "You MUST strictly adhere to the reference ranges provided in the user's input. Do NOT rely on your pre-trained clinical ranges if they differ. Do NOT consider a value high, low, elevated, or abnormal if it falls within the specified normal reference range. Treat all values within the ranges as normal. "
+        "Avoid mentioning the test type and anything about the ranges in the comments/remark. "
+        "Be direct, highly concise, and stay strictly under the 130 character limit. No extra details, intro, or formatting. Just the plain text remark."
+    ))
+    
     updated_at = db.Column(db.DateTime, default=datetime.now, onupdate=datetime.now)
 
 class AppBranding(db.Model):
@@ -405,6 +447,25 @@ class Nationality(db.Model):
     name = db.Column(db.String(100), nullable=False, unique=True)
     created_at = db.Column(db.DateTime, default=datetime.now)
 
+class ReportParameter(db.Model):
+    __tablename__ = 'report_parameters'
+    id = db.Column(db.String(50), primary_key=True)  # unique string key like 'fbs', 'pcv', etc.
+    category = db.Column(db.String(50), nullable=False)  # e.g., 'blood_sugar', 'fbc', 'kft', 'lipid', 'lft', 'ua', 'psa'
+    parameter_name = db.Column(db.String(100), nullable=False)
+    reference_value = db.Column(db.String(255), nullable=False)
+    unit = db.Column(db.String(50), nullable=True)
+    display_order = db.Column(db.Integer, default=0)
+
+    def to_dict(self):
+        return {
+            "id": self.id,
+            "category": self.category,
+            "parameter_name": self.parameter_name,
+            "reference_value": self.reference_value,
+            "unit": self.unit or "",
+            "display_order": self.display_order
+        }
+
 class BioData(db.Model):
     __tablename__ = 'bio_data'
     id = db.Column(db.Integer, primary_key=True)
@@ -453,6 +514,19 @@ class QueueEntry(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.now)
     queue_number = db.Column(db.Integer, nullable=True)
 
+class StaffPatientSeen(db.Model):
+    __tablename__ = 'staff_patient_seen'
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('users.id'), nullable=False, index=True)
+    staff_id = db.Column(db.String(50), nullable=False, index=True)
+    screening_year = db.Column(db.Integer, nullable=False, index=True)
+    department = db.Column(db.String(50), nullable=False, index=True) # 'Consultation', 'Spirometry', 'Audiometry', 'ECG'
+    created_at = db.Column(db.DateTime, default=datetime.now)
+
+    __table_args__ = (
+        db.UniqueConstraint('user_id', 'staff_id', 'screening_year', 'department', name='_user_patient_year_dept_uc'),
+    )
+
 class ConsultationData(db.Model):
     __tablename__ = 'consultation_data'
     id = db.Column(db.Integer, primary_key=True)
@@ -488,7 +562,7 @@ class ConsultationData(db.Model):
     breast_others = db.Column(db.String(255))
     abdomen = db.Column(db.String(50))
     abdomen_others = db.Column(db.String(255))
-    assessment_hx_pe = db.Column(db.String(100)) # Satisfactory...
+    assessment_hx_pe = db.Column(db.Text) # Satisfactory...
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
@@ -620,7 +694,7 @@ class DirectorReview(db.Model):
     murmur = db.Column(db.String(10))
     chest_status = db.Column(db.String(50))
     
-    assessment_hx_pe = db.Column(db.String(100))
+    assessment_hx_pe = db.Column(db.Text)
     other_assessments = db.Column(db.Text)
     overall_lab_remark = db.Column(db.Text)
     other_remarks = db.Column(db.Text)
@@ -758,6 +832,12 @@ class AuditLog(db.Model):
     details = db.Column(db.Text) # JSON string
     ip_address = db.Column(db.String(45))
     timestamp = db.Column(db.DateTime, default=datetime.now)
+    
+    # Location details (Phase 3)
+    country = db.Column(db.String(100), nullable=True)
+    city = db.Column(db.String(100), nullable=True)
+    latitude = db.Column(db.Float, nullable=True)
+    longitude = db.Column(db.Float, nullable=True)
 
     user = db.relationship('StaffUser', primaryjoin='AuditLog.user_id == StaffUser.id', foreign_keys=[user_id], backref=db.backref('audit_logs', lazy=True))
 
@@ -822,6 +902,19 @@ class AuditLog(db.Model):
                 kwargs['details'] = json.dumps(details_data)
         except Exception:
             pass
+
+        # Resolve IP Location (Phase 3)
+        ip = kwargs.get('ip_address')
+        if ip:
+            try:
+                from utils.geoip import resolve_ip_location
+                loc = resolve_ip_location(ip)
+                kwargs['country'] = loc.get('country')
+                kwargs['city'] = loc.get('city')
+                kwargs['latitude'] = loc.get('lat')
+                kwargs['longitude'] = loc.get('lng')
+            except Exception:
+                pass
 
         super().__init__(*args, **kwargs)
 
@@ -939,14 +1032,45 @@ class AuditLog(db.Model):
 
         user_name = "System"
         portal = details_data.get('portal', 'staff')
+        patient_name = None
+        patient_staff_id = None
         
+        # 1. Check if resource is Patient-related
+        if self.resource and self.resource.startswith("Patient:"):
+            parts = self.resource.split(":")
+            potential_id = parts[1] if len(parts) > 1 else None
+            if potential_id:
+                try:
+                    bio = BioData.query.filter_by(staff_id=potential_id).first()
+                    if not bio:
+                        bio = BioData.query.filter_by(phone=potential_id).first()
+                    if bio:
+                        middle = f" {bio.middle_name}" if bio.middle_name else ""
+                        patient_name = f"{bio.first_name}{middle} {bio.last_name}"
+                        patient_staff_id = bio.staff_id
+                except Exception:
+                    pass
+
+        # 2. Check if originator is Patient
         if portal == 'patient':
             if self.user_id:
                 try:
                     # Look up in PatientPortalUser (which uses 'patients' bind)
                     patient = PatientPortalUser.query.get(self.user_id)
                     if patient:
-                        user_name = f"{patient.first_name} {patient.last_name} (Patient)"
+                        bio = BioData.query.filter_by(staff_id=patient.username).first()
+                        if not bio:
+                            bio = BioData.query.filter_by(phone=patient.phone).first()
+                        
+                        if bio:
+                            middle = f" {bio.middle_name}" if bio.middle_name else ""
+                            patient_name = f"{bio.first_name}{middle} {bio.last_name}"
+                            patient_staff_id = bio.staff_id
+                            user_name = f"{patient_name} (Patient)"
+                        else:
+                            patient_name = f"{patient.first_name} {patient.last_name}"
+                            patient_staff_id = patient.username
+                            user_name = f"{patient_name} (Patient)"
                     else:
                         user_name = f"Patient {self.user_id}"
                 except:
@@ -973,7 +1097,13 @@ class AuditLog(db.Model):
             "resource": self.resource,
             "details": details_data,
             "ip_address": self.ip_address,
-            "timestamp": self.timestamp.isoformat()
+            "timestamp": self.timestamp.isoformat(),
+            "patient_name": patient_name,
+            "patient_staff_id": patient_staff_id,
+            "country": self.country,
+            "city": self.city,
+            "latitude": self.latitude,
+            "longitude": self.longitude
         }
 
 
@@ -1230,3 +1360,129 @@ def on_audit_log_insert(mapper, connection, target):
     except Exception as e:
         import sys
         sys.stderr.write(f"[AUDIT LOG SOCKET EMIT ERROR] {e}\n")
+
+
+@event.listens_for(Session, 'before_flush')
+def before_flush_audit(session, flush_context, instances):
+    if getattr(session, '_in_audit_listener', False):
+        return
+    session._in_audit_listener = True
+    try:
+        new_audit_logs = []
+        for obj in session.dirty:
+            model_name = obj.__class__.__name__
+            if model_name not in [
+                'BioData', 'PatientPortalUser', 'ScreeningYearBioData', 
+                'ConsultationData', 'FBCResult', 'KFTResult', 'LipidResult', 
+                'LFTResult', 'SpecialTestsResult', 'DirectorReview'
+            ]:
+                continue
+                
+            from sqlalchemy.orm import attributes
+            from sqlalchemy import inspect
+            
+            state = inspect(obj)
+            before_state = {}
+            after_state = {}
+            changed_fields = []
+            
+            staff_id = getattr(obj, 'staff_id', None)
+            if not staff_id and model_name == 'PatientPortalUser':
+                staff_id = getattr(obj, 'username', None)
+                
+            for attr in state.mapper.column_attrs:
+                hist = attributes.get_history(obj, attr.key)
+                if hist.has_changes():
+                    if attr.key in ['updated_at', 'last_login', 'last_seen_at', 'password_hash', 'otp_code', 'otp_expiry']:
+                        continue
+                        
+                    old_val = hist.deleted[0] if hist.deleted else None
+                    new_val = hist.added[0] if hist.added else getattr(obj, attr.key)
+                    
+                    if old_val == new_val:
+                        continue
+                        
+                    def serialize_val(val):
+                        if val is None:
+                            return None
+                        from datetime import datetime, date
+                        from decimal import Decimal
+                        if isinstance(val, (datetime, date)):
+                            return val.isoformat()
+                        if isinstance(val, Decimal):
+                            return float(val)
+                        return val
+                        
+                    before_state[attr.key] = serialize_val(old_val)
+                    after_state[attr.key] = serialize_val(new_val)
+                    changed_fields.append(attr.key)
+                    
+            if changed_fields:
+                user_id = None
+                ip_address = None
+                portal_type = 'staff'
+                try:
+                    from flask_jwt_extended import get_jwt_identity, get_jwt
+                    from utils.ip import get_client_ip
+                    user_id = get_jwt_identity()
+                    ip_address = get_client_ip()
+                    claims = get_jwt()
+                    portal_type = claims.get('portal', 'staff')
+                except Exception:
+                    pass
+                    
+                if not user_id:
+                    try:
+                        from flask import session as flask_session
+                        user_id = flask_session.get('user_id')
+                    except Exception:
+                        pass
+                        
+                details = {
+                    "action_type": "edit",
+                    "model": model_name,
+                    "staff_id": staff_id,
+                    "changed_fields": changed_fields,
+                    "before": before_state,
+                    "after": after_state,
+                    "portal": portal_type
+                }
+                
+                screening_year = getattr(obj, 'screening_year', None)
+                if screening_year:
+                    details["screening_year"] = screening_year
+                    
+                resource_str = f"Patient:{staff_id}" if staff_id else f"{model_name}:{getattr(obj, 'id', 'unknown')}"
+                
+                action_name = f"Edit Patient {model_name.replace('Result', '').replace('Data', '').replace('Review', '')}"
+                if model_name == 'PatientPortalUser':
+                    action_name = "Edit Patient Portal Account"
+                elif model_name == 'SpecialTestsResult':
+                    edited_tests = []
+                    if any(f in changed_fields for f in ['ecg_result', 'ecg_remark']):
+                        edited_tests.append("ECG")
+                    if any(f in changed_fields for f in ['spirometry_result', 'spirometry_remark', 'weight', 'height']):
+                        edited_tests.append("Spirometry")
+                    if any(f in changed_fields for f in ['audiometry_result', 'audiometry_remark']):
+                        edited_tests.append("Audiometry")
+                    if edited_tests:
+                        action_name = f"Edit Patient {', '.join(edited_tests)}"
+                    else:
+                        action_name = "Edit Patient Special Tests"
+                    
+                log = AuditLog(
+                    user_id=user_id,
+                    action=action_name,
+                    resource=resource_str,
+                    details=json.dumps(details),
+                    ip_address=ip_address
+                )
+                new_audit_logs.append(log)
+                
+        for log in new_audit_logs:
+            session.add(log)
+    except Exception as e:
+        import sys
+        sys.stderr.write(f"[AUDIT LOG BEFORE FLUSH ERROR] {e}\n")
+    finally:
+        session._in_audit_listener = False

@@ -32,6 +32,23 @@ WHITE  = colors.white
 W, H = A4  # 595.28 × 841.89 pts
 PL, PR, PT, PB = 12*mm, 12*mm, 8*mm, 8*mm  # page margins
 
+# ── Font Registration (Open Sans) ─────────────────────────────────────────────
+FONT_REGULAR = 'Helvetica'
+FONT_BOLD = 'Helvetica-Bold'
+
+try:
+    import os
+    _base_dir = os.path.dirname(os.path.abspath(__file__))
+    _reg_path = os.path.join(_base_dir, 'fonts', 'OpenSans-Regular.ttf')
+    _bold_path = os.path.join(_base_dir, 'fonts', 'OpenSans-Bold.ttf')
+    if os.path.exists(_reg_path) and os.path.exists(_bold_path):
+        pdfmetrics.registerFont(TTFont('OpenSans', _reg_path))
+        pdfmetrics.registerFont(TTFont('OpenSans-Bold', _bold_path))
+        FONT_REGULAR = 'OpenSans'
+        FONT_BOLD = 'OpenSans-Bold'
+except Exception as e:
+    print("Failed to register Open Sans font:", e)
+
 
 def _load_image(path_or_url: str, width_mm: float, height_mm: float):
     """Load an image from a local filesystem path, return an RL Image or None."""
@@ -78,7 +95,7 @@ def _para(text, size=10, bold=False, color=BLACK, align=TA_LEFT, leading=None):
     style = ParagraphStyle(
         'custom',
         fontSize=size,
-        fontName='Helvetica-Bold' if bold else 'Helvetica',
+        fontName=FONT_BOLD if bold else FONT_REGULAR,
         textColor=color,
         alignment=align,
         leading=leading or size * 1.2,
@@ -165,7 +182,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         f'DANGOTE CEMENT {_fmt_section(section)}, OBAJANA, KOGI STATE.'
     )
     title_style = ParagraphStyle(
-        'title', fontSize=11, fontName='Helvetica-Bold', textColor=RED,
+        'title', fontSize=11, fontName=FONT_BOLD, textColor=RED,
         alignment=TA_CENTER, leading=14, spaceAfter=2*mm
     )
     story.append(Paragraph(title_text, title_style))
@@ -181,7 +198,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
 
     full_name_api = bio.get('full_name')
     full_name = mk_name(bio.get('first_name',''), bio.get('middle_name',''), bio.get('last_name',''), full=full_name_api)
-    name_style = ParagraphStyle('name', fontSize=13, fontName='Helvetica-Bold',
+    name_style = ParagraphStyle('name', fontSize=13, fontName=FONT_BOLD,
                                 textColor=colors.black, leading=16, spaceAfter=1*mm)
     story.append(Paragraph(full_name, name_style))
     story.append(HRFlowable(width=usable_w, thickness=1.5, color=colors.black, spaceAfter=1*mm))
@@ -229,7 +246,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     # 5. Section title ─────────────────────────────────────────────
     def section_title(text):
         st = ParagraphStyle(
-            'sec', fontSize=11, fontName='Helvetica-Bold', textColor=TEAL,
+            'sec', fontSize=11, fontName=FONT_BOLD, textColor=TEAL,
             alignment=TA_CENTER, leading=14
         )
         return [
@@ -241,11 +258,11 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     story.extend(section_title('LAB FINDINGS / REPORT'))
 
     # 6. Lab results table ─────────────────────────────────────────
-    th_style = ParagraphStyle('th', fontSize=8, fontName='Helvetica-Bold',
+    th_style = ParagraphStyle('th', fontSize=8, fontName=FONT_BOLD,
                               textColor=BLACK, alignment=TA_LEFT)
-    td_style = ParagraphStyle('td', fontSize=8, fontName='Helvetica',
+    td_style = ParagraphStyle('td', fontSize=8, fontName=FONT_REGULAR,
                               textColor=GREY, alignment=TA_LEFT, leading=10)
-    td_bold  = ParagraphStyle('tdb', fontSize=8, fontName='Helvetica-Bold',
+    td_bold  = ParagraphStyle('tdb', fontSize=8, fontName=FONT_BOLD,
                               textColor=BLACK, alignment=TA_LEFT, leading=10)
 
     def td(t, bold=False): return Paragraph(str(t or '-'), td_bold if bold else td_style)
@@ -258,6 +275,54 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     lipid = lipid or {}
     consult = consult or {}
 
+    # Custom Report Parameters
+    report_parameters = report_data.get('report_parameters') or {}
+    import html
+    def get_param(param_id, default_name, default_range, default_unit):
+        p = report_parameters.get(param_id) or {}
+        name = p.get('parameter_name', default_name)
+        val_range = p.get('reference_value', default_range)
+        unit = p.get('unit', default_unit)
+        
+        def clean_val(v):
+            if not v: return ''
+            escaped = html.escape(str(v))
+            escaped = escaped.replace('&lt;br/&gt;', '<br/>').replace('&lt;br&gt;', '<br/>')
+            return escaped.replace('\n', '<br/>')
+            
+        return clean_val(name), clean_val(val_range), clean_val(unit)
+
+    fbs_name, fbs_ref, fbs_unit = get_param('fbs', 'FBS', '70-99', 'ml/dL')
+    rbs_name, rbs_ref, rbs_unit = get_param('rbs', 'RBS', '&lt;200', 'ml/dL')
+    
+    pcv_name, pcv_ref, pcv_unit = get_param('pcv', 'PCV', '36-53.9', '%')
+    wbc_name, wbc_ref, wbc_unit = get_param('wbc', 'WBC', '3-11', 'x109/L')
+    lymph_name, lymph_ref, lymph_unit = get_param('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10\u2079/L')
+    neut_name, neut_ref, neut_unit = get_param('neutrophil', 'Neutrophil', '1.5-8.0', 'x10\u2079/L')
+    mixed_name, mixed_ref, mixed_unit = get_param('mixed', 'Mixed', '0.1-1.8', 'x10\u2079/L')
+    plat_name, plat_ref, plat_unit = get_param('platelets', 'Platelets', '100-450', 'x109/L')
+    
+    k_name, k_ref, k_unit = get_param('potassium', 'Potassium', '3.5-5.0', 'mmol/L')
+    na_name, na_ref, na_unit = get_param('sodium', 'Sodium', '135-145', 'mmol/L')
+    cl_name, cl_ref, cl_unit = get_param('chloride', 'Chloride', '97-107', 'mmol/L')
+    hco3_name, hco3_ref, hco3_unit = get_param('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L')
+    urea_name, urea_ref, urea_unit = get_param('urea', 'Urea', '2.5-8.33', 'mmol/L')
+    creat_name, creat_ref, creat_unit = get_param('creatinine', 'Cretinine', 'Male: 80-133<br/>Female: 62-115', 'umol/L<br/>umol/L')
+    
+    tcho_name, tcho_ref, tcho_unit = get_param('total_cholesterol', 'Total Cholesterol', '&lt;200', 'mg/dL')
+    tg_name, tg_ref, tg_unit = get_param('triglycerides', 'Trigracerides', 'Male: &lt;150<br/>Female: &lt;150', 'mg/dL<br/>mg/dL')
+    hdl_name, hdl_ref, hdl_unit = get_param('hdl', 'HDL-c', 'Male: =&gt;40<br/>Female: =&gt;40', 'mg/dL<br/>mg/dL')
+    ldl_name, ldl_ref, ldl_unit = get_param('ldl', 'LDL-c', '&lt;130', 'mg/dL')
+    
+    ast_name, ast_ref, ast_unit = get_param('ast', 'AST', '0-46', 'U/L')
+    alt_name, alt_ref, alt_unit = get_param('alt', 'ALT', '0-49', 'U/L')
+    alp_name, alp_ref, alp_unit = get_param('alp', 'ALP', 'Male: 80-306<br/>Female: 64-306', 'U/L<br/>U/L')
+    tb_name, tb_ref, tb_unit = get_param('tb', 'TB', '0-1.2', 'mg/dL')
+    cb_name, cb_ref, cb_unit = get_param('cb', 'CB', '0-0.4', 'mg/dL')
+    
+    ua_name, ua_ref, ua_unit = get_param('ua', 'Sugar & Protein', 'NA', '')
+    psa_name, psa_ref, psa_unit = get_param('psa', 'PSA', 'NA', '')
+
     col_ws = [35*mm, 28*mm, 20*mm, 32*mm, 18*mm, 34*mm]
 
     # header row
@@ -265,43 +330,43 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
         [th('INVESTIGATION'), th('PARAMETER'), th('RESULT'), th('REF. VALUE'), th('UNIT'), th('REMARK')],
         
         # Blood Sugar
-        [td('Blood Sugar', True), td('FBS'), td(consult.get('fbs')), td('70-99'), td('ml/dL'), td(consult.get('sugar_remark'))],
-        ['', td('RBS'), td(consult.get('rbs')), td('&lt;200'), td('ml/dL'), ''],
+        [td('Blood Sugar', True), td(fbs_name), td(consult.get('fbs')), td(fbs_ref), td(fbs_unit), td(consult.get('sugar_remark'))],
+        ['', td(rbs_name), td(consult.get('rbs')), td(rbs_ref), td(rbs_unit), ''],
         
         # FBC
-        [td('FBC', True), td('PCV'), td(fbc.get('pcv')), td('34-53.9'), td('%'), td(fbc.get('remark'))],
-        ['', td('WBC'), td(fbc.get('wbc')), td('3-11'), td('x109/L'), ''],
-        ['', td('Lymphocryte'), td(fbc.get('lymp_percent')), td('19.1-48'), td('%'), ''],
-        ['', td('Neutrophil'), td(fbc.get('gra_percent')), td('43.6-73.3'), td('%'), ''],
-        ['', td('Mixed'), td(fbc.get('mid_percent')), td('4.5-12.1'), td('%'), ''],
-        ['', td('Platelets'), td(fbc.get('plt')), td('100-450'), td('x109/L'), ''],
+        [td('FBC', True), td(pcv_name), td(fbc.get('pcv')), td(pcv_ref), td(pcv_unit), td(fbc.get('remark'))],
+        ['', td(wbc_name), td(fbc.get('wbc')), td(wbc_ref), td(wbc_unit), ''],
+        ['', td(lymph_name), td(fbc.get('lymp_abs')), td(lymph_ref), td(lymph_unit), ''],
+        ['', td(neut_name), td(fbc.get('gra_abs')), td(neut_ref), td(neut_unit), ''],
+        ['', td(mixed_name), td(fbc.get('mid_abs')), td(mixed_ref), td(mixed_unit), ''],
+        ['', td(plat_name), td(fbc.get('plt')), td(plat_ref), td(plat_unit), ''],
         
         # Kidney Function
-        [td('Kidney Function', True), td('Potassium'), td(kft.get('potassium')), td('3.5-5.0'), td('mmol/L'), td(kft.get('remark'))],
-        ['', td('Sodium'), td(kft.get('sodium')), td('135-145'), td('mmol/L'), ''],
-        ['', td('Chloride'), td(kft.get('chloride')), td('97-107'), td('mmol/L'), ''],
-        ['', td('Bicarbonate'), td(kft.get('hco3')), td('20-31'), td('mmol/L'), ''],
-        ['', td('Urea'), td(lft.get('urea')), td('2.5-9.33'), td('mmol/L'), ''],
-        ['', td('Cretinine'), td(lft.get('creatinine')), td('Male: 80-133<br/>Female: 62-115'), td('umol/L<br/>umol/L'), ''],
+        [td('Kidney Function', True), td(k_name), td(kft.get('potassium')), td(k_ref), td(k_unit), td(kft.get('remark'))],
+        ['', td(na_name), td(kft.get('sodium')), td(na_ref), td(na_unit), ''],
+        ['', td(cl_name), td(kft.get('chloride')), td(cl_ref), td(cl_unit), ''],
+        ['', td(hco3_name), td(kft.get('hco3')), td(hco3_ref), td(hco3_unit), ''],
+        ['', td(urea_name), td(lft.get('urea')), td(urea_ref), td(urea_unit), ''],
+        ['', td(creat_name), td(lft.get('creatinine')), td(creat_ref), td(creat_unit), ''],
         
         # Lipid Profile
-        [td('Lipid Profile', True), td('Total Cholesterol'), td(lipid.get('tcho')), td('&lt;200'), td('mg/dL'), td(lipid.get('remark'))],
-        ['', td('Trigracerides'), td(lipid.get('tg')), td('Male: &lt;150<br/>Female: &lt;150'), td('mg/dL<br/>mg/dL'), ''],
-        ['', td('HDL-c'), td(lipid.get('hdl')), td('Male: =&gt;40<br/>Female: =&gt;40'), td('mg/dL<br/>mg/dL'), ''],
-        ['', td('LDL-c'), td(lipid.get('ldl')), td('&lt;130'), td('mg/dL'), ''],
+        [td('Lipid Profile', True), td(tcho_name), td(lipid.get('tcho')), td(tcho_ref), td(tcho_unit), td(lipid.get('remark'))],
+        ['', td(tg_name), td(lipid.get('tg')), td(tg_ref), td(tg_unit), ''],
+        ['', td(hdl_name), td(lipid.get('hdl')), td(hdl_ref), td(hdl_unit), ''],
+        ['', td(ldl_name), td(lipid.get('ldl')), td(ldl_ref), td(ldl_unit), ''],
         
         # Liver Function
-        [td('Liver Function', True), td('AST'), td(lft.get('ast')), td('0-46'), td('U/L'), td(lft.get('remark'))],
-        ['', td('ALT'), td(lft.get('alt')), td('0-49'), td('U/L'), ''],
-        ['', td('ALP'), td(lft.get('alp')), td('Male: 80-306<br/>Female: 64-306'), td('U/L<br/>U/L'), ''],
-        ['', td('TB'), td(lft.get('tb')), td('0-1.2'), td('mg/dL'), ''],
-        ['', td('CB'), td(lft.get('cb')), td('0-0.4'), td('mg/dL'), ''],
+        [td('Liver Function', True), td(ast_name), td(lft.get('ast')), td(ast_ref), td(ast_unit), td(lft.get('remark'))],
+        ['', td(alt_name), td(lft.get('alt')), td(alt_ref), td(alt_unit), ''],
+        ['', td(alp_name), td(lft.get('alp')), td(alp_ref), td(alp_unit), ''],
+        ['', td(tb_name), td(lft.get('tb')), td(tb_ref), td(tb_unit), ''],
+        ['', td(cb_name), td(lft.get('cb')), td(cb_ref), td(cb_unit), ''],
         
         # Urine Analysis
-        [td('Urine Analysis', True), td('Sugar & Protein'), td(consult.get('ua_result')), td('NA'), td(''), td(consult.get('ua_remark'))],
+        [td('Urine Analysis', True), td(ua_name), td(consult.get('ua_result')), td(ua_ref), td(ua_unit), td(consult.get('ua_remark'))],
         
         # PSA
-        [td('PSA', True), td('PSA'), td(consult.get('psa')), td('NA'), td(''), td(consult.get('psa_remark'))]
+        [td('PSA', True), td(psa_name), td(consult.get('psa')), td(psa_ref), td(psa_unit), td(consult.get('psa_remark'))]
     ]
 
     SPAN_DEFS = [
@@ -323,7 +388,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     group_borders = [2, 8, 14, 18, 23, 24]  # rows after which a border appears
 
     lab_ts = TableStyle([
-        ('FONTNAME', (0,0), (-1,0), 'Helvetica-Bold'),
+        ('FONTNAME', (0,0), (-1,0), FONT_BOLD),
         ('FONTSIZE', (0,0), (-1,-1), 8),
         ('TOPPADDING',    (0,0), (-1,-1), 1),
         ('BOTTOMPADDING', (0,0), (-1,-1), 1),
@@ -512,7 +577,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
     ]
     acro_cells = []
     acro_style = ParagraphStyle('acro', fontSize=7, leading=9)
-    acro_bold  = ParagraphStyle('acrob', fontSize=7, fontName='Helvetica-Bold', leading=9)
+    acro_bold  = ParagraphStyle('acrob', fontSize=7, fontName=FONT_BOLD, leading=9)
 
     for row in acros:
         acro_cells.append([
@@ -533,7 +598,7 @@ def generate_patient_report_pdf(report_data: dict) -> bytes:
 
     def draw_footer(canvas, doc):
         canvas.saveState()
-        canvas.setFont('Helvetica-Bold', 9)
+        canvas.setFont(FONT_BOLD, 9)
         canvas.setFillColor(colors.HexColor('#666666'))
         # Place page number directly below the footer stack area
         canvas.drawRightString(W - PR, 4*mm, f"Page {doc.page} of 2")

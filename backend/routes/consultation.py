@@ -12,7 +12,7 @@ def get_bind():
     return context if context in ['dcp', 'dct'] else None
 
 @consultation_bp.route('/screening/<int:year>/patient/<staff_id>', methods=['GET'])
-@jwt_required()
+@require_permission('consultation')
 def get_screening_patient(year, staff_id):
     bind = get_bind()
     if not bind: return jsonify({"error": "Invalid section context"}), 400
@@ -85,10 +85,22 @@ def get_screening_patient(year, staff_id):
             "consulted_by_name": consultation.consulted_by_name
         }
         
+    # Log view action in audit trail
+    try:
+        from models import AuditLog
+        AuditLog.log_action(
+            action="View Patient Consultation Record",
+            resource=f"Patient:{record.staff_id}",
+            details={"screening_year": year, "section": bind.upper()},
+            commit=True
+        )
+    except Exception as audit_err:
+        pass
+        
     return jsonify(data), 200
 
 @consultation_bp.route('/consultation', methods=['POST'])
-@jwt_required()
+@require_permission('consultation')
 def save_consultation():
     data = request.json
     staff_id = data.get('staff_id')
@@ -140,6 +152,27 @@ def save_consultation():
     else:
         sys.stderr.write(f"[DEBUG] JWT identity is MISSING or INVALID\n")
             
+    # Record seen patient
+    if user_id:
+        try:
+            from models import StaffPatientSeen
+            existing_seen = StaffPatientSeen.query.filter_by(
+                user_id=int(user_id),
+                staff_id=staff_id,
+                screening_year=int(screening_year),
+                department='Consultation'
+            ).first()
+            if not existing_seen:
+                new_seen = StaffPatientSeen(
+                    user_id=int(user_id),
+                    staff_id=staff_id,
+                    screening_year=int(screening_year),
+                    department='Consultation'
+                )
+                db.session.add(new_seen)
+        except Exception as seen_err:
+            sys.stderr.write(f"[DEBUG] Error recording seen consultation: {seen_err}\n")
+
     # Remove from Consultation Queue
     from models import QueueEntry
     from sqlalchemy import func

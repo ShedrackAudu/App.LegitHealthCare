@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
     File01Icon,
     Download01Icon,
     Mail01Icon,
-    Loading03Icon,
     PrinterIcon,
     Calendar03Icon,
     ArrowRight01Icon,
-    Shield01Icon
+    Shield01Icon,
+    Attachment01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
     SelectValue
 } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
@@ -159,6 +161,21 @@ const PatientMedicalReport: React.FC = () => {
             link.remove();
             window.URL.revokeObjectURL(url);
             toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+            
+            // Log download to audit trail
+            try {
+                const sId = reportData?.bio?.staff_id;
+                const sec = reportData?.bio?.section || 'DCP';
+                if (sId) {
+                    await api.post('/api/patient/reports/log-download', {
+                        staff_id: sId,
+                        screening_year: selectedYear,
+                        section: sec
+                    });
+                }
+            } catch (auditErr) {
+                console.error("Failed to log report download audit action", auditErr);
+            }
         } catch (err: any) {
             console.error('PDF error:', err);
             const msg = err.message || String(err) || 'Failed to generate frontend PDF.';
@@ -247,6 +264,25 @@ const PatientMedicalReport: React.FC = () => {
         return `${y}/${(sec || '').toUpperCase()}/${pid}`;
     };
 
+    const getParam = (id: string, defaultName: string, defaultRange: string, defaultUnit: string) => {
+        const p = reportData?.report_parameters?.[id];
+        return {
+            name: p?.parameter_name || defaultName,
+            range: p?.reference_value || defaultRange,
+            unit: p?.unit !== undefined && p?.unit !== null ? p.unit : defaultUnit
+        };
+    };
+
+    const renderMultiline = (text: string | null | undefined) => {
+        if (!text) return '-';
+        return text.split('\n').map((line, idx) => (
+            <React.Fragment key={idx}>
+                {idx > 0 && <br />}
+                {line}
+            </React.Fragment>
+        ));
+    };
+
     return (
         <PatientLayout>
             <div className="space-y-8 animate-in fade-in duration-700">
@@ -286,7 +322,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                     <Button
                                         size="default"
-                                        className="h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
+                                        className="w-full sm:w-auto h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
                                         onClick={handleGenerateReport}
                                         loading={loading}
                                         disabled={!selectedYear || fetchingYears}
@@ -306,7 +342,7 @@ const PatientMedicalReport: React.FC = () => {
                                 <HugeiconsIcon icon={Shield01Icon} className="text-primary h-6 w-6 shrink-0" />
                                 <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
-                            <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
+                             <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
                                 <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
                                     <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
@@ -316,47 +352,93 @@ const PatientMedicalReport: React.FC = () => {
                                 <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
                                     <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
                                 </Button>
+                                <Button asChild className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 text-[11px] md:text-xs" variant="outline">
+                                    <Link to="/patient/files">
+                                        <HugeiconsIcon icon={Attachment01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Technical Files</span>
+                                    </Link>
+                                </Button>
                             </div>
                         </div>
                     )}
 
                     {!reportData && !loading && (
-                        <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                        <div className="w-full">
                             {fetchingYears ? (
-                                <HugeiconsIcon icon={Loading03Icon} className="h-10 w-10 animate-spin text-primary/30 mb-2" />
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-6 animate-pulse">
+                                    <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/40 rounded-full" />
+                                    <div className="space-y-2.5 flex flex-col items-center">
+                                        <Skeleton className="h-5 w-48 bg-muted/40 rounded" />
+                                        <Skeleton className="h-3 w-64 bg-muted/30 rounded" />
+                                        <Skeleton className="h-3 w-40 bg-muted/30 rounded" />
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 pt-6">
+                                        <div className="h-px w-10 bg-muted-foreground/10" />
+                                        <Skeleton className="h-3 w-32 bg-muted/30 rounded" />
+                                    </div>
+                                </div>
                             ) : (
-                                <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                    <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
+                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
+                                        <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                    </div>
+                                    <div className="space-y-2">
+                                        <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                                            No Report Selected
+                                        </h3>
+                                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
+                                            {availableYears.length > 0
+                                                ? "Please select a screening session from the menu above to view your comprehensive results."
+                                                : "No historical medical screenings found in our database for your account."}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-2 pt-6">
+                                        <div className="h-px w-10 bg-muted-foreground/20" />
+                                        <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                            Official Medical Archives • {user?.username}
+                                        </p>
+                                    </div>
                                 </div>
                             )}
-                            <div className="space-y-2">
-                                <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
-                                    {fetchingYears ? "Accessing Archives" : "No Report Selected"}
-                                </h3>
-                                <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
-                                    {availableYears.length > 0
-                                        ? "Please select a screening session from the menu above to view your comprehensive results."
-                                        : "No historical medical screenings found in our database for your account."}
-                                </p>
-                            </div>
-                            <div className="flex flex-col items-center gap-2 pt-6">
-                                <div className="h-px w-10 bg-muted-foreground/20" />
-                                <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
-                                    Official Medical Archives • {user?.username}
-                                </p>
-                            </div>
                         </div>
                     )}
 
                     {loading && (
-                        <div className="flex flex-col items-center justify-center py-20 md:py-32 bg-muted/5 rounded-3xl border-2 border-dashed border-primary/20">
-                            <div className="relative mb-6">
-                                <HugeiconsIcon icon={Loading03Icon} className="h-12 w-12 md:h-16 md:w-16 animate-spin text-primary" />
-                                <div className="absolute inset-0 flex items-center justify-center">
-                                    <HugeiconsIcon icon={File01Icon} className="h-5 w-5 md:h-6 md:w-6 text-primary/40" />
+                        <div className="w-full max-w-4xl mx-auto space-y-8 animate-pulse">
+                            {/* Fake A4 Page 1 Skeleton */}
+                            <div className="bg-card border rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+                                {/* Header / Branding */}
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b">
+                                    <Skeleton className="h-12 w-48 bg-muted/40 rounded" />
+                                    <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                </div>
+                                {/* Bio details */}
+                                <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-4 bg-muted/10 rounded-xl">
+                                    {Array.from({ length: 8 }).map((_, i) => (
+                                        <div key={i} className="space-y-1.5">
+                                            <Skeleton className="h-3 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                        </div>
+                                    ))}
+                                </div>
+                                {/* Fake Table */}
+                                <div className="space-y-3">
+                                    <Skeleton className="h-6 w-36 bg-muted/40 rounded" />
+                                    <div className="border rounded-xl overflow-hidden">
+                                        <div className="bg-muted/20 h-10 border-b flex items-center px-4 justify-between">
+                                            <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                            <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
+                                        </div>
+                                        {Array.from({ length: 5 }).map((_, i) => (
+                                            <div key={i} className="h-12 border-b flex items-center px-4 justify-between last:border-0">
+                                                <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-12 bg-muted/40 rounded" />
+                                                <Skeleton className="h-4 w-20 bg-muted/40 rounded" />
+                                            </div>
+                                        ))}
+                                    </div>
                                 </div>
                             </div>
-                            <p className="text-[10px] md:text-sm font-black uppercase tracking-[0.2em] text-primary animate-pulse px-6 text-center">Compiling Diagnostic Tables...</p>
                         </div>
                     )}
                 </div>{/* end no-print helper wrapper */}
@@ -419,82 +501,203 @@ const PatientMedicalReport: React.FC = () => {
                                         <th style={{ width: '20%' }}>REMARK</th>
                                     </tr>
                                 </thead>
-                                <tbody>
-                                    {/* Blood Sugar */}
+                                <tbody>                                    {/* Blood Sugar */}
                                     <tr className="category-row">
                                         <td>Blood Sugar</td>
-                                        <td>FBS</td><td>{reportData.results.consultation?.fbs || '-'}</td><td>70-99</td><td>ml/dL</td><td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
+                                        <td>{getParam('fbs', 'FBS', '70-99', 'ml/dL').name}</td>
+                                        <td>{reportData.results.consultation?.fbs || '-'}</td>
+                                        <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('fbs', 'FBS', '70-99', 'ml/dL').unit)}</td>
+                                        <td rowSpan={2}>{reportData.results.consultation?.sugar_remark || '-'}</td>
                                     </tr>
                                     <tr>
-                                        <td></td><td>RBS</td><td>{reportData.results.consultation?.rbs || '-'}</td><td>&lt;200</td><td>ml/dL</td>
+                                        <td></td>
+                                        <td>{getParam('rbs', 'RBS', '<200', 'ml/dL').name}</td>
+                                        <td>{reportData.results.consultation?.rbs || '-'}</td>
+                                        <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('rbs', 'RBS', '<200', 'ml/dL').unit)}</td>
                                     </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* FBC */}
                                     <tr className="category-row">
                                         <td>FBC</td>
-                                        <td>PCV</td><td>{reportData.results.fbc?.pcv || '-'}</td><td>34-53.9</td><td>%</td><td rowSpan={5}>{reportData.results.fbc?.remark || '-'}</td>
+                                        <td>{getParam('pcv', 'PCV', '36-53.9', '%').name}</td>
+                                        <td>{reportData.results.fbc?.pcv || '-'}</td>
+                                        <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').range)}</td>
+                                        <td>{renderMultiline(getParam('pcv', 'PCV', '36-53.9', '%').unit)}</td>
+                                        <td rowSpan={6}>{reportData.results.fbc?.remark || '-'}</td>
                                     </tr>
-                                    <tr><td></td><td>WBC</td><td>{reportData.results.fbc?.wbc || '-'}</td><td>3-11</td><td>x109/L</td></tr>
-                                    <tr><td></td><td>Lymphocryte</td><td>{reportData.results.fbc?.lymp_percent || '-'}</td><td>19.1-48</td><td>%</td></tr>
-                                    <tr><td></td><td>Neutrophil</td><td>{reportData.results.fbc?.gra_percent || '-'}</td><td>43.6-73.3</td><td>%</td></tr>
-                                    <tr><td></td><td>Mixed</td><td>{reportData.results.fbc?.mid_percent || '-'}</td><td>4.5-12.1</td><td>%</td></tr>
-                                    <tr><td></td><td>Platelets</td><td>{reportData.results.fbc?.plt || '-'}</td><td>100-450</td><td>x109/L</td></tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('wbc', 'WBC', '3-11', 'x109/L').name}</td>
+                                        <td>{reportData.results.fbc?.wbc || '-'}</td>
+                                        <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').range)}</td>
+                                        <td>{renderMultiline(getParam('wbc', 'WBC', '3-11', 'x109/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').name}</td>
+                                        <td>{reportData.results.fbc?.lymp_abs || '-'}</td>
+                                        <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').range)}</td>
+                                        <td>{renderMultiline(getParam('lymphocyte', 'Lymphocryte', '0.6-4.1', 'x10⁹/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').name}</td>
+                                        <td>{reportData.results.fbc?.gra_abs || '-'}</td>
+                                        <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').range)}</td>
+                                        <td>{renderMultiline(getParam('neutrophil', 'Neutrophil', '1.5-8.0', 'x10⁹/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').name}</td>
+                                        <td>{reportData.results.fbc?.mid_abs || '-'}</td>
+                                        <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').range)}</td>
+                                        <td>{renderMultiline(getParam('mixed', 'Mixed', '0.1-1.8', 'x10⁹/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('platelets', 'Platelets', '100-450', 'x109/L').name}</td>
+                                        <td>{reportData.results.fbc?.plt || '-'}</td>
+                                        <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').range)}</td>
+                                        <td>{renderMultiline(getParam('platelets', 'Platelets', '100-450', 'x109/L').unit)}</td>
+                                    </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* KFT */}
                                     <tr className="category-row">
                                         <td>Kidney Function</td>
-                                        <td>Potassium</td><td>{reportData.results.kft?.potassium || '-'}</td><td>3.5-5.0</td><td>mmol/L</td><td rowSpan={5}>{reportData.results.kft?.remark || '-'}</td>
+                                        <td>{getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').name}</td>
+                                        <td>{reportData.results.kft?.potassium || '-'}</td>
+                                        <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('potassium', 'Potassium', '3.5-5.0', 'mmol/L').unit)}</td>
+                                        <td rowSpan={6}>{reportData.results.kft?.remark || '-'}</td>
                                     </tr>
-                                    <tr><td></td><td>Sodium</td><td>{reportData.results.kft?.sodium || '-'}</td><td>135-145</td><td>mmol/L</td></tr>
-                                    <tr><td></td><td>Chloride</td><td>{reportData.results.kft?.chloride || '-'}</td><td>97-107</td><td>mmol/L</td></tr>
-                                    <tr><td></td><td>Bicarbonate</td><td>{reportData.results.kft?.hco3 || '-'}</td><td>20-31</td><td>mmol/L</td></tr>
-                                    <tr><td></td><td>Urea</td><td>{reportData.results.lft?.urea || '-'}</td><td>2.5-9.33</td><td>mmol/L</td></tr>
                                     <tr>
-                                        <td></td><td>Cretinine</td><td>{reportData.results.lft?.creatinine || '-'}</td>
-                                        <td>Male: 80-133<br />Female: 62-115</td><td>umol/L<br />umol/L</td>
+                                        <td></td>
+                                        <td>{getParam('sodium', 'Sodium', '135-145', 'mmol/L').name}</td>
+                                        <td>{reportData.results.kft?.sodium || '-'}</td>
+                                        <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('sodium', 'Sodium', '135-145', 'mmol/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('chloride', 'Chloride', '97-107', 'mmol/L').name}</td>
+                                        <td>{reportData.results.kft?.chloride || '-'}</td>
+                                        <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('chloride', 'Chloride', '97-107', 'mmol/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').name}</td>
+                                        <td>{reportData.results.kft?.hco3 || '-'}</td>
+                                        <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('bicarbonate', 'Bicarbonate', '20-31', 'mmol/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').name}</td>
+                                        <td>{reportData.results.lft?.urea || '-'}</td>
+                                        <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('urea', 'Urea', '2.5-8.33', 'mmol/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').name}</td>
+                                        <td>{reportData.results.lft?.creatinine || '-'}</td>
+                                        <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').range)}</td>
+                                        <td>{renderMultiline(getParam('creatinine', 'Cretinine', 'Male: 80-133\nFemale: 62-115', 'umol/L\numol/L').unit)}</td>
                                     </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* Lipid */}
                                     <tr className="category-row">
                                         <td>Lipid Profile</td>
-                                        <td>Total Cholesterol</td><td>{reportData.results.lipid?.tcho || '-'}</td><td>&lt;200</td><td>mg/dL</td><td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
+                                        <td>{getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').name}</td>
+                                        <td>{reportData.results.lipid?.tcho || '-'}</td>
+                                        <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('total_cholesterol', 'Total Cholesterol', '<200', 'mg/dL').unit)}</td>
+                                        <td rowSpan={4}>{reportData.results.lipid?.remark || '-'}</td>
                                     </tr>
                                     <tr>
-                                        <td></td><td>Trigracerides</td><td>{reportData.results.lipid?.tg || '-'}</td>
-                                        <td>Male: &lt;150<br />Female: &lt;150</td><td>mg/dL<br />mg/dL</td>
+                                        <td></td>
+                                        <td>{getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').name}</td>
+                                        <td>{reportData.results.lipid?.tg || '-'}</td>
+                                        <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('triglycerides', 'Trigracerides', 'Male: <150\nFemale: <150', 'mg/dL\nmg/dL').unit)}</td>
                                     </tr>
                                     <tr>
-                                        <td></td><td>HDL-c</td><td>{reportData.results.lipid?.hdl || '-'}</td>
-                                        <td>Male: =&gt;40<br />Female: =&gt;40</td><td>mg/dL<br />mg/dL</td>
+                                        <td></td>
+                                        <td>{getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').name}</td>
+                                        <td>{reportData.results.lipid?.hdl || '-'}</td>
+                                        <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('hdl', 'HDL-c', 'Male: =>40\nFemale: =>40', 'mg/dL\nmg/dL').unit)}</td>
                                     </tr>
-                                    <tr><td></td><td>LDL-c</td><td>{reportData.results.lipid?.ldl || '-'}</td><td>&lt;130</td><td>mg/dL</td></tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('ldl', 'LDL-c', '<130', 'mg/dL').name}</td>
+                                        <td>{reportData.results.lipid?.ldl || '-'}</td>
+                                        <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('ldl', 'LDL-c', '<130', 'mg/dL').unit)}</td>
+                                    </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* LFT */}
                                     <tr className="category-row">
                                         <td>Liver Function</td>
-                                        <td>AST</td><td>{reportData.results.lft?.ast || '-'}</td><td>0-46</td><td>U/L</td><td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
+                                        <td>{getParam('ast', 'AST', '0-46', 'U/L').name}</td>
+                                        <td>{reportData.results.lft?.ast || '-'}</td>
+                                        <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').range)}</td>
+                                        <td>{renderMultiline(getParam('ast', 'AST', '0-46', 'U/L').unit)}</td>
+                                        <td rowSpan={5}>{reportData.results.lft?.remark || '-'}</td>
                                     </tr>
-                                    <tr><td></td><td>ALT</td><td>{reportData.results.lft?.alt || '-'}</td><td>0-49</td><td>U/L</td></tr>
                                     <tr>
-                                        <td></td><td>ALP</td><td>{reportData.results.lft?.alp || '-'}</td>
-                                        <td>Male: 80-306<br />Female: 64-306</td><td>U/L<br />U/L</td>
+                                        <td></td>
+                                        <td>{getParam('alt', 'ALT', '0-49', 'U/L').name}</td>
+                                        <td>{reportData.results.lft?.alt || '-'}</td>
+                                        <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').range)}</td>
+                                        <td>{renderMultiline(getParam('alt', 'ALT', '0-49', 'U/L').unit)}</td>
                                     </tr>
-                                    <tr><td></td><td>TB</td><td>{reportData.results.lft?.tb || '-'}</td><td>0-1.2</td><td>mg/dL</td></tr>
-                                    <tr><td></td><td>CB</td><td>{reportData.results.lft?.cb || '-'}</td><td>0-0.4</td><td>mg/dL</td></tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').name}</td>
+                                        <td>{reportData.results.lft?.alp || '-'}</td>
+                                        <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').range)}</td>
+                                        <td>{renderMultiline(getParam('alp', 'ALP', 'Male: 80-306\nFemale: 64-306', 'U/L\nU/L').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('tb', 'TB', '0-1.2', 'mg/dL').name}</td>
+                                        <td>{reportData.results.lft?.tb || '-'}</td>
+                                        <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('tb', 'TB', '0-1.2', 'mg/dL').unit)}</td>
+                                    </tr>
+                                    <tr>
+                                        <td></td>
+                                        <td>{getParam('cb', 'CB', '0-0.4', 'mg/dL').name}</td>
+                                        <td>{reportData.results.lft?.cb || '-'}</td>
+                                        <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').range)}</td>
+                                        <td>{renderMultiline(getParam('cb', 'CB', '0-0.4', 'mg/dL').unit)}</td>
+                                    </tr>
                                     <tr><td colSpan={6}><hr className="hr-thick" /></td></tr>
 
                                     {/* UA & PSA */}
                                     <tr className="category-row">
                                         <td>Urine Analysis</td>
-                                        <td>Sugar & Protein</td><td>{reportData.results.consultation?.ua_result || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.ua_remark || '-'}</td>
+                                        <td>{getParam('ua', 'Sugar & Protein', 'NA', '').name}</td>
+                                        <td>{reportData.results.consultation?.ua_result || '-'}</td>
+                                        <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').range)}</td>
+                                        <td>{renderMultiline(getParam('ua', 'Sugar & Protein', 'NA', '').unit)}</td>
+                                        <td>{reportData.results.consultation?.ua_remark || '-'}</td>
                                     </tr>
                                     <tr className="category-row">
                                         <td>PSA</td>
-                                        <td>PSA</td><td>{reportData.results.consultation?.psa || '-'}</td><td>NA</td><td></td><td>{reportData.results.consultation?.psa_remark || '-'}</td>
+                                        <td>{getParam('psa', 'PSA', 'NA', '').name}</td>
+                                        <td>{reportData.results.consultation?.psa || '-'}</td>
+                                        <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').range)}</td>
+                                        <td>{renderMultiline(getParam('psa', 'PSA', 'NA', '').unit)}</td>
+                                        <td>{reportData.results.consultation?.psa_remark || '-'}</td>
                                     </tr>
                                     <tr><td colSpan={6} style={{ borderTop: '2px solid var(--table-border-color)', height: '10px' }}></td></tr>
                                 </tbody>
@@ -679,6 +882,16 @@ const PatientMedicalReport: React.FC = () => {
                         </div>
                     </div>
                 )}
+
+                {/* Technical Files Redirect Button at the bottom */}
+                <div className="no-print flex justify-center mt-6 w-full">
+                    <Button asChild className="w-full sm:w-auto h-12 rounded-xl px-8 font-black shadow-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 text-sm gap-2" variant="outline">
+                        <Link to="/patient/files">
+                            <HugeiconsIcon icon={Attachment01Icon} className="h-5 w-5" />
+                            Technical Files
+                        </Link>
+                    </Button>
+                </div>
             </div>
         </PatientLayout>
     );

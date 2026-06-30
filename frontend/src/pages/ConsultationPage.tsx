@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useForm } from 'react-hook-form';
+import { useSearchParams } from 'react-router-dom';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
 import { Controller } from 'react-hook-form';
@@ -42,6 +43,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Button } from '@/components/ui/button';
+import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
 import axios from 'axios';
 import { Badge } from '@/components/ui/badge';
@@ -147,7 +149,7 @@ const RadioField = ({ label, name, control }: any) => (
   </div>
 );
 
-const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any) => (
+const ComboField = React.forwardRef(({ label, options, setValue, ...props }: any, ref: any) => (
   <div className="space-y-1.5 lg:col-span-1">
     <Label className="text-xs font-bold uppercase tracking-tight text-muted-foreground ml-1 whitespace-nowrap truncate block">{label} <span className="text-red-500">*</span></Label>
     <div className="relative group">
@@ -169,13 +171,17 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
                 key={opt}
                 className="font-bold"
                 onClick={() => {
-                  const event = {
-                    target: {
-                      name: props.name,
-                      value: opt
-                    }
-                  };
-                  props.onChange(event as any);
+                  if (setValue) {
+                    setValue(props.name, opt, { shouldDirty: true, shouldValidate: true });
+                  } else {
+                    const event = {
+                      target: {
+                        name: props.name,
+                        value: opt
+                      }
+                    };
+                    props.onChange(event as any);
+                  }
                 }}
               >
                 {opt}
@@ -192,11 +198,14 @@ const ComboField = React.forwardRef(({ label, options, ...props }: any, ref: any
 const ConsultationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
   const { hasPermission } = usePermissions();
+  const [searchParams] = useSearchParams();
+  const staffIdParam = searchParams.get('staff_id');
   const [patient, setPatient] = useState<any>(null);
   const [searchId, setSearchId] = useState('');
   const [searching, setSearching] = useState(false);
   const [saving, setSaving] = useState(false);
   const [queueCount, setQueueCount] = useState(0);
+  const [seenCount, setSeenCount] = useState(0);
   const [queueEntries, setQueueEntries] = useState<any[]>([]);
   const [isQueueModalOpen, setIsQueueModalOpen] = useState(false);
   const [loadingQueue, setLoadingQueue] = useState(false);
@@ -241,14 +250,26 @@ const ConsultationPage: React.FC = () => {
     }
   };
 
+  const fetchSeenStats = async () => {
+    try {
+      const resp = await axios.get(`/api/queue/seen-stats?year=${activeYear}`, {
+        headers: { 'X-Company-Context': activeSection }
+      });
+      setSeenCount(resp.data.consultation || 0);
+    } catch (err) {
+      console.error("Failed to fetch seen stats:", err);
+    }
+  };
+
   const fetchQueueList = async () => {
+    setQueueEntries([]);
+    setIsQueueModalOpen(true);
     setLoadingQueue(true);
     try {
       const resp = await axios.get(`/api/queue/consultation/?year=${activeYear}`, {
         headers: { 'X-Company-Context': activeSection }
       });
       setQueueEntries(resp.data);
-      setIsQueueModalOpen(true);
     } catch (err) {
       console.error("Queue list fetch failed:", err);
       toast.error("Failed to load patient queue");
@@ -274,8 +295,12 @@ const ConsultationPage: React.FC = () => {
 
   useEffect(() => {
     fetchQueue();
+    fetchSeenStats();
     // Poll every 30 seconds for queue changes
-    const interval = setInterval(fetchQueue, 30000);
+    const interval = setInterval(() => {
+      fetchQueue();
+      fetchSeenStats();
+    }, 30000);
     return () => clearInterval(interval);
   }, [activeYear, activeSection]);
 
@@ -408,6 +433,12 @@ const ConsultationPage: React.FC = () => {
     }
   };
 
+  useEffect(() => {
+    if (staffIdParam) {
+      handleSearch(staffIdParam, 'general');
+    }
+  }, [staffIdParam, activeYear, activeSection]);
+
   const onSubmit = async (data: ConsultationValues) => {
     if (!patient) return;
     setSaving(true);
@@ -423,6 +454,7 @@ const ConsultationPage: React.FC = () => {
       });
       toast.success("Consultation records saved!");
       fetchQueue();
+      fetchSeenStats();
       setSearchId('');
       setPatient(null);
     } catch (err) {
@@ -447,26 +479,51 @@ const ConsultationPage: React.FC = () => {
             </div>
           </div>
           <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4 w-full xl:w-auto">
-            {/* Queue Status Card */}
-            <Card
-              className="bg-primary/5 border-primary/20 cursor-pointer hover:bg-primary/10 transition-colors group shrink-0 w-full sm:w-auto shadow-sm"
-              onClick={fetchQueueList}
-            >
-              <CardContent className="p-2.5 px-4 flex items-center justify-between gap-4">
-                <div className="flex items-center gap-2.5">
-                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
-                    <HugeiconsIcon icon={UserGroupIcon} className="h-4 w-4" />
+            {/* Cards sub-container for side-by-side layout on mobile */}
+            <div className="flex flex-row items-center gap-3 w-full md:w-auto">
+              {/* Queue Status Card */}
+              <Card
+                className="flex-1 md:flex-none md:w-36 relative overflow-hidden cursor-pointer bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 hover:border-primary/40 shadow-sm hover:shadow-md hover:scale-[1.02] active:scale-95 transition-all duration-300 h-16 flex items-center rounded-xl shrink-0 group select-none"
+                onClick={fetchQueueList}
+              >
+                <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary group-hover:bg-primary/20 transition-all shrink-0">
+                    <HugeiconsIcon icon={UserGroupIcon} className="h-4.5 w-4.5" />
                   </div>
-                  <div>
-                    <p className="text-[9px] font-black uppercase tracking-widest text-muted-foreground leading-tight">Waiting</p>
-                    <h3 className="text-lg font-black tracking-tighter leading-none">{queueCount}</h3>
+                  <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                    <span className="text-lg font-black tracking-tighter text-foreground leading-none">{queueCount}</span>
+                    <div className="flex items-center gap-1 mt-0">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/80 leading-none">Waiting</span>
+                      <span className="relative flex h-1.5 w-1.5 shrink-0">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="flex items-center gap-0.5 text-[9px] font-black text-primary opacity-0 group-hover:opacity-10 transition-opacity">
-                  VIEW <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3" />
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+                {/* Subtle glass overlay shine */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              </Card>
+
+              {/* Seen Status Card */}
+              <Card
+                className="flex-1 md:flex-none md:w-36 relative overflow-hidden bg-gradient-to-br from-primary/10 via-primary/5 to-transparent border border-primary/20 shadow-sm h-16 flex items-center rounded-xl shrink-0 group select-none"
+              >
+                <CardContent className="p-0 px-3.5 flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                    <HugeiconsIcon icon={UserIcon} className="h-4.5 w-4.5" />
+                  </div>
+                  <div className="flex flex-col justify-center text-left min-w-0 pr-1">
+                    <span className="text-lg font-black tracking-tighter text-foreground leading-none">{seenCount}</span>
+                    <div className="flex items-center gap-1 mt-0">
+                      <span className="text-[8px] font-black uppercase tracking-widest text-muted-foreground/85 leading-none">Consulted</span>
+                    </div>
+                  </div>
+                </CardContent>
+                {/* Subtle glass overlay shine */}
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out" />
+              </Card>
+            </div>
 
             {/* Unified Search Header style matching Director */}
             <PatientSearch
@@ -485,7 +542,48 @@ const ConsultationPage: React.FC = () => {
           </div>
         </div>
 
-        {!patient ? (
+        {searching ? (
+          <div className="animate-in fade-in duration-500 space-y-6 mt-8">
+            {/* Bio Grid Skeleton */}
+            <Card className="border-2 border-primary/10 shadow-lg bg-muted/5">
+              <CardContent className="p-4 md:p-6 flex flex-col sm:flex-row items-center gap-6">
+                <Skeleton className="w-16 h-16 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                <div className="flex-1 grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-8 gap-x-3 gap-y-4 md:gap-x-4 lg:gap-4 w-full">
+                  <div className="lg:col-span-2 space-y-2">
+                    <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                    <Skeleton className="h-5 w-full bg-muted/40 rounded animate-pulse" />
+                  </div>
+                  {Array.from({ length: 6 }).map((_, idx) => (
+                    <div key={idx} className="space-y-2">
+                      <Skeleton className="h-3 w-16 bg-muted/30 rounded" />
+                      <Skeleton className="h-5 w-20 bg-muted/40 rounded animate-pulse" />
+                    </div>
+                  ))}
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Form Fields Skeleton */}
+            <Card className="border-2 shadow-2xl relative overflow-hidden">
+              <CardHeader className="border-b bg-muted/5 py-4">
+                <Skeleton className="h-6 w-48 bg-muted/40 rounded animate-pulse" />
+              </CardHeader>
+              <CardContent className="p-8 space-y-10">
+                <div className="space-y-4">
+                  <Skeleton className="h-4 w-32 bg-muted/30 rounded" />
+                  <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-x-4 md:gap-x-8 gap-y-4">
+                    {Array.from({ length: 8 }).map((_, idx) => (
+                      <div key={idx} className="space-y-2">
+                        <Skeleton className="h-3.5 w-24 bg-muted/30 rounded" />
+                        <Skeleton className="h-10 w-full bg-muted/40 rounded-xl animate-pulse" />
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        ) : !patient ? (
           <Card className="border-2 border-dashed flex items-center justify-center min-h-[16rem] bg-muted/5 mt-8 p-6">
             <div className="text-center space-y-3">
               <div className="w-12 h-12 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 sm:mb-4 transition-transform hover:scale-110 duration-300">
@@ -568,7 +666,7 @@ const ConsultationPage: React.FC = () => {
                         <RadioField name="palor" control={control} label="Palor" />
                         <RadioField name="jaundice" control={control} label="Jaundice" />
                         <RadioField name="murmur" control={control} label="Murmur" />
-                        <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clear']} />
+                        <SelectField name="chest_status" control={control} label="Chest" options={['Clinically Clear', 'Not Clinically Clear']} />
                         <SelectField name="breast_exam" control={control} label="Breast Exam" options={['Abnormal', 'Normal', 'Not Applicable']} />
                         <SelectField name="breast_remark" control={control} label="Breast Exam Remark" options={['Normal', 'Not Applicable']} />
                         <div className="space-y-1.5 lg:col-span-1">
@@ -581,7 +679,7 @@ const ConsultationPage: React.FC = () => {
                           <Input {...register('abdomen_others')} className="h-11 rounded-xl border-2" placeholder="Specify if others..." />
                         </div>
                         <SelectField name="hs_status" control={control} label="HS: 1&2" options={['Present', 'S3 Present', 'S4 Present']} />
-                        <SelectField name="assessment_hx_pe" control={control} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} />
+                        <ComboField {...register('assessment_hx_pe')} label="Assessment - HX/PE" options={['Bladder Outlet Obstruction', 'Elevated BP', 'Hypertensive Crisis', 'Known DM', 'Inadequately controlled hypertension', 'Satisfactory']} error={errors.assessment_hx_pe?.message} setValue={setValue} />
                       </div>
                     </div>
 
@@ -609,9 +707,9 @@ const ConsultationPage: React.FC = () => {
                       <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                         <SelectField name="psa" control={control} label="Prostate-Specific Antigen - PSA" options={['Negative', 'Not Applicable', 'Positive']} />
                         <SelectField name="psa_remark" control={control} label="PSA Remark" options={['Normal', 'Abnormal', 'Not Applicable']} />
-                        <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} />
-                        <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} error={errors.rbs?.message} />
-                        <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
+                        <ComboField {...register('fbs')} label="FBS" options={['Not Applicable']} error={errors.fbs?.message} setValue={setValue} />
+                        <ComboField {...register('rbs')} label="RBS" options={['Not Applicable']} error={errors.rbs?.message} setValue={setValue} />
+                        <SelectField name="sugar_remark" control={control} label="FBS/RBS Remark" options={['Abnormal', 'Impaired', 'Normal']} />
                         <SelectField name="ua_result" control={control} label="Sugar & Protein - U/A" options={['Glycosuria', 'Glycosuria+', 'Glycosuria >+', 'No Abnormality', 'Proteinuria', 'Proteinuria+', 'Proteinuria >+', 'Proteinuria/Glycosuria']} />
                         <SelectField name="ua_remark" control={control} label="U/A Remark" options={['Abnormal', 'Maybe Abnormal', 'Normal']} />
                         <div className="space-y-1.5 lg:col-span-1">
@@ -667,8 +765,19 @@ const ConsultationPage: React.FC = () => {
           <div className="relative mt-2">
             <ScrollArea className="h-[400px] px-1">
               {loadingQueue ? (
-                <div className="flex items-center justify-center h-full">
-                  <HugeiconsIcon icon={Loading03Icon} className="h-8 w-8 animate-spin text-primary/50" />
+                <div className="space-y-3">
+                  {Array.from({ length: 4 }).map((_, i) => (
+                    <div key={i} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card/50 animate-pulse gap-3">
+                      <div className="flex items-center gap-3 min-w-0 flex-1">
+                        <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                        <div className="space-y-2 flex-1">
+                          <Skeleton className="h-4 w-32 bg-muted/40 rounded animate-pulse" />
+                          <Skeleton className="h-3.5 w-24 bg-muted/40 rounded animate-pulse" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-8 w-20 bg-muted/40 rounded-lg animate-pulse" />
+                    </div>
+                  ))}
                 </div>
               ) : queueEntries.length > 0 ? (
                 <div className="space-y-3">
