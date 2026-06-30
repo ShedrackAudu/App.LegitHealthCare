@@ -62,10 +62,10 @@ function InteractiveThreatMap({ threatVectors }: { threatVectors: any[] }) {
         </div>
       </CardHeader>
       <CardContent className="p-6 pt-2 relative">
-        <div className="w-full aspect-[2/1] relative bg-slate-950 dark:bg-black rounded-lg border border-border/80 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
+        <div className="w-full aspect-[2/1] relative bg-slate-50 dark:bg-slate-950 rounded-lg border border-border/80 overflow-hidden animate-in fade-in zoom-in-95 duration-500">
           <svg className="w-full h-full opacity-90" viewBox="0 0 450 220" fill="none" xmlns="http://www.w3.org/2000/svg">
             {/* Grid lines */}
-            <g opacity="0.08" stroke="#2dd4bf" strokeWidth="0.5">
+            <g className="opacity-30 dark:opacity-10" stroke="#2dd4bf" strokeWidth="0.5">
               <line x1="0" y1="55" x2="450" y2="55" />
               <line x1="0" y1="110" x2="450" y2="110" />
               <line x1="0" y1="165" x2="450" y2="165" />
@@ -76,24 +76,24 @@ function InteractiveThreatMap({ threatVectors }: { threatVectors: any[] }) {
 
             {/* Stylized landmasses (Continents) */}
             {/* North America */}
-            <ellipse cx="100" cy="70" rx="45" ry="30" fill="currentColor" className="text-muted-foreground/10" />
-            <path d="M70,50 Q110,40 140,65 T80,95 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            <ellipse cx="100" cy="70" rx="45" ry="30" className="fill-slate-200/70 dark:fill-slate-800/40" />
+            <path d="M70,50 Q110,40 140,65 T80,95 Z" className="fill-slate-200/70 dark:fill-slate-800/40 stroke-slate-300 dark:stroke-slate-700" strokeWidth="0.5" />
             
             {/* South America */}
-            <ellipse cx="140" cy="150" rx="25" ry="40" fill="currentColor" className="text-muted-foreground/10" />
-            <path d="M125,120 Q150,130 150,170 T130,185 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            <ellipse cx="140" cy="150" rx="25" ry="40" className="fill-slate-200/70 dark:fill-slate-800/40" />
+            <path d="M125,120 Q150,130 150,170 T130,185 Z" className="fill-slate-200/70 dark:fill-slate-800/40 stroke-slate-300 dark:stroke-slate-700" strokeWidth="0.5" />
 
             {/* Africa */}
-            <ellipse cx="230" cy="120" rx="30" ry="40" fill="currentColor" className="text-muted-foreground/10" />
-            <path d="M210,95 Q250,90 255,120 T220,155 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            <ellipse cx="230" cy="120" rx="30" ry="40" className="fill-slate-200/70 dark:fill-slate-800/40" />
+            <path d="M210,95 Q250,90 255,120 T220,155 Z" className="fill-slate-200/70 dark:fill-slate-800/40 stroke-slate-300 dark:stroke-slate-700" strokeWidth="0.5" />
 
             {/* Eurasia */}
-            <ellipse cx="300" cy="65" rx="75" ry="40" fill="currentColor" className="text-muted-foreground/10" />
-            <path d="M245,55 Q310,35 365,60 T290,95 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            <ellipse cx="300" cy="65" rx="75" ry="40" className="fill-slate-200/70 dark:fill-slate-800/40" />
+            <path d="M245,55 Q310,35 365,60 T290,95 Z" className="fill-slate-200/70 dark:fill-slate-800/40 stroke-slate-300 dark:stroke-slate-700" strokeWidth="0.5" />
 
             {/* Australia */}
-            <ellipse cx="380" cy="160" rx="25" ry="18" fill="currentColor" className="text-muted-foreground/10" />
-            <path d="M360,150 Q390,145 395,165 T370,173 Z" fill="currentColor" className="text-muted-foreground/10" stroke="currentColor" strokeWidth="0.5" />
+            <ellipse cx="380" cy="160" rx="25" ry="18" className="fill-slate-200/70 dark:fill-slate-800/40" />
+            <path d="M360,150 Q390,145 395,165 T370,173 Z" className="fill-slate-200/70 dark:fill-slate-800/40 stroke-slate-300 dark:stroke-slate-700" strokeWidth="0.5" />
 
             {/* Threat points mapping */}
             {threatVectors.map((threat, idx) => {
@@ -121,7 +121,7 @@ function InteractiveThreatMap({ threatVectors }: { threatVectors: any[] }) {
 
           {/* Hover overlay/tooltip */}
           {hoveredThreat && (
-            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/95 text-[9px] font-mono p-2 border border-rose-500/30 text-rose-400 rounded flex justify-between items-center animate-in fade-in slide-in-from-bottom-1">
+            <div className="absolute bottom-2 left-2 right-2 bg-slate-900/95 dark:bg-black/95 text-[9px] font-mono p-2 border border-rose-500/30 text-rose-400 rounded flex justify-between items-center animate-in fade-in slide-in-from-bottom-1">
               <div>
                 <span className="font-bold text-rose-500">[{hoveredThreat.action}]</span> {hoveredThreat.city}, {hoveredThreat.country} ({hoveredThreat.ip_address})
               </div>
