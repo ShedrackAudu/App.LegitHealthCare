@@ -132,10 +132,12 @@ const PatientReportPage: React.FC = () => {
                 // Capture PDF
                 const pdfBlob = await generateFrontendPDF();
 
-                // Add to ZIP
-                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
-                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
-                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                // Add to ZIP (using individual download filename format)
+                const bio = detailRes.data.bio || {};
+                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
                 
                 zip.file(filename, pdfBlob);
             }
@@ -254,9 +256,12 @@ const PatientReportPage: React.FC = () => {
                 if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
                 if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
 
-                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
-                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
-                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                // Use individual download filename format
+                const bio = detailRes.data.bio || {};
+                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
 
                 const payloadData = {
                     report_data: {

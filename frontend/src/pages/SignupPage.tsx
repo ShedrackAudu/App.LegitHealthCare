@@ -396,7 +396,7 @@ const SignupPage: React.FC = () => {
                  )}
              </Link>
              <h1 className="text-2xl sm:text-3xl font-black tracking-tight">
-                {activeTab === 'staff' ? 'Staff Registration' : 'Patient Setup'}
+                {activeTab === 'staff' ? 'Staff Registration' : 'Dangote Staff Setup'}
              </h1>
              <p className="text-muted-foreground font-medium text-sm sm:text-base">
                 {activeTab === 'staff' ? 'Join the clinical workforce.' : 'Access your medical records securely.'}
