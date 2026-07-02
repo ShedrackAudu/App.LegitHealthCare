@@ -278,6 +278,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
+
+      // Prevent auto-logout during bulk operations
+      const isBulkActive =
+        (window as any).isBulkActionActive === true ||
+        sessionStorage.getItem('lhc_bulk_active') === 'true';
+
+      if (isBulkActive) {
+        // Check again in 1 minute, effectively resetting/postponing the idle logout
+        timeoutId = setTimeout(resetTimer, 60000);
+        return;
+      }
+
       timeoutId = setTimeout(() => {
         axios.post('/api/logout').catch(() => {}).finally(() => {
           setUser(null);

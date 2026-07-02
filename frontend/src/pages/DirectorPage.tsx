@@ -783,6 +783,8 @@ const DirectorPage: React.FC = () => {
             return;
         }
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBatchProcessing(true);
         const total = end - start + 1;
         setBatchProgress({ current: 0, total, successCount: 0, failCount: 0 });
@@ -871,6 +873,8 @@ const DirectorPage: React.FC = () => {
         }
         
         setBatchProcessing(false);
+        (window as any).isBulkActionActive = false;
+        sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
     };
 
@@ -893,6 +897,8 @@ const DirectorPage: React.FC = () => {
             return;
         }
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBatchLabProcessing(true);
         const total = end - start + 1;
         setBatchLabProgress({ current: 0, total, successCount: 0, failCount: 0 });
@@ -973,6 +979,8 @@ const DirectorPage: React.FC = () => {
         }
         
         setBatchLabProcessing(false);
+        (window as any).isBulkActionActive = false;
+        sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
     };
     const selectPatient = (p: any) => {

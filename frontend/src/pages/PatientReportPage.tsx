@@ -77,10 +77,11 @@ const PatientReportPage: React.FC = () => {
         setBulkLoading(true);
         setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         const originalPatient = selectedPatient;
         const originalReportData = reportData;
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
         try {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
@@ -164,6 +165,8 @@ const PatientReportPage: React.FC = () => {
             setReportData(originalReportData);
             setBulkProgress(null);
             setBulkLoading(false);
+            (window as any).isBulkActionActive = false;
+            sessionStorage.removeItem('lhc_bulk_active');
         }
     };
 
@@ -176,13 +179,14 @@ const PatientReportPage: React.FC = () => {
             toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
             return;
         }
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBulkEmailLoading(true);
         setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports with emails...' });
         
         const originalPatient = selectedPatient;
         const originalReportData = reportData;
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
         try {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
@@ -295,6 +299,8 @@ const PatientReportPage: React.FC = () => {
             setReportData(originalReportData);
             setBulkProgress(null);
             setBulkEmailLoading(false);
+            (window as any).isBulkActionActive = false;
+            sessionStorage.removeItem('lhc_bulk_active');
         }
     };
 
