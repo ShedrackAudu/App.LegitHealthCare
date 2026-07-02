@@ -796,6 +796,7 @@ const DirectorPage: React.FC = () => {
         setBatchLogs(initialLogs);
         
         for (let i = start; i <= end; i++) {
+            (window as any).resetLhcInactivityTimer?.();
             setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
             
             try {
@@ -910,6 +911,7 @@ const DirectorPage: React.FC = () => {
         setBatchLabLogs(initialLogs);
         
         for (let i = start; i <= end; i++) {
+            (window as any).resetLhcInactivityTimer?.();
             setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
             
             try {

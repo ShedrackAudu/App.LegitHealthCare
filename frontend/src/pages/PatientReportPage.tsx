@@ -111,6 +111,7 @@ const PatientReportPage: React.FC = () => {
 
             // 2. Loop through each patient, load their data, and render the PDF
             for (let i = 0; i < patientsList.length; i++) {
+                (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
                 setBulkProgress({ 
                     current: i + 1, 
@@ -227,6 +228,7 @@ const PatientReportPage: React.FC = () => {
 
             // 2. Loop through each patient, load their data, and render/email the PDF
             for (let i = 0; i < patientsList.length; i++) {
+                (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
                 setBulkProgress({ 
                     current: i + 1, 
