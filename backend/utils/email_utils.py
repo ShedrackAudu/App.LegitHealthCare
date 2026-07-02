@@ -26,7 +26,7 @@ class EmailService:
         }
 
     @staticmethod
-    def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None):
+    def send_email(to_email, subject, html_content, attachment_data=None, attachment_filename=None, custom_config=None, cc=None, bcc=None):
         config = custom_config or EmailService._get_smtp_config()
         
         # 1. Check for SendGrid (Bypasses Render SMTP Block)
@@ -34,7 +34,7 @@ class EmailService:
         if sendgrid_api_key:
             try:
                 from sendgrid import SendGridAPIClient
-                from sendgrid.helpers.mail import Mail as SG_Mail, Attachment, FileContent, FileName, FileType, Disposition
+                from sendgrid.helpers.mail import Mail as SG_Mail, Attachment, FileContent, FileName, FileType, Disposition, Cc, Bcc
                 import base64
 
                 print("--- SENDGRID API DELIVERY ---")
@@ -45,6 +45,18 @@ class EmailService:
                     subject=subject,
                     html_content=html_content
                 )
+
+                # Add CC recipients
+                if cc:
+                    for addr in cc:
+                        if addr:
+                            message.add_cc(Cc(addr))
+
+                # Add BCC recipients
+                if bcc:
+                    for addr in bcc:
+                        if addr:
+                            message.add_bcc(Bcc(addr))
 
                 if attachment_data and attachment_filename:
                     encoded_file = base64.b64encode(attachment_data).decode()
@@ -83,6 +95,12 @@ class EmailService:
             msg['To'] = str(to_email)
             msg['Subject'] = str(subject)
 
+            # Add CC header
+            if cc:
+                msg['Cc'] = ', '.join(cc)
+
+            # Add BCC (not added as a header — handled in recipient list only)
+
             msg.attach(MIMEText(html_content, 'html'))
 
             if attachment_data and attachment_filename:
@@ -96,12 +114,19 @@ class EmailService:
             is_ssl = (smtp_port == 465)
             server_conn = smtplib.SMTP_SSL(smtp_server, smtp_port, timeout=25) if is_ssl else smtplib.SMTP(smtp_server, smtp_port, timeout=25)
 
+            # Build full recipient list: To + CC + BCC
+            all_recipients = [str(to_email)]
+            if cc:
+                all_recipients.extend(cc)
+            if bcc:
+                all_recipients.extend(bcc)
+
             with server_conn as server:
                 if not is_ssl:
                     server.ehlo(); server.starttls(); server.ehlo()
                 
                 server.login(str(config["username"]), str(config["password"]))
-                server.send_message(msg)
+                server.sendmail(str(config["username"]), all_recipients, msg.as_string())
             
             return True
         except Exception as e:

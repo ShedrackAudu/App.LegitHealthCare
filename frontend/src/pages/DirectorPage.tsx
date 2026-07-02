@@ -1180,7 +1180,11 @@ const DirectorPage: React.FC = () => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
-                                                    {!bulkAiEnabled && (
+                                                    {bulkAiEnabled ? (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    ) : (
                                                         <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                             Disabled
                                                         </span>
@@ -1298,7 +1302,11 @@ const DirectorPage: React.FC = () => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
-                                                    {!bulkAiEnabled && (
+                                                    {bulkAiEnabled ? (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    ) : (
                                                         <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                             Disabled
                                                         </span>

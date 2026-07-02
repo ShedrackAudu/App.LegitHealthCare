@@ -16,6 +16,8 @@ def get_email_settings():
         "MAIL_USERNAME": os.getenv('MAIL_USERNAME', ''),
         "MAIL_DISPLAY_NAME": os.getenv('MAIL_DISPLAY_NAME', 'Legit HealthCare'),
         "HEAD_DOCTOR_EMAIL": os.getenv('HEAD_DOCTOR_EMAIL', ''),
+        "REPORT_CC_EMAILS": os.getenv('REPORT_CC_EMAILS', ''),
+        "REPORT_BCC_EMAILS": os.getenv('REPORT_BCC_EMAILS', ''),
         # We don't send the password back for security, just a placeholder if it exists
         "HAS_PASSWORD": bool(os.getenv('MAIL_PASSWORD'))
     }), 200
@@ -36,6 +38,10 @@ def update_email_settings():
             set_key(ENV_PATH, 'MAIL_PASSWORD', data['MAIL_PASSWORD'])
         if 'HEAD_DOCTOR_EMAIL' in data:
             set_key(ENV_PATH, 'HEAD_DOCTOR_EMAIL', data['HEAD_DOCTOR_EMAIL'])
+        if 'REPORT_CC_EMAILS' in data:
+            set_key(ENV_PATH, 'REPORT_CC_EMAILS', data['REPORT_CC_EMAILS'])
+        if 'REPORT_BCC_EMAILS' in data:
+            set_key(ENV_PATH, 'REPORT_BCC_EMAILS', data['REPORT_BCC_EMAILS'])
         
         # Reload env in current process
         load_dotenv(ENV_PATH, override=True)
@@ -126,12 +132,21 @@ def send_patient_report():
             first_name, screening_year, company, logo_url=logo_url, app_url=app_url
         )
 
+        # Load CC/BCC recipients from environment configuration
+        load_dotenv(ENV_PATH, override=True)
+        cc_raw = os.getenv('REPORT_CC_EMAILS', '')
+        bcc_raw = os.getenv('REPORT_BCC_EMAILS', '')
+        cc_list = [e.strip() for e in cc_raw.split(',') if e.strip()] if cc_raw else []
+        bcc_list = [e.strip() for e in bcc_raw.split(',') if e.strip()] if bcc_raw else []
+
         success = EmailService.send_email(
             recipient,
             f"Your Medical Screening Report - {screening_year}",
             html_content,
             attachment_data=pdf_bytes,
-            attachment_filename=attachment_filename
+            attachment_filename=attachment_filename,
+            cc=cc_list,
+            bcc=bcc_list
         )
 
         if success:
