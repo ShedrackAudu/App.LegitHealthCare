@@ -182,6 +182,8 @@ const SystemConfigPage: React.FC = () => {
         MAIL_DISPLAY_NAME: 'Legit HealthCare',
         MAIL_PASSWORD: '',
         HEAD_DOCTOR_EMAIL: '',
+        REPORT_CC_EMAILS: '',
+        REPORT_BCC_EMAILS: '',
         HAS_PASSWORD: false
     });
 
@@ -769,14 +771,14 @@ const SystemConfigPage: React.FC = () => {
                                             <CardHeader className="bg-primary/5 border-b pb-4">
                                                 <CardTitle className="text-lg flex items-center gap-2">
                                                     <HugeiconsIcon icon={ServerStack01Icon} className="h-5 w-5 text-primary" />
-                                                    SMTP ServerStack01Icon Settings
+                                                    SMTP Settings
                                                 </CardTitle>
                                                 <CardDescription>Configure how the system connects to your email provider.</CardDescription>
                                             </CardHeader>
                                             <CardContent className="pt-6 space-y-6">
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                                                     <div className="space-y-2">
-                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP ServerStack01Icon</Label>
+                                                        <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">SMTP Server</Label>
                                                         <Input
                                                             className="h-11 font-bold border-2 focus-visible:ring-primary"
                                                             value={emailSettings.MAIL_SERVER}
@@ -902,6 +904,38 @@ const SystemConfigPage: React.FC = () => {
                                                         placeholder="e.g. head.doctor@gmail.com"
                                                     />
                                                     <p className="text-[10px] text-muted-foreground italic">This email is used for clinical oversight and urgent reports.</p>
+                                                </div>
+                                            </CardContent>
+                                        </Card>
+
+                                        <Card className="border-2 shadow-lg overflow-hidden border-primary/10">
+                                            <CardHeader className="bg-primary/5 border-b pb-4">
+                                                <CardTitle className="text-lg flex items-center gap-2">
+                                                    <HugeiconsIcon icon={Mail01Icon} className="h-5 w-5 text-primary" />
+                                                    Report Email Distribution
+                                                </CardTitle>
+                                                <CardDescription>Configure CC and BCC recipients that will automatically receive copies of patient reports when emailed (both individual and bulk).</CardDescription>
+                                            </CardHeader>
+                                            <CardContent className="pt-6 space-y-4">
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">CC Recipients (Carbon Copy)</Label>
+                                                    <Input
+                                                        className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                        value={emailSettings.REPORT_CC_EMAILS}
+                                                        onChange={e => setEmailSettings({ ...emailSettings, REPORT_CC_EMAILS: e.target.value })}
+                                                        placeholder="e.g. admin@clinic.com, manager@clinic.com"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">These recipients will be visible to the patient. Separate multiple emails with commas.</p>
+                                                </div>
+                                                <div className="space-y-2">
+                                                    <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">BCC Recipients (Blind Carbon Copy)</Label>
+                                                    <Input
+                                                        className="h-11 font-bold border-2 focus-visible:ring-primary"
+                                                        value={emailSettings.REPORT_BCC_EMAILS}
+                                                        onChange={e => setEmailSettings({ ...emailSettings, REPORT_BCC_EMAILS: e.target.value })}
+                                                        placeholder="e.g. records@clinic.com, compliance@clinic.com"
+                                                    />
+                                                    <p className="text-[10px] text-muted-foreground italic">These recipients will NOT be visible to the patient. Separate multiple emails with commas.</p>
                                                 </div>
                                             </CardContent>
                                         </Card>

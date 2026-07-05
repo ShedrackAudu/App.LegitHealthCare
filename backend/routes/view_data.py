@@ -1081,10 +1081,13 @@ def bulk_download_reports():
             report_data = _get_report_data_dict(yr.staff_id, year, bind, bio, yr)
             pdf_bytes = generate_patient_report_pdf(report_data)
             
-            # Construct a clean filename
-            first_name = (bio.first_name or '').strip().replace(' ', '_')
-            last_name = (bio.last_name or '').strip().replace(' ', '_')
-            filename = f"LHCSL_{year}_{bind.upper()}_PID{yr.patient_id}_{first_name}_{last_name}.pdf"
+            # Construct a clean filename matching the individual download naming format
+            import re
+            pId = yr.patient_id or 'UNKNOWN'
+            dpt_raw = bio.department or yr.department or 'Dept'
+            dpt = re.sub(r'\s+', '', dpt_raw)
+            sId = yr.staff_id or 'UNKNOWN'
+            filename = f"LHCSL{year}{bind.upper()}{pId}_{dpt}_{sId}.pdf"
             zip_file.writestr(filename, pdf_bytes)
 
     zip_buffer.seek(0)

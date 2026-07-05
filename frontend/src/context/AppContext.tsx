@@ -272,20 +272,38 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   }, [user, setUser]);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user) {
+      delete (window as any).resetLhcInactivityTimer;
+      return;
+    }
 
     let timeoutId: any;
 
     const resetTimer = () => {
       if (timeoutId) clearTimeout(timeoutId);
+
       timeoutId = setTimeout(() => {
-        axios.post('/api/logout').catch(() => {}).finally(() => {
-          setUser(null);
-          localStorage.removeItem('user');
-          window.location.href = '/login?reason=inactivity';
-        });
+        // Evaluate bulk active state at the moment the timeout expires
+        const isBulkActive =
+          (window as any).isBulkActionActive === true ||
+          sessionStorage.getItem('lhc_bulk_active') === 'true';
+
+        if (isBulkActive) {
+          console.log("[INACTIVITY TIMER] Inactivity limit reached, but bulk action is active. Resetting timer.");
+          resetTimer(); // Start a new cycle
+        } else {
+          console.warn("[INACTIVITY TIMER] User inactive for 10 minutes. Logging out.");
+          axios.post('/api/logout').catch(() => {}).finally(() => {
+            setUser(null);
+            localStorage.removeItem('user');
+            window.location.href = '/login?reason=inactivity';
+          });
+        }
       }, 10 * 60 * 1000); // 10 minutes
     };
+
+    // Expose reset function globally so background/bulk loops can invoke it
+    (window as any).resetLhcInactivityTimer = resetTimer;
 
     const events = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart'];
     events.forEach(event => document.addEventListener(event, resetTimer));
@@ -295,6 +313,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     return () => {
       if (timeoutId) clearTimeout(timeoutId);
       events.forEach(event => document.removeEventListener(event, resetTimer));
+      delete (window as any).resetLhcInactivityTimer;
     };
   }, [user, setUser]);
 

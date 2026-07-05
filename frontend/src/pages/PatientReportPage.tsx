@@ -77,10 +77,11 @@ const PatientReportPage: React.FC = () => {
         setBulkLoading(true);
         setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         const originalPatient = selectedPatient;
         const originalReportData = reportData;
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
         try {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
@@ -110,6 +111,7 @@ const PatientReportPage: React.FC = () => {
 
             // 2. Loop through each patient, load their data, and render the PDF
             for (let i = 0; i < patientsList.length; i++) {
+                (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
                 setBulkProgress({ 
                     current: i + 1, 
@@ -132,10 +134,12 @@ const PatientReportPage: React.FC = () => {
                 // Capture PDF
                 const pdfBlob = await generateFrontendPDF();
 
-                // Add to ZIP
-                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
-                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
-                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                // Add to ZIP (using individual download filename format)
+                const bio = detailRes.data.bio || {};
+                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
                 
                 zip.file(filename, pdfBlob);
             }
@@ -162,6 +166,8 @@ const PatientReportPage: React.FC = () => {
             setReportData(originalReportData);
             setBulkProgress(null);
             setBulkLoading(false);
+            (window as any).isBulkActionActive = false;
+            sessionStorage.removeItem('lhc_bulk_active');
         }
     };
 
@@ -174,13 +180,14 @@ const PatientReportPage: React.FC = () => {
             toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
             return;
         }
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBulkEmailLoading(true);
         setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports with emails...' });
         
         const originalPatient = selectedPatient;
         const originalReportData = reportData;
         const delay = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
-
         try {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
@@ -221,6 +228,7 @@ const PatientReportPage: React.FC = () => {
 
             // 2. Loop through each patient, load their data, and render/email the PDF
             for (let i = 0; i < patientsList.length; i++) {
+                (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
                 setBulkProgress({ 
                     current: i + 1, 
@@ -254,9 +262,12 @@ const PatientReportPage: React.FC = () => {
                 if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
                 if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
 
-                const firstNameClean = (patientInfo.first_name || '').trim().replace(/\s+/g, '_');
-                const lastNameClean = (patientInfo.last_name || '').trim().replace(/\s+/g, '_');
-                const filename = `LHCSL_${activeYear}_${activeSection.toUpperCase()}_PID${patientInfo.patient_id}_${firstNameClean}_${lastNameClean}.pdf`;
+                // Use individual download filename format
+                const bio = detailRes.data.bio || {};
+                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
 
                 const payloadData = {
                     report_data: {
@@ -290,6 +301,8 @@ const PatientReportPage: React.FC = () => {
             setReportData(originalReportData);
             setBulkProgress(null);
             setBulkEmailLoading(false);
+            (window as any).isBulkActionActive = false;
+            sessionStorage.removeItem('lhc_bulk_active');
         }
     };
 
@@ -651,6 +664,8 @@ const PatientReportPage: React.FC = () => {
                                             <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Ref:</span><span className="text-[#333]">{mkRef(activeYear, activeSection, reportData.bio.patient_id)}</span></div>
                                         </div>
                                         <div className="bio-col space-y-1">
+                                            <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Weight:</span><span className="text-[#333]">{reportData.results.special?.weight ? `${reportData.results.special.weight} kg` : '-'}</span></div>
+                                            <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Height:</span><span className="text-[#333]">{reportData.results.special?.height ? `${reportData.results.special.height} cm` : '-'}</span></div>
                                             <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Registered at:</span><span className="text-[#333] text-[10px]">{fTime(reportData.timing?.reg_date_time)}</span></div>
                                             <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Reported on:</span><span className="text-[#333] text-[10px]">{fTime(reportData.timing?.report_date_time)}</span></div>
                                             <div className="bio-row flex justify-between"><span className="bio-label font-bold text-[#00897b]">Generated on:</span><span className="text-[#333] text-[10px]">{fTime(reportData.timing?.gen_date_time)}</span></div>
@@ -1125,7 +1140,11 @@ const PatientReportPage: React.FC = () => {
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Downloader</h2>
-                                            {!bulkDownloadEnabled && (
+                                            {bulkDownloadEnabled ? (
+                                                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                    Active
+                                                </span>
+                                            ) : (
                                                 <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                     Disabled
                                                 </span>
@@ -1198,7 +1217,11 @@ const PatientReportPage: React.FC = () => {
                                     <div>
                                         <div className="flex items-center gap-2">
                                             <h2 className="text-lg font-black tracking-tight text-foreground">Bulk Report Emailer</h2>
-                                            {!bulkEmailEnabled && (
+                                            {bulkEmailEnabled ? (
+                                                <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                    Active
+                                                </span>
+                                            ) : (
                                                 <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                     Disabled
                                                 </span>

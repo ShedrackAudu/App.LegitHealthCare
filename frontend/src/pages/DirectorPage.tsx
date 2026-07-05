@@ -783,6 +783,8 @@ const DirectorPage: React.FC = () => {
             return;
         }
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBatchProcessing(true);
         const total = end - start + 1;
         setBatchProgress({ current: 0, total, successCount: 0, failCount: 0 });
@@ -794,6 +796,7 @@ const DirectorPage: React.FC = () => {
         setBatchLogs(initialLogs);
         
         for (let i = start; i <= end; i++) {
+            (window as any).resetLhcInactivityTimer?.();
             setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
             
             try {
@@ -871,6 +874,8 @@ const DirectorPage: React.FC = () => {
         }
         
         setBatchProcessing(false);
+        (window as any).isBulkActionActive = false;
+        sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
     };
 
@@ -893,6 +898,8 @@ const DirectorPage: React.FC = () => {
             return;
         }
         
+        (window as any).isBulkActionActive = true;
+        sessionStorage.setItem('lhc_bulk_active', 'true');
         setBatchLabProcessing(true);
         const total = end - start + 1;
         setBatchLabProgress({ current: 0, total, successCount: 0, failCount: 0 });
@@ -904,6 +911,7 @@ const DirectorPage: React.FC = () => {
         setBatchLabLogs(initialLogs);
         
         for (let i = start; i <= end; i++) {
+            (window as any).resetLhcInactivityTimer?.();
             setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'processing' as const, message: 'Resolving Patient...' } : log));
             
             try {
@@ -973,6 +981,8 @@ const DirectorPage: React.FC = () => {
         }
         
         setBatchLabProcessing(false);
+        (window as any).isBulkActionActive = false;
+        sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
     };
     const selectPatient = (p: any) => {
@@ -1180,7 +1190,11 @@ const DirectorPage: React.FC = () => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Review Generator</h2>
-                                                    {!bulkAiEnabled && (
+                                                    {bulkAiEnabled ? (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    ) : (
                                                         <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                             Disabled
                                                         </span>
@@ -1298,7 +1312,11 @@ const DirectorPage: React.FC = () => {
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <h2 className="text-lg font-black tracking-tight text-foreground">Bulk AI Lab Remark</h2>
-                                                    {!bulkAiEnabled && (
+                                                    {bulkAiEnabled ? (
+                                                        <span className="text-[9px] font-black uppercase tracking-wider bg-emerald-500/10 text-emerald-500 px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                                            Active
+                                                        </span>
+                                                    ) : (
                                                         <span className="text-[9px] font-black uppercase tracking-wider bg-rose-500/10 text-rose-500 px-2 py-0.5 rounded-full border border-rose-500/20">
                                                             Disabled
                                                         </span>

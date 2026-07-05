@@ -698,7 +698,7 @@ const LoginPage = () => {
                           <HugeiconsIcon icon={UserIcon} className="w-4 h-4 text-emerald-500" />
                         </div>
                         <div className="space-y-0.5">
-                          <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none">Patient</span>
+                          <span className="block text-[10px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400 leading-none">Dangote Staff</span>
                           <span className="block text-[8px] font-bold text-muted-foreground leading-none">Results & Records</span>
                         </div>
                     </Link>

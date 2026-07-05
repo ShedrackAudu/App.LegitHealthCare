@@ -48,6 +48,8 @@ import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import NetworkStatusBanner from './components/common/NetworkStatusBanner';
 
 const ACKNOWLEDGED_VERSION_KEY = 'lhc_acknowledged_version';
+const FIRST_DETECTED_KEY = 'lhc_update_first_detected';
+const UPDATE_DELAY_MS = 5 * 60 * 1000; // 5 minutes
 
 const AppUpdateNotifier: React.FC = () => {
   const [show, setShow] = useState(false);
@@ -64,6 +66,8 @@ const AppUpdateNotifier: React.FC = () => {
 
     // Hide if hashes match (frontend already up to date)
     if (!serverCommitShort || serverCommitShort === localCommitShort) {
+      // Version matches — clean up any stale detection timestamp
+      try { sessionStorage.removeItem(FIRST_DETECTED_KEY); } catch { /* no-op */ }
       return;
     }
 
@@ -75,7 +79,7 @@ const AppUpdateNotifier: React.FC = () => {
     }
 
     // If we detect a NEW version (different from the last version we saw when dismissing/cooldown started),
-    // we bypass/clear the cooldown entirely to display the brand new update immediately.
+    // we bypass/clear the cooldown entirely so the 5-minute warm-up restarts for the new version.
     const isNewDeployment = lastSeenServerVersion.current && lastSeenServerVersion.current !== serverCommitShort;
 
     // Respect 5-minute "Later" cooldown ONLY if it's the SAME version we dismissed
@@ -85,6 +89,33 @@ const AppUpdateNotifier: React.FC = () => {
         console.log(`[VERSION CHECK] Update available but muted for cooldown (${Math.round((300000 - timeSinceDismiss) / 1000)}s left).`);
         return;
       }
+    }
+
+    // --- 5-minute warm-up delay (persisted in sessionStorage so refreshes don't reset it) ---
+    try {
+      const stored = sessionStorage.getItem(FIRST_DETECTED_KEY);
+      let firstDetected: { version: string; timestamp: number } | null = null;
+      if (stored) {
+        firstDetected = JSON.parse(stored);
+      }
+
+      // If no record exists, or the stored record is for a different version, start a fresh timer
+      if (!firstDetected || firstDetected.version !== serverCommitShort) {
+        const record = { version: serverCommitShort, timestamp: Date.now() };
+        sessionStorage.setItem(FIRST_DETECTED_KEY, JSON.stringify(record));
+        console.log(`[VERSION CHECK] New version ${serverCommitShort} detected. Starting ${UPDATE_DELAY_MS / 1000}s warm-up timer.`);
+        return; // Don't show yet — timer just started
+      }
+
+      // Timer exists for this version — check if enough time has passed
+      const elapsed = Date.now() - firstDetected.timestamp;
+      if (elapsed < UPDATE_DELAY_MS) {
+        console.log(`[VERSION CHECK] Update available, warm-up in progress (${Math.round((UPDATE_DELAY_MS - elapsed) / 1000)}s remaining).`);
+        return; // Still within warm-up period
+      }
+    } catch {
+      // If sessionStorage is unavailable (e.g. private browsing quota), fall through and show immediately
+      console.warn('[VERSION CHECK] sessionStorage unavailable, skipping warm-up delay.');
     }
 
     console.warn(`[VERSION CHECK] Version mismatch: Local=${localCommitShort}, Server=${serverCommitShort}. Showing notification.`);
@@ -134,6 +165,8 @@ const AppUpdateNotifier: React.FC = () => {
   const dismissNotification = () => {
     setShow(false);
     lastDismissedAt.current = Date.now();
+    // Clear the warm-up record so it doesn't interfere with cooldown logic
+    try { sessionStorage.removeItem(FIRST_DETECTED_KEY); } catch { /* no-op */ }
   };
 
   // "Refresh Now" — save acknowledged version to localStorage so it won't reappear after reload
@@ -142,6 +175,8 @@ const AppUpdateNotifier: React.FC = () => {
       localStorage.setItem(ACKNOWLEDGED_VERSION_KEY, pendingServerVersion);
       console.log(`[VERSION CHECK] Acknowledged version ${pendingServerVersion}. Reloading...`);
     }
+    // Clean up detection record before reload
+    try { sessionStorage.removeItem(FIRST_DETECTED_KEY); } catch { /* no-op */ }
     // Force a hard reload to bypass browser cache and load the latest deployed assets
     window.location.href = window.location.href.split('?')[0] + '?_cb=' + Date.now();
   };

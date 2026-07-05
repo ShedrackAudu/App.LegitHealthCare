@@ -33,7 +33,8 @@ import {
   Loading03Icon,
   LockIcon,
   Hospital02Icon,
-  Copy01Icon
+  Copy01Icon,
+  FilterIcon
 } from '@hugeicons/core-free-icons';
 import { PasswordStrength } from '@/components/ui/PasswordStrength';
 import {
@@ -52,6 +53,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import axios from 'axios';
 import { toast } from 'react-hot-toast';
@@ -91,6 +99,11 @@ const UserManagementPage: React.FC = () => {
   const [roles, setRoles] = useState<Role[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [verificationFilter, setVerificationFilter] = useState<'all' | 'verified' | 'unverified'>('all');
+  const [sectionFilter, setSectionFilter] = useState<string>('all');
+  const [roleFilter, setRoleFilter] = useState<string>('all');
+  const [deptFilter, setDeptFilter] = useState<string>('all');
+  const [showFilters, setShowFilters] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -215,14 +228,73 @@ const UserManagementPage: React.FC = () => {
     fetchData();
   }, []);
 
+  // Reset filters when activeTab changes
+  useEffect(() => {
+    setVerificationFilter('all');
+    setSectionFilter('all');
+    setRoleFilter('all');
+    setDeptFilter('all');
+    setSearchTerm('');
+    setShowFilters(false);
+  }, [activeTab]);
+
+  const departments = useMemo(() => {
+    const depts = new Set<string>();
+    users.forEach(u => {
+      if (u.department) depts.add(u.department);
+    });
+    return Array.from(depts).sort();
+  }, [users]);
+
+  const activeStaffFiltersCount = useMemo(() => {
+    let count = 0;
+    if (verificationFilter !== 'all') count++;
+    if (roleFilter !== 'all') count++;
+    if (deptFilter !== 'all') count++;
+    return count;
+  }, [verificationFilter, roleFilter, deptFilter]);
+
+  const activePatientFiltersCount = useMemo(() => {
+    let count = 0;
+    if (verificationFilter !== 'all') count++;
+    if (sectionFilter !== 'all') count++;
+    return count;
+  }, [verificationFilter, sectionFilter]);
+
   const filteredUsers = useMemo(() => {
-    return users.filter(u =>
-      `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      u.phone.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-  }, [users, searchTerm]);
+    return users.filter(u => {
+      // 1. Search term
+      const matchesSearch = 
+        `${u.first_name} ${u.last_name}`.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.username.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        u.phone.toLowerCase().includes(searchTerm.toLowerCase());
+
+      if (!matchesSearch) return false;
+
+      // 2. Verification filter
+      if (verificationFilter === 'verified' && !u.is_verified) return false;
+      if (verificationFilter === 'unverified' && u.is_verified) return false;
+
+      // 3. Section filter (DCP / DCT)
+      if (sectionFilter !== 'all') {
+        const uSec = (u.section || '').toLowerCase();
+        if (uSec !== sectionFilter.toLowerCase()) return false;
+      }
+
+      // 4. Role filter
+      if (roleFilter !== 'all') {
+        if (!u.roles || !u.roles.includes(roleFilter)) return false;
+      }
+
+      // 5. Department filter
+      if (deptFilter !== 'all') {
+        if (u.department !== deptFilter) return false;
+      }
+
+      return true;
+    });
+  }, [users, searchTerm, verificationFilter, sectionFilter, roleFilter, deptFilter]);
 
   // Staff Pagination State
   const [staffPage, setStaffPage] = useState(1);
@@ -232,11 +304,11 @@ const UserManagementPage: React.FC = () => {
   const [patientsPage, setPatientsPage] = useState(1);
   const [patientsPerPage, setPatientsPerPage] = useState(25);
 
-  // Reset page numbers when search term changes
+  // Reset page numbers when search term or filters change
   useEffect(() => {
     setStaffPage(1);
     setPatientsPage(1);
-  }, [searchTerm]);
+  }, [searchTerm, verificationFilter, sectionFilter, roleFilter, deptFilter]);
 
   const staffUsers = useMemo(() => {
     return filteredUsers.filter(u => !u.roles.includes('Patient'));
@@ -469,16 +541,93 @@ const UserManagementPage: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Filtering {staffUsers.length} of {users.filter(u => !u.roles.includes('Patient')).length} total personnel.</CardDescription>
                   </div>
-                  <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search staff..."
-                      className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                      <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search staff..."
+                        className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant={showFilters || activeStaffFiltersCount > 0 ? "default" : "outline"}
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="h-12 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                    >
+                      <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                      <span>Filters</span>
+                      {activeStaffFiltersCount > 0 && (
+                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                          {activeStaffFiltersCount}
+                        </Badge>
+                      )}
+                    </Button>
                   </div>
                 </div>
+
+                {/* Filters */}
+                {showFilters && (
+                  <div className="flex flex-wrap items-center gap-3 mt-4 pt-3 border-t border-border/40 animate-in slide-in-from-top-4 duration-300">
+                    <div className="w-full sm:w-auto min-w-[140px]">
+                      <Select value={verificationFilter} onValueChange={(val: any) => setVerificationFilter(val)}>
+                        <SelectTrigger className="h-9 rounded-lg font-bold text-xs bg-muted/30 border-2">
+                          <SelectValue placeholder="Verification" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs font-bold">All Statuses</SelectItem>
+                          <SelectItem value="verified" className="text-xs font-bold">Verified Only</SelectItem>
+                          <SelectItem value="unverified" className="text-xs font-bold">Pending Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-full sm:w-auto min-w-[140px]">
+                      <Select value={roleFilter} onValueChange={setRoleFilter}>
+                        <SelectTrigger className="h-9 rounded-lg font-bold text-xs bg-muted/30 border-2">
+                          <SelectValue placeholder="Role" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs font-bold">All Roles</SelectItem>
+                          {roles.map(r => (
+                            <SelectItem key={r.id} value={r.name} className="text-xs font-bold">{r.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-full sm:w-auto min-w-[160px]">
+                      <Select value={deptFilter} onValueChange={setDeptFilter}>
+                        <SelectTrigger className="h-9 rounded-lg font-bold text-xs bg-muted/30 border-2">
+                          <SelectValue placeholder="Department" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs font-bold">All Departments</SelectItem>
+                          {departments.map(d => (
+                            <SelectItem key={d} value={d} className="text-xs font-bold">{d}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {(verificationFilter !== 'all' || roleFilter !== 'all' || deptFilter !== 'all' || searchTerm) && (
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => {
+                          setVerificationFilter('all');
+                          setRoleFilter('all');
+                          setDeptFilter('all');
+                          setSearchTerm('');
+                        }}
+                        className="h-9 text-xs font-black text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 px-3 rounded-lg flex items-center gap-1.5"
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
@@ -521,16 +670,77 @@ const UserManagementPage: React.FC = () => {
                     </CardTitle>
                     <CardDescription>Filtering {patientUsers.length} of {users.filter(u => u.roles.includes('Patient')).length} total patients.</CardDescription>
                   </div>
-                  <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
-                    <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search patients..."
-                      className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
-                      value={searchTerm}
-                      onChange={(e) => setSearchTerm(e.target.value)}
-                    />
+                  <div className="flex flex-wrap items-center gap-3 w-full md:w-auto">
+                    <div className="flex w-full md:w-80 items-center gap-2 bg-muted/30 p-2 rounded-xl border-2 focus-within:border-primary/50 transition-all relative">
+                      <HugeiconsIcon icon={Search01Icon} className="ml-1 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search patients..."
+                        className="border-0 bg-transparent focus-visible:ring-0 w-full text-sm font-bold h-8"
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                      />
+                    </div>
+                    <Button
+                      variant={showFilters || activePatientFiltersCount > 0 ? "default" : "outline"}
+                      onClick={() => setShowFilters(!showFilters)}
+                      className="h-12 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                    >
+                      <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                      <span>Filters</span>
+                      {activePatientFiltersCount > 0 && (
+                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                          {activePatientFiltersCount}
+                        </Badge>
+                      )}
+                    </Button>
                   </div>
                 </div>
+
+                {/* Filters */}
+                {showFilters && (
+                  <div className="flex flex-wrap items-center gap-3 mt-4 pt-3 border-t border-border/40 animate-in slide-in-from-top-4 duration-300">
+                    <div className="w-full sm:w-auto min-w-[140px]">
+                      <Select value={verificationFilter} onValueChange={(val: any) => setVerificationFilter(val)}>
+                        <SelectTrigger className="h-9 rounded-lg font-bold text-xs bg-muted/30 border-2">
+                          <SelectValue placeholder="Verification" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs font-bold">All Statuses</SelectItem>
+                          <SelectItem value="verified" className="text-xs font-bold">Verified Only</SelectItem>
+                          <SelectItem value="unverified" className="text-xs font-bold">Pending Only</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="w-full sm:w-auto min-w-[140px]">
+                      <Select value={sectionFilter} onValueChange={setSectionFilter}>
+                        <SelectTrigger className="h-9 rounded-lg font-bold text-xs bg-muted/30 border-2">
+                          <SelectValue placeholder="Section" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all" className="text-xs font-bold">All Sections</SelectItem>
+                          <SelectItem value="dcp" className="text-xs font-bold">DCP</SelectItem>
+                          <SelectItem value="dct" className="text-xs font-bold">DCT</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    {(verificationFilter !== 'all' || sectionFilter !== 'all' || searchTerm) && (
+                      <Button 
+                        variant="ghost" 
+                        onClick={() => {
+                          setVerificationFilter('all');
+                          setSectionFilter('all');
+                          setSearchTerm('');
+                        }}
+                        className="h-9 text-xs font-black text-rose-500 hover:text-rose-600 hover:bg-rose-500/10 px-3 rounded-lg flex items-center gap-1.5"
+                      >
+                        <HugeiconsIcon icon={Cancel01Icon} className="w-3.5 h-3.5" />
+                        Clear Filters
+                      </Button>
+                    )}
+                  </div>
+                )}
               </CardHeader>
               <CardContent className="p-0">
                 <UserTable
