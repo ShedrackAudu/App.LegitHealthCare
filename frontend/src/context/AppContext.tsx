@@ -24,6 +24,8 @@ interface AppContextType {
   activeChatId: string | null;
   setActiveChatId: (id: string | null) => void;
   verifyingAuth: boolean;
+  messageNotifications: any[];
+  dismissMessageNotification: (id: string) => void;
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
@@ -98,6 +100,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     activeChatIdRef.current = activeChatId;
   }, [activeChatId]);
 
+  const [messageNotifications, setMessageNotifications] = useState<any[]>([]);
+
+  const dismissMessageNotification = useCallback((id: string) => {
+    setMessageNotifications(prev => prev.filter(n => n.id !== id));
+  }, []);
+
   const MESSAGE_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2361/2361-preview.mp3';
   const ALERT_SOUND = 'https://assets.mixkit.co/active_storage/sfx/2353/2353-preview.mp3';
   
@@ -166,20 +174,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       newSocket.on('message_notification', (msg: any) => {
           setUnreadMessagesCount(prev => prev + 1);
           
-          const isChatActive = window.location.pathname.includes('/messaging') && 
+          const isChatActive = (window.location.pathname.includes('/messages') || window.location.pathname.includes('/messaging')) && 
             activeChatIdRef.current === (msg.group_id ? `group_${msg.group_id}` : `dm_${msg.sender_id}`);
           
           if (!isChatActive && msg.sender_id !== user.id) {
             playGlobalSound('message');
             
-            const titleText = msg.group_id ? `Group: ${msg.sender_name}` : msg.sender_name;
-            toast(
-              <div className="flex flex-col gap-0.5">
-                <span className="font-bold text-foreground text-sm">{titleText}</span>
-                <span className="text-muted-foreground text-xs line-clamp-2">{msg.content}</span>
-              </div>,
-              { id: `message_${msg.id}` }
-            );
+            const notificationId = `msg_${msg.id || Date.now()}_${Math.random()}`;
+            setMessageNotifications(prev => [
+              ...prev,
+              {
+                id: notificationId,
+                chat_id: msg.group_id ? `group_${msg.group_id}` : `dm_${msg.sender_id}`,
+                sender_name: msg.sender_name,
+                group_id: msg.group_id,
+                content: msg.content,
+                timestamp: new Date().toISOString()
+              }
+            ]);
           }
       });
 
@@ -397,7 +409,9 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       socket, unreadMessagesCount, setUnreadMessagesCount,
       isMuted, setIsMuted: handleSetIsMuted, playGlobalSound,
       activeChatId, setActiveChatId,
-      verifyingAuth
+      verifyingAuth,
+      messageNotifications,
+      dismissMessageNotification
     }}>
       {children}
     </AppContext.Provider>

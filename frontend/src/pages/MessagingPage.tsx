@@ -101,6 +101,17 @@ export default function MessagingPage() {
     fetchConversations();
   }, []);
 
+  useEffect(() => {
+    const openChatId = localStorage.getItem('open_chat_id');
+    if (openChatId && conversations.length > 0) {
+      const conv = conversations.find(c => c.id === openChatId);
+      if (conv) {
+        setActiveChat(conv);
+        localStorage.removeItem('open_chat_id');
+      }
+    }
+  }, [conversations]);
+
   const viewProfile = async (userId: number) => {
     if (!userId) return;
     try {
