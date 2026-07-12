@@ -42,6 +42,7 @@ const PatientReportPage: React.FC = () => {
     const [bulkEmailEnabled, setBulkEmailEnabled] = useState(true);
     const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
     const [excludeEmail, setExcludeEmail] = useState(true);
+    const [onlyBounced, setOnlyBounced] = useState(false);
 
     useEffect(() => {
         const checkBulkStatuses = async () => {
@@ -70,7 +71,7 @@ const PatientReportPage: React.FC = () => {
             toast.error("Bulk report downloading is currently disabled by the system administrator.");
             return;
         }
-        if (!rangeInput.trim()) {
+        if (!onlyBounced && !rangeInput.trim()) {
             toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
             return;
         }
@@ -86,11 +87,12 @@ const PatientReportPage: React.FC = () => {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
                 params: {
-                    range: rangeInput,
+                    range: onlyBounced ? '' : rangeInput,
                     year: activeYear,
                     company: activeSection,
                     list_only: 'true',
-                    exclude_email: excludeEmail ? 'true' : 'false'
+                    exclude_email: excludeEmail ? 'true' : 'false',
+                    only_bounced_emails: onlyBounced ? 'true' : 'false'
                 },
                 headers: {
                     'X-Company-Context': activeSection
@@ -150,7 +152,8 @@ const PatientReportPage: React.FC = () => {
             const url = window.URL.createObjectURL(zipBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeInput.replace(/\s+/g, '')}.zip`;
+            const rangeName = onlyBounced ? 'Bounces' : rangeInput.replace(/\s+/g, '');
+            link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeName}.zip`;
             document.body.appendChild(link);
             link.click();
             link.remove();
@@ -1158,9 +1161,11 @@ const PatientReportPage: React.FC = () => {
                                     <p className="font-bold text-foreground">Downloads reports meeting these criteria:</p>
                                     <ul className="list-disc list-inside space-y-1 pl-1">
                                         <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
-                                        {excludeEmail && (
+                                        {onlyBounced ? (
+                                            <li>Patient email matches a failed notification in Gmail</li>
+                                        ) : excludeEmail ? (
                                             <li>No email address is attached to the patient profile</li>
-                                        )}
+                                        ) : null}
                                     </ul>
 
                                     <div className="pt-2 border-t flex items-center justify-between gap-4">
@@ -1171,12 +1176,40 @@ const PatientReportPage: React.FC = () => {
                                         <button
                                             type="button"
                                             id="exclude-email-toggle"
-                                            onClick={() => setExcludeEmail(!excludeEmail)}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            onClick={() => {
+                                                setExcludeEmail(!excludeEmail);
+                                                if (!excludeEmail) {
+                                                    setOnlyBounced(false);
+                                                }
+                                            }}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail && !onlyBounced ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
                                             disabled={bulkLoading || !bulkDownloadEnabled}
                                         >
                                             <span
-                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail && !onlyBounced ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <div className="pt-2 border-t flex items-center justify-between gap-4">
+                                        <div className="space-y-0.5">
+                                            <label htmlFor="only-bounced-toggle" className="font-bold text-foreground cursor-pointer">Only bounced emails</label>
+                                            <p className="text-[10px] text-muted-foreground">Only download reports for patients with incorrect/failed emails.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="only-bounced-toggle"
+                                            onClick={() => {
+                                                setOnlyBounced(!onlyBounced);
+                                                if (!onlyBounced) {
+                                                    setExcludeEmail(false);
+                                                }
+                                            }}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${onlyBounced ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            disabled={bulkLoading || !bulkDownloadEnabled}
+                                        >
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${onlyBounced ? 'translate-x-5' : 'translate-x-0.5'}`}
                                             />
                                         </button>
                                     </div>
@@ -1186,13 +1219,15 @@ const PatientReportPage: React.FC = () => {
                                     <Label htmlFor="pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
                                     <Input
                                         id="pid-range"
-                                        placeholder="e.g. 1-100 or 25"
-                                        value={rangeInput}
+                                        placeholder={onlyBounced ? "All (Bounced Emails Only)" : "e.g. 1-100 or 25"}
+                                        value={onlyBounced ? "" : rangeInput}
                                         onChange={(e) => setRangeInput(e.target.value)}
                                         className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-55"
-                                        disabled={bulkLoading || !bulkDownloadEnabled}
+                                        disabled={bulkLoading || !bulkDownloadEnabled || onlyBounced}
                                     />
-                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and download as a ZIP file.</p>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        {onlyBounced ? "System will scan all unread Gmail failure notices for this section." : "Specify range of serial Patient IDs to scan and download as a ZIP file."}
+                                    </p>
                                 </div>
                             </div>
 
