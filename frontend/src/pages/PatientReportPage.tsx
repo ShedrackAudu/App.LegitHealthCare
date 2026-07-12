@@ -76,7 +76,13 @@ const PatientReportPage: React.FC = () => {
             return;
         }
         setBulkLoading(true);
-        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
+        setBulkProgress({ 
+            current: 0, 
+            total: 100, 
+            name: onlyBounced 
+                ? 'Connecting to Gmail & scanning for bounced notifications...' 
+                : 'Scanning for completed reports...' 
+        });
         
         (window as any).isBulkActionActive = true;
         sessionStorage.setItem('lhc_bulk_active', 'true');
@@ -1310,7 +1316,9 @@ const PatientReportPage: React.FC = () => {
                             
                             {/* Inner Circle Background */}
                             <div className="absolute inset-2 rounded-full bg-card border-2 border-indigo-500/5 shadow-inner flex items-center justify-center z-10">
-                                <span className="text-2xl animate-pulse">📄</span>
+                                <span className="text-2xl animate-pulse">
+                                    {onlyBounced && bulkProgress.current === 0 ? '✉️' : '📄'}
+                                </span>
                             </div>
                             
                             {/* SVG Gradient Spinner */}
@@ -1345,7 +1353,9 @@ const PatientReportPage: React.FC = () => {
                         </div>
                         
                         <div className="space-y-2">
-                            <h2 className="text-xl font-black tracking-tight text-foreground">Generating Bulk Reports</h2>
+                            <h2 className="text-xl font-black tracking-tight text-foreground">
+                                {onlyBounced && bulkProgress.current === 0 ? 'Scanning Inbox for Bounces' : 'Generating Bulk Reports'}
+                            </h2>
                             <p className="text-sm text-muted-foreground font-semibold">
                                 Please do not close or reload this page.
                             </p>
@@ -1354,13 +1364,22 @@ const PatientReportPage: React.FC = () => {
                         <div className="space-y-4">
                             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                                 <div 
-                                    className="h-full bg-primary transition-all duration-300 rounded-full"
-                                    style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                                    className={`h-full bg-primary transition-all duration-300 rounded-full ${onlyBounced && bulkProgress.current === 0 ? 'w-full animate-pulse' : ''}`}
+                                    style={onlyBounced && bulkProgress.current === 0 ? undefined : { width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
                                 />
                             </div>
                             <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider text-muted-foreground">
-                                <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
-                                <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                                {onlyBounced && bulkProgress.current === 0 ? (
+                                    <>
+                                        <span>Reading failure notices...</span>
+                                        <span>SMTP/IMAP</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
+                                        <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                         
