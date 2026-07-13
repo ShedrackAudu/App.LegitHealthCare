@@ -7,7 +7,10 @@ import {
   Mail01Icon, 
   Loading03Icon, 
   Cancel01Icon, 
-  PrinterIcon 
+  PrinterIcon,
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+  Alert01Icon 
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -43,6 +46,15 @@ const PatientReportPage: React.FC = () => {
     const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
     const [excludeEmail, setExcludeEmail] = useState(true);
     const [onlyBounced, setOnlyBounced] = useState(false);
+    const [bulkSummary, setBulkSummary] = useState<{
+        isOpen: boolean;
+        title: string;
+        status: 'success' | 'warning' | 'error';
+        total: number;
+        successCount: number;
+        failCount: number;
+        details?: string;
+    } | null>(null);
 
     useEffect(() => {
         const checkBulkStatuses = async () => {
@@ -167,10 +179,28 @@ const PatientReportPage: React.FC = () => {
             window.URL.revokeObjectURL(url);
             
             toast.success('Bulk reports downloaded successfully', { id: 'bulkDownload' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Download Completed",
+                status: "success",
+                total: patientsList.length,
+                successCount: patientsList.length,
+                failCount: 0,
+                details: `Successfully compiled and packaged ${patientsList.length} patient reports sorted by department inside the ZIP file.`
+            });
         } catch (err: any) {
             console.error('Bulk download error:', err);
             const errorMsg = err.response?.data?.error || err.message || 'Failed to download reports';
             toast.error(errorMsg, { id: 'bulkDownload' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Download Failed",
+                status: "error",
+                total: 0,
+                successCount: 0,
+                failCount: 0,
+                details: errorMsg
+            });
         } finally {
             setSelectedPatient(originalPatient);
             setReportData(originalReportData);
@@ -237,6 +267,10 @@ const PatientReportPage: React.FC = () => {
             };
 
             // 2. Loop through each patient, load their data, and render/email the PDF
+            let successCount = 0;
+            let failCount = 0;
+            const failedPatients: string[] = [];
+
             for (let i = 0; i < patientsList.length; i++) {
                 (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
@@ -246,66 +280,96 @@ const PatientReportPage: React.FC = () => {
                     name: `Emailing: ${patientInfo.first_name} ${patientInfo.last_name}` 
                 });
 
-                // Fetch details
-                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
-                    headers: { 'X-Company-Context': activeSection }
-                });
+                try {
+                    // Fetch details
+                    const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                        headers: { 'X-Company-Context': activeSection }
+                    });
 
-                // Swap states to trigger rendering of the report pages
-                setSelectedPatient(patientInfo);
-                setReportData(detailRes.data);
+                    // Swap states to trigger rendering of the report pages
+                    setSelectedPatient(patientInfo);
+                    setReportData(detailRes.data);
 
-                // Wait 400ms for React rendering and browser layout calculations
-                await delay(400);
+                    // Wait 400ms for React rendering and browser layout calculations
+                    await delay(400);
 
-                // Capture PDF
-                const pdfBlob = await generateFrontendPDF();
-                const b64data = await blobToBase64(pdfBlob);
+                    // Capture PDF
+                    const pdfBlob = await generateFrontendPDF();
+                    const b64data = await blobToBase64(pdfBlob);
 
-                const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
-                if (!pEmail || !pEmail.trim()) {
-                    console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
-                    continue;
+                    const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
+                    if (!pEmail || !pEmail.trim()) {
+                        console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
+                        failCount++;
+                        failedPatients.push(`${patientInfo.first_name} ${patientInfo.last_name} (Missing Email)`);
+                        continue;
+                    }
+
+                    let companyName = 'Legit HealthCare';
+                    if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
+                    if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
+
+                    // Use individual download filename format
+                    const bio = detailRes.data.bio || {};
+                    const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                    const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                    const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                    const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
+
+                    const payloadData = {
+                        report_data: {
+                            ...detailRes.data,
+                            bio: {
+                                ...detailRes.data.bio,
+                                section: activeSection,
+                                screening_year: activeYear,
+                            }
+                        },
+                        email: pEmail,
+                        first_name: patientInfo.first_name || 'Patient',
+                        screening_year: activeYear,
+                        company: companyName,
+                        staff_id: patientInfo.staff_id || '',
+                        attachment_data: b64data,
+                        attachment_filename: filename
+                    };
+
+                    // Send email
+                    await api.post('/api/email/report', payloadData);
+                    successCount++;
+                } catch (singleErr: any) {
+                    console.error(`Failed to email report for ${patientInfo.first_name} ${patientInfo.last_name}:`, singleErr);
+                    failCount++;
+                    const msg = singleErr.response?.data?.error || singleErr.message || 'Transmission error';
+                    failedPatients.push(`${patientInfo.first_name} ${patientInfo.last_name} (${msg})`);
                 }
-
-                let companyName = 'Legit HealthCare';
-                if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
-                if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
-
-                // Use individual download filename format
-                const bio = detailRes.data.bio || {};
-                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
-                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
-                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
-                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
-
-                const payloadData = {
-                    report_data: {
-                        ...detailRes.data,
-                        bio: {
-                            ...detailRes.data.bio,
-                            section: activeSection,
-                            screening_year: activeYear,
-                        }
-                    },
-                    email: pEmail,
-                    first_name: patientInfo.first_name || 'Patient',
-                    screening_year: activeYear,
-                    company: companyName,
-                    staff_id: patientInfo.staff_id || '',
-                    attachment_data: b64data,
-                    attachment_filename: filename
-                };
-
-                // Send email
-                await api.post('/api/email/report', payloadData);
             }
             
-            toast.success(`Bulk reports successfully emailed to ${patientsList.length} patients!`, { id: 'bulkEmail' });
+            toast.success(`Bulk reports emailing completed!`, { id: 'bulkEmail' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Email Sending Complete",
+                status: failCount > 0 ? "warning" : "success",
+                total: patientsList.length,
+                successCount: successCount,
+                failCount: failCount,
+                details: failCount > 0 
+                    ? `Processed ${patientsList.length} emails. ${successCount} sent successfully. ${failCount} failed:\n\n` + failedPatients.join('\n')
+                    : `Successfully generated and emailed PDF reports to all ${successCount} patients.`
+            });
         } catch (err: any) {
             console.error('Bulk email error:', err);
             const errorMsg = err.response?.data?.error || err.message || 'Failed to bulk email reports';
             toast.error(errorMsg, { id: 'bulkEmail' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Email Failed",
+                status: "error",
+                total: 0,
+                successCount: 0,
+                failCount: 0,
+                details: errorMsg
+            });
         } finally {
             setSelectedPatient(originalPatient);
             setReportData(originalReportData);
@@ -1388,6 +1452,57 @@ const PatientReportPage: React.FC = () => {
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 mb-0.5">Processing Patient</p>
                             <p className="text-sm font-black text-foreground truncate">{bulkProgress.name || 'Initial Scanning...'}</p>
                         </div>
+                    </div>
+                </div>
+            )}
+            {bulkSummary && bulkSummary.isOpen && (
+                <div className="fixed inset-0 bg-background/60 backdrop-blur-md z-[10000] flex items-center justify-center p-6 text-center animate-in fade-in duration-300">
+                    <div className="max-w-md w-full bg-card border-2 border-border/80 rounded-3xl p-8 shadow-2xl relative flex flex-col items-center">
+                        {/* Status Icon */}
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
+                            bulkSummary.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                            bulkSummary.status === 'warning' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                            'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                        }`}>
+                            <HugeiconsIcon 
+                                icon={
+                                    bulkSummary.status === 'success' ? CheckmarkCircle02Icon :
+                                    bulkSummary.status === 'warning' ? Alert01Icon :
+                                    AlertCircleIcon
+                                } 
+                                className="w-8 h-8" 
+                            />
+                        </div>
+
+                        <h3 className="text-xl font-black text-foreground tracking-tight mb-2">{bulkSummary.title}</h3>
+                        
+                        <div className="text-xs text-muted-foreground font-semibold mb-6 max-w-sm max-h-48 overflow-y-auto w-full text-center whitespace-pre-wrap border border-dashed border-border/40 rounded-xl p-3 bg-muted/20">
+                            {bulkSummary.details}
+                        </div>
+
+                        {/* Counts grid */}
+                        <div className="grid grid-cols-3 gap-3 w-full bg-muted/30 border border-border/50 rounded-2xl p-4 mb-6">
+                            <div>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">Total</span>
+                                <span className="text-lg font-black text-foreground">{bulkSummary.total}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-emerald-500/80 uppercase tracking-wider block">Succeeded</span>
+                                <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{bulkSummary.successCount}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-rose-500/80 uppercase tracking-wider block">Failed</span>
+                                <span className="text-lg font-black text-rose-600 dark:text-rose-400">{bulkSummary.failCount}</span>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <Button 
+                            onClick={() => setBulkSummary(null)}
+                            className="w-full py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all"
+                        >
+                            Acknowledge
+                        </Button>
                     </div>
                 </div>
             )}

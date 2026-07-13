@@ -13,7 +13,10 @@ import {
   Shield01Icon,
   SparklesIcon,
   UserIcon,
-  Cancel01Icon
+  Cancel01Icon,
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+  Alert01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
@@ -743,6 +746,15 @@ const DirectorPage: React.FC = () => {
     const [batchProcessing, setBatchProcessing] = useState(false);
     const [batchProgress, setBatchProgress] = useState({ current: 0, total: 0, successCount: 0, failCount: 0 });
     const [batchLogs, setBatchLogs] = useState<Array<{ id: number; status: 'pending' | 'success' | 'failed' | 'processing'; message: string }>>([]);
+    const [batchSummary, setBatchSummary] = useState<{
+        isOpen: boolean;
+        title: string;
+        status: 'success' | 'warning' | 'error';
+        total: number;
+        successCount: number;
+        failCount: number;
+        details?: string;
+    } | null>(null);
 
     // Batch AI Lab Remarks states
     const [batchLabStartId, setBatchLabStartId] = useState('');
@@ -789,6 +801,10 @@ const DirectorPage: React.FC = () => {
         const total = end - start + 1;
         setBatchProgress({ current: 0, total, successCount: 0, failCount: 0 });
         
+        let successCount = 0;
+        let failCount = 0;
+        const failedIds: number[] = [];
+
         const initialLogs = [];
         for (let i = start; i <= end; i++) {
             initialLogs.push({ id: i, status: 'pending' as const, message: 'Queued' });
@@ -822,7 +838,8 @@ const DirectorPage: React.FC = () => {
                 );
                 if (hasExistingComment) {
                     setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: 'Skipped: Review comments already exist' } : log));
-                    setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                    successCount++;
+                    setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount }));
                     continue;
                 }
                 
@@ -864,12 +881,15 @@ const DirectorPage: React.FC = () => {
                 
                 // Success log
                 setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: `Completed: ${patientData.first_name} ${patientData.last_name}` } : log));
-                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                successCount++;
+                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, successCount }));
                 
             } catch (err: any) {
                 const errMsg = err.response?.data?.error || err.message || "Failed to process";
                 setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: errMsg } : log));
-                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, failCount: prev.failCount + 1 }));
+                failCount++;
+                failedIds.push(i);
+                setBatchProgress(prev => ({ ...prev, current: prev.current + 1, failCount }));
             }
         }
         
@@ -877,6 +897,17 @@ const DirectorPage: React.FC = () => {
         (window as any).isBulkActionActive = false;
         sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
+        setBatchSummary({
+            isOpen: true,
+            title: "Bulk AI Reviews Complete",
+            status: failCount > 0 ? "warning" : "success",
+            total,
+            successCount,
+            failCount,
+            details: failCount > 0 
+                ? `Processed AI reviews for ${total} patient IDs. ${successCount} succeeded. ${failCount} failed (Failed IDs: ${failedIds.join(', ')}). Please verify the failures in the log list below.`
+                : `Successfully generated and saved AI review comments for all ${successCount} patients.`
+        });
     };
 
     const startBatchLabProcess = async () => {
@@ -904,6 +935,10 @@ const DirectorPage: React.FC = () => {
         const total = end - start + 1;
         setBatchLabProgress({ current: 0, total, successCount: 0, failCount: 0 });
         
+        let successCount = 0;
+        let failCount = 0;
+        const failedIds: number[] = [];
+
         const initialLogs = [];
         for (let i = start; i <= end; i++) {
             initialLogs.push({ id: i, status: 'pending' as const, message: 'Queued' });
@@ -933,7 +968,8 @@ const DirectorPage: React.FC = () => {
                 
                 if (hasExistingLabRemark) {
                     setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: 'Skipped: Overall lab remark already exists' } : log));
-                    setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                    successCount++;
+                    setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount }));
                     continue;
                 }
                 
@@ -971,12 +1007,15 @@ const DirectorPage: React.FC = () => {
                 
                 // Success log
                 setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'success' as const, message: `Completed: ${patientData.first_name} ${patientData.last_name}` } : log));
-                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount: prev.successCount + 1 }));
+                successCount++;
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, successCount }));
                 
             } catch (err: any) {
                 const errMsg = err.response?.data?.error || err.message || "Failed to process";
                 setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: errMsg } : log));
-                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, failCount: prev.failCount + 1 }));
+                failCount++;
+                failedIds.push(i);
+                setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, failCount }));
             }
         }
         
@@ -984,6 +1023,17 @@ const DirectorPage: React.FC = () => {
         (window as any).isBulkActionActive = false;
         sessionStorage.removeItem('lhc_bulk_active');
         toast.success("Batch processing completed!");
+        setBatchSummary({
+            isOpen: true,
+            title: "Bulk AI Lab Remarks Complete",
+            status: failCount > 0 ? "warning" : "success",
+            total,
+            successCount,
+            failCount,
+            details: failCount > 0 
+                ? `Processed Overall Lab Remarks for ${total} patient IDs. ${successCount} succeeded. ${failCount} failed (Failed IDs: ${failedIds.join(', ')}). Please verify the failures in the log list below.`
+                : `Successfully generated and saved AI overall lab remarks for all ${successCount} patients.`
+        });
     };
     const selectPatient = (p: any) => {
         handleSearchWithId(p.staff_id, 'general');
@@ -1438,6 +1488,57 @@ const DirectorPage: React.FC = () => {
                     </div>
                 )}
             </div>
+            {batchSummary && batchSummary.isOpen && (
+                <div className="fixed inset-0 bg-background/60 backdrop-blur-md z-[10000] flex items-center justify-center p-6 text-center animate-in fade-in duration-300">
+                    <div className="max-w-md w-full bg-card border-2 border-border/80 rounded-3xl p-8 shadow-2xl relative flex flex-col items-center">
+                        {/* Status Icon */}
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
+                            batchSummary.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                            batchSummary.status === 'warning' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                            'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                        }`}>
+                            <HugeiconsIcon 
+                                icon={
+                                    batchSummary.status === 'success' ? CheckmarkCircle02Icon :
+                                    batchSummary.status === 'warning' ? Alert01Icon :
+                                    AlertCircleIcon
+                                } 
+                                className="w-8 h-8" 
+                            />
+                        </div>
+
+                        <h3 className="text-xl font-black text-foreground tracking-tight mb-2">{batchSummary.title}</h3>
+                        
+                        <div className="text-xs text-muted-foreground font-semibold mb-6 max-w-sm max-h-48 overflow-y-auto w-full text-center whitespace-pre-wrap border border-dashed border-border/40 rounded-xl p-3 bg-muted/20">
+                            {batchSummary.details}
+                        </div>
+
+                        {/* Counts grid */}
+                        <div className="grid grid-cols-3 gap-3 w-full bg-muted/30 border border-border/50 rounded-2xl p-4 mb-6">
+                            <div>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">Total</span>
+                                <span className="text-lg font-black text-foreground">{batchSummary.total}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-emerald-500/80 uppercase tracking-wider block">Succeeded</span>
+                                <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{batchSummary.successCount}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-rose-500/80 uppercase tracking-wider block">Failed</span>
+                                <span className="text-lg font-black text-rose-600 dark:text-rose-400">{batchSummary.failCount}</span>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <Button 
+                            onClick={() => setBatchSummary(null)}
+                            className="w-full py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all"
+                        >
+                            Acknowledge
+                        </Button>
+                    </div>
+                </div>
+            )}
         </MainLayout>
     );
 };
