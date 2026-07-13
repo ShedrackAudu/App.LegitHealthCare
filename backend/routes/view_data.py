@@ -1186,7 +1186,10 @@ def bulk_download_reports():
             dpt = re.sub(r'\s+', '', dpt_raw)
             sId = yr.staff_id or 'UNKNOWN'
             filename = f"LHCSL{year}{bind.upper()}{pId}_{dpt}_{sId}.pdf"
-            zip_file.writestr(filename, pdf_bytes)
+            
+            dept_name = dpt_raw.strip() if dpt_raw else 'Unassigned'
+            sanitized_dept = re.sub(r'[\\/:*?"<>|]', '_', dept_name)
+            zip_file.writestr(f"{sanitized_dept}/{filename}", pdf_bytes)
 
     zip_buffer.seek(0)
     

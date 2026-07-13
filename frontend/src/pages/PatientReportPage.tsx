@@ -142,14 +142,15 @@ const PatientReportPage: React.FC = () => {
                 // Capture PDF
                 const pdfBlob = await generateFrontendPDF();
 
-                // Add to ZIP (using individual download filename format)
+                // Add to ZIP grouped departmentally
                 const bio = detailRes.data.bio || {};
                 const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
                 const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
                 const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
                 const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
                 
-                zip.file(filename, pdfBlob);
+                const deptFolder = (bio.department?.trim() || 'Unassigned').replace(/[\\\/:\*\?"<>\|]/g, '_');
+                zip.file(`${deptFolder}/${filename}`, pdfBlob);
             }
 
             setBulkProgress(prev => prev ? { ...prev, name: 'Compiling ZIP package...' } : null);
