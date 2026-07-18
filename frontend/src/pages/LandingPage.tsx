@@ -669,7 +669,10 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground gap-4">
-            <p>© {new Date().getFullYear()} {branding?.clinic_name || "Legit HealthCare Services Ltd."}. All rights reserved.</p>
+            <p className="text-center md:text-left">
+              © {new Date().getFullYear()} {branding?.clinic_name || "Legit HealthCare Services Ltd."}.
+              <span className="block md:inline md:ml-1">All rights reserved.</span>
+            </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
