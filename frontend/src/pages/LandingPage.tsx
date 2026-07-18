@@ -177,7 +177,7 @@ const LandingPage = () => {
         </div>
         
         <div className="container mx-auto px-6 md:px-12 lg:px-20 relative">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
             {/* Left Content Side */}
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
@@ -252,7 +252,7 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: "circOut", delay: 0.3 }}
-              className="lg:flex-1 relative w-full mt-16 lg:mt-0"
+              className="lg:flex-1 relative w-full mt-8 lg:mt-0"
             >
               <div className="relative mx-auto lg:ml-auto group max-w-2xl">
                 {/* Visual Depth Elements */}
