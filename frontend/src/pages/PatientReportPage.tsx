@@ -7,7 +7,10 @@ import {
   Mail01Icon, 
   Loading03Icon, 
   Cancel01Icon, 
-  PrinterIcon 
+  PrinterIcon,
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+  Alert01Icon 
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { MainLayout } from '@/components/layout/MainLayout';
@@ -42,6 +45,16 @@ const PatientReportPage: React.FC = () => {
     const [bulkEmailEnabled, setBulkEmailEnabled] = useState(true);
     const [bulkProgress, setBulkProgress] = useState<{ current: number; total: number; name: string } | null>(null);
     const [excludeEmail, setExcludeEmail] = useState(true);
+    const [onlyBounced, setOnlyBounced] = useState(false);
+    const [bulkSummary, setBulkSummary] = useState<{
+        isOpen: boolean;
+        title: string;
+        status: 'success' | 'warning' | 'error';
+        total: number;
+        successCount: number;
+        failCount: number;
+        details?: string;
+    } | null>(null);
 
     useEffect(() => {
         const checkBulkStatuses = async () => {
@@ -70,12 +83,18 @@ const PatientReportPage: React.FC = () => {
             toast.error("Bulk report downloading is currently disabled by the system administrator.");
             return;
         }
-        if (!rangeInput.trim()) {
+        if (!onlyBounced && !rangeInput.trim()) {
             toast.error("Please enter a valid Patient ID range (e.g. 1-100)");
             return;
         }
         setBulkLoading(true);
-        setBulkProgress({ current: 0, total: 100, name: 'Scanning for completed reports...' });
+        setBulkProgress({ 
+            current: 0, 
+            total: 100, 
+            name: onlyBounced 
+                ? 'Connecting to Gmail & scanning for bounced notifications...' 
+                : 'Scanning for completed reports...' 
+        });
         
         (window as any).isBulkActionActive = true;
         sessionStorage.setItem('lhc_bulk_active', 'true');
@@ -86,11 +105,12 @@ const PatientReportPage: React.FC = () => {
             // 1. Get the list of matching patients from the backend
             const response = await api.get(`/api/patient-report/bulk-download`, {
                 params: {
-                    range: rangeInput,
+                    range: onlyBounced ? '' : rangeInput,
                     year: activeYear,
                     company: activeSection,
                     list_only: 'true',
-                    exclude_email: excludeEmail ? 'true' : 'false'
+                    exclude_email: excludeEmail ? 'true' : 'false',
+                    only_bounced_emails: onlyBounced ? 'true' : 'false'
                 },
                 headers: {
                     'X-Company-Context': activeSection
@@ -134,14 +154,15 @@ const PatientReportPage: React.FC = () => {
                 // Capture PDF
                 const pdfBlob = await generateFrontendPDF();
 
-                // Add to ZIP (using individual download filename format)
+                // Add to ZIP grouped departmentally
                 const bio = detailRes.data.bio || {};
                 const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
                 const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
                 const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
                 const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
                 
-                zip.file(filename, pdfBlob);
+                const deptFolder = (bio.department?.trim() || 'Unassigned').replace(/[\\\/:\*\?"<>\|]/g, '_');
+                zip.file(`${deptFolder}/${filename}`, pdfBlob);
             }
 
             setBulkProgress(prev => prev ? { ...prev, name: 'Compiling ZIP package...' } : null);
@@ -150,17 +171,36 @@ const PatientReportPage: React.FC = () => {
             const url = window.URL.createObjectURL(zipBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeInput.replace(/\s+/g, '')}.zip`;
+            const rangeName = onlyBounced ? 'Bounces' : rangeInput.replace(/\s+/g, '');
+            link.download = `Bulk_Reports_${activeSection}_${activeYear}_${rangeName}.zip`;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
             
             toast.success('Bulk reports downloaded successfully', { id: 'bulkDownload' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Download Completed",
+                status: "success",
+                total: patientsList.length,
+                successCount: patientsList.length,
+                failCount: 0,
+                details: `Successfully compiled and packaged ${patientsList.length} patient reports sorted by department inside the ZIP file.`
+            });
         } catch (err: any) {
             console.error('Bulk download error:', err);
             const errorMsg = err.response?.data?.error || err.message || 'Failed to download reports';
             toast.error(errorMsg, { id: 'bulkDownload' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Download Failed",
+                status: "error",
+                total: 0,
+                successCount: 0,
+                failCount: 0,
+                details: errorMsg
+            });
         } finally {
             setSelectedPatient(originalPatient);
             setReportData(originalReportData);
@@ -227,6 +267,10 @@ const PatientReportPage: React.FC = () => {
             };
 
             // 2. Loop through each patient, load their data, and render/email the PDF
+            let successCount = 0;
+            let failCount = 0;
+            const failedPatients: string[] = [];
+
             for (let i = 0; i < patientsList.length; i++) {
                 (window as any).resetLhcInactivityTimer?.();
                 const patientInfo = patientsList[i];
@@ -236,66 +280,96 @@ const PatientReportPage: React.FC = () => {
                     name: `Emailing: ${patientInfo.first_name} ${patientInfo.last_name}` 
                 });
 
-                // Fetch details
-                const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
-                    headers: { 'X-Company-Context': activeSection }
-                });
+                try {
+                    // Fetch details
+                    const detailRes = await api.get(`/api/patient-report/${patientInfo.staff_id}/${activeYear}`, {
+                        headers: { 'X-Company-Context': activeSection }
+                    });
 
-                // Swap states to trigger rendering of the report pages
-                setSelectedPatient(patientInfo);
-                setReportData(detailRes.data);
+                    // Swap states to trigger rendering of the report pages
+                    setSelectedPatient(patientInfo);
+                    setReportData(detailRes.data);
 
-                // Wait 400ms for React rendering and browser layout calculations
-                await delay(400);
+                    // Wait 400ms for React rendering and browser layout calculations
+                    await delay(400);
 
-                // Capture PDF
-                const pdfBlob = await generateFrontendPDF();
-                const b64data = await blobToBase64(pdfBlob);
+                    // Capture PDF
+                    const pdfBlob = await generateFrontendPDF();
+                    const b64data = await blobToBase64(pdfBlob);
 
-                const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
-                if (!pEmail || !pEmail.trim()) {
-                    console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
-                    continue;
+                    const pEmail = detailRes.data.bio?.email || patientInfo.email || '';
+                    if (!pEmail || !pEmail.trim()) {
+                        console.warn(`Skipping patient ${patientInfo.staff_id} because email is missing.`);
+                        failCount++;
+                        failedPatients.push(`${patientInfo.first_name} ${patientInfo.last_name} (Missing Email)`);
+                        continue;
+                    }
+
+                    let companyName = 'Legit HealthCare';
+                    if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
+                    if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
+
+                    // Use individual download filename format
+                    const bio = detailRes.data.bio || {};
+                    const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
+                    const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
+                    const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
+                    const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
+
+                    const payloadData = {
+                        report_data: {
+                            ...detailRes.data,
+                            bio: {
+                                ...detailRes.data.bio,
+                                section: activeSection,
+                                screening_year: activeYear,
+                            }
+                        },
+                        email: pEmail,
+                        first_name: patientInfo.first_name || 'Patient',
+                        screening_year: activeYear,
+                        company: companyName,
+                        staff_id: patientInfo.staff_id || '',
+                        attachment_data: b64data,
+                        attachment_filename: filename
+                    };
+
+                    // Send email
+                    await api.post('/api/email/report', payloadData);
+                    successCount++;
+                } catch (singleErr: any) {
+                    console.error(`Failed to email report for ${patientInfo.first_name} ${patientInfo.last_name}:`, singleErr);
+                    failCount++;
+                    const msg = singleErr.response?.data?.error || singleErr.message || 'Transmission error';
+                    failedPatients.push(`${patientInfo.first_name} ${patientInfo.last_name} (${msg})`);
                 }
-
-                let companyName = 'Legit HealthCare';
-                if (activeSection === 'DCT') companyName = 'Dangote Cement Transport';
-                if (activeSection === 'DCP') companyName = 'Dangote Cement Plant';
-
-                // Use individual download filename format
-                const bio = detailRes.data.bio || {};
-                const pId = bio.patient_id || patientInfo.patient_id || 'UNKNOWN';
-                const dpt = bio.department?.replace(/\s+/g, '') || 'Dept';
-                const sId = bio.staff_id || patientInfo.staff_id || 'UNKNOWN';
-                const filename = `LHCSL${activeYear}${activeSection.toUpperCase()}${pId}_${dpt}_${sId}.pdf`;
-
-                const payloadData = {
-                    report_data: {
-                        ...detailRes.data,
-                        bio: {
-                            ...detailRes.data.bio,
-                            section: activeSection,
-                            screening_year: activeYear,
-                        }
-                    },
-                    email: pEmail,
-                    first_name: patientInfo.first_name || 'Patient',
-                    screening_year: activeYear,
-                    company: companyName,
-                    staff_id: patientInfo.staff_id || '',
-                    attachment_data: b64data,
-                    attachment_filename: filename
-                };
-
-                // Send email
-                await api.post('/api/email/report', payloadData);
             }
             
-            toast.success(`Bulk reports successfully emailed to ${patientsList.length} patients!`, { id: 'bulkEmail' });
+            toast.success(`Bulk reports emailing completed!`, { id: 'bulkEmail' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Email Sending Complete",
+                status: failCount > 0 ? "warning" : "success",
+                total: patientsList.length,
+                successCount: successCount,
+                failCount: failCount,
+                details: failCount > 0 
+                    ? `Processed ${patientsList.length} emails. ${successCount} sent successfully. ${failCount} failed:\n\n` + failedPatients.join('\n')
+                    : `Successfully generated and emailed PDF reports to all ${successCount} patients.`
+            });
         } catch (err: any) {
             console.error('Bulk email error:', err);
             const errorMsg = err.response?.data?.error || err.message || 'Failed to bulk email reports';
             toast.error(errorMsg, { id: 'bulkEmail' });
+            setBulkSummary({
+                isOpen: true,
+                title: "Bulk Email Failed",
+                status: "error",
+                total: 0,
+                successCount: 0,
+                failCount: 0,
+                details: errorMsg
+            });
         } finally {
             setSelectedPatient(originalPatient);
             setReportData(originalReportData);
@@ -1158,9 +1232,11 @@ const PatientReportPage: React.FC = () => {
                                     <p className="font-bold text-foreground">Downloads reports meeting these criteria:</p>
                                     <ul className="list-disc list-inside space-y-1 pl-1">
                                         <li>Report progress status is exactly <span className="font-black text-indigo-600 dark:text-indigo-400">100% Complete</span></li>
-                                        {excludeEmail && (
+                                        {onlyBounced ? (
+                                            <li>Patient email matches a failed notification in Gmail</li>
+                                        ) : excludeEmail ? (
                                             <li>No email address is attached to the patient profile</li>
-                                        )}
+                                        ) : null}
                                     </ul>
 
                                     <div className="pt-2 border-t flex items-center justify-between gap-4">
@@ -1171,12 +1247,40 @@ const PatientReportPage: React.FC = () => {
                                         <button
                                             type="button"
                                             id="exclude-email-toggle"
-                                            onClick={() => setExcludeEmail(!excludeEmail)}
-                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            onClick={() => {
+                                                setExcludeEmail(!excludeEmail);
+                                                if (!excludeEmail) {
+                                                    setOnlyBounced(false);
+                                                }
+                                            }}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${excludeEmail && !onlyBounced ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
                                             disabled={bulkLoading || !bulkDownloadEnabled}
                                         >
                                             <span
-                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${excludeEmail && !onlyBounced ? 'translate-x-5' : 'translate-x-0.5'}`}
+                                            />
+                                        </button>
+                                    </div>
+
+                                    <div className="pt-2 border-t flex items-center justify-between gap-4">
+                                        <div className="space-y-0.5">
+                                            <label htmlFor="only-bounced-toggle" className="font-bold text-foreground cursor-pointer">Only bounced emails</label>
+                                            <p className="text-[10px] text-muted-foreground">Only download reports for patients with incorrect/failed emails.</p>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            id="only-bounced-toggle"
+                                            onClick={() => {
+                                                setOnlyBounced(!onlyBounced);
+                                                if (!onlyBounced) {
+                                                    setExcludeEmail(false);
+                                                }
+                                            }}
+                                            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer items-center rounded-full transition-colors duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500 focus-visible:ring-offset-2 ${onlyBounced ? 'bg-indigo-600' : 'bg-muted-foreground/30'}`}
+                                            disabled={bulkLoading || !bulkDownloadEnabled}
+                                        >
+                                            <span
+                                                className={`pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform duration-200 ${onlyBounced ? 'translate-x-5' : 'translate-x-0.5'}`}
                                             />
                                         </button>
                                     </div>
@@ -1186,13 +1290,15 @@ const PatientReportPage: React.FC = () => {
                                     <Label htmlFor="pid-range" className="text-xs font-black uppercase tracking-wider text-muted-foreground">Patient ID Range</Label>
                                     <Input
                                         id="pid-range"
-                                        placeholder="e.g. 1-100 or 25"
-                                        value={rangeInput}
+                                        placeholder={onlyBounced ? "All (Bounced Emails Only)" : "e.g. 1-100 or 25"}
+                                        value={onlyBounced ? "" : rangeInput}
                                         onChange={(e) => setRangeInput(e.target.value)}
                                         className="rounded-xl border-2 border-border focus-visible:ring-indigo-500/50 disabled:cursor-not-allowed disabled:opacity-55"
-                                        disabled={bulkLoading || !bulkDownloadEnabled}
+                                        disabled={bulkLoading || !bulkDownloadEnabled || onlyBounced}
                                     />
-                                    <p className="text-[10px] text-muted-foreground italic">Specify range of serial Patient IDs to scan and download as a ZIP file.</p>
+                                    <p className="text-[10px] text-muted-foreground italic">
+                                        {onlyBounced ? "System will scan all unread Gmail failure notices for this section." : "Specify range of serial Patient IDs to scan and download as a ZIP file."}
+                                    </p>
                                 </div>
                             </div>
 
@@ -1275,7 +1381,9 @@ const PatientReportPage: React.FC = () => {
                             
                             {/* Inner Circle Background */}
                             <div className="absolute inset-2 rounded-full bg-card border-2 border-indigo-500/5 shadow-inner flex items-center justify-center z-10">
-                                <span className="text-2xl animate-pulse">📄</span>
+                                <span className="text-2xl animate-pulse">
+                                    {onlyBounced && bulkProgress.current === 0 ? '✉️' : '📄'}
+                                </span>
                             </div>
                             
                             {/* SVG Gradient Spinner */}
@@ -1310,7 +1418,9 @@ const PatientReportPage: React.FC = () => {
                         </div>
                         
                         <div className="space-y-2">
-                            <h2 className="text-xl font-black tracking-tight text-foreground">Generating Bulk Reports</h2>
+                            <h2 className="text-xl font-black tracking-tight text-foreground">
+                                {onlyBounced && bulkProgress.current === 0 ? 'Scanning Inbox for Bounces' : 'Generating Bulk Reports'}
+                            </h2>
                             <p className="text-sm text-muted-foreground font-semibold">
                                 Please do not close or reload this page.
                             </p>
@@ -1319,13 +1429,22 @@ const PatientReportPage: React.FC = () => {
                         <div className="space-y-4">
                             <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                                 <div 
-                                    className="h-full bg-primary transition-all duration-300 rounded-full"
-                                    style={{ width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
+                                    className={`h-full bg-primary transition-all duration-300 rounded-full ${onlyBounced && bulkProgress.current === 0 ? 'w-full animate-pulse' : ''}`}
+                                    style={onlyBounced && bulkProgress.current === 0 ? undefined : { width: `${(bulkProgress.current / bulkProgress.total) * 100}%` }}
                                 />
                             </div>
                             <div className="flex justify-between items-center text-xs font-black uppercase tracking-wider text-muted-foreground">
-                                <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
-                                <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                                {onlyBounced && bulkProgress.current === 0 ? (
+                                    <>
+                                        <span>Reading failure notices...</span>
+                                        <span>SMTP/IMAP</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span>Report {bulkProgress.current} of {bulkProgress.total}</span>
+                                        <span>{Math.round((bulkProgress.current / bulkProgress.total) * 100)}%</span>
+                                    </>
+                                )}
                             </div>
                         </div>
                         
@@ -1333,6 +1452,57 @@ const PatientReportPage: React.FC = () => {
                             <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground/80 mb-0.5">Processing Patient</p>
                             <p className="text-sm font-black text-foreground truncate">{bulkProgress.name || 'Initial Scanning...'}</p>
                         </div>
+                    </div>
+                </div>
+            )}
+            {bulkSummary && bulkSummary.isOpen && (
+                <div className="fixed inset-0 bg-background/60 backdrop-blur-md z-[10000] flex items-center justify-center p-6 text-center animate-in fade-in duration-300">
+                    <div className="max-w-md w-full bg-card border-2 border-border/80 rounded-3xl p-8 shadow-2xl relative flex flex-col items-center">
+                        {/* Status Icon */}
+                        <div className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-5 ${
+                            bulkSummary.status === 'success' ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' :
+                            bulkSummary.status === 'warning' ? 'bg-amber-500/10 text-amber-500 border border-amber-500/20' :
+                            'bg-rose-500/10 text-rose-500 border border-rose-500/20'
+                        }`}>
+                            <HugeiconsIcon 
+                                icon={
+                                    bulkSummary.status === 'success' ? CheckmarkCircle02Icon :
+                                    bulkSummary.status === 'warning' ? Alert01Icon :
+                                    AlertCircleIcon
+                                } 
+                                className="w-8 h-8" 
+                            />
+                        </div>
+
+                        <h3 className="text-xl font-black text-foreground tracking-tight mb-2">{bulkSummary.title}</h3>
+                        
+                        <div className="text-xs text-muted-foreground font-semibold mb-6 max-w-sm max-h-48 overflow-y-auto w-full text-center whitespace-pre-wrap border border-dashed border-border/40 rounded-xl p-3 bg-muted/20">
+                            {bulkSummary.details}
+                        </div>
+
+                        {/* Counts grid */}
+                        <div className="grid grid-cols-3 gap-3 w-full bg-muted/30 border border-border/50 rounded-2xl p-4 mb-6">
+                            <div>
+                                <span className="text-[10px] font-black text-muted-foreground uppercase tracking-wider block">Total</span>
+                                <span className="text-lg font-black text-foreground">{bulkSummary.total}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-emerald-500/80 uppercase tracking-wider block">Succeeded</span>
+                                <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">{bulkSummary.successCount}</span>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-black text-rose-500/80 uppercase tracking-wider block">Failed</span>
+                                <span className="text-lg font-black text-rose-600 dark:text-rose-400">{bulkSummary.failCount}</span>
+                            </div>
+                        </div>
+
+                        {/* Close Button */}
+                        <Button 
+                            onClick={() => setBulkSummary(null)}
+                            className="w-full py-4 rounded-xl font-bold bg-primary text-primary-foreground hover:bg-primary/90 shadow-lg transition-all"
+                        >
+                            Acknowledge
+                        </Button>
                     </div>
                 </div>
             )}

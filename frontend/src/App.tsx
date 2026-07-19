@@ -46,6 +46,7 @@ import axios from 'axios';
 import { CustomToaster } from './components/CustomToaster';
 import { ProtectedRoute } from './components/auth/ProtectedRoute';
 import NetworkStatusBanner from './components/common/NetworkStatusBanner';
+import { MessageSlideOutNotification } from './components/common/MessageSlideOutNotification';
 
 const ACKNOWLEDGED_VERSION_KEY = 'lhc_acknowledged_version';
 const FIRST_DETECTED_KEY = 'lhc_update_first_detected';
@@ -250,6 +251,7 @@ function RootApp() {
             <NetworkStatusBanner />
             <div className="flex-1 min-h-0 relative">
               <CustomToaster />
+              <MessageSlideOutNotification />
               <Routes>
                 <Route path="/" element={<LandingPage />} />
                 <Route path="/signup" element={<SignupPage />} />

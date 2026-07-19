@@ -956,6 +956,89 @@ def _get_report_data_dict(staff_id, year, bind, patient, yearly):
         "report_parameters": params_dict
     }
 
+def get_bounced_emails():
+    import imaplib
+    import email
+    import re
+    from utils.email_utils import EmailService
+
+    config = EmailService._get_smtp_config()
+    username = config.get('username')
+    password = config.get('password')
+    server_host = 'imap.gmail.com'
+
+    smtp_server = config.get('server', '').lower()
+    if 'gmail' not in smtp_server and 'google' not in smtp_server:
+        if smtp_server.startswith('smtp.'):
+            server_host = smtp_server.replace('smtp.', 'imap.', 1)
+        else:
+            server_host = smtp_server.replace('smtp', 'imap')
+
+    if not username or not password:
+        print("[IMAP BOUNCE DETECT] Missing credentials.")
+        return []
+
+    bounced_emails = set()
+    try:
+        mail = imaplib.IMAP4_SSL(server_host, 993)
+        mail.login(username, password)
+        mail.select("inbox")
+
+        status, data = mail.search(None, '(UNSEEN FROM "mailer-daemon")')
+        if status != "OK":
+            mail.logout()
+            return []
+
+        mail_ids = data[0].split()
+        if not mail_ids:
+            mail.close()
+            mail.logout()
+            return []
+
+        for mail_id in mail_ids:
+            status, header_data = mail.fetch(mail_id, "(BODY[HEADER.FIELDS (SUBJECT FROM)])")
+            if status != "OK" or not header_data or not header_data[0]:
+                continue
+            
+            raw_headers = header_data[0][1]
+            msg_headers = email.message_from_bytes(raw_headers)
+            subject = str(msg_headers.get('Subject', '')).lower()
+            
+            if not any(kw in subject for kw in ["delivery incomplete", "delevery incomplete", "address not found", "delivery status notification"]):
+                continue
+
+            status, body_data = mail.fetch(mail_id, "(RFC822)")
+            if status != "OK" or not body_data or not body_data[0]:
+                continue
+            
+            raw_email = body_data[0][1]
+            msg = email.message_from_bytes(raw_email)
+
+            body = ""
+            if msg.is_multipart():
+                for part in msg.walk():
+                    if part.get_content_type() == "text/plain":
+                        body += part.get_payload(decode=True).decode(errors='ignore')
+            else:
+                body = msg.get_payload(decode=True).decode(errors='ignore')
+
+            body_lower = body.lower()
+            if any(kw in body_lower for kw in ["delivery incomplete", "delevery incomplete", "address not found"]):
+                emails_found = re.findall(r'[\w\.-]+@[\w\.-]+\.\w+', body)
+                for addr in emails_found:
+                    addr_lower = addr.strip().lower()
+                    if addr_lower != username.lower():
+                        bounced_emails.add(addr_lower)
+            
+            mail.store(mail_id, '+FLAGS', '\\Seen')
+
+        mail.close()
+        mail.logout()
+    except Exception as e:
+        print(f"[IMAP BOUNCE DETECT] Error: {e}")
+
+    return list(bounced_emails)
+
 @view_data_bp.route('/patient-report/bulk-download', methods=['GET'])
 @jwt_required()
 def bulk_download_reports():
@@ -966,6 +1049,7 @@ def bulk_download_reports():
 
     from models import SystemConfig
     only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
+    only_bounced = request.args.get('only_bounced_emails', 'false').lower() == 'true'
     
     if only_with_email:
         email_config = SystemConfig.query.get('bulk_report_email_enabled')
@@ -1000,32 +1084,39 @@ def bulk_download_reports():
     if not bind: return jsonify({"error": "Invalid context"}), 400
 
     range_str = request.args.get('range', '').strip()
-    if not range_str:
+    if not range_str and not only_bounced:
         return jsonify({"error": "Range parameter is required (e.g. 1-100)"}), 400
 
     year_param = request.args.get('year')
     year = int(year_param) if year_param else datetime.now().year
 
     exclude_email = request.args.get('exclude_email', 'true').lower() == 'true'
-    only_with_email = request.args.get('only_with_email', 'false').lower() == 'true'
 
-    # Parse range (e.g. 1-100)
-    try:
-        if '-' in range_str:
-            start_parts, end_parts = range_str.split('-', 1)
-            start_id = int(start_parts.strip())
-            end_id = int(end_parts.strip())
-        else:
-            start_id = int(range_str)
-            end_id = start_id
-    except ValueError:
-        return jsonify({"error": "Invalid range format. Use numbers or start-end range (e.g., 1-100)"}), 400
+    # Parse range if specified
+    start_id = None
+    end_id = None
+    if range_str:
+        try:
+            if '-' in range_str:
+                start_parts, end_parts = range_str.split('-', 1)
+                start_id = int(start_parts.strip())
+                end_id = int(end_parts.strip())
+            else:
+                start_id = int(range_str)
+                end_id = start_id
+        except ValueError:
+            return jsonify({"error": "Invalid range format. Use numbers or start-end range (e.g., 1-100)"}), 400
 
-    if start_id > end_id:
-        start_id, end_id = end_id, start_id
+        if start_id > end_id:
+            start_id, end_id = end_id, start_id
 
     # Fetch all ScreeningYearBioData for this year
     yearly_records = ScreeningYearBioData.query.filter_by(screening_year=year).all()
+
+    # Search for bounced emails if requested
+    bounced_emails = []
+    if only_bounced:
+        bounced_emails = get_bounced_emails()
 
     matching_records = []
     engine = db.engines[bind]
@@ -1033,16 +1124,23 @@ def bulk_download_reports():
     for yr in yearly_records:
         pid_str = yr.patient_id
         try:
-            # Strip non-numeric chars if any (though usually numeric)
             pid_int = int(''.join(filter(str.isdigit, pid_str)))
         except ValueError:
             continue
 
-        if start_id <= pid_int <= end_id:
-            bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
-            email = bio.email if bio else None
-            
-            email_check_passed = False
+        # If range is specified, match against range
+        if start_id is not None and end_id is not None:
+            if not (start_id <= pid_int <= end_id):
+                continue
+
+        bio = BioData.query.filter_by(staff_id=yr.staff_id).first()
+        email = bio.email if bio else None
+        
+        email_check_passed = False
+        if only_bounced:
+            if email and email.strip().lower() in bounced_emails:
+                email_check_passed = True
+        else:
             if only_with_email:
                 if email and email.strip():
                     email_check_passed = True
@@ -1050,11 +1148,11 @@ def bulk_download_reports():
                 if not exclude_email or not email or not email.strip():
                     email_check_passed = True
 
-            if email_check_passed:
-                # Check condition 1: Report is 100% complete
-                percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
-                if percentage == 100:
-                    matching_records.append((yr, bio))
+        if email_check_passed:
+            # Check condition 1: Report is 100% complete
+            percentage, _, _, _ = calculate_report_progress(yr.staff_id, year, engine)
+            if percentage == 100:
+                matching_records.append((yr, bio))
 
     if not matching_records:
         return jsonify({"error": "No completed reports matching the conditions found in the specified range."}), 404
@@ -1088,7 +1186,10 @@ def bulk_download_reports():
             dpt = re.sub(r'\s+', '', dpt_raw)
             sId = yr.staff_id or 'UNKNOWN'
             filename = f"LHCSL{year}{bind.upper()}{pId}_{dpt}_{sId}.pdf"
-            zip_file.writestr(filename, pdf_bytes)
+            
+            dept_name = dpt_raw.strip() if dpt_raw else 'Unassigned'
+            sanitized_dept = re.sub(r'[\\/:*?"<>|]', '_', dept_name)
+            zip_file.writestr(f"{sanitized_dept}/{filename}", pdf_bytes)
 
     zip_buffer.seek(0)
     

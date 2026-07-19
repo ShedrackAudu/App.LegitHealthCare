@@ -177,25 +177,16 @@ const LandingPage = () => {
         </div>
         
         <div className="container mx-auto px-6 md:px-12 lg:px-20 relative">
-          <div className="flex flex-col lg:flex-row items-center gap-16">
+          <div className="flex flex-col lg:flex-row items-center gap-8 lg:gap-16">
             {/* Left Content Side */}
             <motion.div 
               initial={{ opacity: 0, x: -30 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="flex-1 text-left space-y-7"
+              className="flex-1 text-center lg:text-left space-y-7"
             >
               <div className="space-y-5">
-                <motion.div 
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
-                  className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20 backdrop-blur-md"
-                >
-                  <div className="w-2 h-2 rounded-full bg-primary animate-pulse" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">Now Live: Patient Portal</span>
-                </motion.div>
-                
+
                 <h1 className="text-5xl sm:text-7xl lg:text-[95px] font-black leading-[0.95] tracking-tight group">
                   <span className="block bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70 pb-4">
                     {branding?.clinic_slogan || "Excellence in Care."}
@@ -204,19 +195,19 @@ const LandingPage = () => {
                     initial={{ scaleX: 0 }}
                     animate={{ scaleX: 1 }}
                     transition={{ delay: 0.5, duration: 1 }}
-                    className="block h-2 bg-primary/40 w-1/4 mt-8 rounded-full origin-left group-hover:w-1/2 transition-all duration-700"
+                    className="block h-2 bg-primary/40 w-1/4 mt-8 rounded-full origin-left group-hover:w-1/2 transition-all duration-700 mx-auto lg:mx-0"
                   />
                   <span className="text-[19px] lg:text-[35px] text-primary font-black mt-10 block tracking-tight pb-2">
                     {branding?.clinic_name || "Legit HealthCare"}
                   </span>
                 </h1>
                 
-                <p className="text-[13px] sm:text-lg md:text-lg text-muted-foreground leading-relaxed max-w-xl font-medium">
+                <p className="text-[13px] sm:text-lg md:text-lg text-muted-foreground leading-relaxed max-w-xl font-medium mx-auto lg:mx-0">
                   The official healthcare management portal for managing staff annual medical screenings with an advanced self-service patient portal for tracking and managing health and personal data.
                 </p>
               </div>
 
-              <div className="flex flex-row items-center justify-start gap-3 sm:gap-5">
+              <div className="flex flex-row items-center justify-center lg:justify-start gap-3 sm:gap-5">
                 <Link to="/signup?portal=staff">
                   <Button size="lg" className="h-14 sm:h-16 px-6 sm:px-10 text-base sm:text-lg font-black rounded-xl shadow-2xl shadow-primary/40 hover:shadow-primary/60 hover:-translate-y-1 active:translate-y-0.5 transition-all bg-primary relative overflow-hidden group">
                     <span className="relative z-10 flex items-center">
@@ -235,7 +226,7 @@ const LandingPage = () => {
               </div>
 
               {/* Trust Indicators */}
-              <div className="pt-5 sm:pt-7 flex flex-row items-center gap-4 sm:gap-8 border-t border-border/50">
+              <div className="pt-5 sm:pt-7 flex flex-row items-center justify-center lg:justify-start gap-4 sm:gap-8 border-t border-border/50">
                 <div className="flex -space-x-3">
                   {[1,2,3,4].map(i => (
                     <div key={i} className="w-10 h-10 rounded-full border-2 border-background bg-muted flex items-center justify-center text-[10px] font-bold overflow-hidden">
@@ -248,7 +239,7 @@ const LandingPage = () => {
                 </div>
                 <div className="h-8 w-px bg-border/50 hidden sm:block" />
                 <div className="space-y-1">
-                   <div className="flex gap-1">
+                   <div className="flex gap-1 justify-center lg:justify-start">
                      {[1,2,3,4,5].map(i => <HugeiconsIcon icon={SparklesIcon} key={i} className="w-3 h-3 text-amber-500 fill-amber-500" />)}
                    </div>
                    <p className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Certified Medical Services</p>
@@ -261,7 +252,7 @@ const LandingPage = () => {
               initial={{ opacity: 0, y: 40 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 1, ease: "circOut", delay: 0.3 }}
-              className="lg:flex-1 relative w-full mt-16 lg:mt-0"
+              className="lg:flex-1 relative w-full mt-8 lg:mt-0"
             >
               <div className="relative mx-auto lg:ml-auto group max-w-2xl">
                 {/* Visual Depth Elements */}
@@ -340,7 +331,7 @@ const LandingPage = () => {
       {/* Features Section */}
       <section id="services" className="pt-24 pb-12 relative overflow-hidden">
         <div className="container mx-auto px-8 md:px-12 lg:px-20">
-          <div className="text-left md:text-center max-w-3xl md:mx-auto mb-20 space-y-4">
+          <div className="text-center max-w-3xl mx-auto mb-20 space-y-4">
             <h2 className="text-4xl lg:text-6xl font-black tracking-tight">Clinical Features</h2>
             <p className="text-lg text-muted-foreground font-medium">Built with the highest standards of modern healthcare technology.</p>
           </div>
@@ -425,12 +416,14 @@ const LandingPage = () => {
               whileInView={{ opacity: 1, x: 0 }}
               viewport={{ once: true, margin: "-100px" }}
               transition={{ duration: 0.8 }}
-              className="space-y-8"
+              className="space-y-8 text-center lg:text-left"
             >
               <div className="space-y-4">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                  <HugeiconsIcon icon={FavouriteIcon} className="w-4 h-4 text-primary fill-primary/20" />
-                  <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">About Legit HealthCare</span>
+                <div className="flex justify-center lg:justify-start">
+                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                    <HugeiconsIcon icon={FavouriteIcon} className="w-4 h-4 text-primary fill-primary/20" />
+                    <span className="text-[10px] font-black uppercase tracking-[0.2em] text-primary">About Legit HealthCare</span>
+                  </div>
                 </div>
                 <h2 className="text-4xl lg:text-6xl font-black tracking-tight leading-[1.05]">
                   Pioneering the Future of <span className="text-primary">Clinical Excellence</span>
@@ -441,7 +434,7 @@ const LandingPage = () => {
               </div>
 
               <div className="space-y-6">
-                <div className="flex gap-4 items-start">
+                <div className="flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-4">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
                     <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
                   </div>
@@ -450,7 +443,7 @@ const LandingPage = () => {
                     <p className="text-sm text-muted-foreground mt-1">We utilize enterprise-level encryption and secure two-factor authentication to guarantee patient confidentiality and clinical record integrity.</p>
                   </div>
                 </div>
-                <div className="flex gap-4 items-start">
+                <div className="flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-4">
                   <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center shrink-0 text-primary">
                     <HugeiconsIcon icon={Activity01Icon} className="w-5 h-5" />
                   </div>
@@ -471,10 +464,12 @@ const LandingPage = () => {
          <div className="container mx-auto px-8 md:px-12 lg:px-20">
             <div className="bg-card/50 backdrop-blur-3xl rounded-3xl border-2 border-primary/10 shadow-3xl overflow-hidden p-8 md:p-20 relative">
                <div className="grid grid-cols-1 lg:grid-cols-2 gap-20 items-center">
-                  <div className="space-y-10">
+                  <div className="space-y-10 text-center lg:text-left">
                      <div className="space-y-4">
-                        <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[.3em] border border-primary/20">
-                           Self-Service Excellence
+                        <div className="flex justify-center lg:justify-start">
+                           <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-primary/10 text-primary text-[10px] font-black uppercase tracking-[.3em] border border-primary/20">
+                              Self-Service Excellence
+                           </div>
                         </div>
                         <h2 className="text-5xl md:text-7xl font-black tracking-tight leading-[1.05]">
                            The New <br />
@@ -487,29 +482,29 @@ const LandingPage = () => {
                      </div>
 
                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-8">
-                        <div className="space-y-3">
+                        <div className="space-y-3 flex flex-col items-center text-center sm:items-start sm:text-left">
                            <div className="w-12 h-12 bg-primary rounded-2xl flex items-center justify-center text-white font-black text-xl">1</div>
                            <h4 className="text-xl font-bold">Claim Account</h4>
                            <p className="text-muted-foreground text-sm leading-relaxed">Enter your Staff ID and verify your identity via a secure OTP sent to your company email.</p>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 flex flex-col items-center text-center sm:items-start sm:text-left">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">2</div>
                            <h4 className="text-xl font-bold">Secure 2FA</h4>
                            <p className="text-muted-foreground text-sm leading-relaxed">Your medical privacy is our priority. Every login session is protected by mandatory Two-Factor Authentication (2FA).</p>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 flex flex-col items-center text-center sm:items-start sm:text-left">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">3</div>
                            <h4 className="text-xl font-bold">Digital Reports</h4>
                            <p className="text-muted-foreground text-sm leading-relaxed">Download and print your official medical screening reports directly from your secure dashboard.</p>
                         </div>
-                        <div className="space-y-3">
+                        <div className="space-y-3 flex flex-col items-center text-center sm:items-start sm:text-left">
                            <div className="w-12 h-12 bg-primary/20 rounded-2xl flex items-center justify-center text-primary font-black text-xl">4</div>
                            <h4 className="text-xl font-bold">Digital Bookings</h4>
                            <p className="text-muted-foreground text-sm leading-relaxed">Skip the queue by scheduling your screening sessions directly from your dashboard.</p>
                         </div>
                      </div>
 
-                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
+                     <div className="flex flex-col sm:flex-row items-center sm:items-start justify-center lg:justify-start gap-4 pt-4">
                         <Link to="/signup?portal=patient">
                            <Button size="lg" className="h-16 px-10 text-lg font-black shadow-2xl shadow-primary/30 transition-transform active:scale-95 bg-primary rounded-xl">
                               Claim My Account
@@ -567,7 +562,7 @@ const LandingPage = () => {
         
         <div className="container mx-auto px-8 md:px-12 lg:px-20 relative z-10">
            <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-              <div className="space-y-6">
+              <div className="space-y-6 text-center lg:text-left">
                  <h2 className="text-4xl font-bold text-primary-foreground">The Modern Health Experience</h2>
                  <p className="text-lg text-primary-foreground/70">We've revolutionized how medical screenings are handled at Legit HealthCare Services Ltd. No more paper trails—just pure digital efficiency.</p>
                  <div className="space-y-8 pt-4">
@@ -674,7 +669,10 @@ const LandingPage = () => {
             </div>
           </div>
           <div className="pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center text-sm text-muted-foreground gap-4">
-            <p>© {new Date().getFullYear()} {branding?.clinic_name || "Legit HealthCare Services Ltd."}. All rights reserved.</p>
+            <p className="text-center md:text-left">
+              © {new Date().getFullYear()} {branding?.clinic_name || "Legit HealthCare Services Ltd."}.
+              <span className="block md:inline md:ml-1">All rights reserved.</span>
+            </p>
             <div className="flex space-x-6 mt-4 md:mt-0">
               <a href="#" className="hover:text-primary transition-colors">Privacy Policy</a>
               <a href="#" className="hover:text-primary transition-colors">Terms of Service</a>
@@ -709,7 +707,7 @@ interface FeatureCardProps {
 }
 
 const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
-  <div className="bg-card p-10 rounded-3xl border-2 border-border hover:border-primary/40 transition-all group flex flex-col h-full items-start">
+  <div className="bg-card p-10 rounded-3xl border-2 border-border hover:border-primary/40 transition-all group flex flex-col h-full items-center text-center md:items-start md:text-left">
     <div className="w-14 h-14 bg-primary/5 rounded-2xl flex items-center justify-center mb-8 group-hover:bg-primary group-hover:text-primary-foreground group-hover:rotate-6 transition-all duration-300">
       {icon}
     </div>
@@ -719,7 +717,7 @@ const FeatureCard = ({ icon, title, description }: FeatureCardProps) => (
 );
 
 const WorkflowStep = ({ number, title, text }: { number: string; title: string; text: string }) => (
-  <div className="flex gap-6 items-start group">
+  <div className="flex flex-col items-center text-center lg:flex-row lg:items-start lg:text-left gap-4 lg:gap-6 group">
     <div className="text-4xl font-black text-primary-foreground/20 group-hover:text-primary-foreground/60 transition-colors duration-500 tabular-nums">
       {number}
     </div>
