@@ -96,6 +96,24 @@ def send_weekly_verification_reminders(app):
             traceback.print_exc()
 
 
+def cleanup_expired_tokens(app):
+    """
+    Deletes expired tokens from the TokenBlocklist to keep database clean.
+    Since JWT_ACCESS_TOKEN_EXPIRES is set to 4 hours, any token older than 5 hours
+    is naturally invalid and can be safely removed from the blocklist.
+    """
+    with app.app_context():
+        try:
+            from models import db, TokenBlocklist
+            expiry_limit = datetime.now() - timedelta(hours=5)
+            deleted_count = TokenBlocklist.query.filter(TokenBlocklist.created_at < expiry_limit).delete()
+            db.session.commit()
+            if deleted_count > 0:
+                print(f"[SCHEDULER] Cleaned up {deleted_count} expired blocklisted token(s).")
+        except Exception as e:
+            print(f"[SCHEDULER] Error during token blocklist cleanup: {e}")
+
+
 def init_scheduler(app):
     """
     Initializes and starts the APScheduler scheduler dynamically based on environment.
@@ -142,6 +160,16 @@ def init_scheduler(app):
         args=[app],
         id='weekly_verification_reminder',
         name='Weekly Patient Verification Reminder',
+        replace_existing=True
+    )
+
+    # Schedule the token blocklist cleanup job to run every hour.
+    scheduler.add_job(
+        func=cleanup_expired_tokens,
+        trigger=IntervalTrigger(hours=1),
+        args=[app],
+        id='cleanup_expired_tokens',
+        name='Cleanup Expired Blocklisted Tokens',
         replace_existing=True
     )
 
