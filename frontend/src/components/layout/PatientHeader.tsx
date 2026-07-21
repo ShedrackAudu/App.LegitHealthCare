@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Sun01Icon,
-  Moon01Icon,
+  Moon02Icon,
   Logout02Icon,
   UserIcon,
   Notification01Icon,
@@ -148,7 +148,7 @@ export const PatientHeader: React.FC = () => {
                 ? "-rotate-90 scale-0 opacity-0" 
                 : "rotate-0 scale-100 opacity-100"
             }`} />
-            <HugeiconsIcon icon={Moon01Icon} className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
+            <HugeiconsIcon icon={Moon02Icon} className={`absolute h-[1.2rem] w-[1.2rem] transition-all ${
               resolvedTheme === "dark" 
                 ? "rotate-0 scale-100 opacity-100" 
                 : "rotate-90 scale-0 opacity-0"
