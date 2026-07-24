@@ -376,7 +376,7 @@ class EmailService:
         # Escape user-controlled data (SEC-008)
         e_first_name = escape(first_name)
         e_username = escape(username)
-        e_password = escape(password)
+        e_password = str(password)
         
         return f"""
         <!DOCTYPE html>

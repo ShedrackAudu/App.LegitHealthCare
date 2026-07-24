@@ -1502,13 +1502,13 @@ def create_user():
 
     # Generate strong temporary password
     import secrets
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    alphabet = string.ascii_letters + string.digits + "!@#$%^*"
     while True:
         temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
         if (any(c.islower() for c in temp_password)
                 and any(c.isupper() for c in temp_password)
                 and any(c.isdigit() for c in temp_password)
-                and any(c in "!@#$%^&*" for c in temp_password)):
+                and any(c in "!@#$%^*" for c in temp_password)):
             break
     
     # Create User
@@ -1617,13 +1617,13 @@ def onboard_patient():
 
     # Generate strong temporary password
     import secrets
-    alphabet = string.ascii_letters + string.digits + "!@#$%^&*"
+    alphabet = string.ascii_letters + string.digits + "!@#$%^*"
     while True:
         temp_password = ''.join(secrets.choice(alphabet) for i in range(12))
         if (any(c.islower() for c in temp_password)
                 and any(c.isupper() for c in temp_password)
                 and any(c.isdigit() for c in temp_password)
-                and any(c in "!@#$%^&*" for c in temp_password)):
+                and any(c in "!@#$%^*" for c in temp_password)):
             break
     
     try:
