@@ -37,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { SafeImage } from '@/components/common/SafeImage';
 
 const getPageTitle = (pathname: string, branding: any, brandingError: boolean) => {
@@ -294,7 +294,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
           </div>
 
           {/* Mobile Logo Mark */}
-          <div className="flex sm:hidden items-center gap-2 min-w-0">
+          <Link to="/" className="flex sm:hidden items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
             {branding?.logo_light ? (
               <SafeImage 
                 src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
@@ -308,7 +308,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                 <span className="truncate max-w-[120px]">{branding?.clinic_name || 'LEGIT HC'}</span>
               </div>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* Right Side: Options and Auth */}
