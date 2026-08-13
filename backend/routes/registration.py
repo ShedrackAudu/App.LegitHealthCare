@@ -238,9 +238,16 @@ def register_patient():
         except Exception as se:
             print(f"Failed to emit patient_registered event: {se}")
         
-        # Trigger background email notification (Zero latency for the user)
+        # Trigger background email notification & auto account creation (Zero latency for the user)
         if patient.email and "@" in patient.email:
-            trigger_registration_success_notification(patient.email, patient.first_name, screening_year)
+            trigger_registration_success_notification(
+                patient.email, 
+                patient.first_name, 
+                screening_year,
+                staff_id=patient.staff_id,
+                patient_last_name=patient.last_name,
+                patient_phone=patient.phone
+            )
         
         return jsonify({"message": "Registration successful", "staff_id": staff_id}), 201
     except Exception as e:

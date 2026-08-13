@@ -116,9 +116,9 @@ def _trigger_report_ready_notification_sync(staff_id, screening_year, section):
         return False, str(e)
 
 
-def trigger_registration_success_notification(patient_email, patient_first_name, screening_year):
+def trigger_registration_success_notification(patient_email, patient_first_name, screening_year, staff_id=None, patient_last_name=None, patient_phone=None):
     """
-    Spawns a background thread to send the registration success email.
+    Spawns a background thread to auto-create PatientPortalUser (if missing) and send the registration success email.
     Ensures zero disruption to the main request flow (zero latency for patient save).
     """
     print(f"[REG-NOTIFICATION] Spawning thread for background delivery to {patient_email}")
@@ -126,25 +126,236 @@ def trigger_registration_success_notification(patient_email, patient_first_name,
     
     thread = threading.Thread(
         target=_trigger_registration_success_async_wrapper, 
-        args=(app, patient_email, patient_first_name, screening_year)
+        args=(app, patient_email, patient_first_name, screening_year, staff_id, patient_last_name, patient_phone)
+    )
+import os
+import threading
+from flask import current_app
+from models import db, BioData, ScreeningYearBioData, AppBranding, PatientPortalUser
+from utils.email_utils import EmailService
+from utils.progress_utils import calculate_report_progress
+from sqlalchemy import text, func
+
+def trigger_report_ready_notification(staff_id, screening_year, section):
+    """
+    Spawns a background thread to check and send the notification.
+    Ensures zero disruption to the main request flow.
+    """
+    app = current_app._get_current_object()
+    
+    thread = threading.Thread(
+        target=_trigger_logic_async_wrapper, 
+        args=(app, staff_id, screening_year, section)
     )
     thread.daemon = True
     thread.start()
     return True, "Background process started"
 
-def _trigger_registration_success_async_wrapper(app, patient_email, patient_first_name, screening_year):
+def _trigger_logic_async_wrapper(app, staff_id, screening_year, section):
     """Wrapper to provide app context to the background thread."""
     with app.app_context():
-        _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year)
+        _trigger_report_ready_notification_sync(staff_id, screening_year, section)
 
-def _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year):
+def _trigger_report_ready_notification_sync(staff_id, screening_year, section):
     """
-    Sends the registration success email.
-    Patient data is passed directly - no database queries needed for patient info.
-    Only queries AppBranding which is in the global/default database (always accessible).
+    Actual synchronous logic (run in background).
+    Uses raw SQL with the sectional engine to avoid RoutingSession issues
+    in background threads (no flask.request available).
     """
     try:
-        print(f"[REG-NOTIFICATION] Preparing email for {patient_email}...")
+        # 1. Get the sectional engine
+        engine = db.engines.get(section.lower())
+        if not engine:
+            print(f"[NOTIFICATION] Skip: Invalid section '{section}'")
+            return False, "Invalid clinical section"
+
+        # 2. Calculate progress
+        percentage, points, status, missing = calculate_report_progress(staff_id, screening_year, engine)
+        
+        if percentage < 100:
+            return False, f"Report incomplete ({percentage}%)"
+
+        # 3. Check if already notified - use raw SQL with the sectional engine
+        with engine.connect() as conn:
+            row = conn.execute(
+                text("SELECT id, is_notified_ready FROM screening_year_bio_data WHERE staff_id = :sid AND screening_year = :yr"),
+                {"sid": staff_id, "yr": screening_year}
+            ).fetchone()
+        
+        if not row:
+            print(f"[NOTIFICATION] Skip: No screening record for {staff_id}/{screening_year}")
+            return False, "Screening record not found"
+            
+        record_id = row[0]
+        if row[1]:  # is_notified_ready
+            return True, "Already notified"
+
+        # 4. Fetch patient email from BioData - use raw SQL with the sectional engine
+        with engine.connect() as conn:
+            patient_row = conn.execute(
+                text("SELECT first_name, email FROM bio_data WHERE staff_id = :sid"),
+                {"sid": staff_id}
+            ).fetchone()
+        
+        if not patient_row or not patient_row[1] or "@" not in patient_row[1]:
+            print(f"[NOTIFICATION] Skip: No valid email for {staff_id}")
+            return False, "Patient email not found or invalid"
+
+        patient_first_name = patient_row[0]
+        patient_email = patient_row[1]
+
+        # 5. Prepare Email
+        branding = AppBranding.query.first()
+        logo_url = branding.logo_light if branding and branding.logo_light else None
+        
+        app_url = current_app.config.get('FRONTEND_URL', current_app.config.get('APP_URL', 'http://localhost:5173'))
+        if logo_url and logo_url.startswith('/'):
+            # Logo is served by the backend, so use APP_URL for static assets
+            backend_url = current_app.config.get('APP_URL', 'http://localhost:5173')
+            logo_url = f"{backend_url.rstrip('/')}{logo_url}"
+
+        subject = f"Your {screening_year} Medical Report is Ready - Legit HealthCare"
+        html_content = EmailService.get_report_ready_template(
+            patient_first_name, 
+            screening_year, 
+            app_url, 
+            logo_url=logo_url
+        )
+
+        # 6. Send Email
+        success = EmailService.send_email(patient_email, subject, html_content)
+        
+        if success:
+            # Mark as notified using raw SQL
+            with engine.connect() as conn:
+                conn.execute(
+                    text("UPDATE screening_year_bio_data SET is_notified_ready = 1 WHERE id = :rid"),
+                    {"rid": record_id}
+                )
+                conn.commit()
+            print(f"[NOTIFICATION] Successfully sent to {patient_email}")
+            return True, "Notification sent successfully"
+        else:
+            print(f"[NOTIFICATION] Email delivery failed for {patient_email}")
+            return False, "Email service failure"
+
+    except Exception as e:
+        print(f"[NOTIFICATION] TRIGGER ERROR: {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return False, str(e)
+
+
+def trigger_registration_success_notification(patient_email, patient_first_name, screening_year, staff_id=None, patient_last_name=None, patient_phone=None):
+    """
+    Spawns a background thread to auto-create PatientPortalUser (if missing) and send the registration success email.
+    Ensures zero disruption to the main request flow (zero latency for patient save).
+    """
+    print(f"[REG-NOTIFICATION] Spawning thread for background delivery to {patient_email}")
+    app = current_app._get_current_object()
+    
+    thread = threading.Thread(
+        target=_trigger_registration_success_async_wrapper, 
+        args=(app, patient_email, patient_first_name, screening_year, staff_id, patient_last_name, patient_phone)
+    )
+    thread.daemon = True
+    thread.start()
+    return True, "Background process started"
+
+def _trigger_registration_success_async_wrapper(app, patient_email, patient_first_name, screening_year, staff_id=None, patient_last_name=None, patient_phone=None):
+    """Wrapper to provide app context to the background thread."""
+    with app.app_context():
+        _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year, staff_id, patient_last_name, patient_phone)
+
+def _trigger_registration_success_notification_sync(patient_email, patient_first_name, screening_year, staff_id=None, patient_last_name=None, patient_phone=None):
+    """
+    Sends the registration success email and automatically provisions/updates a PatientPortalUser account in the background.
+    """
+    try:
+        print(f"[REG-NOTIFICATION] Preparing email & account setup for {patient_email} (Staff ID: {staff_id})...")
+
+        temp_password = None
+        clean_email = patient_email.strip().lower() if patient_email else None
+        clean_staff_id = staff_id.strip() if staff_id else None
+
+        # Auto-create or update PatientPortalUser if staff_id & patient_email are provided
+        if clean_staff_id and clean_email and "@" in clean_email:
+            try:
+                # Case-insensitive lookup for existing account
+                existing = PatientPortalUser.query.filter(
+                    (func.lower(PatientPortalUser.username) == clean_staff_id.lower()) | 
+                    (func.lower(PatientPortalUser.email) == clean_email)
+                ).first()
+
+                if existing:
+                    existing.email = clean_email
+                    existing.first_name = patient_first_name or existing.first_name
+                    if patient_last_name:
+                        existing.last_name = patient_last_name
+                    existing.is_verified = True
+
+                    # If existing user still must reset password or needs initial credentials, issue temp password
+                    if existing.must_reset_password:
+                        import secrets
+                        import string
+                        alphabet = string.ascii_letters + string.digits + "!@#$%^*"
+                        while True:
+                            pwd = ''.join(secrets.choice(alphabet) for _ in range(12))
+                            if (any(c.islower() for c in pwd)
+                                    and any(c.isupper() for c in pwd)
+                                    and any(c.isdigit() for c in pwd)
+                                    and any(c in "!@#$%^*" for c in pwd)):
+                                temp_password = pwd
+                                break
+                        existing.set_password(temp_password)
+                        print(f"[REG-NOTIFICATION] Re-issued temp password for existing PatientPortalUser: {clean_staff_id}")
+
+                    db.session.commit()
+                else:
+                    # Account does not exist -> Create new PatientPortalUser
+                    import secrets
+                    import string
+                    alphabet = string.ascii_letters + string.digits + "!@#$%^*"
+                    while True:
+                        pwd = ''.join(secrets.choice(alphabet) for _ in range(12))
+                        if (any(c.islower() for c in pwd)
+                                and any(c.isupper() for c in pwd)
+                                and any(c.isdigit() for c in pwd)
+                                and any(c in "!@#$%^*" for c in pwd)):
+                            temp_password = pwd
+                            break
+
+                    clean_phone = patient_phone.strip() if (patient_phone and patient_phone.strip()) else None
+                    if clean_phone:
+                        phone_conflict = PatientPortalUser.query.filter(
+                            PatientPortalUser.phone == clean_phone,
+                            func.lower(PatientPortalUser.username) != clean_staff_id.lower()
+                        ).first()
+                        if phone_conflict:
+                            clean_phone = None
+
+                    if not clean_phone:
+                        clean_phone = f"P_{clean_staff_id}"
+
+                    new_user = PatientPortalUser(
+                        username=clean_staff_id,
+                        first_name=patient_first_name or 'Patient',
+                        last_name=patient_last_name or '',
+                        email=clean_email,
+                        phone=clean_phone,
+                        is_verified=True,
+                        must_reset_password=True
+                    )
+                    new_user.set_password(temp_password)
+                    db.session.add(new_user)
+                    db.session.commit()
+                    print(f"[REG-NOTIFICATION] Successfully created PatientPortalUser for {clean_staff_id}")
+
+            except Exception as account_err:
+                db.session.rollback()
+                print(f"[REG-NOTIFICATION] Account provisioning error for {clean_staff_id}: {account_err}")
+                import traceback
+                traceback.print_exc()
 
         # 1. Get Branding (AppBranding is in the global system DB - always accessible)
         branding = AppBranding.query.first()
@@ -165,11 +376,13 @@ def _trigger_registration_success_notification_sync(patient_email, patient_first
             screening_year,
             clinic_name,
             app_url,
-            logo_url=logo_url
+            logo_url=logo_url,
+            username=clean_staff_id or staff_id,
+            temp_password=temp_password
         )
 
         # 4. Send
-        print(f"[REG-NOTIFICATION] Sending to {patient_email}...")
+        print(f"[REG-NOTIFICATION] Sending email to {patient_email}...")
         success = EmailService.send_email(patient_email, subject, html_content)
         if success:
             print(f"[REG-NOTIFICATION] SUCCESS: Email delivered to {patient_email}")
@@ -183,4 +396,3 @@ def _trigger_registration_success_notification_sync(patient_email, patient_first
         import traceback
         traceback.print_exc()
         return False
-

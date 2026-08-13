@@ -547,11 +547,11 @@ class EmailService:
         """
 
     @staticmethod
-    def get_registration_success_template(first_name, year, clinic_name, app_url, logo_url=None, is_reminder=False):
+    def get_registration_success_template(first_name, year, clinic_name, app_url, logo_url=None, is_reminder=False, username=None, temp_password=None):
         logo_html = f'<img src="{logo_url}" alt="Logo" style="width: 64px; height: 64px; border-radius: 12px; margin-bottom: 20px; object-fit: contain;">' if logo_url else '<div style="font-size: 19px; font-weight: 800; color: #14b8a5; margin-bottom: 20px;">LEGIT HEALTHCARE</div>'
         
-        # Signup URL for patients to claim account
-        signup_url = f"{app_url.rstrip('/')}/signup?portal=patient"
+        # Direct Login URL for patients
+        login_url = f"{app_url.rstrip('/')}/login?portal=patient"
         
         # Escape user-controlled data (SEC-008)
         e_first_name = escape(first_name)
@@ -566,20 +566,43 @@ class EmailService:
             cta_text = "Click below to verify your email and activate your patient portal account:"
             cta_button_label = "Complete Account Setup"
             followup_text = "If you have already verified your account, you can safely disregard this email."
+        elif temp_password:
+            header_title = "Registration Successful"
+            intro_text = f"""
+                <p>We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.</p>
+                <p>Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.</p>
+            """
+            e_username = escape(username or '')
+            e_temp_pass = str(temp_password)
+            detail_text = f"""
+                <p>An online Patient Portal account has been automatically created for you.<br>
+                Your login details for the Patient Portal are as follows:</p>
+                <div style="background-color: #f8fafc; padding: 12px 16px; border-radius: 8px; border-left: 4px solid #14b8a5; margin: 15px 0;">
+                    <p style="margin: 4px 0; font-size: 14px;"><strong>Username / Staff ID:</strong> {e_username}</p>
+                    <p style="margin: 4px 0; font-size: 14px;"><strong>Temporary Password:</strong> {e_temp_pass}</p>
+                </div>
+                <p>For security reasons, you will be required to change your temporary password upon your first login.</p>
+            """
+            cta_text = """
+                Click the button below to log in to your Patient Portal account and track your screening report progress:
+            """
+            cta_button_label = "Login to Patient Portal"
+            followup_text = """
+                You will receive a follow-up email once your screening report is ready.
+            """
         else:
             header_title = "Registration Successful"
             intro_text = f"""
-                We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.
+                <p>We are pleased to inform you that you have been successfully registered for the <strong>{e_year} medical screening program</strong>.</p>
+                <p>Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.</p>
             """
-            detail_text = """
-                Your participation is an important step toward maintaining your health and overall well-being. Please note that we are currently processing your information, including your submitted data and laboratory samples, as part of the screening procedure.
-            """
+            detail_text = ""
             cta_text = """
-                In the meantime, kindly click the button below to create or claim your patient account. This will allow you to track your personal data and monitor the progress of your screening report:
+                Click the button below to log in to your Patient Portal account and track your screening report progress:
             """
-            cta_button_label = "Create Patient Account"
+            cta_button_label = "Login to Patient Portal"
             followup_text = """
-                You will receive a follow-up email once your report is ready.
+                You will receive a follow-up email once your screening report is ready.
             """
         
         return f"""
@@ -631,7 +654,7 @@ class EmailService:
                     </div>
                     
                     <div class="cta-container">
-                        <a href="{signup_url}" class="cta-button">{cta_button_label}</a>
+                        <a href="{login_url}" class="cta-button">{cta_button_label}</a>
                     </div>
                     
                     <div class="body-text">
