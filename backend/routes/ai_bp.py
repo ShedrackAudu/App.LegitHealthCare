@@ -93,6 +93,64 @@ def update_settings():
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
 
+@ai_bp.route('/test-connection', methods=['POST'])
+@require_permission('manage_ai')
+def test_connection():
+    try:
+        data = request.json or {}
+        settings = AISettings.query.first()
+        
+        raw_key = data.get('api_key') or os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        model_name = data.get('model_selection') or (settings.model_selection if settings else "gpt-4o-mini") or "gpt-4o-mini"
+        
+        if not raw_key or not raw_key.strip():
+            return jsonify({"error": "No OpenAI API Key found. Please enter your API Key in the field above."}), 400
+            
+        api_key = raw_key.strip()
+        client = OpenAI(api_key=api_key, timeout=20.0, max_retries=2)
+        
+        params = {
+            "model": model_name,
+            "messages": [
+                {"role": "user", "content": "Respond with exactly 'Operational' to confirm API connection."}
+            ]
+        }
+        if model_name.startswith("o1") or model_name.startswith("o3"):
+            params["max_completion_tokens"] = 15
+        else:
+            params["max_tokens"] = 15
+            
+        response = client.chat.completions.create(**params)
+        reply = response.choices[0].message.content.strip()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Connection verified successfully with {model_name}! (AI response: '{reply}')",
+            "model": model_name
+        }), 200
+        
+    except openai.AuthenticationError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Authentication Failure: The API Key is invalid or expired. Please check your OpenAI API key."}), 400
+    except openai.RateLimitError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Quota Exceeded: Your account usage limit has been reached or has insufficient billing credits. Please check your billing on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify internet access, firewall, or DNS."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"AI Connection Failed: {str(e)}"}), 500
+
 @ai_bp.route('/generate', methods=['POST'])
 @require_permission('director_review')
 def generate_overview():
@@ -108,10 +166,10 @@ def generate_overview():
         # Prioritize key from environment variable as per user request
         api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
         
-        if not api_key:
+        if not api_key or not api_key.strip():
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key.strip(), timeout=35.0, max_retries=2)
         
         # 1. Fetch Patient Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
@@ -281,13 +339,25 @@ def generate_overview():
         
     except openai.AuthenticationError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked on the OpenAI Platform. Please update your API credentials in the AI Configuration menu."}), 400
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid or has been revoked. Please update your API credentials in the AI Configuration menu."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation and that a valid API key is currently provisioned."}), 402
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify your internet connection, firewall, or DNS settings."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"AI Processing Error: {str(e)}"}), 500
 
 @ai_bp.route('/generate-lab-remark', methods=['POST'])
 @require_permission('director_review')
@@ -303,10 +373,10 @@ def generate_lab_remark():
         settings = AISettings.query.first()
         api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
         
-        if not api_key:
+        if not api_key or not api_key.strip():
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key)
+        client = OpenAI(api_key=api_key.strip(), timeout=35.0, max_retries=2)
         
         # Fetch Patient & Lab Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
@@ -392,7 +462,19 @@ def generate_lab_remark():
         return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded."}), 402
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded. Please check your billing on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify internet access, firewall, or DNS settings."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"AI Processing Error: {str(e)}"}), 500

@@ -14,7 +14,11 @@ import {
   LockKeyIcon, 
   File01Icon, 
   Activity01Icon, 
-  Delete02Icon 
+  Delete02Icon,
+  CheckmarkCircle02Icon,
+  AlertCircleIcon,
+  Wifi01Icon,
+  SparklesIcon
 } from '@hugeicons/core-free-icons';
 import { toast } from 'react-hot-toast';
 import axios from 'axios';
@@ -99,6 +103,45 @@ export const AISettingsPage = () => {
     });
     
     const [newSample, setNewSample] = useState('');
+    const [testingConnection, setTestingConnection] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState<{
+        tested: boolean;
+        success: boolean;
+        message: string;
+    } | null>(null);
+
+    const handleTestConnection = async () => {
+        if (!settings.api_key || !settings.api_key.trim()) {
+            toast.error("Please enter an OpenAI API Key first.");
+            return;
+        }
+        setTestingConnection(true);
+        setConnectionStatus(null);
+        try {
+            const res = await axios.post('/api/ai/test-connection', {
+                api_key: settings.api_key.trim(),
+                model_selection: settings.model_selection
+            }, {
+                headers: { 'X-Company-Context': activeSection }
+            });
+            setConnectionStatus({
+                tested: true,
+                success: true,
+                message: res.data.message || "Connection verified successfully!"
+            });
+            toast.success("AI Connection verified successfully!");
+        } catch (err: any) {
+            const errMsg = err.response?.data?.error || err.message || "Failed to reach OpenAI API";
+            setConnectionStatus({
+                tested: true,
+                success: false,
+                message: errMsg
+            });
+            toast.error(errMsg);
+        } finally {
+            setTestingConnection(false);
+        }
+    };
 
     useEffect(() => {
         fetchSettings();
@@ -375,11 +418,31 @@ export const AISettingsPage = () => {
                     {/* API Configuration */}
                     <Card className="border-2 shadow-xl shadow-blue-500/5 relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 rounded-bl-full -z-10 pointer-events-none"></div>
-                        <CardHeader className="border-b bg-muted/5 p-6">
+                        <CardHeader className="border-b bg-muted/5 p-6 flex flex-row items-center justify-between">
                             <CardTitle className="text-xl flex items-center gap-2">
                                 <HugeiconsIcon icon={LockKeyIcon} className="h-6 w-6 text-blue-500" />
                                 Connection Details
                             </CardTitle>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                disabled={testingConnection || !settings.api_key}
+                                onClick={handleTestConnection}
+                                className="h-9 px-3.5 text-xs font-bold gap-2 border-blue-500/30 text-blue-600 dark:text-blue-400 hover:bg-blue-500/10 active:scale-95 transition-all shadow-xs"
+                            >
+                                {testingConnection ? (
+                                    <>
+                                        <HugeiconsIcon icon={Loading03Icon} className="h-3.5 w-3.5 animate-spin" />
+                                        <span>Testing...</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <HugeiconsIcon icon={Wifi01Icon} className="h-3.5 w-3.5" />
+                                        <span>Test Connection</span>
+                                    </>
+                                )}
+                            </Button>
                         </CardHeader>
                         <CardContent className="p-8 space-y-6">
                             <div className="space-y-3">
@@ -387,17 +450,23 @@ export const AISettingsPage = () => {
                                 <Input 
                                     type="password"
                                     value={settings.api_key}
-                                    placeholder="sk-..." 
-                                    onChange={e => setSettings({...settings, api_key: e.target.value})}
+                                    placeholder="sk-proj-..." 
+                                    onChange={e => {
+                                        setSettings({...settings, api_key: e.target.value});
+                                        setConnectionStatus(null);
+                                    }}
                                     className="h-12 border-2 text-lg font-mono tracking-widest bg-muted/20"
                                     required
                                 />
-                                <p className="text-xs text-muted-foreground">Your API key is stored securely and used exclusively for generating patient overviews.</p>
+                                <p className="text-xs text-muted-foreground">Your API key is stored securely and used exclusively for generating clinical overviews and remarks.</p>
                             </div>
                             
                             <div className="space-y-3">
                                 <Label className="font-bold text-sm">AI Model Selection</Label>
-                                <Select value={settings.model_selection} onValueChange={(val) => setSettings({...settings, model_selection: val})}>
+                                <Select value={settings.model_selection} onValueChange={(val) => {
+                                    setSettings({...settings, model_selection: val});
+                                    setConnectionStatus(null);
+                                }}>
                                     <SelectTrigger className="h-12 border-2 font-bold bg-muted/20 text-md">
                                         <SelectValue placeholder="Select a model" />
                                     </SelectTrigger>
@@ -408,6 +477,26 @@ export const AISettingsPage = () => {
                                     </SelectContent>
                                 </Select>
                             </div>
+
+                            {/* Connection Diagnostic Result */}
+                            {connectionStatus && (
+                                <div className={`p-4 rounded-xl border flex items-start gap-3 text-xs leading-relaxed transition-all ${
+                                    connectionStatus.success 
+                                        ? 'bg-emerald-500/10 border-emerald-500/30 text-emerald-700 dark:text-emerald-300' 
+                                        : 'bg-rose-500/10 border-rose-500/30 text-rose-700 dark:text-rose-300'
+                                }`}>
+                                    <HugeiconsIcon 
+                                        icon={connectionStatus.success ? CheckmarkCircle02Icon : AlertCircleIcon} 
+                                        className={`h-5 w-5 shrink-0 mt-0.5 ${connectionStatus.success ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`} 
+                                    />
+                                    <div className="space-y-1">
+                                        <p className="font-bold text-sm">
+                                            {connectionStatus.success ? "Connection Verified" : "Connection Failed"}
+                                        </p>
+                                        <p>{connectionStatus.message}</p>
+                                    </div>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
 
