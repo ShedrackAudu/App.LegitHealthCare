@@ -19,7 +19,8 @@ import {
   FavouriteIcon,
   ThermometerIcon,
   FloppyDiskIcon,
-  Delete02Icon
+  Delete02Icon,
+  ArrowLeft01Icon
 } from '@hugeicons/core-free-icons';
 import { usePermissions } from '@/hooks/usePermissions';
 import { PatientSearch } from '@/components/PatientSearch';
@@ -198,7 +199,7 @@ const ComboField = React.forwardRef(({ label, options, setValue, ...props }: any
 const ConsultationPage: React.FC = () => {
   const { activeSection, activeYear } = useAppContext();
   const { hasPermission } = usePermissions();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const staffIdParam = searchParams.get('staff_id');
   const [patient, setPatient] = useState<any>(null);
   const [searchId, setSearchId] = useState('');
@@ -526,19 +527,34 @@ const ConsultationPage: React.FC = () => {
             </div>
 
             {/* Unified Search Header style matching Director */}
-            <PatientSearch
-              activeSection={activeSection}
-              onSearch={handleSearch}
-              onSelect={(p) => {
-                setPatient(p);
-                handleSearch(p.staff_id, 'general');
-              }}
-              searching={searching}
-              themeColor="emerald"
-              year={activeYear}
-              strict={true}
-              showPidToggle={true}
-            />
+            {patient ? (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setPatient(null);
+                  setSearchParams({});
+                  reset();
+                }}
+                className="gap-2 border-2 border-primary/25 hover:border-primary hover:bg-primary/5 rounded-xl font-bold h-11 px-5 transition-all shadow-xs shrink-0 self-start sm:self-auto"
+              >
+                <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 text-primary" />
+                <span>Back to Search</span>
+              </Button>
+            ) : (
+              <PatientSearch
+                activeSection={activeSection}
+                onSearch={handleSearch}
+                onSelect={(p) => {
+                  setPatient(p);
+                  handleSearch(p.staff_id, 'general');
+                }}
+                searching={searching}
+                themeColor="emerald"
+                year={activeYear}
+                strict={true}
+                showPidToggle={true}
+              />
+            )}
           </div>
         </div>
 

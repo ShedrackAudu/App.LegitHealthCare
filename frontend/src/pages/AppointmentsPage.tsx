@@ -19,7 +19,8 @@ import {
   Search01Icon,
   ReloadIcon,
   MoreVerticalIcon,
-  Delete02Icon
+  Delete02Icon,
+  ArrowLeft01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
@@ -262,7 +263,17 @@ const AppointmentsPage = () => {
             </div>
           </div>
 
-          <PatientSearch
+          {patient ? (
+            <Button
+              variant="outline"
+              onClick={() => setPatient(null)}
+              className="gap-2 border-2 border-primary/25 hover:border-primary hover:bg-primary/5 rounded-xl font-bold h-11 px-5 transition-all shadow-xs shrink-0 self-start sm:self-auto"
+            >
+              <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 text-primary" />
+              <span>Back to Search</span>
+            </Button>
+          ) : (
+            <PatientSearch
               activeSection={activeSection}
               onSearch={handleSearch}
               onSelect={(p) => {
@@ -272,7 +283,8 @@ const AppointmentsPage = () => {
               themeColor="primary"
               year={activeYear}
               strict={true}
-          />
+            />
+          )}
         </div>
 
 

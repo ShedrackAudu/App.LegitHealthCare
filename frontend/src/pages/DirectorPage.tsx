@@ -16,7 +16,8 @@ import {
   Cancel01Icon,
   CheckmarkCircle02Icon,
   AlertCircleIcon,
-  Alert01Icon
+  Alert01Icon,
+  ArrowLeft01Icon
 } from '@hugeicons/core-free-icons';
 import { PatientSearch } from '@/components/PatientSearch';
 import {
@@ -723,7 +724,7 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
 
 const DirectorPage: React.FC = () => {
     const { activeSection, activeYear } = useAppContext();
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const staffIdParam = searchParams.get('staff_id');
     const [patient, setPatient] = useState<any>(null);
     const [history, setHistory] = useState<any>(null);
@@ -1116,17 +1117,32 @@ const DirectorPage: React.FC = () => {
                         </div>
                     </div>
                     
-                    <PatientSearch
-                        activeSection={activeSection}
-                        onSelect={selectPatient}
-                        onSearch={handleSearchWithId}
-                        searching={searching}
-                        themeColor="primary"
-                        placeholder="Search Staff ID or Name..."
-                        year={activeYear}
-                        strict={true}
-                        showPidToggle={true}
-                    />
+                    {patient ? (
+                        <Button
+                            variant="outline"
+                            onClick={() => {
+                                setPatient(null);
+                                setHistory(null);
+                                setSearchParams({});
+                            }}
+                            className="gap-2 border-2 border-primary/25 hover:border-primary hover:bg-primary/5 rounded-xl font-bold h-11 px-5 transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                        >
+                            <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 text-primary" />
+                            <span>Back to Search</span>
+                        </Button>
+                    ) : (
+                        <PatientSearch
+                            activeSection={activeSection}
+                            onSelect={selectPatient}
+                            onSearch={handleSearchWithId}
+                            searching={searching}
+                            themeColor="primary"
+                            placeholder="Search Staff ID or Name..."
+                            year={activeYear}
+                            strict={true}
+                            showPidToggle={true}
+                        />
+                    )}
                 </div>
 
                 {searching ? (
