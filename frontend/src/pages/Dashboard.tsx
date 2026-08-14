@@ -497,7 +497,7 @@ const Dashboard: React.FC = () => {
                 <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight">
                   Welcome back, {user.first_name}!
                 </h1>
-                <p className="text-[11px] sm:text-sm text-muted-foreground font-medium line-clamp-1 sm:line-clamp-none mt-0.5">
+                <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground font-medium mt-0.5">
                   Overview of patient flow, pending clinical assessments, and operations.
                 </p>
               </div>

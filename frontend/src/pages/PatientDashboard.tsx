@@ -229,24 +229,7 @@ const PatientDashboard = () => {
   return (
     <PatientLayout>
       <div className="space-y-5 animate-in fade-in duration-700 dashboard-page">
-        {/* Header Section with Live Clock */}
-        {/* Header Section - More Compact */}
-        <div className="flex flex-row items-center justify-between gap-2 border-b border-primary/5 pb-3">
-          <div>
-            <h2 className="text-[9px] font-black uppercase tracking-[0.2em] text-primary/70">Patient Overview</h2>
-            <div className="flex items-center gap-1.5 text-muted-foreground font-bold text-[10px]">
-               <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-primary" />
-               <span className="tabular-nums">{formatDateTime(currentTime).replace(' - ', ' | ')}</span>
-            </div>
-          </div>
-          <div className="flex gap-1.5">
-             <div className="px-2 py-1 bg-primary/10 text-primary rounded-lg border border-primary/10 flex items-center gap-1 text-[9px] font-black">
-                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="w-3 h-3" /> Verified
-             </div>
-          </div>
-        </div>
-
-        {/* PWA Install Banner */}
+        {/* PWA Install Banner — Mobile only */}
         <AnimatePresence>
           {deferredPrompt && !isInstalled && !dismissed && (
             <motion.div
@@ -297,78 +280,98 @@ const PatientDashboard = () => {
           )}
         </AnimatePresence>
 
-        {/* Welcome Hero - Compact & Integrated Icon */}
+        {/* Executive Welcome Hero Section - Matching Staff Portal Aesthetic */}
         <motion.div 
           initial={{ opacity: 0, scale: 0.98 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="relative overflow-hidden rounded-xl bg-gradient-to-br from-primary via-primary/95 to-primary/90 p-5 md:p-6 text-primary-foreground shadow-sm"
-        >          {/* Background Integrated Icon and Decorative Circles */}
-          <div className="absolute -right-12 -bottom-12 w-64 h-64 text-white/[0.07] pointer-events-none -rotate-12 transition-transform duration-1000 group-hover:rotate-0">
-            <HugeiconsIcon icon={Activity01Icon} className="w-full h-full stroke-[1.5]" />
+          className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-500/10 via-primary/5 to-emerald-500/10 dark:from-teal-950/45 dark:via-card/70 dark:to-emerald-950/30 backdrop-blur-md border border-teal-500/25 dark:border-teal-500/35 p-3.5 sm:p-5 lg:p-6 shadow-xs shadow-teal-500/5 group"
+        >
+          {/* Subtle Watermark Icon */}
+          <div className="absolute -right-8 -bottom-8 w-28 sm:w-44 h-28 sm:h-44 text-primary/[0.06] dark:text-primary/[0.1] pointer-events-none -rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+             <HugeiconsIcon icon={Activity01Icon} className="w-full h-full stroke-1" />
           </div>
-          <div className="absolute top-0 right-0 w-[400px] h-[400px] bg-white/10 rounded-full blur-[80px] -translate-y-1/2 translate-x-1/2" />
-          <div className="absolute bottom-0 left-0 w-32 h-32 bg-black/10 rounded-full blur-[50px] translate-y-1/2 -translate-x-1/4" />
-          
-          <div className="relative z-10 flex flex-col md:flex-row md:items-end justify-between gap-6">
-            <div className="space-y-3.5 text-left flex-1">
-               <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[9px] font-bold uppercase tracking-wider backdrop-blur-md border border-white/10 shadow-2xs">
-                 <HugeiconsIcon icon={Shield01Icon} className="w-2.5 h-2.5" /> NHA & NDPA Secured
-               </div>
-               <h1 className="text-xl md:text-3xl font-bold tracking-tight leading-tight">
-                  Welcome back, <br />
-                  <span className="text-white/70">{profile?.first_name || user?.first_name}!</span>
-               </h1>
-               
-               <p className="text-[10px] md:text-xs text-primary-foreground/80 max-w-lg font-medium leading-relaxed hidden sm:block">
+
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-3.5 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2 max-w-2xl text-left">
+              {/* Badges */}
+              <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold uppercase tracking-wider text-primary shadow-2xs">
+                  <HugeiconsIcon icon={Shield01Icon} className="w-2.5 h-2.5" />
+                  NHA & NDPA Secured
+                </span>
+                <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full bg-muted/60 border border-border/60 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                  Patient Portal • <strong className="text-foreground">{new Date().getFullYear()}</strong>
+                </span>
+              </div>
+
+              <div>
+                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                  Welcome back, {profile?.first_name || user?.first_name}!
+                </h1>
+                <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground font-medium mt-0.5">
                   Access your screening reports, schedule clinical visits, and track your wellness progress.
-               </p>
+                </p>
+              </div>
+
+              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground/90 pt-0 flex items-center gap-1.5">
+                <HugeiconsIcon icon={Clock01Icon} className="w-3 h-3 text-primary" />
+                <span className="tabular-nums">{formatDateTime(currentTime).replace(' - ', ' | ')}</span>
+              </div>
             </div>
- 
-            <div className="flex flex-row gap-2 shrink-0 w-full lg:w-auto mt-0">
-               <button 
-                 className={`flex-1 lg:flex-none rounded-lg font-bold px-3 h-8 text-[9px] uppercase tracking-wider shadow-2xs active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
-                   (reportProgress?.percentage || 0) < 100 
-                   ? 'bg-white/20 text-white/60 border border-white/10 cursor-not-allowed' 
-                   : 'bg-white text-primary hover:bg-white/95'
-                 }`} 
-                 onClick={() => {
-                   if ((reportProgress?.percentage || 0) < 100) {
-                     toast.error("Your report is being compiled, please check back later");
-                   } else {
-                     navigate('/patient/records');
-                   }
-                 }}
-               >
-                 {(reportProgress?.percentage || 0) < 100 ? <HugeiconsIcon icon={Shield01Icon} className="w-3 h-3" /> : <HugeiconsIcon icon={Note01Icon} className="w-3 h-3" />}
-                 Reports
-               </button>
-               <button className="flex-1 lg:flex-none bg-white/10 border border-white/20 hover:bg-white/20 text-white rounded-lg font-bold px-3 h-8 text-[9px] uppercase tracking-wider shadow-2xs active:scale-95 transition-all flex items-center justify-center gap-1.5" onClick={() => navigate('/patient/appointments')}>
-                 <HugeiconsIcon icon={Calendar03Icon} className="w-3 h-3" /> Book Visit
-               </button>
+
+            {/* Quick Actions — Hidden on mobile, visible on sm and up */}
+            <div className="hidden sm:flex flex-row items-center gap-2 sm:gap-2.5 shrink-0 sm:self-auto mt-1 lg:mt-0">
+              <Button 
+                variant="outline"
+                size="sm"
+                className={`rounded-xl font-bold px-3.5 h-9 text-[10px] uppercase tracking-wider shadow-2xs active:scale-95 transition-all flex items-center justify-center gap-1.5 ${
+                  (reportProgress?.percentage || 0) < 100 
+                  ? 'border-border/60 text-muted-foreground opacity-60 cursor-not-allowed' 
+                  : 'border-primary/30 hover:border-primary/50 text-primary hover:bg-primary/5'
+                }`} 
+                onClick={() => {
+                  if ((reportProgress?.percentage || 0) < 100) {
+                    toast.error("Your report is being compiled, please check back later");
+                  } else {
+                    navigate('/patient/records');
+                  }
+                }}
+              >
+                {(reportProgress?.percentage || 0) < 100 ? <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" /> : <HugeiconsIcon icon={Note01Icon} className="w-3.5 h-3.5" />}
+                <span>Reports</span>
+              </Button>
+              <Button 
+                size="sm"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl font-bold px-3.5 h-9 text-[10px] uppercase tracking-wider shadow-2xs shadow-primary/20 active:scale-95 transition-all flex items-center justify-center gap-1.5" 
+                onClick={() => navigate('/patient/appointments')}
+              >
+                <HugeiconsIcon icon={Calendar03Icon} className="w-3.5 h-3.5" />
+                <span>Book Visit</span>
+              </Button>
             </div>
           </div>
         </motion.div>
 
-        {/* Report Progress Card */}
+        {/* Report Progress Card - Compact & Responsive */}
         <motion.div variants={item} initial="hidden" animate="show" className="grid grid-cols-1 gap-6">
           <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md transition-colors hover:bg-card/80">
-            <CardContent className="p-3 md:p-5">
+            <CardContent className="p-3 sm:p-4 md:p-5">
               {!reportProgress ? (
-                <div className="flex flex-row items-center gap-3 md:gap-10 animate-pulse w-full">
-                  <Skeleton className="h-16 w-16 md:h-28 md:w-28 rounded-full bg-muted/40 shrink-0" />
-                  <div className="flex-1 space-y-3">
-                    <Skeleton className="h-3.5 w-32 bg-muted/40 rounded" />
-                    <Skeleton className="h-5 w-48 bg-muted/40 rounded" />
-                    <div className="flex gap-2 pt-1">
-                      <Skeleton className="h-5 w-20 bg-muted/40 rounded-md" />
-                      <Skeleton className="h-5 w-20 bg-muted/40 rounded-md" />
+                <div className="flex flex-row items-center gap-3 sm:gap-6 animate-pulse w-full">
+                  <Skeleton className="h-12 w-12 sm:h-16 sm:w-16 md:h-20 md:w-20 rounded-full bg-muted/40 shrink-0" />
+                  <div className="flex-1 space-y-2">
+                    <Skeleton className="h-3 w-28 bg-muted/40 rounded" />
+                    <Skeleton className="h-4 w-40 bg-muted/40 rounded" />
+                    <div className="flex gap-1.5 pt-0.5">
+                      <Skeleton className="h-4 w-16 bg-muted/40 rounded-md" />
+                      <Skeleton className="h-4 w-16 bg-muted/40 rounded-md" />
                     </div>
                   </div>
                 </div>
               ) : (
-                <div className="flex flex-row items-center gap-3 md:gap-10">
+                <div className="flex flex-row items-center justify-between gap-2.5 sm:gap-6">
                     {/* Compact Circular Progress */}
-                    <div className="relative h-16 w-16 md:h-28 md:w-28 shrink-0">
+                    <div className="relative h-11 w-11 sm:h-16 sm:w-16 md:h-20 md:w-20 shrink-0">
                         <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
                             <circle className="text-muted/15" strokeWidth="12" stroke="currentColor" fill="transparent" r="40" cx="50" cy="50" />
                             <motion.circle 
@@ -384,39 +387,40 @@ const PatientDashboard = () => {
                             />
                         </svg>
                         <div className="absolute inset-0 flex flex-col items-center justify-center">
-                            <span className="text-[13px] md:text-[27px] font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
+                            <span className="text-[10px] sm:text-base md:text-xl font-black tracking-tighter leading-none" style={{ color: getProgressColor(reportProgress.percentage) }}>
                                 {reportProgress.percentage}%
                              </span>
                         </div>
                     </div>
                     
                     {/* Information Grid */}
-                    <div className="flex-1 min-w-0 space-y-1.5 md:space-y-4">
-                        <div className="space-y-0.5">
-                            <h2 className="text-[9px] md:text-xs font-bold tracking-wider text-muted-foreground uppercase">{reportProgress.year} Screening Status</h2>
-                            <p className="text-xs md:text-xl font-bold text-foreground truncate">
+                    <div className="flex-1 min-w-0 space-y-0.5 sm:space-y-1.5">
+                        <div className="space-y-0">
+                            <h2 className="text-[8px] sm:text-[10px] md:text-xs font-bold tracking-wider text-muted-foreground uppercase">{reportProgress.year} Screening Status</h2>
+                            <p className="text-xs sm:text-base md:text-lg font-bold text-foreground truncate leading-tight">
                                 {reportProgress.status}
                             </p>
                         </div>
                         
-                        <div className="flex flex-wrap gap-1 md:gap-2">
-                            <div className="px-2 py-0.5 md:px-2.5 md:py-1 bg-primary/10 rounded-md border border-primary/20 text-[8px] md:text-[11px] font-bold text-primary flex items-center gap-1 shadow-2xs">
-                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-2.5 w-2.5 md:h-3.5 md:w-3.5" />
-                                {reportProgress.points}/{reportProgress.total} Items
+                        <div className="flex flex-wrap items-center gap-1 sm:gap-1.5 pt-0.5">
+                            <div className="px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-primary/10 rounded-md border border-primary/20 text-[8px] sm:text-[10px] font-bold text-primary flex items-center gap-1 shadow-2xs">
+                                <HugeiconsIcon icon={CheckmarkCircle01Icon} className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                <span>{reportProgress.points}/{reportProgress.total} Items</span>
                             </div>
                             {reportProgress.missing_count > 0 && (
-                                <div className="px-2 py-0.5 md:px-2.5 md:py-1 bg-amber-500/10 rounded-md border border-amber-500/20 text-[8px] md:text-[11px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 shadow-2xs">
-                                    <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5 md:h-3.5 md:w-3.5" />
-                                    {reportProgress.missing_count} Pending
+                                <div className="px-1.5 py-0.5 sm:px-2 sm:py-0.5 bg-amber-500/10 rounded-md border border-amber-500/20 text-[8px] sm:text-[10px] font-bold text-amber-600 dark:text-amber-400 flex items-center gap-1 shadow-2xs">
+                                    <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                                    <span>{reportProgress.missing_count} Pending</span>
                                 </div>
                             )}
                         </div>
                     </div>
                     
-                    {/* Action - Desktop only */}
-                    <div className="hidden sm:flex shrink-0">
+                    {/* Action Button - In-row across all screens */}
+                    <div className="shrink-0">
                         <Button 
-                          className="rounded-lg font-bold h-9 px-4 shadow-xs text-xs active:scale-95 transition-all" 
+                          size="sm"
+                          className="rounded-xl font-bold h-7 sm:h-9 px-2.5 sm:px-4 text-[9px] sm:text-xs uppercase tracking-wider shadow-2xs active:scale-95 transition-all" 
                           onClick={() => {
                             if ((reportProgress?.percentage || 0) < 100) {
                               toast.error("Your report is being compiled, please check back later");
@@ -426,28 +430,9 @@ const PatientDashboard = () => {
                           }}
                           disabled={(reportProgress?.percentage || 0) < 100}
                         >
-                            {(reportProgress?.percentage || 0) < 100 ? 'Locked' : 'View Details'}
+                            {(reportProgress?.percentage || 0) < 100 ? 'Locked' : 'Details'}
                         </Button>
                     </div>
-                </div>
-              )}
-              
-              {/* Mobile Only Button */}
-              {reportProgress && (
-                <div className="mt-3 flex sm:hidden">
-                    <Button 
-                      className="w-full rounded-lg font-bold h-8 shadow-xs text-[10px] uppercase tracking-wider active:scale-95 transition-all" 
-                      onClick={() => {
-                        if ((reportProgress?.percentage || 0) < 100) {
-                          toast.error("Your report is being compiled, please check back later");
-                        } else {
-                          navigate('/patient/records');
-                        }
-                      }}
-                      disabled={(reportProgress?.percentage || 0) < 100}
-                    >
-                        {(reportProgress?.percentage || 0) < 100 ? 'Medical Findings Locked' : 'View Screening Details'}
-                    </Button>
                 </div>
               )}
             </CardContent>
