@@ -106,3 +106,31 @@ def delete_department(id):
     db.session.commit()
     AuditLog.log_action("Delete Department", resource=f"Department:{id}", details={"name": dept.name})
     return jsonify({"message": "Department deleted"}), 200
+
+@config_bp.route('/maintenance', methods=['GET'])
+def get_maintenance_status():
+    try:
+        from models import SystemConfig
+        enabled_cfg = SystemConfig.query.get('maintenance_mode_enabled')
+        title_cfg = SystemConfig.query.get('maintenance_title')
+        msg_cfg = SystemConfig.query.get('maintenance_message')
+        eta_cfg = SystemConfig.query.get('maintenance_eta')
+        
+        is_enabled = (enabled_cfg.value.lower() == 'true') if (enabled_cfg and enabled_cfg.value) else False
+        title = title_cfg.value if (title_cfg and title_cfg.value) else "Scheduled System Maintenance"
+        message = msg_cfg.value if (msg_cfg and msg_cfg.value) else "We are currently performing routine upgrades and performance enhancements. Services will resume shortly."
+        eta = eta_cfg.value if (eta_cfg and eta_cfg.value) else ""
+        
+        return jsonify({
+            "enabled": is_enabled,
+            "title": title,
+            "message": message,
+            "eta": eta
+        }), 200
+    except Exception:
+        return jsonify({
+            "enabled": False,
+            "title": "Scheduled System Maintenance",
+            "message": "We are currently performing routine upgrades and performance enhancements. Services will resume shortly.",
+            "eta": ""
+        }), 200

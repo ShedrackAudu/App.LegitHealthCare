@@ -288,29 +288,29 @@ const PatientMedicalReport: React.FC = () => {
             <div className="space-y-8 animate-in fade-in duration-700">
                 <div className="no-print space-y-8">
                     {/* Header Selector Card */}
-                    <Card className="border shadow-lg rounded-2xl overflow-hidden bg-card/50 backdrop-blur-md">
+                    <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
                         <CardHeader className="p-6 md:p-8">
                             <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                                 <div className="flex flex-col gap-3">
                                     <div className="flex items-center gap-3">
-                                        <div className="p-2 sm:p-3 bg-primary/10 rounded-xl sm:rounded-2xl text-primary">
+                                        <div className="p-2.5 bg-primary/10 border border-primary/20 rounded-xl text-primary shadow-2xs">
                                             <HugeiconsIcon icon={File01Icon} className="h-5 w-5 sm:h-6 sm:w-6" />
                                         </div>
-                                        <CardTitle className="text-xl sm:text-2xl font-black tracking-tight">Medical Reports</CardTitle>
+                                        <CardTitle className="text-xl sm:text-2xl font-bold tracking-tight">Medical Reports</CardTitle>
                                     </div>
-                                    <CardDescription className="text-muted-foreground font-medium text-xs sm:text-base pl-4 border-l-4 border-primary/20 ml-1 py-1">
-                                        Select a screening year to view your results.
+                                    <CardDescription className="text-muted-foreground font-medium text-xs sm:text-sm pl-3 border-l-2 border-primary/30 ml-1 py-0.5">
+                                        Select a screening year to view your comprehensive results.
                                     </CardDescription>
                                 </div>
 
                                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
                                     <div className="w-full sm:w-44">
                                         <Select value={selectedYear} onValueChange={setSelectedYear} disabled={fetchingYears || loading}>
-                                            <SelectTrigger className="h-10 rounded-xl border font-bold text-sm">
+                                            <SelectTrigger className="h-10 rounded-lg border-input/80 bg-card/60 font-bold text-xs shadow-2xs">
                                                 <HugeiconsIcon icon={Calendar03Icon} className="mr-2 h-3.5 w-3.5 text-primary" />
                                                 <SelectValue placeholder={fetchingYears ? "Loading..." : "Select Year"} />
                                             </SelectTrigger>
-                                            <SelectContent className="rounded-xl font-bold">
+                                            <SelectContent className="rounded-xl font-bold bg-popover/95 backdrop-blur-md border border-border/80 shadow-md">
                                                 {availableYears.map(year => (
                                                     <SelectItem key={year} value={year}>{year} Screening</SelectItem>
                                                 ))}
@@ -322,7 +322,7 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                     <Button
                                         size="default"
-                                        className="w-full sm:w-auto h-10 rounded-xl px-6 font-black shadow-lg transition-all active:scale-95 text-xs"
+                                        className="w-full sm:w-auto h-10 rounded-lg px-6 font-bold shadow-xs transition-all active:scale-95 text-xs bg-primary"
                                         onClick={handleGenerateReport}
                                         loading={loading}
                                         disabled={!selectedYear || fetchingYears}
@@ -337,24 +337,24 @@ const PatientMedicalReport: React.FC = () => {
 
                     {/* Report Actions Banner */}
                     {reportData && !loading && (
-                        <div className="flex flex-col md:flex-row items-center justify-between bg-card/80 p-3 md:p-3 rounded-xl border border-primary/20 sticky top-2 z-20 backdrop-blur-xl shadow-md gap-3 md:gap-0">
-                            <div className="flex items-center gap-3 px-2 md:px-4">
-                                <HugeiconsIcon icon={Shield01Icon} className="text-primary h-6 w-6 shrink-0" />
-                                <span className="text-[11px] md:text-sm font-black uppercase tracking-widest text-primary">Official Verified Report - {selectedYear}</span>
+                        <div className="flex flex-col md:flex-row items-center justify-between bg-card/75 dark:bg-card/60 p-3 rounded-xl border border-border/60 sticky top-2 z-20 backdrop-blur-xl shadow-xs gap-3 md:gap-0">
+                            <div className="flex items-center gap-2.5 px-2 md:px-4">
+                                <HugeiconsIcon icon={Shield01Icon} className="text-primary h-5 w-5 shrink-0" />
+                                <span className="text-xs md:text-sm font-bold uppercase tracking-wider text-primary">Official Verified Report - {selectedYear}</span>
                             </div>
                              <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 w-full md:w-auto px-2">
-                                <Button variant="outline" className="flex-1 md:flex-none rounded-xl font-black h-10 border-2 text-[11px] md:text-xs" onClick={handlePrint}>
-                                    <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Print</span>
+                                <Button variant="outline" className="flex-1 md:flex-none rounded-lg font-bold h-9 border border-border/70 bg-card/60 text-xs shadow-2xs" onClick={handlePrint}>
+                                    <HugeiconsIcon icon={PrinterIcon} className="sm:mr-1 md:mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Print</span>
                                 </Button>
-                                <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-indigo-500 text-indigo-500 hover:bg-indigo-50 text-[11px] md:text-xs" variant="outline" onClick={handleDownloadPDF}>
-                                    <HugeiconsIcon icon={Download01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Download</span>
+                                <Button className="flex-1 md:flex-none rounded-lg font-bold h-9 shadow-2xs border border-primary/30 text-primary hover:bg-primary/10 text-xs" variant="outline" onClick={handleDownloadPDF}>
+                                    <HugeiconsIcon icon={Download01Icon} className="sm:mr-1 md:mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Download</span>
                                 </Button>
-                                <Button className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 bg-indigo-600 text-white hover:bg-indigo-700 text-[11px] md:text-xs" onClick={handleEmailReport}>
-                                    <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Email Report</span>
+                                <Button className="flex-1 md:flex-none rounded-lg font-bold h-9 shadow-2xs bg-primary text-primary-foreground hover:bg-primary/90 text-xs" onClick={handleEmailReport}>
+                                    <HugeiconsIcon icon={Mail01Icon} className="sm:mr-1 md:mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Email Report</span>
                                 </Button>
-                                <Button asChild className="flex-1 md:flex-none rounded-xl font-black h-10 shadow-lg border-2 border-emerald-500 text-emerald-600 hover:bg-emerald-50 text-[11px] md:text-xs" variant="outline">
+                                <Button asChild className="flex-1 md:flex-none rounded-lg font-bold h-9 shadow-2xs border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/10 text-xs" variant="outline">
                                     <Link to="/patient/files">
-                                        <HugeiconsIcon icon={Attachment01Icon} className="sm:mr-1 md:mr-2 h-3 w-3 md:h-4 md:w-4" /> <span className="hidden sm:inline">Technical Files</span>
+                                        <HugeiconsIcon icon={Attachment01Icon} className="sm:mr-1 md:mr-1.5 h-3.5 w-3.5" /> <span className="hidden sm:inline">Technical Files</span>
                                     </Link>
                                 </Button>
                             </div>
@@ -364,7 +364,7 @@ const PatientMedicalReport: React.FC = () => {
                     {!reportData && !loading && (
                         <div className="w-full">
                             {fetchingYears ? (
-                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-6 animate-pulse">
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-card/40 backdrop-blur-xs rounded-xl border border-dashed border-border/60 text-center px-6 space-y-6 animate-pulse">
                                     <Skeleton className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/40 rounded-full" />
                                     <div className="space-y-2.5 flex flex-col items-center">
                                         <Skeleton className="h-5 w-48 bg-muted/40 rounded" />
@@ -377,23 +377,23 @@ const PatientMedicalReport: React.FC = () => {
                                     </div>
                                 </div>
                             ) : (
-                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-muted/5 rounded-2xl border-2 border-dashed border-border/50 text-center px-6 space-y-4">
-                                    <div className="w-16 h-16 sm:w-20 sm:h-20 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-2 transition-transform hover:scale-110 duration-500">
-                                        <HugeiconsIcon icon={File01Icon} className="h-8 w-8 sm:h-10 sm:w-10 text-muted-foreground/30" />
+                                <div className="flex flex-col items-center justify-center py-12 md:py-24 bg-card/40 backdrop-blur-xs rounded-xl border border-dashed border-border/60 text-center px-6 space-y-4 shadow-2xs">
+                                    <div className="w-14 h-14 sm:w-16 sm:h-16 bg-muted/20 rounded-full flex items-center justify-center mx-auto mb-1 transition-transform hover:scale-105 duration-300">
+                                        <HugeiconsIcon icon={File01Icon} className="h-7 w-7 sm:h-8 sm:w-8 text-muted-foreground/40" />
                                     </div>
-                                    <div className="space-y-2">
-                                        <h3 className="text-sm md:text-lg font-black text-muted-foreground/50 uppercase tracking-[0.2em]">
+                                    <div className="space-y-1.5">
+                                        <h3 className="text-sm md:text-base font-bold text-muted-foreground uppercase tracking-wider">
                                             No Report Selected
                                         </h3>
-                                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
+                                        <p className="text-xs text-muted-foreground font-medium italic max-w-[240px] md:max-w-xs mx-auto leading-relaxed">
                                             {availableYears.length > 0
                                                 ? "Please select a screening session from the menu above to view your comprehensive results."
                                                 : "No historical medical screenings found in our database for your account."}
                                         </p>
                                     </div>
-                                    <div className="flex flex-col items-center gap-2 pt-6">
+                                    <div className="flex flex-col items-center gap-2 pt-4">
                                         <div className="h-px w-10 bg-muted-foreground/20" />
-                                        <p className="text-[9px] text-muted-foreground uppercase tracking-[0.3em] font-black">
+                                        <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-bold">
                                             Official Medical Archives • {user?.username}
                                         </p>
                                     </div>
@@ -405,9 +405,9 @@ const PatientMedicalReport: React.FC = () => {
                     {loading && (
                         <div className="w-full max-w-4xl mx-auto space-y-8 animate-pulse">
                             {/* Fake A4 Page 1 Skeleton */}
-                            <div className="bg-card border rounded-2xl p-6 sm:p-8 shadow-md space-y-6">
+                            <div className="bg-card/60 backdrop-blur-md border border-border/60 rounded-xl p-6 sm:p-8 shadow-xs space-y-6">
                                 {/* Header / Branding */}
-                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b">
+                                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 pb-6 border-b border-border/50">
                                     <Skeleton className="h-12 w-48 bg-muted/40 rounded" />
                                     <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
                                 </div>
@@ -423,14 +423,14 @@ const PatientMedicalReport: React.FC = () => {
                                 {/* Fake Table */}
                                 <div className="space-y-3">
                                     <Skeleton className="h-6 w-36 bg-muted/40 rounded" />
-                                    <div className="border rounded-xl overflow-hidden">
-                                        <div className="bg-muted/20 h-10 border-b flex items-center px-4 justify-between">
+                                    <div className="border border-border/50 rounded-xl overflow-hidden">
+                                        <div className="bg-muted/20 h-10 border-b border-border/50 flex items-center px-4 justify-between">
                                             <Skeleton className="h-4 w-24 bg-muted/40 rounded" />
                                             <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
                                             <Skeleton className="h-4 w-16 bg-muted/40 rounded" />
                                         </div>
                                         {Array.from({ length: 5 }).map((_, i) => (
-                                            <div key={i} className="h-12 border-b flex items-center px-4 justify-between last:border-0">
+                                            <div key={i} className="h-12 border-b border-border/50 flex items-center px-4 justify-between last:border-0">
                                                 <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
                                                 <Skeleton className="h-4 w-12 bg-muted/40 rounded" />
                                                 <Skeleton className="h-4 w-20 bg-muted/40 rounded" />
@@ -445,9 +445,9 @@ const PatientMedicalReport: React.FC = () => {
 
                 {/* VERBATIM REPORT CONTENT FROM STAFF PORTAL */}
                 {reportData && !loading && (
-                    <div className="flex flex-col items-center gap-8 py-8 px-4 overflow-x-auto print-container bg-muted/30 rounded-3xl border-2 border-dashed border-border print:bg-transparent print:border-0 print:p-0 print:overflow-visible" style={{ padding: '2rem' }}>
+                    <div className="flex flex-col items-center gap-8 py-8 px-4 overflow-x-auto print-container bg-muted/20 rounded-2xl border border-dashed border-border/60 print:bg-transparent print:border-0 print:p-0 print:overflow-visible" style={{ padding: '2rem' }}>
                         {/* PAGE 1 */}
-                        <div className="a4-page shadow-2xl">
+                        <div className="a4-page shadow-lg">
                             {/* Branding Header Area */}
                             <div className="report-branding">
                                 {reportData.branding?.header_image ? (

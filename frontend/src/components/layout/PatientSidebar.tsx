@@ -176,7 +176,7 @@ export const PatientSidebar: React.FC = () => {
                   "flex items-center rounded-lg transition-all duration-200 group/item relative",
                   isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
+                    ? "bg-primary text-primary-foreground shadow-xs shadow-primary/30"
                     : "text-muted-foreground hover:bg-muted hover:text-foreground"
                 )}
               >
@@ -189,7 +189,7 @@ export const PatientSidebar: React.FC = () => {
                 </span>
 
                 {isCollapsed && (
-                  <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                  <div className="absolute left-16 ml-2 px-2.5 py-1 bg-popover/95 text-popover-foreground text-xs rounded-md opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md border border-border/80 backdrop-blur-md">
                     {item.title}
                   </div>
                 )}
@@ -201,9 +201,17 @@ export const PatientSidebar: React.FC = () => {
             {/* Versioning */}
             <div className={cn(
               "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none",
-              isCollapsed ? "text-center" : "px-3"
+              isCollapsed ? "text-center flex justify-center my-0.5" : "px-3"
             )}>
-              <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
+              {isCollapsed ? (
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight text-primary bg-primary/15 hover:bg-primary/25 dark:bg-primary/20 dark:hover:bg-primary/30 backdrop-blur-md border border-primary/35 shadow-2xs shadow-primary/10 transition-all select-none">
+                  {import.meta.env.VITE_APP_VERSION || 'v1.5'}
+                </span>
+              ) : (
+                <div className="flex flex-col gap-0.5 leading-none">
+                  <span>{import.meta.env.VITE_APP_VERSION || 'v1.5'}</span>
+                </div>
+              )}
             </div>
 
             {/* Manage Account Link */}
@@ -215,7 +223,7 @@ export const PatientSidebar: React.FC = () => {
               }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/manage",
-                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "",
+                isActive ? "bg-primary text-primary-foreground shadow-xs shadow-primary/30" : "",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
               )}
               title="Manage Account"
@@ -223,7 +231,7 @@ export const PatientSidebar: React.FC = () => {
               <HugeiconsIcon icon={AccountSetting01Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
               {isCollapsed && (
-                <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
+                <div className="absolute left-16 ml-2 px-2.5 py-1 bg-popover/95 text-popover-foreground text-xs rounded-md opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md border border-border/80 backdrop-blur-md">
                   Manage Account
                 </div>
               )}
@@ -241,7 +249,7 @@ export const PatientSidebar: React.FC = () => {
               <HugeiconsIcon icon={Logout02Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Log out</span>}
               {isCollapsed && (
-                <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md">
+                <div className="absolute left-16 ml-2 px-2.5 py-1 bg-popover/95 text-popover-foreground text-xs rounded-md opacity-0 invisible group-hover/logout:opacity-100 group-hover/logout:visible transition-all whitespace-nowrap z-50 shadow-md border border-border/80 backdrop-blur-md">
                   Log out
                 </div>
               )}
@@ -276,7 +284,7 @@ export const PatientSidebar: React.FC = () => {
       {isCollapsed && (
         <button
           onClick={toggleSidebar}
-          className="lg:hidden fixed bottom-4 left-4 z-[55] flex items-center justify-center rounded-lg bg-primary border border-primary-foreground/10 text-primary-foreground w-10 h-10 shadow-lg cursor-pointer focus:outline-none hover:bg-primary/90 transition-colors"
+          className="lg:hidden fixed bottom-4 left-4 z-[55] flex items-center justify-center rounded-xl bg-primary border border-primary-foreground/10 text-primary-foreground w-10 h-10 shadow-md cursor-pointer focus:outline-none hover:bg-primary/90 transition-colors"
           title="Expand Sidebar"
         >
           <HugeiconsIcon icon={SidebarRight01Icon} className="h-5 w-5 shrink-0" />

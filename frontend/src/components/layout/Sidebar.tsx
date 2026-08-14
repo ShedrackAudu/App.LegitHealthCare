@@ -209,8 +209,8 @@ export const Sidebar: React.FC = () => {
                     "flex items-center rounded-lg transition-all duration-200 group/item relative",
                     isCollapsed ? "justify-center w-10 h-10 mx-auto mt-0.5" : "px-3 py-2.5 gap-3",
                     isActive
-                      ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20"
-                      : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                      ? "bg-primary text-primary-foreground shadow-xs shadow-primary/30 font-bold"
+                      : "text-muted-foreground hover:bg-muted/80 hover:text-foreground"
                   )}
                 >
                   <HugeiconsIcon icon={item.icon} className={cn("h-5 w-5 shrink-0", !isCollapsed && "mr-1")} />
@@ -232,7 +232,7 @@ export const Sidebar: React.FC = () => {
                   )}
 
                   {isCollapsed && (
-                    <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
+                    <div className="absolute left-16 ml-2 px-2.5 py-1 bg-popover/90 backdrop-blur-md border border-border/80 text-popover-foreground text-xs rounded-md opacity-0 invisible group-hover/item:opacity-100 group-hover/item:visible transition-all whitespace-nowrap z-50 shadow-md">
                       {item.title}
                     </div>
                   )}
@@ -302,13 +302,15 @@ export const Sidebar: React.FC = () => {
             {/* Versioning */}
             <div className={cn(
               "py-1 text-[10px] font-bold text-muted-foreground/50 transition-all duration-200 select-none",
-              isCollapsed ? "text-center" : "px-3"
+              isCollapsed ? "text-center flex justify-center my-0.5" : "px-3"
             )}>
               {isCollapsed ? (
-                <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'}</span>
+                <span className="inline-flex items-center justify-center px-2 py-0.5 rounded-full text-[9px] font-mono font-bold tracking-tight text-primary bg-primary/15 hover:bg-primary/25 dark:bg-primary/20 dark:hover:bg-primary/30 backdrop-blur-md border border-primary/35 shadow-2xs shadow-primary/10 transition-all select-none">
+                  {import.meta.env.VITE_APP_VERSION || 'v1.5'}
+                </span>
               ) : (
                 <div className="flex flex-col gap-0.5 leading-none">
-                  <span>{import.meta.env.VITE_APP_VERSION || 'v1.2.0'} ({import.meta.env.VITE_APP_GIT_HASH || 'dev'})</span>
+                  <span>{import.meta.env.VITE_APP_VERSION || 'v1.5'} ({import.meta.env.VITE_APP_GIT_HASH || 'dev'})</span>
                   <span className="text-[9px] font-medium opacity-80">Build: {import.meta.env.VITE_APP_BUILD_DATE || 'N/A'}</span>
                 </div>
               )}
@@ -323,7 +325,7 @@ export const Sidebar: React.FC = () => {
               }}
               className={({ isActive }) => cn(
                 "flex items-center rounded-lg transition-all duration-200 text-muted-foreground hover:bg-muted hover:text-foreground border-0 bg-transparent w-full h-10 cursor-pointer focus:outline-none relative group/manage",
-                isActive ? "bg-primary text-primary-foreground shadow-lg shadow-primary/20" : "",
+                isActive ? "bg-primary text-primary-foreground shadow-xs shadow-primary/30 font-bold" : "",
                 isCollapsed ? "justify-center w-10 mx-auto" : "px-3 gap-3 justify-start"
               )}
               title="Manage Account"
@@ -331,7 +333,7 @@ export const Sidebar: React.FC = () => {
               <HugeiconsIcon icon={AccountSetting01Icon} className="h-5 w-5 shrink-0" />
               {!isCollapsed && <span className="font-semibold text-sm">Manage Account</span>}
               {isCollapsed && (
-                <div className="absolute left-16 ml-2 px-2 py-1 bg-popover text-popover-foreground text-xs rounded opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
+                <div className="absolute left-16 ml-2 px-2.5 py-1 bg-popover/90 backdrop-blur-md border border-border/80 text-popover-foreground text-xs rounded-md opacity-0 invisible group-hover/manage:opacity-100 group-hover/manage:visible transition-all whitespace-nowrap z-50 shadow-md">
                   Manage Account
                 </div>
               )}

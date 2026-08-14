@@ -22,7 +22,7 @@ try {
   // no tags
 }
 
-const appVersion = gitTag || "v1.2.0"
+const appVersion = gitTag || "v1.5"
 const buildDate = new Date().toISOString().slice(0, 10)
 
 // https://vite.dev/config/

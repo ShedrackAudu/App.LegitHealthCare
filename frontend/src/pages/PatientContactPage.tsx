@@ -189,32 +189,32 @@ const PatientContactPage: React.FC = () => {
                 {/* Header */}
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-xl sm:text-2xl font-black tracking-tight">Contact Us</h1>
-                        <p className="text-[10px] md:text-xs text-muted-foreground font-medium mt-0.5">
+                        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Contact Us</h1>
+                        <p className="text-xs text-muted-foreground font-medium mt-0.5">
                             Reach out to {contactInfo.clinic_name} support.
                         </p>
                     </div>
-                    <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-xl border h-9 text-[10px]">
-                        <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Dashboard
+                    <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-lg border border-border/70 bg-card/60 backdrop-blur-xs h-9 text-xs shadow-2xs">
+                        <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" /> Dashboard
                     </Button>
                 </div>
 
                 {/* Quick Contact Row */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     {/* Call */}
-                    <Card className="border shadow-md rounded-xl overflow-hidden bg-card/40">
+                    <Card className="border border-border/60 shadow-2xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-primary/10 rounded-xl text-primary shrink-0">
+                                <div className="p-2 bg-primary/10 border border-primary/20 rounded-lg text-primary shrink-0 shadow-2xs">
                                     <HugeiconsIcon icon={CallIcon} className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Call Support</p>
-                                    <p className="text-sm font-black truncate">{contactInfo.phone || 'Not Available'}</p>
+                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Call Support</p>
+                                    <p className="text-sm font-bold truncate">{contactInfo.phone || 'Not Available'}</p>
                                 </div>
                                 <Button 
                                     size="sm"
-                                    className="h-8 rounded-lg font-black text-[9px] px-4 shadow-md shadow-primary/10 active:scale-95 transition-all shrink-0"
+                                    className="h-8 rounded-lg font-bold text-xs px-3.5 shadow-2xs active:scale-95 transition-all shrink-0"
                                     asChild
                                     disabled={!contactInfo.phone}
                                 >
@@ -227,20 +227,20 @@ const PatientContactPage: React.FC = () => {
                     </Card>
 
                     {/* Email */}
-                    <Card className="border shadow-md rounded-xl overflow-hidden bg-card/40">
+                    <Card className="border border-border/60 shadow-2xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
                         <CardContent className="p-4">
                             <div className="flex items-center gap-3">
-                                <div className="p-2 bg-blue-500/10 rounded-xl text-blue-600 shrink-0">
+                                <div className="p-2 bg-blue-500/10 border border-blue-500/20 rounded-lg text-blue-600 dark:text-blue-400 shrink-0 shadow-2xs">
                                     <HugeiconsIcon icon={Mail01Icon} className="w-4 h-4" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <p className="text-[8px] font-black uppercase tracking-widest text-muted-foreground">Email Support</p>
-                                    <p className="text-sm font-black truncate">{contactInfo.email || 'Not Available'}</p>
+                                    <p className="text-[9px] font-bold uppercase tracking-wider text-muted-foreground">Email Support</p>
+                                    <p className="text-sm font-bold truncate">{contactInfo.email || 'Not Available'}</p>
                                 </div>
                                 <Button 
                                     size="sm"
                                     variant="outline"
-                                    className="h-8 rounded-lg font-black text-[9px] px-4 border hover:bg-blue-500 hover:text-white transition-all active:scale-95 shrink-0"
+                                    className="h-8 rounded-lg font-bold text-xs px-3.5 border border-border/70 bg-card/60 hover:bg-blue-500 hover:text-white transition-all active:scale-95 shrink-0 shadow-2xs"
                                     asChild
                                     disabled={!contactInfo.email}
                                 >
@@ -255,32 +255,32 @@ const PatientContactPage: React.FC = () => {
 
                 {/* WhatsApp Section */}
                 <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.1 }}>
-                    <Card className="border shadow-lg rounded-xl overflow-hidden">
-                        <CardHeader className="p-5 border-b bg-muted/5">
+                    <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
+                        <CardHeader className="p-5 border-b border-border/60 bg-muted/5">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="p-2 rounded-xl bg-emerald-500/10 text-emerald-600">
+                                    <div className="p-2 rounded-lg bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 shadow-2xs">
                                         <HugeiconsIcon icon={WhatsappIcon} className="w-4.5 h-4.5" />
                                     </div>
                                     <div>
-                                        <CardTitle className="text-base font-black tracking-tight">WhatsApp</CardTitle>
-                                        <CardDescription className="text-[10px] font-medium">Send a message directly.</CardDescription>
+                                        <CardTitle className="text-base font-bold tracking-tight">WhatsApp</CardTitle>
+                                        <CardDescription className="text-xs font-medium">Send a message directly.</CardDescription>
                                     </div>
                                 </div>
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20">
+                                <div className="flex items-center gap-1.5 px-2.5 py-0.5 bg-emerald-500/10 rounded-full border border-emerald-500/20 shadow-2xs">
                                     <div className="w-1.5 h-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                    <span className="text-[8px] font-black text-emerald-700 uppercase tracking-tighter">Online</span>
+                                    <span className="text-[9px] font-bold text-emerald-700 dark:text-emerald-400 uppercase tracking-tight">Online</span>
                                 </div>
                             </div>
                         </CardHeader>
                         <CardContent className="p-5 space-y-4">
                             {/* Identity Badge */}
                             <div className="flex flex-wrap gap-2">
-                                <div className="flex items-center gap-1.5 bg-muted/30 px-2.5 py-1 rounded-lg border text-[9px] font-black text-muted-foreground">
+                                <div className="flex items-center gap-1.5 bg-card/60 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-border/70 text-[10px] font-bold text-muted-foreground shadow-2xs">
                                     <HugeiconsIcon icon={LicenseIcon} className="w-3 h-3 text-primary" />
                                     {patientMeta.staff_id || 'N/A'}
                                 </div>
-                                <div className="flex items-center gap-1.5 bg-muted/30 px-2.5 py-1 rounded-lg border text-[9px] font-black text-muted-foreground">
+                                <div className="flex items-center gap-1.5 bg-card/60 backdrop-blur-xs px-2.5 py-1 rounded-lg border border-border/70 text-[10px] font-bold text-muted-foreground shadow-2xs">
                                     <HugeiconsIcon icon={Building02Icon} className="w-3 h-3 text-primary" />
                                     {patientMeta.department || 'N/A'} · {patientMeta.section || 'N/A'}
                                 </div>
@@ -289,16 +289,16 @@ const PatientContactPage: React.FC = () => {
                             {/* Message Area */}
                             <div className="space-y-1.5">
                                 <div className="flex items-center justify-between">
-                                    <label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Your Message</label>
-                                    <span className="text-[8px] font-bold text-muted-foreground/50">{message.length}/500</span>
+                                    <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Your Message</label>
+                                    <span className="text-[9px] font-medium text-muted-foreground/60">{message.length}/500</span>
                                 </div>
                                 <Textarea 
                                     placeholder="Describe your inquiry (e.g. I need help with my medical report...)"
-                                    className="min-h-[120px] text-sm font-semibold border rounded-xl p-4 focus-visible:ring-emerald-500 resize-none"
+                                    className="min-h-[120px] text-sm font-medium border border-input/80 bg-card/60 backdrop-blur-xs rounded-xl p-3.5 focus-visible:ring-emerald-500 resize-none shadow-2xs"
                                     value={message}
                                     onChange={(e) => setMessage(e.target.value.slice(0, 500))}
                                 />
-                                <p className="text-[9px] text-muted-foreground/60 font-medium">
+                                <p className="text-[10px] text-muted-foreground/70 font-medium">
                                     Your Staff ID and department will be appended automatically.
                                 </p>
                             </div>
@@ -306,14 +306,14 @@ const PatientContactPage: React.FC = () => {
                             {/* Actions */}
                             <div className="grid grid-cols-2 gap-2.5">
                                 <Button 
-                                    className="h-10 rounded-xl bg-emerald-600 hover:bg-emerald-700 font-black text-[10px] active:scale-95 transition-all"
+                                    className="h-10 rounded-lg bg-emerald-600 hover:bg-emerald-700 font-bold text-xs active:scale-95 transition-all shadow-xs text-white"
                                     onClick={handleWhatsAppSend}
                                 >
                                     <HugeiconsIcon icon={SentIcon} className="mr-1.5 h-3.5 w-3.5" /> Send Message
                                 </Button>
                                 <Button 
                                     variant="outline"
-                                    className="h-10 rounded-xl border font-black text-[10px] text-emerald-700 hover:bg-emerald-50 active:scale-95 transition-all"
+                                    className="h-10 rounded-lg border border-border/80 bg-card/60 backdrop-blur-xs font-bold text-xs text-emerald-700 dark:text-emerald-400 hover:bg-emerald-500/10 active:scale-95 transition-all shadow-2xs"
                                     onClick={handleDirectWhatsApp}
                                 >
                                     <HugeiconsIcon icon={ArrowUpRight01Icon} className="mr-1.5 h-3.5 w-3.5" /> Direct Chat

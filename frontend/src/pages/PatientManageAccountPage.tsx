@@ -130,63 +130,59 @@ const PatientManageAccountPage = () => {
 
   return (
     <PatientLayout>
-      <div className="space-y-5 animate-in fade-in duration-700 pb-20">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-5"
-        >
-          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-            <div>
-              <h1 className="text-xl sm:text-2xl font-black tracking-tight">Account Settings</h1>
-              <p className="text-[10px] md:text-xs text-muted-foreground font-medium mt-0.5">Manage your personal profile and security preferences.</p>
-            </div>
-            <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-xl border h-9 text-[10px]">
-              <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3 h-3" /> Dashboard
-            </Button>
+      <div className="max-w-4xl mx-auto space-y-6 pb-12 animate-in fade-in duration-700">
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+          <div className="space-y-0.5">
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">Account Settings</h1>
+            <p className="text-xs text-muted-foreground font-medium">Manage your personal credentials and communication preferences.</p>
           </div>
+          <Button variant="outline" onClick={() => navigate('/patient/dashboard')} className="gap-2 font-bold rounded-lg border border-border/70 bg-card/60 backdrop-blur-xs h-9 text-xs shadow-2xs">
+            <HugeiconsIcon icon={ArrowLeft01Icon} className="w-3.5 h-3.5" /> Dashboard
+          </Button>
+        </div>
 
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Left Column: Personal Info */}
+            {/* Left Column: Personal Info Form */}
             <div className="lg:col-span-2 space-y-6">
-              <Card className="border shadow-lg rounded-2xl overflow-hidden">
-                <CardHeader className="p-5 border-b bg-muted/5">
+              <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
+                <CardHeader className="p-5 border-b border-border/60 bg-muted/5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 rounded-xl bg-primary/10 text-primary">
-                       <HugeiconsIcon icon={UserIcon} className="w-4.5 h-4.5" />
+                    <div className="p-2 bg-primary/10 border border-primary/20 rounded-lg text-primary shadow-2xs">
+                      <HugeiconsIcon icon={UserIcon} className="w-4 h-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-base font-black tracking-tight">Personal Profile</CardTitle>
-                      <CardDescription className="text-[10px] font-medium">Contact information.</CardDescription>
+                      <CardTitle className="text-base font-bold tracking-tight">Profile Details</CardTitle>
+                      <CardDescription className="text-xs font-medium">Personal contact info.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
                 <form onSubmit={handleUpdateProfile}>
                   <CardContent className="p-5 space-y-5">
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                       <div className="space-y-1">
-                        <Label htmlFor="first_name" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">First Name</Label>
+                        <Label htmlFor="first_name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">First Name</Label>
                         <Input
                           id="first_name"
-                          className="h-9 rounded-xl border font-bold px-3 bg-muted/50 text-[13px]"
+                          className="h-9 rounded-lg border border-border/60 font-bold px-3 bg-muted/30 text-xs shadow-2xs"
                           value={formData.first_name}
                           readOnly
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="middle_name" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Middle Name</Label>
+                        <Label htmlFor="middle_name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Middle Name</Label>
                         <Input
                           id="middle_name"
-                          className="h-9 rounded-xl border font-bold px-3 bg-muted/50 text-[13px]"
+                          className="h-9 rounded-lg border border-border/60 font-bold px-3 bg-muted/30 text-xs shadow-2xs"
                           value={formData.middle_name}
                           readOnly
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="last_name" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Last Name</Label>
+                        <Label htmlFor="last_name" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Last Name</Label>
                         <Input
                           id="last_name"
-                          className="h-9 rounded-xl border font-bold px-3 bg-muted/50 text-[13px]"
+                          className="h-9 rounded-lg border border-border/60 font-bold px-3 bg-muted/30 text-xs shadow-2xs"
                           value={formData.last_name}
                           readOnly
                         />
@@ -195,12 +191,12 @@ const PatientManageAccountPage = () => {
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                       <div className="space-y-1">
-                        <Label htmlFor="email" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Email Address</Label>
+                        <Label htmlFor="email" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Email Address</Label>
                         <div className="relative group">
-                          <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={Mail01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
                           <Input
                             id="email"
-                            className="h-10 pl-9 rounded-xl border font-bold text-[13px] focus:ring-4 focus:ring-primary/5 transition-all"
+                            className="h-10 pl-9 rounded-lg border-input/80 bg-card/60 backdrop-blur-xs font-bold text-xs shadow-2xs focus:ring-4 focus:ring-primary/5 transition-all"
                             value={formData.email}
                             onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                             required
@@ -208,12 +204,12 @@ const PatientManageAccountPage = () => {
                         </div>
                       </div>
                       <div className="space-y-1">
-                        <Label htmlFor="phone" className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">Phone Number</Label>
+                        <Label htmlFor="phone" className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Phone Number</Label>
                         <div className="relative group">
-                          <HugeiconsIcon icon={CallIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/40 group-focus-within:text-primary transition-colors" />
+                          <HugeiconsIcon icon={CallIcon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground/50 group-focus-within:text-primary transition-colors" />
                           <Input
                             id="phone"
-                            className="h-10 pl-9 rounded-xl border font-bold text-[13px] focus:ring-4 focus:ring-primary/5 transition-all"
+                            className="h-10 pl-9 rounded-lg border-input/80 bg-card/60 backdrop-blur-xs font-bold text-xs shadow-2xs focus:ring-4 focus:ring-primary/5 transition-all"
                             value={formData.phone}
                             onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                             required
@@ -222,80 +218,80 @@ const PatientManageAccountPage = () => {
                       </div>
                     </div>
 
-                    <div className="pt-5 border-t border-dashed space-y-4">
-                      <p className="text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 mb-1">
-                        <HugeiconsIcon icon={FingerPrintIcon} className="w-3.5 h-3.5 text-primary opacity-60" />
+                    <div className="pt-5 border-t border-border/50 space-y-3.5">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-2 mb-1">
+                        <HugeiconsIcon icon={FingerPrintIcon} className="w-3.5 h-3.5 text-primary opacity-80" />
                         Verified Clinical Identity
                       </p>
                       <div className="grid grid-cols-2 md:grid-cols-4 gap-2.5">
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={LicenseIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Staff ID</p>
-                              <p className="text-[11px] font-medium truncate">{formData.staff_id}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Staff ID</p>
+                              <p className="text-xs font-bold truncate">{formData.staff_id}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={Calendar03Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Birth</p>
-                              <p className="text-[11px] font-medium truncate">{formData.dob}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Birth</p>
+                              <p className="text-xs font-bold truncate">{formData.dob}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={Shield01Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Profile</p>
-                              <p className="text-[11px] font-medium truncate">{formData.age}y / {formData.gender}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Profile</p>
+                              <p className="text-xs font-bold truncate">{formData.age}y / {formData.gender}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={Building02Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Dept</p>
-                              <p className="text-[11px] font-medium truncate">{formData.department}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Dept</p>
+                              <p className="text-xs font-bold truncate">{formData.department}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={CompassIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Section</p>
-                              <p className="text-[11px] font-medium truncate">{formData.section}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Section</p>
+                              <p className="text-xs font-bold truncate">{formData.section}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={Flag02Icon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Race</p>
-                              <p className="text-[11px] font-medium truncate">{formData.race}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Race</p>
+                              <p className="text-xs font-bold truncate">{formData.race}</p>
                            </div>
                         </div>
-                        <div className="flex items-center gap-2.5 bg-muted/20 p-2.5 rounded-xl border border-border/50 md:col-span-2">
-                           <div className="p-1.5 rounded-lg bg-background text-primary shrink-0 shadow-sm">
+                        <div className="flex items-center gap-2.5 bg-card/50 backdrop-blur-xs p-2.5 rounded-xl border border-border/60 shadow-2xs md:col-span-2">
+                           <div className="p-1.5 rounded-lg bg-primary/10 border border-primary/20 text-primary shrink-0 shadow-2xs">
                               <HugeiconsIcon icon={GlobeIcon} className="w-3.5 h-3.5" />
                            </div>
                            <div className="min-w-0">
-                              <p className="text-[8px] uppercase font-black text-muted-foreground tracking-widest leading-none mb-1">Nationality</p>
-                              <p className="text-[11px] font-medium truncate">{formData.nationality}</p>
+                              <p className="text-[8px] uppercase font-bold text-muted-foreground tracking-wider leading-none mb-1">Nationality</p>
+                              <p className="text-xs font-bold truncate">{formData.nationality}</p>
                            </div>
                         </div>
                       </div>
                     </div>
                   </CardContent>
                   <CardFooter className="p-5 pt-0 bg-muted/5 flex justify-end">
-                    <Button type="submit" loading={saving} className="h-10 px-6 rounded-xl font-black text-[11px] shadow-lg shadow-primary/10 active:scale-95 transition-all">
+                    <Button type="submit" loading={saving} className="h-10 px-6 rounded-lg font-bold text-xs shadow-xs active:scale-95 transition-all">
                       {!saving && <><HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-3.5 w-3.5" /> Save Changes</>}
                     </Button>
                   </CardFooter>
@@ -305,15 +301,15 @@ const PatientManageAccountPage = () => {
 
             {/* Right Column: Security */}
             <div className="space-y-6">
-              <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/10">
-                <CardHeader className="p-5 border-b bg-primary/[0.03]">
+              <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md">
+                <CardHeader className="p-5 border-b border-border/60 bg-muted/5">
                   <div className="flex items-center gap-3">
-                    <div className="p-2 bg-primary/10 rounded-xl text-primary">
+                    <div className="p-2 bg-primary/10 border border-primary/20 rounded-lg text-primary shadow-2xs">
                       <HugeiconsIcon icon={Shield01Icon} className="w-4 h-4" />
                     </div>
                     <div>
-                      <CardTitle className="text-base font-black tracking-tight">Security</CardTitle>
-                      <CardDescription className="text-[10px] font-medium">Data protection.</CardDescription>
+                      <CardTitle className="text-base font-bold tracking-tight">Security</CardTitle>
+                      <CardDescription className="text-xs font-medium">Data protection.</CardDescription>
                     </div>
                   </div>
                 </CardHeader>
@@ -321,37 +317,37 @@ const PatientManageAccountPage = () => {
                   <div className="space-y-2.5">
                      <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                          <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center text-primary">
+                          <div className="w-7 h-7 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xs">
                             <HugeiconsIcon icon={LockIcon} className="w-3.5 h-3.5" />
                           </div>
-                          <span className="font-black text-[10px] uppercase tracking-wider">Two-Factor Auth</span>
+                          <span className="font-bold text-xs uppercase tracking-wider">Two-Factor Auth</span>
                         </div>
-                        <div className={`px-1.5 py-0.5 rounded text-[7px] font-black uppercase tracking-widest ${user.is_2fa_enabled ? 'bg-primary text-white shadow-sm' : 'bg-muted text-muted-foreground'}`}>
+                        <div className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase tracking-wider ${user.is_2fa_enabled ? 'bg-primary text-primary-foreground shadow-2xs' : 'bg-muted text-muted-foreground'}`}>
                           {user.is_2fa_enabled ? 'ON' : 'OFF'}
                         </div>
                      </div>
-                     <p className="text-[10px] font-medium text-muted-foreground leading-relaxed">
+                     <p className="text-xs font-medium text-muted-foreground leading-relaxed">
                        Add an extra layer of clinical data protection.
                      </p>
                      <Button 
-                      className={`w-full h-9 rounded-xl font-black shadow-md transition-all active:scale-95 text-[10px] ${user.is_2fa_enabled ? 'bg-primary hover:bg-primary0 shadow-primary/10' : 'shadow-primary/10'}`}
+                      className={`w-full h-9 rounded-lg font-bold shadow-2xs transition-all active:scale-95 text-xs ${user.is_2fa_enabled ? 'bg-primary hover:bg-primary/90' : ''}`}
                       onClick={() => navigate('/patient/account/2fa')}
                      >
                       {user.is_2fa_enabled ? "Manage 2FA" : "Enable Shield"}
                      </Button>
                   </div>
 
-                  <div className="pt-3.5 border-t border-dashed space-y-2.5">
+                  <div className="pt-3.5 border-t border-border/50 space-y-2.5">
                      <Button 
                         variant="outline" 
-                        className="w-full justify-start gap-3 h-10 rounded-xl border font-bold px-3 group transition-all hover:bg-primary/5 text-[10px]" 
+                        className="w-full justify-start gap-3 h-10 rounded-lg border border-border/70 bg-card/60 font-bold px-3 group transition-all hover:border-primary/40 text-xs shadow-2xs" 
                         onClick={() => {
                           setShowResetModal(true);
                           setResetStep(1);
                         }}
                       >
-                        <div className="p-1 rounded-lg bg-muted group-hover:bg-primary/10 transition-colors">
-                          <HugeiconsIcon icon={LockKeyIcon} className="w-3 h-3 text-muted-foreground group-hover:text-primary" />
+                        <div className="p-1 rounded-md bg-muted/60 group-hover:bg-primary/10 transition-colors">
+                          <HugeiconsIcon icon={LockKeyIcon} className="w-3.5 h-3.5 text-muted-foreground group-hover:text-primary" />
                         </div>
                         <span>Reset Passcode</span>
                      </Button>
@@ -361,84 +357,86 @@ const PatientManageAccountPage = () => {
 
               {/* Password Reset Modal */}
               <Dialog open={showResetModal} onOpenChange={setShowResetModal}>
-                <DialogContent className="sm:max-w-[400px] rounded-2xl border shadow-2xl p-0 overflow-hidden gap-0">
+                <DialogContent className="sm:max-w-[400px] rounded-2xl border border-border/70 bg-card/95 backdrop-blur-xl shadow-2xl p-0 overflow-hidden gap-0">
                   <div className="p-6 space-y-4">
                     <DialogHeader className="space-y-3 items-center text-center">
-                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-sm">
+                      <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary shadow-2xs border border-primary/20">
                         <HugeiconsIcon icon={LockKeyIcon} className="w-6 h-6" />
                       </div>
                       <div className="space-y-1">
-                        <DialogTitle className="text-xl font-black tracking-tight">Security Reset</DialogTitle>
-                        <DialogDescription className="text-[11px] font-medium leading-relaxed">
+                        <DialogTitle className="text-xl font-bold tracking-tight">Security Reset</DialogTitle>
+                        <DialogDescription className="text-xs font-medium leading-relaxed">
                           {resetStep === 1 
-                            ? "We'll send a 6-digit verification code to your email." 
-                            : "Verify the code sent to your email and set a new password."}
+                            ? "We will send an OTP code to your registered email to verify identity."
+                            : "Enter the code and specify your new clinical passcode."
+                          }
                         </DialogDescription>
                       </div>
                     </DialogHeader>
 
-                    <div className="space-y-4">
+                    <div className="space-y-3.5 pt-2">
                       {resetStep === 1 ? (
-                        <div className="bg-muted/30 p-4 rounded-xl border border-dashed text-center space-y-1">
-                           <span className="text-[8px] font-black text-muted-foreground uppercase tracking-widest opacity-60">Target Email</span>
-                           <p className="text-sm font-black truncate">{formData.email}</p>
+                        <div className="space-y-1">
+                          <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Registered Email</Label>
+                          <Input 
+                            value={formData.email} 
+                            disabled 
+                            className="h-10 rounded-lg border-border/60 bg-muted/30 font-bold text-xs shadow-2xs" 
+                          />
                         </div>
                       ) : (
-                        <div className="space-y-4">
-                          <div className="space-y-1.5">
-                            <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">6-Digit Code</Label>
+                        <div className="space-y-3">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">OTP Code (from Email)</Label>
                             <Input 
-                              className="h-12 rounded-xl border text-center text-xl font-black tracking-[0.3em] focus:ring-4 focus:ring-primary/5"
-                              maxLength={6}
+                              placeholder="6-digit code" 
                               value={resetOtp}
                               onChange={(e) => setResetOtp(e.target.value)}
-                              placeholder="000000"
+                              className="h-10 text-center font-bold tracking-widest text-sm rounded-lg border-input/80 bg-card/60 shadow-2xs"
+                              maxLength={6}
                             />
                           </div>
-                          <div className="space-y-1.5">
-                            <div className="flex justify-between items-center mb-0.5">
-                              <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">New Passcode</Label>
-                              <PasswordStrength password={newPassword} />
-                            </div>
-                            <div className="relative group">
+
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">New Passcode</Label>
+                            <div className="relative">
                               <Input 
                                 type={showPassword ? "text" : "password"}
-                                className="h-11 rounded-xl border font-bold px-4 pr-10 text-sm"
+                                placeholder="••••••••" 
                                 value={newPassword}
                                 onChange={(e) => setNewPassword(e.target.value)}
-                                placeholder="••••••••"
+                                className="h-10 rounded-lg border-input/80 bg-card/60 shadow-2xs font-bold text-xs pr-10"
                               />
-                              <button 
-                                type="button" 
+                              <button
+                                type="button"
                                 onClick={() => setShowPassword(!showPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
                               >
-                                {showPassword ? <HugeiconsIcon icon={ViewOffIcon} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
+                                <HugeiconsIcon icon={showPassword ? ViewOffIcon : EyeIcon} className="w-4 h-4" />
                               </button>
                             </div>
+                            <PasswordStrength password={newPassword} />
                           </div>
 
-                          <div className="space-y-1.5">
-                            <div className="flex justify-between items-center mb-0.5">
-                              <Label className="text-[9px] font-black uppercase tracking-widest text-muted-foreground ml-0.5">Confirm Passcode</Label>
-                              <PasswordMatchIndicator password={newPassword} confirmPassword={confirmPassword} />
-                            </div>
-                            <div className="relative group">
+                          <div className="space-y-1">
+                            <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Confirm Passcode</Label>
+                            <div className="relative">
                               <Input 
                                 type={showConfirmPassword ? "text" : "password"}
-                                className="h-11 rounded-xl border font-bold px-4 pr-10 text-sm"
+                                placeholder="••••••••" 
                                 value={confirmPassword}
                                 onChange={(e) => setConfirmPassword(e.target.value)}
-                                placeholder="••••••••"
+                                className="h-10 rounded-lg border-input/80 bg-card/60 shadow-2xs font-bold text-xs pr-10"
                               />
                               <button 
                                 type="button" 
                                 onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-primary transition-colors focus:outline-none"
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground/60 hover:text-foreground"
                               >
                                 {showConfirmPassword ? <HugeiconsIcon icon={ViewOffIcon} className="w-4 h-4" /> : <HugeiconsIcon icon={EyeIcon} className="w-4 h-4" />}
                               </button>
                             </div>
+                            <PasswordMatchIndicator password={newPassword} confirmPassword={confirmPassword} />
                           </div>
                         </div>
                       )}
@@ -447,7 +445,7 @@ const PatientManageAccountPage = () => {
                     <div className="pt-2">
                       {resetStep === 1 ? (
                         <Button 
-                          className="h-12 w-full rounded-xl font-black text-xs shadow-xl shadow-primary/20 transition-all active:scale-95"
+                          className="h-11 w-full rounded-lg font-bold text-xs shadow-xs transition-all active:scale-95 bg-primary"
                           onClick={async () => {
                             setResetLoading(true);
                             try {
@@ -467,7 +465,7 @@ const PatientManageAccountPage = () => {
                         </Button>
                       ) : (
                         <Button 
-                          className="h-12 w-full rounded-xl font-black text-xs shadow-xl shadow-primary/20 transition-all active:scale-95"
+                          className="h-11 w-full rounded-lg font-bold text-xs shadow-xs transition-all active:scale-95 bg-primary"
                           onClick={async () => {
                             const isStrong = (pw: string) => {
                                 return pw.length >= 8 && 
@@ -512,13 +510,13 @@ const PatientManageAccountPage = () => {
                 </DialogContent>
               </Dialog>
 
-              <div className="p-5 bg-primary/5 rounded-2xl border border-primary/10 flex flex-col items-center text-center space-y-3">
-                 <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center text-primary shadow-sm border border-primary/20">
-                    <HugeiconsIcon icon={Shield01Icon} className="w-6 h-6" />
+              <div className="p-5 bg-primary/[0.04] rounded-xl border border-primary/15 flex flex-col items-center text-center space-y-3 backdrop-blur-xs shadow-2xs">
+                 <div className="w-11 h-11 rounded-lg bg-primary/10 flex items-center justify-center text-primary shadow-2xs border border-primary/20">
+                    <HugeiconsIcon icon={Shield01Icon} className="w-5 h-5" />
                  </div>
                  <div className="space-y-1">
-                    <h4 className="font-black text-sm uppercase tracking-tight">Privacy Guard</h4>
-                    <p className="text-[10px] font-medium text-muted-foreground/60 leading-relaxed px-4">
+                    <h4 className="font-bold text-xs uppercase tracking-wider text-primary">Privacy Guard</h4>
+                    <p className="text-xs font-medium text-muted-foreground leading-relaxed px-4">
                       Your medical records are encrypted and only accessible by authorized clinical staff and you.
                     </p>
                  </div>

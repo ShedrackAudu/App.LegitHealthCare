@@ -56,23 +56,26 @@
   --color-card: hsl(var(--card));
   --color-card-foreground: hsl(var(--card-foreground));
 
-  /* Border radius */
+  /* Border radius (20% reduced: base is 0.5rem / 8px) */
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --radius-xl: calc(var(--radius) + 3px);
+  --radius-2xl: calc(var(--radius) + 6px);
 
   /* Animations */
   --animate-accordion-down: accordion-down 0.2s ease-out;
   --animate-accordion-up: accordion-up 0.2s ease-out;
 
-  /* Disable all default system-wide shadows */
-  --shadow: none;
-  --shadow-sm: none;
-  --shadow-md: none;
-  --shadow-lg: none;
-  --shadow-xl: none;
-  --shadow-2xl: none;
-  --shadow-inner: none;
+  /* Subtle, fainted layered shadows */
+  --shadow-2xs: 0 1px 2px 0 rgb(0 0 0 / 0.02);
+  --shadow-xs: 0 1px 3px 0 rgb(0 0 0 / 0.025), 0 1px 2px -1px rgb(0 0 0 / 0.025);
+  --shadow-sm: 0 2px 4px 0 rgb(0 0 0 / 0.03), 0 1px 2px -1px rgb(0 0 0 / 0.02);
+  --shadow: 0 3px 6px -1px rgb(0 0 0 / 0.035), 0 1px 3px -1px rgb(0 0 0 / 0.025);
+  --shadow-md: 0 5px 12px -2px rgb(0 0 0 / 0.04), 0 2px 5px -2px rgb(0 0 0 / 0.03);
+  --shadow-lg: 0 8px 18px -4px rgb(0 0 0 / 0.05), 0 3px 6px -3px rgb(0 0 0 / 0.03);
+  --shadow-xl: 0 12px 24px -5px rgb(0 0 0 / 0.06), 0 4px 8px -4px rgb(0 0 0 / 0.04);
+  --shadow-2xl: 0 16px 36px -8px rgb(0 0 0 / 0.1);
 }
 
 @layer base {
@@ -106,18 +109,18 @@
     --input: 214.3 31.8% 91.4%;
     --ring: 173 80% 40%;
 
-    --radius: 0px;
+    --radius: 0.5rem;
   }
 
   .dark {
     color-scheme: dark;
-    --background: 0 0% 0%;
+    --background: 220 20% 6%;
     --foreground: 210 40% 98%;
 
-    --card: 0 0% 0%;
+    --card: 220 20% 8%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 0 0% 0%;
+    --popover: 220 20% 8%;
     --popover-foreground: 210 40% 98%;
 
     --primary: 173 80% 40%;
@@ -135,9 +138,10 @@
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
+    --border: 217.2 32.6% 15%;
+    --input: 217.2 32.6% 15%;
     --ring: 173 80% 40%;
+    --radius: 0.5rem;
   }
 
   * {
@@ -171,6 +175,11 @@
 
   button {
     white-space: nowrap;
+    transition: transform 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  button:active:not(:disabled) {
+    transform: scale(0.985);
   }
 
 
@@ -718,41 +727,62 @@
   --tw-animate-duration: 1000ms;
 }
 
-/* Remove all border-radius system wide (including their modals/dropdowns/portals) */
-*,
-::before,
-::after {
-  border-radius: 0px !important;
+/* Glassmorphism System Utilities */
+.glass-panel {
+  background: hsl(var(--card) / 0.65);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid hsl(var(--border) / 0.6);
 }
 
-/* Force 100% black solid backgrounds system-wide in dark mode */
-.dark,
-.dark body,
-.dark #root,
-.dark header,
-.dark nav,
-.dark main,
-.dark footer,
-.dark dialog,
-.dark [class*="bg-background"],
-.dark [class*="bg-card"],
-.dark [class*="bg-popover"],
-.dark [class*="bg-zinc-950"],
-.dark [class*="bg-slate-950"],
-.dark [class*="bg-neutral-950"],
-.dark [class*="bg-gray-950"] {
-  background-color: #000000 !important;
-  background: #000000 !important;
-  backdrop-filter: none !important;
-  --tw-backdrop-blur: none !important;
+.glass-card {
+  background: hsl(var(--card) / 0.6);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  border: 1px solid hsl(var(--border) / 0.6);
+  box-shadow: 0 2px 6px 0 rgb(0 0 0 / 0.02);
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.dark [class*="bg-background/"],
-.dark [class*="bg-card/"],
-.dark [class*="bg-popover/"] {
-  background-color: #000000 !important;
-  background: #000000 !important;
-  backdrop-filter: none !important;
+.glass-card:hover {
+  background: hsl(var(--card) / 0.85);
+  border-color: hsl(var(--primary) / 0.35);
+  box-shadow: 0 4px 14px -3px rgb(0 0 0 / 0.04), 0 0 0 1px hsl(var(--primary) / 0.1);
+}
+
+.dark .glass-card {
+  background: hsl(var(--card) / 0.45);
+  border-color: hsl(var(--border) / 0.5);
+  box-shadow: 0 2px 10px -2px rgb(0 0 0 / 0.2);
+}
+
+.dark .glass-card:hover {
+  background: hsl(var(--card) / 0.7);
+  border-color: hsl(var(--primary) / 0.4);
+  box-shadow: 0 6px 18px -4px rgb(0 0 0 / 0.3), 0 0 0 1px hsl(var(--primary) / 0.2);
+}
+
+.glass-header {
+  background: hsl(var(--background) / 0.8);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid hsl(var(--border) / 0.6);
+}
+
+.glass-dropdown {
+  background: hsl(var(--popover) / 0.88);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid hsl(var(--border) / 0.7);
+  box-shadow: 0 8px 20px -4px rgb(0 0 0 / 0.08);
+}
+
+.glass-modal {
+  background: hsl(var(--card) / 0.92);
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  border: 1px solid hsl(var(--border) / 0.7);
+  box-shadow: 0 16px 36px -8px rgb(0 0 0 / 0.15);
 }
 
 /* Force react-hot-toast containers/toasts flush to screen edge and remove margin */

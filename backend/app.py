@@ -199,11 +199,17 @@ def init_db():
                 conn.commit()
 
         # Create tables in default database
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            app.logger.warning(f"Default db create_all notice: {e}")
         # Create tables in all other binds
         for bind_name in app.config.get('SQLALCHEMY_BINDS', {}):
-            engine = db.engines[bind_name]
-            db.metadata.create_all(bind=engine)
+            try:
+                engine = db.engines[bind_name]
+                db.metadata.create_all(bind=engine, checkfirst=True)
+            except Exception as e:
+                app.logger.warning(f"Bind {bind_name} create_all notice: {e}")
 
         # Dynamic migrations: alter columns to TEXT for assessment_hx_pe in postgresql
         for engine_key, engine_instance in ([('default', db.engine)] + list(db.engines.items())):
@@ -325,6 +331,35 @@ def get_ticker_config():
         "icon": icon_config.value if icon_config else "info",
         "enabled": (enabled_config.value.lower() == 'true') if enabled_config else False
     }), 200
+
+@app.route('/api/config/maintenance', methods=['GET'])
+def get_maintenance_config():
+    try:
+        from models import SystemConfig
+        enabled_cfg = SystemConfig.query.get('maintenance_mode_enabled')
+        title_cfg = SystemConfig.query.get('maintenance_title')
+        msg_cfg = SystemConfig.query.get('maintenance_message')
+        eta_cfg = SystemConfig.query.get('maintenance_eta')
+        
+        is_enabled = (enabled_cfg.value.lower() == 'true') if (enabled_cfg and enabled_cfg.value) else False
+        title = title_cfg.value if (title_cfg and title_cfg.value) else "Scheduled System Maintenance"
+        message = msg_cfg.value if (msg_cfg and msg_cfg.value) else "We are currently performing routine upgrades and performance enhancements. Services will resume shortly."
+        eta = eta_cfg.value if (eta_cfg and eta_cfg.value) else ""
+        
+        return jsonify({
+            "enabled": is_enabled,
+            "title": title,
+            "message": message,
+            "eta": eta
+        }), 200
+    except Exception as e:
+        app.logger.warning(f"Error fetching maintenance config: {e}")
+        return jsonify({
+            "enabled": False,
+            "title": "Scheduled System Maintenance",
+            "message": "We are currently performing routine upgrades and performance enhancements. Services will resume shortly.",
+            "eta": ""
+        }), 200
 
 
 @app.route('/signup', methods=['POST'])
