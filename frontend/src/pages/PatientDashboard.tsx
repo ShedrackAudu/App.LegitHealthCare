@@ -11,9 +11,13 @@ import {
   Shield01Icon,
   Note01Icon,
   Calendar03Icon,
-  AlertCircleIcon
+  AlertCircleIcon,
+  Attachment01Icon,
+  Comment01Icon,
+  ArrowRight01Icon,
+  Link01Icon
 } from '@hugeicons/core-free-icons';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { useAppContext } from '@/context/AppContext';
@@ -21,6 +25,37 @@ import { useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
+
+const patientQuickLinks = [
+  { 
+    title: 'Medical Report', 
+    description: 'View screening results & lab findings.',
+    icon: Note01Icon, 
+    path: '/patient/records',
+    color: 'bg-primary/10 text-primary border-primary/20'
+  },
+  { 
+    title: 'Technical Files', 
+    description: 'Access PDFs & technical attachments.',
+    icon: Attachment01Icon, 
+    path: '/patient/files',
+    color: 'bg-blue-500/10 text-blue-500 border-blue-500/20'
+  },
+  { 
+    title: 'Appointments', 
+    description: 'Schedule & manage clinic visits.',
+    icon: Calendar03Icon, 
+    path: '/patient/appointments',
+    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20'
+  },
+  { 
+    title: 'Contact Us', 
+    description: 'Get support or submit medical inquiries.',
+    icon: Comment01Icon, 
+    path: '/patient/contact',
+    color: 'bg-purple-500/10 text-purple-500 border-purple-500/20'
+  },
+];
 
 const PatientDashboard = () => {
   const { user } = useAppContext();
@@ -463,6 +498,42 @@ const PatientDashboard = () => {
             </Card>
           </motion.div>
         </motion.div>
+
+        {/* Quick Links Section - Matched to Staff Portal */}
+        <div className="space-y-4 pt-2">
+          <div className="flex items-center gap-2">
+            <h2 className="text-xl font-bold tracking-tight">Quick Links</h2>
+            <div className="h-px flex-1 bg-border" />
+          </div>
+          
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {patientQuickLinks.map((action) => (
+              <Card 
+                key={action.path}
+                className="group cursor-pointer transition-all duration-300 border hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm flex flex-col h-full"
+                onClick={() => navigate(action.path)}
+              >
+                <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color}`}>
+                    <HugeiconsIcon icon={action.icon} className="w-4.5 h-4.5" />
+                  </div>
+                  <div className="min-w-0">
+                    <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
+                    <CardDescription className="text-[10px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
+                      {action.description}
+                    </CardDescription>
+                  </div>
+                </CardHeader>
+                <CardContent className="p-3.5 pt-0 mt-auto">
+                  <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
+                    <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
+                    <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        </div>
       </div>
     </PatientLayout>
   );

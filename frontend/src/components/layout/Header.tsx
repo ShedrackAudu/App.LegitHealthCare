@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { HugeiconsIcon } from '@hugeicons/react';
 import {
   Sun01Icon,
-  Moon01Icon,
+  Moon02Icon,
   Logout02Icon,
   UserIcon,
   Notification01Icon,
@@ -11,7 +11,8 @@ import {
   Building02Icon,
   Clock01Icon,
   Settings02Icon,
-  AccountSetting01Icon
+  AccountSetting01Icon,
+  WhatsappIcon
 } from '@hugeicons/core-free-icons';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -36,7 +37,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 import { SafeImage } from '@/components/common/SafeImage';
 
 const getPageTitle = (pathname: string, branding: any, brandingError: boolean) => {
@@ -81,6 +82,15 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
     socket
   } = useAppContext();
   const { theme, setTheme, resolvedTheme } = useTheme();
+  const handleSupportClick = () => {
+    if (!branding?.whatsapp) {
+      toast.error("Support WhatsApp number is not configured.");
+      return;
+    }
+    const cleanNumber = branding.whatsapp.replace(/\D/g, '');
+    const url = `https://wa.me/${cleanNumber}?text=${encodeURIComponent("Hello! I need support with the Legit HealthCare Staff Portal.")}`;
+    window.open(url, '_blank');
+  };
   const navigate = useNavigate();
   const location = useLocation();
   const pageTitle = manualTitle || getPageTitle(location.pathname, branding, brandingError);
@@ -284,7 +294,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
           </div>
 
           {/* Mobile Logo Mark */}
-          <div className="flex sm:hidden items-center gap-2 min-w-0">
+          <Link to="/" className="flex sm:hidden items-center gap-2 min-w-0 hover:opacity-80 transition-opacity">
             {branding?.logo_light ? (
               <SafeImage 
                 src={`${(window as any).API_BASE_URL}${branding.logo_light}`} 
@@ -298,7 +308,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                 <span className="truncate max-w-[120px]">{branding?.clinic_name || 'LEGIT HC'}</span>
               </div>
             )}
-          </div>
+          </Link>
         </div>
 
         {/* Right Side: Options and Auth */}
@@ -361,6 +371,19 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
             )}
             <Button
               variant="outline"
+              className="h-7 w-7 sm:h-9 sm:w-9 sm:hover:w-28 border-2 rounded-lg bg-card transition-all duration-300 flex items-center justify-center sm:justify-start overflow-hidden px-0 group shrink-0"
+              onClick={handleSupportClick}
+              title="IT Support"
+            >
+              <div className="flex items-center gap-1.5 px-2">
+                <HugeiconsIcon icon={WhatsappIcon} className="h-3.5 w-3.5 sm:h-4 sm:w-4 text-emerald-500 shrink-0" />
+                <span className="hidden sm:inline-block max-w-0 group-hover:max-w-xs opacity-0 group-hover:opacity-100 transition-all duration-300 overflow-hidden font-bold text-xs text-emerald-600 dark:text-emerald-400 whitespace-nowrap">
+                  IT Support
+                </span>
+              </div>
+            </Button>
+            <Button
+              variant="outline"
               size="icon"
               className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card"
               onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
@@ -371,7 +394,7 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                   ? "-rotate-90 scale-0 opacity-0" 
                   : "rotate-0 scale-100 opacity-100"
               }`} />
-              <HugeiconsIcon icon={Moon01Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+              <HugeiconsIcon icon={Moon02Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
                 resolvedTheme === "dark" 
                   ? "rotate-0 scale-100 opacity-100" 
                   : "rotate-90 scale-0 opacity-0"

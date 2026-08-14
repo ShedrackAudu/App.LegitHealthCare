@@ -12,8 +12,8 @@ from datetime import datetime, timedelta
 import json
 from dotenv import load_dotenv
 
-from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies
-from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog
+from flask_jwt_extended import create_access_token, get_jwt_identity, jwt_required, set_access_cookies, unset_jwt_cookies, get_jwt
+from models import db, StaffUser, PatientPortalUser, BioData, ScreeningYearBioData, User, bcrypt, AuditLog, TokenBlocklist
 from extensions import mail, jwt, limiter, socketio
 from auth_utils import generate_otp, send_otp_email, is_password_strong
 from utils.ip import get_client_ip
@@ -108,6 +108,16 @@ def invalid_token_response(callback):
 @jwt.expired_token_loader
 def expired_token_response(jwt_header, jwt_payload):
     return jsonify({"error": "Session Expired: Please log in again to continue."}), 401
+
+@jwt.token_in_blocklist_loader
+def check_if_token_revoked(jwt_header, jwt_payload):
+    jti = jwt_payload["jti"]
+    token = TokenBlocklist.query.filter_by(jti=jti).scalar()
+    return token is not None
+
+@jwt.revoked_token_loader
+def revoked_token_response(jwt_header, jwt_payload):
+    return jsonify({"error": "Session Terminated: This session has been logged out."}), 401
 
 from flask_limiter import RateLimitExceeded
 @app.errorhandler(RateLimitExceeded)
@@ -819,6 +829,19 @@ def logout():
         if user:
             user.last_seen_at = datetime.now() - timedelta(days=1)
             db.session.commit()
+    
+    # Save the token to blocklist if it exists in the current request
+    try:
+        jwt_payload = get_jwt()
+        if jwt_payload and "jti" in jwt_payload:
+            jti = jwt_payload["jti"]
+            # Avoid duplicate inserts
+            if not TokenBlocklist.query.filter_by(jti=jti).first():
+                db.session.add(TokenBlocklist(jti=jti))
+                db.session.commit()
+    except Exception:
+        pass
+
     response = jsonify({"message": "Logout complete"})
     unset_jwt_cookies(response)
     return response, 200

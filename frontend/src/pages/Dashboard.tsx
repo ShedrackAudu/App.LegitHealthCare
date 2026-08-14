@@ -450,14 +450,14 @@ const Dashboard: React.FC = () => {
       <div className="space-y-8 animate-in fade-in duration-700 dashboard-page">
         {/* Welcome Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-3xl font-bold tracking-tight">Welcome, {user.first_name}!</h1>
-            <p className="text-muted-foreground mt-1">
+          <div className="flex flex-col space-y-0.5 sm:space-y-1">
+            <h1 className="text-xl sm:text-3xl font-bold tracking-tight leading-tight">Welcome back, {user.first_name}!</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
               Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
             </p>
-            <p className="text-xs text-muted-foreground/80 mt-2">
+            <div className="text-[11px] sm:text-xs text-muted-foreground/80 pt-0.5">
               <LiveClock />
-            </p>
+            </div>
           </div>
           <div className="flex items-center gap-3 bg-card border rounded-xl p-2 md:p-3 md:px-5 w-full md:w-auto justify-start md:justify-end">
              <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${

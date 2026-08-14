@@ -32,7 +32,7 @@ class RoutingSession(Session):
                     'report_verifications', 'chat_messages', 
                     'chat_groups', 'chat_group_members', 'user_contacts', 'notifications',
                     'inventory_categories', 'inventory_suppliers', 'inventory_items', 'inventory_transactions',
-                    'report_parameters'
+                    'report_parameters', 'token_blocklist'
                 ]:
                     return _db.engine
                 
@@ -1105,6 +1105,13 @@ class AuditLog(db.Model):
             "latitude": self.latitude,
             "longitude": self.longitude
         }
+
+
+class TokenBlocklist(db.Model):
+    __tablename__ = 'token_blocklist'
+    id = db.Column(db.Integer, primary_key=True)
+    jti = db.Column(db.String(36), nullable=False, unique=True, index=True)
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.now)
 
 
 class AccessRequest(db.Model):
