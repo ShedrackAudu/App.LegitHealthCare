@@ -6,7 +6,7 @@ from app import app
 from models import db, BioData, ScreeningYearBioData, KFTResult, LipidResult, ConsultationData, AISettings, User
 
 def test_bulk_ai_remarks_kft_success(client, setup_user):
-    token = create_access_token(identity=str(setup_user.id))
+    token = create_access_token(identity=str(setup_user.id), additional_claims={'portal': 'staff'})
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'
@@ -115,7 +115,7 @@ def test_bulk_ai_remarks_kft_success(client, setup_user):
             assert updated_kft.kft_remark == 'Normal kidney function.'
 
 def test_bulk_ai_remarks_lipid_success(client, setup_user):
-    token = create_access_token(identity=str(setup_user.id))
+    token = create_access_token(identity=str(setup_user.id), additional_claims={'portal': 'staff'})
     headers = {
         'Authorization': f'Bearer {token}',
         'Content-Type': 'application/json'

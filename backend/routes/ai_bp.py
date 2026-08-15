@@ -107,7 +107,8 @@ def test_connection():
             return jsonify({"error": "No OpenAI API Key found. Please enter your API Key in the field above."}), 400
             
         api_key = raw_key.strip()
-        client = OpenAI(api_key=api_key, timeout=20.0, max_retries=2)
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=20.0, max_retries=2)
         
         params = {
             "model": model_name,
@@ -169,7 +170,8 @@ def generate_overview():
         if not api_key or not api_key.strip():
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key.strip(), timeout=35.0, max_retries=2)
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key.strip(), base_url=base_url, timeout=35.0, max_retries=2)
         
         # 1. Fetch Patient Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
@@ -376,7 +378,8 @@ def generate_lab_remark():
         if not api_key or not api_key.strip():
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key.strip(), timeout=35.0, max_retries=2)
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key.strip(), base_url=base_url, timeout=35.0, max_retries=2)
         
         # Fetch Patient & Lab Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
