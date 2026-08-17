@@ -11,13 +11,30 @@ ai_bp = Blueprint('ai', __name__)
 
 import re
 
-def mask_api_key(key):
+def is_masked_key(key):
     if not key or not isinstance(key, str):
+        return False
+    k = key.strip()
+    return '...' in k or '*' in k
+
+def mask_api_key(key):
+    if not key or not isinstance(key, str) or is_masked_key(key):
         return ""
     key = key.strip()
     if len(key) <= 8:
         return "********"
     return f"{key[:6]}...{key[-4:]}"
+
+def get_effective_openai_api_key(provided_key=None):
+    if provided_key and not is_masked_key(provided_key) and provided_key.strip():
+        return provided_key.strip()
+    env_key = os.getenv('OPENAI_API_KEY')
+    if env_key and not is_masked_key(env_key) and env_key.strip():
+        return env_key.strip()
+    settings = AISettings.query.first()
+    if settings and settings.api_key and not is_masked_key(settings.api_key) and settings.api_key.strip():
+        return settings.api_key.strip()
+    return None
 
 def sanitize_ai_input(text):
     if not text or not isinstance(text, str):
@@ -43,14 +60,14 @@ def get_settings():
         db.session.add(settings)
         db.session.commit()
     
-    stored_key = settings.api_key or os.getenv('OPENAI_API_KEY') or ""
+    effective_key = get_effective_openai_api_key()
     return jsonify({
         'id': settings.id,
         'medical_parameters': json.loads(settings.medical_parameters) if settings.medical_parameters else [],
         'system_prompt': settings.system_prompt,
         'response_format': settings.response_format,
-        'api_key': mask_api_key(stored_key),
-        'is_key_configured': bool(stored_key),
+        'api_key': mask_api_key(effective_key or ""),
+        'is_key_configured': bool(effective_key),
         'model_selection': settings.model_selection,
         'sample_comments': json.loads(settings.sample_comments) if settings.sample_comments else [],
         'prompt_fbc': settings.prompt_fbc,
@@ -103,7 +120,7 @@ def update_settings():
         settings.prompt_kft = data.get('prompt_kft', settings.prompt_kft)
         
         new_api_key = data.get('api_key')
-        if new_api_key and '*' not in new_api_key and new_api_key.strip():
+        if new_api_key and not is_masked_key(new_api_key) and new_api_key.strip():
             clean_key = new_api_key.strip()
             settings.api_key = clean_key
             # Persist to .env as per user request
@@ -129,14 +146,12 @@ def test_connection():
         settings = AISettings.query.first()
         
         raw_key = data.get('api_key')
-        if not raw_key or '*' in raw_key or not raw_key.strip():
-            raw_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        api_key = get_effective_openai_api_key(raw_key)
         model_name = data.get('model_selection') or (settings.model_selection if settings else "gpt-4o-mini") or "gpt-4o-mini"
         
-        if not raw_key or not raw_key.strip():
+        if not api_key:
             return jsonify({"error": "No OpenAI API Key found. Please enter your API Key in the field above."}), 400
             
-        api_key = raw_key.strip()
         base_url = os.getenv('OPENAI_BASE_URL') or None
         client = OpenAI(api_key=api_key, base_url=base_url, timeout=20.0, max_retries=2)
         
@@ -194,10 +209,9 @@ def generate_overview():
             return jsonify({"error": "Staff ID and Screening Year are required"}), 400
             
         settings = AISettings.query.first()
-        # Prioritize key from environment variable as per user request
-        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        api_key = get_effective_openai_api_key()
         
-        if not api_key or not api_key.strip():
+        if not api_key:
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
         base_url = os.getenv('OPENAI_BASE_URL') or None
@@ -406,13 +420,13 @@ def generate_lab_remark():
             return jsonify({"error": "Staff ID and Screening Year are required"}), 400
             
         settings = AISettings.query.first()
-        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        api_key = get_effective_openai_api_key()
         
-        if not api_key or not api_key.strip():
+        if not api_key:
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
         base_url = os.getenv('OPENAI_BASE_URL') or None
-        client = OpenAI(api_key=api_key.strip(), base_url=base_url, timeout=35.0, max_retries=2)
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=35.0, max_retries=2)
         
         # Fetch Patient & Lab Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
