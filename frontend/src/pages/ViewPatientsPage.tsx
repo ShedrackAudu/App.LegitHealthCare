@@ -167,36 +167,67 @@ const ViewPatientsPage: React.FC = () => {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
-                        <div className="flex-1 min-w-[280px]">
-                            <PatientSearch
-                                activeSection={activeSection}
-                                onSearch={(q) => {
-                                    setSearchQuery(q);
-                                    fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
-                                }}
-                                onSelect={(p) => {
-                                    setSearchQuery(p.staff_id);
-                                    fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
-                                }}
-                                searching={loading}
-                                themeColor="emerald"
-                                placeholder="Search Staff ID or Name..."
-                                initialValue={searchQuery}
-                            />
-                        </div>
-                        <Button
-                            variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
-                        >
-                            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
-                            <span>Filters</span>
-                            {activeFiltersCount > 0 && (
-                                <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
-                                    {activeFiltersCount}
-                                </Badge>
-                            )}
-                        </Button>
+                        {searchQuery && searchQuery.trim() !== '' ? (
+                            <>
+                                <Button
+                                    variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="h-11 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                                >
+                                    <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                                    <span>Filters</span>
+                                    {activeFiltersCount > 0 && (
+                                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                            {activeFiltersCount}
+                                        </Badge>
+                                    )}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setSearchQuery('');
+                                        fetchPatients('', 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                    }}
+                                    className="gap-2 border-2 border-primary/25 hover:border-primary hover:bg-primary/5 rounded-xl font-bold h-11 px-5 transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                                >
+                                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 text-primary" />
+                                    <span>Back to Search</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex-1 min-w-[280px]">
+                                    <PatientSearch
+                                        activeSection={activeSection}
+                                        onSearch={(q) => {
+                                            setSearchQuery(q);
+                                            fetchPatients(q, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                        }}
+                                        onSelect={(p) => {
+                                            setSearchQuery(p.staff_id);
+                                            fetchPatients(p.staff_id, 1, perPage, { gender: genderFilter, dept: deptFilter, nation: nationFilter, minA: minAge, maxA: maxAge });
+                                        }}
+                                        searching={loading}
+                                        themeColor="emerald"
+                                        placeholder="Search Staff ID or Name..."
+                                        initialValue={searchQuery}
+                                    />
+                                </div>
+                                <Button
+                                    variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                                >
+                                    <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                                    <span>Filters</span>
+                                    {activeFiltersCount > 0 && (
+                                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                            {activeFiltersCount}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 

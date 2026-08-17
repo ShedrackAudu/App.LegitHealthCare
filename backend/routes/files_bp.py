@@ -17,10 +17,20 @@ def _cors_headers(response):
     return response
 
 ALLOWED_EXTENSIONS = {'pdf', 'jpg', 'jpeg', 'png'}
+ALLOWED_MIMETYPES = {'application/pdf', 'image/jpeg', 'image/png', 'image/pjpeg', 'image/x-png'}
 
-def allowed_file(filename):
-    return '.' in filename and \
-           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+def allowed_file(file_obj):
+    if not file_obj or not file_obj.filename:
+        return False
+    filename = file_obj.filename
+    if '.' not in filename:
+        return False
+    ext = filename.rsplit('.', 1)[1].lower()
+    if ext not in ALLOWED_EXTENSIONS:
+        return False
+    if file_obj.mimetype and file_obj.mimetype.lower() not in ALLOWED_MIMETYPES:
+        return False
+    return True
 
 @files_bp.route('/upload', methods=['POST'])
 @require_permission(['lab_spirometry', 'lab_audiometry', 'lab_ecg', 'consultation', 'view_records'])
@@ -39,7 +49,7 @@ def upload_file():
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
-    if file and allowed_file(file.filename):
+    if file and allowed_file(file):
         filename = secure_filename(file.filename)
         # Create storage path
         upload_folder = os.path.join(current_app.root_path, 'static', 'uploads', 'patient_files', str(staff_id), str(year))

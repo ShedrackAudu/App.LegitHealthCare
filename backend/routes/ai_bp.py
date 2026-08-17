@@ -9,6 +9,31 @@ import os
 
 ai_bp = Blueprint('ai', __name__)
 
+import re
+
+def mask_api_key(key):
+    if not key or not isinstance(key, str):
+        return ""
+    key = key.strip()
+    if len(key) <= 8:
+        return "********"
+    return f"{key[:6]}...{key[-4:]}"
+
+def sanitize_ai_input(text):
+    if not text or not isinstance(text, str):
+        return text if text is not None else ""
+    patterns = [
+        r"(?i)ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|directions)",
+        r"(?i)system\s+override",
+        r"(?i)disregard\s+(all\s+)?(previous|prior|above)",
+        r"(?i)you\s+are\s+now\s+a",
+        r"(?i)new\s+system\s+prompt"
+    ]
+    sanitized = text
+    for pattern in patterns:
+        sanitized = re.sub(pattern, "[sanitized_directive]", sanitized)
+    return sanitized
+
 @ai_bp.route('/settings', methods=['GET'])
 @require_permission('manage_ai')
 def get_settings():
@@ -18,12 +43,14 @@ def get_settings():
         db.session.add(settings)
         db.session.commit()
     
+    stored_key = settings.api_key or os.getenv('OPENAI_API_KEY') or ""
     return jsonify({
         'id': settings.id,
         'medical_parameters': json.loads(settings.medical_parameters) if settings.medical_parameters else [],
         'system_prompt': settings.system_prompt,
         'response_format': settings.response_format,
-        'api_key': settings.api_key or "",
+        'api_key': mask_api_key(stored_key),
+        'is_key_configured': bool(stored_key),
         'model_selection': settings.model_selection,
         'sample_comments': json.loads(settings.sample_comments) if settings.sample_comments else [],
         'prompt_fbc': settings.prompt_fbc,
@@ -76,12 +103,13 @@ def update_settings():
         settings.prompt_kft = data.get('prompt_kft', settings.prompt_kft)
         
         new_api_key = data.get('api_key')
-        if new_api_key:
-            settings.api_key = new_api_key
+        if new_api_key and '*' not in new_api_key and new_api_key.strip():
+            clean_key = new_api_key.strip()
+            settings.api_key = clean_key
             # Persist to .env as per user request
-            update_env_file('OPENAI_API_KEY', new_api_key)
+            update_env_file('OPENAI_API_KEY', clean_key)
             # Update current env for immediate use if needed (though os.getenv might need reload)
-            os.environ['OPENAI_API_KEY'] = new_api_key
+            os.environ['OPENAI_API_KEY'] = clean_key
             
         settings.model_selection = data.get('model_selection', settings.model_selection)
         settings.sample_comments = json.dumps(data.get('sample_comments', []))
@@ -100,7 +128,9 @@ def test_connection():
         data = request.json or {}
         settings = AISettings.query.first()
         
-        raw_key = data.get('api_key') or os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        raw_key = data.get('api_key')
+        if not raw_key or '*' in raw_key or not raw_key.strip():
+            raw_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
         model_name = data.get('model_selection') or (settings.model_selection if settings else "gpt-4o-mini") or "gpt-4o-mini"
         
         if not raw_key or not raw_key.strip():
@@ -181,11 +211,14 @@ def generate_overview():
             return jsonify({"error": "Patient data not found for given criteria."}), 404
             
         def getval(field_name, db_obj):
+            val = None
             if data and field_name in data:
-                return data[field_name]
-            if db_obj and hasattr(db_obj, field_name):
-                return getattr(db_obj, field_name)
-            return None
+                val = data[field_name]
+            elif db_obj and hasattr(db_obj, field_name):
+                val = getattr(db_obj, field_name)
+            if isinstance(val, str):
+                return sanitize_ai_input(val)
+            return val
 
         # 2. Build AI Prompt Context
         context_parts = []
@@ -259,7 +292,7 @@ def generate_overview():
             lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             lp_rem = getval("lp_remark", lp)
             if lp_rem or lp:
-                context_parts.append(f"--- Lipid Profile Results ---")
+                context_parts.append(f"--- Lipid Profile ---")
                 context_parts.append(f"Remark: {lp_rem or 'N/A'}")
  
         if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry", "Weight", "Height"]):
