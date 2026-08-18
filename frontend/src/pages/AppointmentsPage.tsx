@@ -466,7 +466,7 @@ const AppointmentsPage = () => {
 
                         <div className="flex items-center gap-2 w-full lg:w-auto">
                             <div className="relative flex-1 lg:w-64">
-                                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
                                 <Input 
                                     placeholder="Search by name or ID..."
                                     className="pl-9 h-12 rounded-2xl border-2 focus:ring-primary/10 font-bold"

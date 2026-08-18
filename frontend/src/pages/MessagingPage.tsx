@@ -580,7 +580,7 @@ export default function MessagingPage() {
             </div>
           </div>
           <div className="relative">
-            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
             <Input 
               placeholder="Search users..." 
               className="pl-9 bg-card border-none ring-1 ring-border focus-visible:ring-primary/50"
@@ -1214,7 +1214,7 @@ export default function MessagingPage() {
               </div>
             )}
             <div className="relative">
-              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
               <Input 
                 placeholder="Search staff members..." 
                 className="pl-9 h-11"
@@ -1409,7 +1409,7 @@ export default function MessagingPage() {
             ) : (
               <div className="space-y-4 animate-in slide-in-from-right-4">
                 <div className="relative">
-                  <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
                   <Input 
                     placeholder="Search people to add..." 
                     className="pl-9 h-11 font-bold"

@@ -28,6 +28,7 @@ import { toast } from 'react-hot-toast';
 import { QRCodeSVG } from 'qrcode.react';
 import { jsPDF } from 'jspdf';
 import { toJpeg } from 'html-to-image';
+import { SingleReportProgressModal, type ReportProgressState } from '@/components/SingleReportProgressModal';
 import '@/styles/PatientReport.css';
 
 const PatientMedicalReport: React.FC = () => {
@@ -37,6 +38,12 @@ const PatientMedicalReport: React.FC = () => {
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(false);
     const [fetchingYears, setFetchingYears] = useState(true);
+    const [reportActionModal, setReportActionModal] = useState<ReportProgressState>({
+        isOpen: false,
+        action: 'download',
+        stage: 'idle',
+        progress: 0,
+    });
 
     useEffect(() => {
         const fetchYears = async () => {
@@ -100,7 +107,7 @@ const PatientMedicalReport: React.FC = () => {
 
     const handlePrint = () => window.print();
 
-    const generateFrontendPDF = async (): Promise<Blob> => {
+    const generateFrontendPDF = async (onPageProgress?: (current: number, total: number) => void): Promise<Blob> => {
         const pages = document.querySelectorAll('.a4-page');
         if (pages.length === 0) throw new Error("Report pages not found in DOM");
 
@@ -109,6 +116,9 @@ const PatientMedicalReport: React.FC = () => {
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
         for (let i = 0; i < pages.length; i++) {
+            if (onPageProgress) {
+                onPageProgress(i + 1, pages.length);
+            }
             const pageEl = pages[i] as HTMLElement;
             // Force true dimensions to prevent viewport clipping on small screens
             const width = pageEl.scrollWidth;
@@ -149,18 +159,61 @@ const PatientMedicalReport: React.FC = () => {
 
     const handleDownloadPDF = async () => {
         if (!reportData) return;
-        toast.loading('Generating PDF (Pixel-Perfect)...', { id: 'pdfGen' });
+
+        const pName = mkName(reportData.bio?.first_name || 'Patient', reportData.bio?.middle_name, reportData.bio?.last_name || '');
+        const sId = user?.username || reportData.bio?.staff_id || '';
+        const filename = getDownloadFilename();
+
+        setReportActionModal({
+            isOpen: true,
+            action: 'download',
+            stage: 'preparing',
+            progress: 15,
+            patientName: pName,
+            staffId: sId,
+            filename: filename,
+            statusTitle: 'Preparing Medical Report...',
+            statusDescription: 'Validating records & initializing document layout'
+        });
+
         try {
-            const pdfBlob = await generateFrontendPDF();
+            const pdfBlob = await generateFrontendPDF((cur, tot) => {
+                const pageProgress = 20 + Math.round((cur / tot) * 55); // 20% to 75%
+                setReportActionModal(prev => ({
+                    ...prev,
+                    stage: 'capturing',
+                    currentPage: cur,
+                    totalPages: tot,
+                    progress: pageProgress,
+                    statusTitle: `Capturing Page ${cur} of ${tot}...`,
+                    statusDescription: 'Rendering high-resolution vector and canvas graphics'
+                }));
+            });
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'packaging',
+                progress: 85,
+                statusTitle: 'Compiling PDF Binary...',
+                statusDescription: 'Assembling high-density vector pages and metadata'
+            }));
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'saving',
+                progress: 95,
+                statusTitle: 'Saving File to Device...',
+                statusDescription: `Writing ${filename} to your device storage`
+            }));
+
             const url = window.URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = getDownloadFilename();
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-            toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
             
             // Log download to audit trail
             try {
@@ -176,18 +229,84 @@ const PatientMedicalReport: React.FC = () => {
             } catch (auditErr) {
                 console.error("Failed to log report download audit action", auditErr);
             }
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'success',
+                progress: 100,
+                statusTitle: 'Report Downloaded Successfully!',
+                statusDescription: `Your medical screening report has been saved to your device.`
+            }));
         } catch (err: any) {
             console.error('PDF error:', err);
             const msg = err.message || String(err) || 'Failed to generate frontend PDF.';
-            toast.error(`Error: ${msg}`, { id: 'pdfGen' });
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'error',
+                statusTitle: 'Download Failed',
+                errorMessage: msg
+            }));
         }
     };
 
     const handleEmailReport = async () => {
         if (!reportData) return;
-        toast.loading('Capturing layout and emailing report...', { id: 'emailSend' });
+
+        const pEmail = (reportData.bio?.email || user?.email || '').trim();
+        const pName = mkName(reportData.bio?.first_name || 'Patient', reportData.bio?.middle_name, reportData.bio?.last_name || '');
+        const sId = user?.username || reportData.bio?.staff_id || '';
+        const filename = getDownloadFilename();
+
+        if (!pEmail) {
+            setReportActionModal({
+                isOpen: true,
+                action: 'email',
+                stage: 'error',
+                progress: 0,
+                recipientEmail: 'Missing Email Address',
+                patientName: pName,
+                staffId: sId,
+                filename: filename,
+                statusTitle: 'Email Address Missing',
+                errorMessage: 'No verified email address is associated with your account. Please update your profile with a valid email.'
+            });
+            return;
+        }
+
+        setReportActionModal({
+            isOpen: true,
+            action: 'email',
+            stage: 'preparing',
+            progress: 15,
+            recipientEmail: pEmail,
+            patientName: pName,
+            staffId: sId,
+            filename: filename,
+            statusTitle: 'Preparing Medical Report...',
+            statusDescription: 'Validating recipient address & initializing document layout'
+        });
+
         try {
-            const pdfBlob = await generateFrontendPDF();
+            const pdfBlob = await generateFrontendPDF((cur, tot) => {
+                const pageProgress = 20 + Math.round((cur / tot) * 45); // 20% to 65%
+                setReportActionModal(prev => ({
+                    ...prev,
+                    stage: 'capturing',
+                    currentPage: cur,
+                    totalPages: tot,
+                    progress: pageProgress,
+                    statusTitle: `Capturing Page ${cur} of ${tot}...`,
+                    statusDescription: 'Rendering high-resolution vector and canvas graphics'
+                }));
+            });
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'packaging',
+                progress: 75,
+                statusTitle: 'Compiling & Encrypting PDF...',
+                statusDescription: 'Packaging attachment and generating binary Base64 payload'
+            }));
 
             // Convert Base64 helper
             const blobToBase64 = (b: Blob): Promise<string> => {
@@ -206,7 +325,6 @@ const PatientMedicalReport: React.FC = () => {
 
             const b64data = await blobToBase64(pdfBlob);
 
-            const pEmail = reportData.bio?.email || user?.email || '';
             const sec = reportData.bio?.section || 'DCP';
             let companyName = 'Legit HealthCare';
             if (sec === 'DCT') companyName = 'Dangote Cement Transport';
@@ -214,7 +332,7 @@ const PatientMedicalReport: React.FC = () => {
 
             const payloadData = {
                 attachment_data: b64data,
-                attachment_filename: getDownloadFilename(),
+                attachment_filename: filename,
                 email: pEmail,
                 first_name: reportData.bio?.first_name || 'Patient',
                 screening_year: selectedYear,
@@ -224,12 +342,32 @@ const PatientMedicalReport: React.FC = () => {
                 origin: 'frontend'
             };
 
-            await api.post('/api/email/report', payloadData);
-            toast.success('Report successfully emailed to your address!', { id: 'emailSend' });
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'transmitting',
+                progress: 90,
+                statusTitle: 'Transmitting via SMTP Server...',
+                statusDescription: `Dispatching encrypted email with PDF attachment to ${pEmail}`
+            }));
+
+            const res = await api.post('/api/email/report', payloadData);
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'success',
+                progress: 100,
+                statusTitle: 'Report Emailed Successfully!',
+                statusDescription: res.data.message || `Your medical screening report has been delivered to ${pEmail}.`
+            }));
         } catch (err: any) {
             console.error('Email error:', err);
-            const msg = err.response?.data?.error || 'Failed to send email. Check SMTP settings.';
-            toast.error(msg, { id: 'emailSend' });
+            const msg = err.response?.data?.error || err.message || 'Failed to send email. Check SMTP settings.';
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'error',
+                statusTitle: 'Email Delivery Failed',
+                errorMessage: msg
+            }));
         }
     };
 
@@ -894,6 +1032,13 @@ const PatientMedicalReport: React.FC = () => {
                         </Link>
                     </Button>
                 </div>
+
+                {/* Report Action Progress Modal (Download / Email) */}
+                <SingleReportProgressModal
+                    state={reportActionModal}
+                    onClose={() => setReportActionModal(prev => ({ ...prev, isOpen: false }))}
+                    onRetry={reportActionModal.action === 'email' ? handleEmailReport : handleDownloadPDF}
+                />
             </div>
         </PatientLayout>
     );

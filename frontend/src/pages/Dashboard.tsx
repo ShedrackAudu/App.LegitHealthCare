@@ -50,6 +50,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Removed Loader2 lucide-react import
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { getTimeGreeting } from '@/lib/timeUtils';
 
 const quickActions = [
   { 
@@ -495,7 +496,7 @@ const Dashboard: React.FC = () => {
 
               <div>
                 <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight">
-                  Welcome back, {user.first_name}!
+                  {getTimeGreeting()}, {user.first_name}!
                 </h1>
                 <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground font-medium mt-0.5">
                   Overview of patient flow, pending clinical assessments, and operations.

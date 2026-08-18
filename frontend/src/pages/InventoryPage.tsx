@@ -784,7 +784,7 @@ const InventoryPage: React.FC = () => {
           <TabsContent value="items" className="space-y-4">
             <div className="flex flex-col sm:flex-row gap-4 items-stretch sm:items-center justify-between w-full">
               <div className="relative flex-1 md:w-96">
-                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground z-10 pointer-events-none" />
                 <Input 
                   placeholder="Search by name or SKU..." 
                   className="pl-9 h-10"

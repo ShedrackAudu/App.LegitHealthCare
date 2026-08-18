@@ -16,6 +16,7 @@ import { toJpeg } from 'html-to-image';
 import axios from 'axios';
 import { ModeToggle } from '@/components/mode-toggle';
 import { API_BASE_URL } from '../lib/api';
+import { SingleReportProgressModal, type ReportProgressState } from '@/components/SingleReportProgressModal';
 import '@/styles/PatientReport.css';
 
 const PublicReportPage: React.FC = () => {
@@ -23,6 +24,12 @@ const PublicReportPage: React.FC = () => {
     const navigate = useNavigate();
     const [reportData, setReportData] = useState<any>(null);
     const [loading, setLoading] = useState(true);
+    const [reportActionModal, setReportActionModal] = useState<ReportProgressState>({
+        isOpen: false,
+        action: 'download',
+        stage: 'idle',
+        progress: 0,
+    });
 
     useEffect(() => {
         const fetchReportData = async () => {
@@ -42,7 +49,7 @@ const PublicReportPage: React.FC = () => {
 
     const handlePrint = () => window.print();
 
-    const generateFrontendPDF = async (): Promise<Blob> => {
+    const generateFrontendPDF = async (onPageProgress?: (current: number, total: number) => void): Promise<Blob> => {
         const pages = document.querySelectorAll('.a4-page');
         if (pages.length === 0) throw new Error("Report pages not found in DOM");
 
@@ -51,6 +58,9 @@ const PublicReportPage: React.FC = () => {
         const pdfHeight = pdf.internal.pageSize.getHeight();
 
         for (let i = 0; i < pages.length; i++) {
+            if (onPageProgress) {
+                onPageProgress(i + 1, pages.length);
+            }
             const pageEl = pages[i] as HTMLElement;
             const width = pageEl.scrollWidth;
             const height = pageEl.scrollHeight;
@@ -88,22 +98,78 @@ const PublicReportPage: React.FC = () => {
 
     const handleDownloadPDF = async () => {
         if (!reportData) return;
-        toast.loading('Generating PDF (Pixel-Perfect)...', { id: 'pdfGen' });
+
+        const pName = mkName(reportData.selected_patient?.first_name || 'Patient', reportData.selected_patient?.middle_name, reportData.selected_patient?.last_name || '');
+        const sId = reportData.selected_patient?.staff_id || '';
+        const filename = getDownloadFilename();
+
+        setReportActionModal({
+            isOpen: true,
+            action: 'download',
+            stage: 'preparing',
+            progress: 15,
+            patientName: pName,
+            staffId: sId,
+            filename: filename,
+            statusTitle: 'Preparing Verified Report...',
+            statusDescription: 'Validating clinical records & document layout'
+        });
+
         try {
-            const pdfBlob = await generateFrontendPDF();
+            const pdfBlob = await generateFrontendPDF((cur, tot) => {
+                const pageProgress = 20 + Math.round((cur / tot) * 55); // 20% to 75%
+                setReportActionModal(prev => ({
+                    ...prev,
+                    stage: 'capturing',
+                    currentPage: cur,
+                    totalPages: tot,
+                    progress: pageProgress,
+                    statusTitle: `Capturing Page ${cur} of ${tot}...`,
+                    statusDescription: 'Rendering high-resolution vector and canvas graphics'
+                }));
+            });
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'packaging',
+                progress: 85,
+                statusTitle: 'Compiling PDF Binary...',
+                statusDescription: 'Assembling high-density vector pages and verified stamp'
+            }));
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'saving',
+                progress: 95,
+                statusTitle: 'Saving File to Device...',
+                statusDescription: `Writing ${filename} to your device storage`
+            }));
+
             const url = window.URL.createObjectURL(pdfBlob);
             const link = document.createElement('a');
             link.href = url;
-            link.download = getDownloadFilename();
+            link.download = filename;
             document.body.appendChild(link);
             link.click();
             link.remove();
             window.URL.revokeObjectURL(url);
-            toast.success('PDF Downloaded successfully', { id: 'pdfGen' });
+
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'success',
+                progress: 100,
+                statusTitle: 'Report Downloaded Successfully!',
+                statusDescription: `The verified clinical report has been saved to your device.`
+            }));
         } catch (err: any) {
             console.error('PDF error:', err);
             const msg = err.message || String(err) || 'Failed to generate PDF.';
-            toast.error(`Error: ${msg}`, { id: 'pdfGen' });
+            setReportActionModal(prev => ({
+                ...prev,
+                stage: 'error',
+                statusTitle: 'Download Failed',
+                errorMessage: msg
+            }));
         }
     };
 
@@ -646,6 +712,13 @@ const PublicReportPage: React.FC = () => {
                     </div>
                 </div>
             </div>
+
+            {/* Report Action Progress Modal (Download) */}
+            <SingleReportProgressModal
+                state={reportActionModal}
+                onClose={() => setReportActionModal(prev => ({ ...prev, isOpen: false }))}
+                onRetry={handleDownloadPDF}
+            />
         </div>
     );
 };

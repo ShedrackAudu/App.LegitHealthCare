@@ -44,3 +44,21 @@ export const generateAppointmentSlots = () => {
 
     return slots;
 };
+
+/**
+ * Returns a time-of-day greeting:
+ * - 00:00 - 11:59: "Good Morning"
+ * - 12:00 - 16:59: "Good Afternoon"
+ * - 17:00 - 23:59: "Good Evening"
+ */
+export const getTimeGreeting = (date: Date = new Date()): string => {
+    const hours = date.getHours();
+    if (hours < 12) {
+        return 'Good Morning';
+    } else if (hours < 17) {
+        return 'Good Afternoon';
+    } else {
+        return 'Good Evening';
+    }
+};
+

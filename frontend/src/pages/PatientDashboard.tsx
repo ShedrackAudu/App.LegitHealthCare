@@ -25,6 +25,7 @@ import { useNavigate } from 'react-router-dom';
 import { PatientLayout } from '@/components/layout/PatientLayout';
 import api from '@/lib/api';
 import { toast } from 'react-hot-toast';
+import { getTimeGreeting } from '@/lib/timeUtils';
 
 const patientQuickLinks = [
   { 
@@ -306,7 +307,7 @@ const PatientDashboard = () => {
 
               <div>
                 <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight">
-                  Welcome back, {profile?.first_name || user?.first_name}!
+                  {getTimeGreeting()}, {profile?.first_name || user?.first_name}!
                 </h1>
                 <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground font-medium mt-0.5">
                   Access your screening reports, schedule clinical visits, and track your wellness progress.
