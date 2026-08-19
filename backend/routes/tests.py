@@ -27,13 +27,14 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 from openai import OpenAI
                 import os
                 
+                settings = AISettings.query.first()
                 from routes.ai_bp import get_effective_openai_api_key
                 api_key = get_effective_openai_api_key()
                 if not api_key:
                     print("FBC AI Remark Error: OpenAI API Key is not configured.")
                     return
                     
-                base_url = os.getenv('OPENAI_BASE_URL') or None
+                base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
                 client = OpenAI(api_key=api_key, base_url=base_url)
                 
                 # Fetch patient gender
@@ -104,13 +105,14 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                 from openai import OpenAI
                 import os
                 
+                settings = AISettings.query.first()
                 from routes.ai_bp import get_effective_openai_api_key
                 api_key = get_effective_openai_api_key()
                 if not api_key:
                     print("Lipid AI Remark Error: OpenAI API Key is not configured.")
                     return
                     
-                base_url = os.getenv('OPENAI_BASE_URL') or None
+                base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
                 client = OpenAI(api_key=api_key, base_url=base_url)
                 
                 # Fetch patient gender
@@ -987,7 +989,7 @@ def bulk_ai_remarks(test_type):
                             'LFTResult': LFTResult
                         }
                         bg_model_class = bg_model_map[model_class_name]
-                        base_url = os.getenv('OPENAI_BASE_URL') or None
+                        base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
                         bg_client = BGOpenAI(api_key=api_key, base_url=base_url)
 
                         def call_openai_and_save(item):

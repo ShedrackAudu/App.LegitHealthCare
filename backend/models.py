@@ -200,30 +200,31 @@ class PatientPortalUser(db.Model):
     def check_password(self, password):
         return bcrypt.check_password_hash(self.password_hash, password)
 
-    def to_dict(self):
-        # Dynamically find the section (DCP/DCT) by checking both clinical databases
+    def to_dict(self, include_bio=False):
+        # Dynamically find the section (DCP/DCT) by checking clinical databases only when explicitly requested
         section = None
         first_name = self.first_name
         last_name = self.last_name
-        from flask import current_app
-        from sqlalchemy import text
         
-        for bind_key in ['dcp', 'dct']:
-            try:
-                engine = db.engines.get(bind_key)
-                if not engine: continue
-                sql = text("SELECT first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
-                with engine.connect() as conn:
-                    result = conn.execute(sql, {"sid": self.username}).fetchone()
-                    if result:
-                        section = bind_key.upper()
-                        if result[0]:
-                            first_name = result[0]
-                        if result[1]:
-                            last_name = result[1]
-                        break
-            except:
-                continue
+        if include_bio:
+            from flask import current_app
+            from sqlalchemy import text
+            for bind_key in ['dcp', 'dct']:
+                try:
+                    engine = db.engines.get(bind_key)
+                    if not engine: continue
+                    sql = text("SELECT first_name, last_name FROM bio_data WHERE LOWER(staff_id) = LOWER(:sid)")
+                    with engine.connect() as conn:
+                        result = conn.execute(sql, {"sid": self.username}).fetchone()
+                        if result:
+                            section = bind_key.upper()
+                            if result[0]:
+                                first_name = result[0]
+                            if result[1]:
+                                last_name = result[1]
+                            break
+                except:
+                    continue
 
         return {
             "id": self.id,
