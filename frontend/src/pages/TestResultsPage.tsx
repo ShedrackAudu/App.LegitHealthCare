@@ -315,12 +315,26 @@ const TestResultsPage: React.FC = () => {
         }
     };
 
-    const selectPatient = (p: any) => {
+    const selectPatient = async (p: any) => {
         setIsSelecting(true);
         setPatient(p);
         setSearchId(''); // Clear the search field
         setSearchResults([]);
-        toast.success(`Loaded ${p.first_name}'s record`);
+        
+        const targetStaffId = p?.staff_id;
+        if (targetStaffId) {
+            try {
+                const response = await axios.get(`/patient/${targetStaffId}?year=${activeYear}&strict=true&search_type=general`, {
+                    headers: { 'X-Company-Context': activeSection }
+                });
+                if (response.data) {
+                    setPatient(response.data);
+                }
+            } catch (err) {
+                console.error("Failed to load full patient profile:", err);
+            }
+        }
+        toast.success(`Loaded ${p.first_name || 'patient'}'s record`);
     };
 
     const handleSearch = async () => {

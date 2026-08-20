@@ -46,6 +46,20 @@ def upload_file():
     if not all([staff_id, year, department]):
         return jsonify({"error": "Missing metadata (staff_id, year, department)"}), 400
 
+    # Enforce 1 file limit for Spirometry, Audiometry, and ECG
+    dept_clean = department.strip()
+    if dept_clean.lower() in ['spirometry', 'audiometry', 'ecg']:
+        from sqlalchemy import func
+        existing_file = PatientFile.query.filter(
+            PatientFile.staff_id == staff_id,
+            PatientFile.screening_year == int(year),
+            func.lower(PatientFile.department) == dept_clean.lower()
+        ).first()
+        if existing_file:
+            return jsonify({
+                "error": "Only 1 file attachment is allowed per patient. Please delete the existing attachment before uploading a new one"
+            }), 400
+
     if file.filename == '':
         return jsonify({"error": "No selected file"}), 400
 
