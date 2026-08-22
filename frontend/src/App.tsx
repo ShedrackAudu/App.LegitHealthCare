@@ -301,7 +301,7 @@ const MaintenanceWrapper: React.FC<{ children: React.ReactNode }> = ({ children 
 function RootApp() {
   console.log("App.tsx: Full Render (as RootApp)...");
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AppProvider>
         <Router>
           <AppUpdateNotifier />

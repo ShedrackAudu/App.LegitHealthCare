@@ -199,7 +199,6 @@ const SystemConfigPage: React.FC = () => {
     const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
     const [bulkReportDownloadEnabled, setBulkReportDownloadEnabled] = useState(true);
     const [bulkReportEmailEnabled, setBulkReportEmailEnabled] = useState(true);
-    const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
         title: '',
@@ -301,9 +300,6 @@ const SystemConfigPage: React.FC = () => {
             }
             if (response.data.bulk_report_email_enabled !== undefined) {
                 setBulkReportEmailEnabled(response.data.bulk_report_email_enabled === 'true');
-            }
-            if (response.data.default_theme !== undefined) {
-                setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
             }
             if (response.data.ticker_message !== undefined) {
                 setTickerMessage(response.data.ticker_message);
@@ -654,27 +650,6 @@ const SystemConfigPage: React.FC = () => {
             toast.success(`Bulk report emailing has been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
             toast.error("Failed to update Bulk report emailing setting.");
-        } finally {
-            setMaintenanceSaving(false);
-        }
-    };
-
-    const handleSaveDefaultTheme = async (themeValue: 'light' | 'dark') => {
-        setMaintenanceSaving(true);
-        try {
-            await axios.post('/api/admin/config', 
-                { default_theme: themeValue },
-                {
-                    headers: {
-                        'X-Company-Context': activeSection,
-                        'X-User-ID': user?.id?.toString()
-                    }
-                }
-            );
-            setDefaultThemeSetting(themeValue);
-            toast.success(`Default system theme updated to ${themeValue}.`);
-        } catch (err) {
-            toast.error("Failed to update default theme setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -1242,37 +1217,6 @@ const SystemConfigPage: React.FC = () => {
                                                     />
                                                 )}
                                             </button>
-                                        </div>
-                                    </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                Configure the default application theme (Light or Dark) for all users when they don't have a local preference.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className="flex gap-2">
-                                                <Button 
-                                                    onClick={() => handleSaveDefaultTheme('light')}
-                                                    disabled={maintenanceSaving || !canManageMaintenance}
-                                                    variant={defaultThemeSetting === 'light' ? "default" : "outline"}
-                                                    size="sm"
-                                                    className="font-bold"
-                                                >
-                                                    Light
-                                                </Button>
-                                                <Button 
-                                                    onClick={() => handleSaveDefaultTheme('dark')}
-                                                    disabled={maintenanceSaving || !canManageMaintenance}
-                                                    variant={defaultThemeSetting === 'dark' ? "default" : "outline"}
-                                                    size="sm"
-                                                    className="font-bold"
-                                                >
-                                                    Dark
-                                                </Button>
-                                            </div>
                                         </div>
                                     </div>
                                 </CardContent>

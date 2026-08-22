@@ -1356,26 +1356,39 @@ const RegistrationPage: React.FC = () => {
 
       {/* Full Image Preview Dialog */}
       <Dialog open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-        <DialogContent className="sm:max-w-lg p-0 overflow-hidden rounded-2xl border-0 shadow-2xl bg-black/95">
-          <DialogHeader className="sr-only">
-            <DialogTitle>Passport Photo Preview</DialogTitle>
-            <DialogDescription>Full size preview of the passport photograph</DialogDescription>
-          </DialogHeader>
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden rounded-2xl border bg-card text-card-foreground shadow-2xl">
+          <div className="p-4 sm:p-5 border-b flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-primary/10 text-primary">
+                <HugeiconsIcon icon={Camera01Icon} className="w-5 h-5" />
+              </div>
+              <div>
+                <DialogTitle className="text-base sm:text-lg font-bold text-foreground">
+                  {watch('first_name') || watch('last_name') ? `${watch('first_name') || ''} ${watch('last_name') || ''}'s Photo`.trim() : 'Passport Photo Preview'}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground">
+                  {watch('staff_id') ? `Staff ID: ${watch('staff_id')}` : 'Full size preview of the passport photograph'}
+                </DialogDescription>
+              </div>
+            </div>
+          </div>
+
           {passportPreview && (
-            <div className="relative flex items-center justify-center p-4">
+            <div className="relative flex items-center justify-center p-4 sm:p-6 bg-muted/20">
               <img
                 src={passportPreview.startsWith('http') || passportPreview.startsWith('blob') || passportPreview.startsWith('data') ? passportPreview : `${(window as any).API_BASE_URL}${passportPreview}`}
                 alt="Passport Full Preview"
-                className="max-w-full max-h-[70vh] object-contain rounded-xl shadow-2xl"
+                className="max-w-full max-h-[65vh] object-contain rounded-xl shadow-md border"
               />
             </div>
           )}
-          <div className="flex items-center justify-center gap-3 p-4 bg-black/50">
+
+          <div className="flex items-center justify-end gap-2.5 p-4 bg-muted/40 border-t">
             <Button
               type="button"
               variant="outline"
               size="sm"
-              className="font-bold gap-2 border-white/20 text-white hover:bg-white/10 hover:text-white"
+              className="font-bold gap-2"
               onClick={() => { setIsPreviewOpen(false); setIsSourceDialogOpen(true); }}
             >
               <HugeiconsIcon icon={Camera01Icon} className="h-4 w-4" />
@@ -1383,9 +1396,9 @@ const RegistrationPage: React.FC = () => {
             </Button>
             <Button
               type="button"
-              variant="ghost"
+              variant="default"
               size="sm"
-              className="font-bold text-white hover:bg-white/10 hover:text-white"
+              className="font-bold"
               onClick={() => setIsPreviewOpen(false)}
             >
               Close

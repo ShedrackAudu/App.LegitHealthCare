@@ -382,24 +382,51 @@ export const Header: React.FC<HeaderProps> = ({ manualTitle }) => {
                 </span>
               </div>
             </Button>
-            <Button
-              variant="outline"
-              size="icon"
-              className="h-7 w-7 sm:h-9 sm:w-9 border border-border/80 rounded-lg bg-card/60 backdrop-blur-sm shadow-2xs hover:border-border"
-              onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-            >
-              <label className="sr-only">Toggle theme</label>
-              <HugeiconsIcon icon={Sun01Icon} className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
-                resolvedTheme === "dark" 
-                  ? "-rotate-90 scale-0 opacity-0" 
-                  : "rotate-0 scale-100 opacity-100"
-              }`} />
-              <HugeiconsIcon icon={Moon02Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
-                resolvedTheme === "dark" 
-                  ? "rotate-0 scale-100 opacity-100" 
-                  : "rotate-90 scale-0 opacity-0"
-              }`} />
-            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="outline"
+                  size="icon"
+                  className="h-7 w-7 sm:h-9 sm:w-9 border border-border/80 rounded-lg bg-card/60 backdrop-blur-sm shadow-2xs hover:border-border relative"
+                  title={`Theme: ${theme === 'system' ? `System (${resolvedTheme})` : theme.charAt(0).toUpperCase() + theme.slice(1)}`}
+                >
+                  <label className="sr-only">Toggle theme</label>
+                  <HugeiconsIcon icon={Sun01Icon} className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+                    resolvedTheme === "dark" 
+                      ? "-rotate-90 scale-0 opacity-0" 
+                      : "rotate-0 scale-100 opacity-100"
+                  }`} />
+                  <HugeiconsIcon icon={Moon02Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+                    resolvedTheme === "dark" 
+                      ? "rotate-0 scale-100 opacity-100" 
+                      : "rotate-90 scale-0 opacity-0"
+                  }`} />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-36 rounded-xl shadow-lg border-2" sideOffset={8}>
+                <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={Sun01Icon} className="h-3.5 w-3.5 text-amber-500" />
+                    <span className="text-xs">Light</span>
+                  </div>
+                  {theme === "light" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <HugeiconsIcon icon={Moon02Icon} className="h-3.5 w-3.5 text-indigo-400" />
+                    <span className="text-xs">Dark</span>
+                  </div>
+                  {theme === "dark" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={() => setTheme("system")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                  <div className="flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 text-muted-foreground"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                    <span className="text-xs">System</span>
+                  </div>
+                  {theme === "system" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
           </div>
 
           <DropdownMenu>

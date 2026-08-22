@@ -395,7 +395,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             )}
             </div>
           </DialogHeader>
-          <div className="flex-1 w-full bg-zinc-800 dark:bg-black relative flex items-center justify-center overflow-auto">
+          <div className="flex-1 w-full bg-muted/20 relative flex items-center justify-center overflow-auto">
             {selectedFile && (
               selectedFile.filename.toLowerCase().endsWith('.pdf') ? (
                 <iframe 

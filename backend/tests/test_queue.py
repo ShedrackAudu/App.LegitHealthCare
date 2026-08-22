@@ -39,6 +39,11 @@ def setup_rbac_and_queues(client):
     # Create BioData, screening bio-data, and queue entries under a request context
     # so they route to the 'dcp' bind database
     with app.test_request_context(headers={'X-Company-Context': 'dcp'}):
+        QueueEntry.query.delete()
+        ScreeningYearBioData.query.delete()
+        BioData.query.delete()
+        db.session.commit()
+
         parent_bio = BioData(
             staff_id='ST-001',
             first_name='John',

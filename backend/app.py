@@ -293,13 +293,6 @@ def signup_status():
     is_enabled = config.value.lower() == 'true' if config else True
     return jsonify({"staff_signup_enabled": is_enabled}), 200
 
-@app.route('/api/config/default-theme', methods=['GET'])
-def get_default_theme():
-    from models import SystemConfig
-    config = SystemConfig.query.get('default_theme')
-    # Default to 'light' if not set
-    theme = config.value if config else 'light'
-    return jsonify({"default_theme": theme}), 200
 
 @app.route('/api/config/bulk-ai-review-status', methods=['GET'])
 def get_bulk_ai_review_status():
