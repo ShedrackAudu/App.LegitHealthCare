@@ -55,12 +55,12 @@ const appointmentSchema = z.object({
 type AppointmentValues = z.infer<typeof appointmentSchema>;
 
 const BioItem = ({ label, value, icon: Icon }: any) => (
-    <div className="flex items-center gap-3 p-3 rounded-xl bg-muted/20 border border-transparent hover:border-primary/20 transition-all group">
-        <div className="p-2 rounded-lg bg-background border shadow-sm text-primary group-hover:scale-105 transition-transform shrink-0">
+    <div className="flex items-center gap-3 p-3 rounded-xl bg-card/60 dark:bg-card/40 backdrop-blur-xs border border-border/60 hover:border-primary/30 transition-all group shadow-2xs">
+        <div className="p-2 rounded-lg bg-primary/10 border border-primary/20 shadow-2xs text-primary group-hover:scale-105 transition-transform shrink-0">
             <HugeiconsIcon icon={Icon} className="h-4 w-4" />
         </div>
         <div className="min-w-0 flex-1">
-            <p className="text-[9px] uppercase tracking-widest font-black text-muted-foreground leading-none mb-1">{label}</p>
+            <p className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground leading-none mb-1">{label}</p>
             <p className="text-sm font-bold text-foreground leading-tight truncate">{value || 'N/A'}</p>
         </div>
     </div>
@@ -167,7 +167,7 @@ const PatientAppointmentsPage = () => {
     <PatientLayout>
       <div className="max-w-7xl mx-auto space-y-8 pb-20 animate-in fade-in duration-700">
         
-        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-5 md:p-8 text-white shadow-xl shadow-amber-500/20 group">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-amber-500 via-amber-600 to-orange-600 p-5 md:p-8 text-white shadow-xs group">
           {/* Integrated Background Icon */}
           <div className="absolute -right-10 -bottom-10 w-48 h-48 text-white/[0.12] pointer-events-none -rotate-12 transition-transform duration-1000 group-hover:rotate-0">
              <HugeiconsIcon icon={Calendar03Icon} className="w-full h-full stroke-[1.5]" />
@@ -175,13 +175,13 @@ const PatientAppointmentsPage = () => {
           <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 rounded-full blur-[60px] -translate-y-1/2 translate-x-1/2" />
           
           <div className="relative z-10 flex flex-col items-center md:items-start text-center md:text-left gap-4">
-             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[8px] md:text-[9px] font-black uppercase tracking-widest backdrop-blur-md border border-white/10">
+             <div className="inline-flex items-center gap-2 px-2.5 py-1 rounded-full bg-white/15 text-[8px] md:text-[9px] font-bold uppercase tracking-wider backdrop-blur-md border border-white/10 shadow-2xs">
                <HugeiconsIcon icon={Clock01Icon} className="w-2.5 h-2.5" /> Scheduling Active
              </div>
-             <div className="space-y-1.5">
-                <h1 className="text-xl md:text-3xl font-black tracking-tight leading-none">Book Appointment</h1>
+             <div className="space-y-1">
+                <h1 className="text-xl md:text-3xl font-bold tracking-tight leading-tight">Book Appointment</h1>
                 <p className="text-[11px] md:text-sm text-white/80 max-w-sm font-medium leading-relaxed">
-                   Need a follow-up or a new health screening? <br className="hidden md:block"/>Schedule your visit with our medical team.
+                   Need a follow-up or a new health screening? Schedule your visit with our medical team.
                 </p>
              </div>
           </div>
@@ -191,15 +191,15 @@ const PatientAppointmentsPage = () => {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 animate-pulse">
                 {/* Left Side: Profile Summary Skeleton */}
                 <div className="lg:col-span-1 space-y-4">
-                    <Card className="border border-border/80 bg-card/45 p-5 space-y-4">
+                    <Card className="border border-border/60 bg-card/45 p-5 space-y-4 rounded-xl">
                         <div className="flex items-center gap-4">
-                            <Skeleton className="h-10 w-10 rounded-xl bg-muted/40 shrink-0" />
+                            <Skeleton className="h-10 w-10 rounded-lg bg-muted/40 shrink-0" />
                             <div className="space-y-2 flex-1">
                                 <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
                                 <Skeleton className="h-3 w-20 bg-muted/40 rounded" />
                             </div>
                         </div>
-                        <div className="space-y-3 pt-4 border-t">
+                        <div className="space-y-3 pt-4 border-t border-border/50">
                             <Skeleton className="h-3 w-full bg-muted/40 rounded" />
                             <Skeleton className="h-3 w-full bg-muted/40 rounded" />
                             <Skeleton className="h-3 w-full bg-muted/40 rounded" />
@@ -208,11 +208,11 @@ const PatientAppointmentsPage = () => {
                 </div>
                 {/* Right Side: Appointment Section Skeleton */}
                 <div className="lg:col-span-2 space-y-6">
-                    <Card className="border border-border/80 bg-card/45 p-6 space-y-4">
+                    <Card className="border border-border/60 bg-card/45 p-6 space-y-4 rounded-xl">
                         <Skeleton className="h-6 w-48 bg-muted/40 rounded" />
                         <div className="space-y-4">
                             {Array.from({ length: 3 }).map((_, i) => (
-                                <div key={i} className="flex justify-between items-center p-4 border rounded-xl">
+                                <div key={i} className="flex justify-between items-center p-4 border border-border/50 rounded-xl">
                                     <div className="space-y-2">
                                         <Skeleton className="h-4 w-32 bg-muted/40 rounded" />
                                         <Skeleton className="h-3 w-24 bg-muted/40 rounded" />
@@ -227,18 +227,18 @@ const PatientAppointmentsPage = () => {
         ) : (
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 
-                {/* Left Side: Profile Summary - Compact */}
+                {/* Left Side: Profile Summary */}
                 <div className="lg:col-span-1 space-y-4">
-                    <Card className="border shadow-lg rounded-2xl overflow-hidden sticky top-24 border-primary/5 transition-all hover:shadow-xl">
+                    <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden sticky top-24 bg-card/60 dark:bg-card/45 backdrop-blur-md transition-all hover:shadow-sm">
                         <CardHeader className="bg-primary/5 border-b border-primary/10 p-5">
                             <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-xl bg-primary text-primary-foreground flex items-center justify-center shadow-lg shadow-primary/20 shrink-0">
+                                <div className="h-10 w-10 rounded-lg bg-primary text-primary-foreground flex items-center justify-center shadow-2xs shrink-0">
                                     <HugeiconsIcon icon={UserIcon} className="h-5 w-5" />
                                 </div>
                                 <div className="flex-1 min-w-0">
-                                    <CardTitle className="text-base font-black leading-none truncate">{profile?.first_name} {profile?.last_name}</CardTitle>
-                                    <div className="flex items-center gap-2 mt-1.5">
-                                        <span className="px-1.5 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-black tracking-widest">
+                                    <CardTitle className="text-base font-bold leading-tight truncate">{profile?.first_name} {profile?.last_name}</CardTitle>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className="px-2 py-0.5 rounded bg-primary/10 text-primary text-[9px] font-bold tracking-wider">
                                             {profile?.staff_id}
                                         </span>
                                         <div className="flex items-center gap-1 text-[9px] font-bold text-primary uppercase">
@@ -248,11 +248,11 @@ const PatientAppointmentsPage = () => {
                                 </div>
                             </div>
                         </CardHeader>
-                        <CardContent className="p-4 space-y-2 bg-muted/5">
-                            <BioItem label="DEPARTMENT" value={profile?.department} icon={Building02Icon} />
-                            <BioItem label="CONTACT PHONE" value={profile?.phone} icon={CallIcon} />
-                            <BioItem label="EMAIL ADDRESS" icon={Mail01Icon} value={profile?.email} />
-                            <BioItem label="GENDER / AGE" value={`${profile?.gender} • ${profile?.age} yrs`} icon={UserIcon} />
+                        <CardContent className="p-4 space-y-2.5">
+                            <BioItem label="Department" value={profile?.department} icon={Building02Icon} />
+                            <BioItem label="Contact Phone" value={profile?.phone} icon={CallIcon} />
+                            <BioItem label="Email Address" icon={Mail01Icon} value={profile?.email} />
+                            <BioItem label="Gender / Age" value={`${profile?.gender} • ${profile?.age} yrs`} icon={UserIcon} />
                             <div className="pt-2 px-1">
                                 <Button variant="link" className="px-0 h-auto font-bold text-[11px] text-primary group" onClick={() => window.location.href='/patient/account'}>
                                     Profile Settings <HugeiconsIcon icon={ArrowRight01Icon} className="ml-1.5 w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -265,52 +265,52 @@ const PatientAppointmentsPage = () => {
                 {/* Right Side: Tabs */}
                 <div className="lg:col-span-2">
                     <Tabs defaultValue="book" className="w-full">
-                        <TabsList className="grid w-full grid-cols-2 mb-6 bg-muted/30 p-1.5 h-14 rounded-2xl border border-primary/5">
-                            <TabsTrigger value="book" className="rounded-xl font-black text-[10px] sm:text-[13px] tracking-normal sm:tracking-widest uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">Book Visit</TabsTrigger>
-                            <TabsTrigger value="history" className="rounded-xl font-black text-[10px] sm:text-[13px] tracking-normal sm:tracking-widest uppercase data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">History</TabsTrigger>
+                        <TabsList className="grid w-full grid-cols-2 mb-6 bg-card/60 dark:bg-card/45 backdrop-blur-md p-1 h-12 rounded-xl border border-border/60 shadow-2xs">
+                            <TabsTrigger value="book" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">Book Visit</TabsTrigger>
+                            <TabsTrigger value="history" className="rounded-lg font-bold text-xs uppercase tracking-wider data-[state=active]:bg-primary data-[state=active]:text-primary-foreground transition-all shadow-none h-full px-2">History</TabsTrigger>
                         </TabsList>
 
                         <TabsContent value="book" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <Card className="border shadow-lg rounded-2xl overflow-hidden border-primary/5 transition-all">
+                            <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md transition-all">
                                 <CardHeader className="p-4 md:p-6 pb-0">
-                                    <CardTitle className="text-lg md:text-xl font-black">Slot Selection</CardTitle>
-                                    <CardDescription className="text-[11px] font-medium text-muted-foreground/60 leading-none mt-1">Fill in your clinical visit details.</CardDescription>
+                                    <CardTitle className="text-lg md:text-xl font-bold">Slot Selection</CardTitle>
+                                    <CardDescription className="text-xs font-medium text-muted-foreground mt-0.5">Fill in your clinical visit details.</CardDescription>
                                 </CardHeader>
-                        <CardContent className="p-4 md:p-6 pt-2 space-y-3.5">
+                        <CardContent className="p-4 md:p-6 pt-3 space-y-3.5">
                             <div className="grid grid-cols-1 gap-3.5">
                                 <div className="space-y-1">
-                                    <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-70">Preferred Date <span className="text-red-500">*</span></Label>
+                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Preferred Date <span className="text-rose-500">*</span></Label>
                                     <div className="relative group">
-                                        <HugeiconsIcon icon={Calendar03Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/50 group-focus-within:text-primary transition-colors z-10" />
+                                        <HugeiconsIcon icon={Calendar03Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/60 group-focus-within:text-primary transition-colors z-10" />
                                         <Input 
                                             type="date"
                                             min={today}
-                                            className={`h-10 pl-10 rounded-xl border font-bold text-xs transition-all focus:ring-4 focus:ring-primary/5 ${errors.appointment_date ? 'border-red-500' : 'focus:border-primary'}`} 
+                                            className={`h-10 pl-10 rounded-lg border-input/80 bg-card/60 backdrop-blur-xs font-bold text-xs transition-all shadow-2xs ${errors.appointment_date ? 'border-rose-500' : 'focus:border-primary'}`} 
                                             {...register('appointment_date')}
                                         />
                                     </div>
                                     <div className="flex justify-between items-center px-0.5">
                                          {errors.appointment_date ? (
-                                            <p className="text-[9px] text-red-500 font-bold flex items-center gap-1">
+                                            <p className="text-[10px] text-rose-500 font-bold flex items-center gap-1">
                                                 <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                                 {errors.appointment_date.message}
                                             </p>
                                         ) : (
-                                            <p className="text-[8px] text-muted-foreground font-black italic opacity-40 uppercase tracking-tighter">* Mon - Fri (10AM - 4PM)</p>
+                                            <p className="text-[9px] text-muted-foreground font-bold italic opacity-60 uppercase tracking-tight">* Mon - Fri (10AM - 4PM)</p>
                                         )}
                                     </div>
                                 </div>
 
                                 <div className="space-y-2">
-                                    <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-70">
-                                        Time Slot <span className="text-red-500">*</span>
+                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">
+                                        Time Slot <span className="text-rose-500">*</span>
                                         {fetchingSlots && <HugeiconsIcon icon={Loading03Icon} className="inline ml-2 h-2.5 w-2.5 animate-spin text-primary" />}
                                     </Label>
                                     
                                     {!selectedDate ? (
-                                        <div className="py-4 rounded-xl bg-muted/5 border border-dashed border-muted/20 flex items-center justify-center gap-2 text-muted-foreground/30">
-                                            <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 opacity-20" />
-                                            <p className="text-[8px] font-black uppercase tracking-[0.2em]">Select a date first</p>
+                                        <div className="py-4 rounded-lg bg-card/30 border border-dashed border-border/60 flex items-center justify-center gap-2 text-muted-foreground/40">
+                                            <HugeiconsIcon icon={Clock01Icon} className="w-3.5 h-3.5 opacity-40" />
+                                            <p className="text-[9px] font-bold uppercase tracking-wider">Select a date first</p>
                                         </div>
                                     ) : (
                                         <div className="grid grid-cols-4 sm:grid-cols-5 gap-1.5">
@@ -325,24 +325,24 @@ const PatientAppointmentsPage = () => {
                                                         disabled={isBooked || fetchingSlots}
                                                         onClick={() => setValue('time_slot', slot)}
                                                         className={`
-                                                            relative h-8 rounded-lg border font-black text-[8.5px] transition-all
+                                                            relative h-8 rounded-lg border font-bold text-[9px] transition-all shadow-2xs
                                                             ${isBooked 
                                                                 ? 'bg-muted/10 border-transparent text-muted-foreground/30 cursor-not-allowed' 
                                                                 : isSelected
-                                                                    ? 'bg-primary border-primary text-primary-foreground shadow-lg shadow-primary/20 ring-1 ring-primary ring-offset-1'
-                                                                    : 'bg-background border-primary/5 hover:border-primary/30 hover:bg-primary/5'
+                                                                    ? 'bg-primary border-primary text-primary-foreground shadow-xs shadow-primary/20 ring-1 ring-primary ring-offset-1'
+                                                                    : 'bg-card/60 backdrop-blur-xs border-border/70 hover:border-primary/40 hover:bg-primary/5'
                                                             }
                                                         `}
                                                     >
                                                         {slot.split(' - ')[0]}
-                                                        {isBooked && <div className="absolute -top-1 -right-1 bg-red-500/80 text-[5px] text-white px-0.5 rounded-sm uppercase font-black">Full</div>}
+                                                        {isBooked && <div className="absolute -top-1 -right-1 bg-rose-500 text-[6px] text-white px-1 rounded uppercase font-bold">Full</div>}
                                                     </button>
                                                 );
                                             })}
                                         </div>
                                     )}
                                     {errors.time_slot && (
-                                        <p className="text-[9px] text-red-500 font-bold flex items-center gap-1 ml-0.5">
+                                        <p className="text-[10px] text-rose-500 font-bold flex items-center gap-1 ml-0.5">
                                             <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                             {errors.time_slot.message}
                                         </p>
@@ -350,43 +350,43 @@ const PatientAppointmentsPage = () => {
                                 </div>
 
                                 <div className="space-y-1.5">
-                                    <Label className="text-[8px] font-black uppercase tracking-widest text-muted-foreground opacity-70">Reason <span className="text-red-500">*</span></Label>
+                                    <Label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Reason <span className="text-rose-500">*</span></Label>
                                     <Textarea 
                                         placeholder="Briefly state why you need to see a doctor..." 
-                                        className={`min-h-[70px] rounded-xl border p-3 font-bold text-xs transition-all resize-none focus:ring-4 focus:ring-primary/5 ${errors.reason ? 'border-red-500' : 'focus:border-primary'}`}
+                                        className={`min-h-[70px] rounded-lg border-input/80 bg-card/60 backdrop-blur-xs p-3 font-medium text-xs transition-all resize-none shadow-2xs ${errors.reason ? 'border-rose-500' : 'focus:border-primary'}`}
                                         {...register('reason')}
                                     />
                                     <div className="flex justify-between items-center px-0.5">
                                         {errors.reason && (
-                                            <p className="text-[9px] text-red-500 font-bold flex items-center gap-1">
+                                            <p className="text-[10px] text-rose-500 font-bold flex items-center gap-1">
                                                 <HugeiconsIcon icon={AlertCircleIcon} className="h-2.5 w-2.5" />
                                                 {errors.reason.message}
                                             </p>
                                         )}
-                                        <p className="text-[8px] text-muted-foreground font-black ml-auto opacity-30 uppercase tracking-tighter italic">Max 500 chars</p>
+                                        <p className="text-[9px] text-muted-foreground font-bold ml-auto opacity-40 uppercase tracking-tight italic">Max 500 chars</p>
                                     </div>
                                 </div>
                             </div>
 
-                            <Separator className="my-1.5 opacity-20" />
+                            <Separator className="my-1.5 opacity-30" />
                             
                             <Button 
                                 onClick={handleSubmit(onBookAppointment)}
                                 loading={isBooking}
                                 size="lg"
-                                className="w-full h-11 rounded-xl text-xs font-black gap-2 shadow-xl hover:scale-[1.01] active:scale-[0.98] transition-all bg-primary shadow-primary/20"
+                                className="w-full h-10 rounded-lg text-xs font-bold gap-2 shadow-xs hover:scale-[1.005] active:scale-[0.98] transition-all bg-primary shadow-primary/20"
                             >
                                 {!isBooking && <HugeiconsIcon icon={CheckmarkCircle02Icon} className="h-4 w-4" />}
                                 Complete Booking
                             </Button>
 
-                            <div className="p-3.5 rounded-xl bg-primary/5 border border-dashed border-primary/10 flex gap-3">
-                                <div className="p-1 bg-primary/10 rounded-lg text-primary shrink-0 h-fit">
+                            <div className="p-3 rounded-lg bg-primary/5 border border-primary/15 flex gap-3 backdrop-blur-xs">
+                                <div className="p-1 bg-primary/10 rounded-md text-primary shrink-0 h-fit">
                                      <HugeiconsIcon icon={GlobeIcon} className="w-3 h-3" />
                                 </div>
                                 <div className="space-y-0.5">
-                                    <p className="text-[9px] font-black text-emerald-800 uppercase tracking-wider opacity-60">Next Steps</p>
-                                    <p className="text-[10px] font-semibold text-primary/50 leading-tight">Admin will confirm within 24 hours.</p>
+                                    <p className="text-[10px] font-bold text-primary uppercase tracking-wider">Next Steps</p>
+                                    <p className="text-xs font-medium text-muted-foreground leading-tight">Admin will confirm within 24 hours.</p>
                                 </div>
                             </div>
                         </CardContent>
@@ -394,12 +394,12 @@ const PatientAppointmentsPage = () => {
                         </TabsContent>
 
                         <TabsContent value="history" className="mt-0 animate-in fade-in slide-in-from-bottom-4 duration-500">
-                            <Card className="border shadow-xl rounded-2xl overflow-hidden border-primary/5 min-h-[400px]">
-                                <CardHeader className="p-4 md:p-6 pb-4 bg-muted/10">
+                            <Card className="border border-border/60 shadow-xs rounded-xl overflow-hidden bg-card/60 dark:bg-card/45 backdrop-blur-md min-h-[400px]">
+                                <CardHeader className="p-4 md:p-6 pb-4 bg-muted/10 border-b border-border/50">
                                     <div className="flex justify-between items-center">
                                         <div>
-                                            <CardTitle className="text-lg md:text-xl font-black">Visit History</CardTitle>
-                                            <CardDescription className="text-[10px] font-bold text-muted-foreground/60 uppercase tracking-widest mt-1">Status of your clinic appointments</CardDescription>
+                                            <CardTitle className="text-lg md:text-xl font-bold">Visit History</CardTitle>
+                                            <CardDescription className="text-[10px] font-bold text-muted-foreground/70 uppercase tracking-wider mt-0.5">Status of your clinic appointments</CardDescription>
                                         </div>
                                         {fetchingAppointments && <HugeiconsIcon icon={Loading03Icon} className="h-4 w-4 animate-spin text-primary" />}
                                     </div>
@@ -407,12 +407,12 @@ const PatientAppointmentsPage = () => {
                                 <CardContent className="p-0">
                                     <div className="hidden md:block overflow-x-auto">
                                         <Table>
-                                            <TableHeader className="bg-muted/20 border-b">
-                                                <TableRow className="hover:bg-transparent">
-                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4 pl-6">Schedule</TableHead>
-                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4">Status</TableHead>
-                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4">Booking Info</TableHead>
-                                                    <TableHead className="font-black text-[9px] uppercase tracking-widest py-4 pr-6">Reason</TableHead>
+                                            <TableHeader className="bg-muted/10 border-b border-border/50">
+                                                <TableRow className="hover:bg-transparent border-border/50">
+                                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider py-3.5 pl-6">Schedule</TableHead>
+                                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider py-3.5">Status</TableHead>
+                                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider py-3.5">Booking Info</TableHead>
+                                                    <TableHead className="font-bold text-[10px] uppercase tracking-wider py-3.5 pr-6">Reason</TableHead>
                                                 </TableRow>
                                             </TableHeader>
                                             <TableBody>
@@ -424,41 +424,41 @@ const PatientAppointmentsPage = () => {
                                                     </TableRow>
                                                 ) : (
                                                     appointments.map((app) => (
-                                                        <TableRow key={app.id} className="hover:bg-muted/5 transition-colors group">
-                                                            <TableCell className="py-4 pl-6">
-                                                                <div className="space-y-1">
+                                                        <TableRow key={app.id} className="hover:bg-muted/30 transition-colors border-border/50 group">
+                                                            <TableCell className="py-3.5 pl-6">
+                                                                <div className="space-y-0.5">
                                                                     <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                                                                         <HugeiconsIcon icon={Calendar03Icon} className="h-3.5 w-3.5 text-primary" />
                                                                         {new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}
                                                                     </div>
-                                                                    <div className="flex items-center gap-1.5 text-[10px] font-black text-muted-foreground/60">
-                                                                        <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5" />
+                                                                    <div className="flex items-center gap-1.5 text-[10px] font-medium text-muted-foreground">
+                                                                        <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
                                                                         {app.time_slot}
                                                                     </div>
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="py-4">
+                                                            <TableCell className="py-3.5">
                                                                 <Badge className={`${
-                                                                    app.status === 'Completed' ? 'bg-green-500 hover:bg-green-600' : 
-                                                                    app.status === 'Cancelled' ? 'bg-red-500 hover:bg-red-600' : 
+                                                                    app.status === 'Completed' ? 'bg-emerald-500 hover:bg-emerald-600' : 
+                                                                    app.status === 'Cancelled' ? 'bg-rose-500 hover:bg-rose-600' : 
                                                                     'bg-amber-500 hover:bg-amber-600'
-                                                                } text-white border-0 font-black text-[8px] uppercase tracking-widest py-0.5 px-2`}>
+                                                                } text-white border-0 font-bold text-[9px] uppercase tracking-wider py-0.5 px-2 rounded shadow-2xs`}>
                                                                     {app.status}
                                                                 </Badge>
                                                             </TableCell>
-                                                            <TableCell className="py-4">
+                                                            <TableCell className="py-3.5">
                                                                 <div className="space-y-0.5">
-                                                                    <p className="text-[8px] font-black text-muted-foreground uppercase opacity-60 tracking-tighter">Booked By</p>
+                                                                    <p className="text-[9px] font-bold text-muted-foreground uppercase tracking-tight">Booked By</p>
                                                                     <div className="flex items-center gap-1.5">
-                                                                        <p className="text-[10px] font-black text-foreground uppercase">
+                                                                        <p className="text-[10px] font-bold text-foreground uppercase">
                                                                             {app.booked_by_type === 'patient' ? 'You' : 'Clinic Staff'}
                                                                         </p>
                                                                         {app.booked_by_type === 'patient' && <span className="h-1.5 w-1.5 rounded-full bg-blue-500 animate-pulse" />}
                                                                     </div>
                                                                 </div>
                                                             </TableCell>
-                                                            <TableCell className="py-4 pr-6">
-                                                                <p className="text-[10px] font-bold text-muted-foreground italic line-clamp-1 max-w-[180px] group-hover:line-clamp-none transition-all">
+                                                            <TableCell className="py-3.5 pr-6">
+                                                                <p className="text-[11px] font-medium text-muted-foreground italic line-clamp-1 max-w-[180px] group-hover:line-clamp-none transition-all">
                                                                     {app.reason}
                                                                 </p>
                                                             </TableCell>
@@ -476,27 +476,27 @@ const PatientAppointmentsPage = () => {
                                             </div>
                                         ) : (
                                             appointments.map(app => (
-                                                <div key={app.id} className="p-4 rounded-xl border bg-muted/5 space-y-3">
+                                                <div key={app.id} className="p-4 rounded-xl border border-border/60 bg-card/60 backdrop-blur-xs space-y-3 shadow-2xs">
                                                     <div className="flex justify-between items-start">
                                                         <div className="flex items-center gap-2">
                                                             <HugeiconsIcon icon={Calendar03Icon} className="h-4 w-4 text-primary" />
-                                                            <p className="text-xs font-black">{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
+                                                            <p className="text-xs font-bold">{new Date(app.appointment_date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' })}</p>
                                                         </div>
                                                         <Badge className={`${
-                                                            app.status === 'Completed' ? 'bg-green-500' : 
-                                                            app.status === 'Cancelled' ? 'bg-red-500' : 
+                                                            app.status === 'Completed' ? 'bg-emerald-500' : 
+                                                            app.status === 'Cancelled' ? 'bg-rose-500' : 
                                                             'bg-amber-500'
-                                                        } text-white border-0 font-black text-[7px] uppercase tracking-widest py-0 px-2 h-4`}>
+                                                        } text-white border-0 font-bold text-[8px] uppercase tracking-wider py-0 px-1.5 h-4.5 rounded shadow-2xs`}>
                                                             {app.status}
                                                         </Badge>
                                                     </div>
-                                                    <div className="flex items-center gap-2 text-[10px] font-bold text-muted-foreground">
+                                                    <div className="flex items-center gap-2 text-[10px] font-medium text-muted-foreground">
                                                         <HugeiconsIcon icon={Clock01Icon} className="h-3 w-3" />
                                                         {app.time_slot}
                                                     </div>
-                                                    <div className="pt-2 border-t border-dashed border-muted/20">
-                                                        <p className="text-[8px] font-black text-muted-foreground uppercase opacity-40 mb-1">Reason</p>
-                                                        <p className="text-[10px] font-medium leading-relaxed italic">{app.reason}</p>
+                                                    <div className="pt-2 border-t border-dashed border-border/50">
+                                                        <p className="text-[9px] font-bold text-muted-foreground uppercase opacity-60 mb-0.5">Reason</p>
+                                                        <p className="text-[11px] font-medium leading-relaxed italic">{app.reason}</p>
                                                     </div>
                                                 </div>
                                             ))

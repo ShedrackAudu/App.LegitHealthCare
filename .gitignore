@@ -1,10 +1,9 @@
 # ===== Backend (Python/Flask) =====
 backend/venv/
-backend/__pycache__/
-backend/routes/__pycache__/
-backend/utils/__pycache__/
-backend/*.pyc
-backend/*.pyo
+__pycache__/
+**/__pycache__/
+*.py[cod]
+*$py.class
 backend/instance/
 backend/*.db
 backend/server.log

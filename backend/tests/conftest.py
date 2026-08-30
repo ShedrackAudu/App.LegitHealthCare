@@ -1,4 +1,5 @@
 import pytest
+from sqlalchemy.pool import StaticPool
 from app import app, db
 from models import User
 from flask_jwt_extended import create_access_token
@@ -11,6 +12,10 @@ def client():
         'dcp': 'sqlite:///:memory:',
         'dct': 'sqlite:///:memory:',
         'patients': 'sqlite:///:memory:'
+    }
+    app.config['SQLALCHEMY_ENGINE_OPTIONS'] = {
+        'poolclass': StaticPool,
+        'connect_args': {'check_same_thread': False}
     }
     app.config['WTF_CSRF_ENABLED'] = False
     

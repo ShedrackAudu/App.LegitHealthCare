@@ -9,6 +9,48 @@ import os
 
 ai_bp = Blueprint('ai', __name__)
 
+import re
+
+def is_masked_key(key):
+    if not key or not isinstance(key, str):
+        return False
+    k = key.strip()
+    return '...' in k or '*' in k
+
+def mask_api_key(key):
+    if not key or not isinstance(key, str) or is_masked_key(key):
+        return ""
+    key = key.strip()
+    if len(key) <= 8:
+        return "********"
+    return f"{key[:6]}...{key[-4:]}"
+
+def get_effective_openai_api_key(provided_key=None):
+    if provided_key and not is_masked_key(provided_key) and provided_key.strip():
+        return provided_key.strip()
+    env_key = os.getenv('OPENAI_API_KEY')
+    if env_key and not is_masked_key(env_key) and env_key.strip():
+        return env_key.strip()
+    settings = AISettings.query.first()
+    if settings and settings.api_key and not is_masked_key(settings.api_key) and settings.api_key.strip():
+        return settings.api_key.strip()
+    return None
+
+def sanitize_ai_input(text):
+    if not text or not isinstance(text, str):
+        return text if text is not None else ""
+    patterns = [
+        r"(?i)ignore\s+(all\s+)?(previous|prior|above)\s+(instructions|prompts|directions)",
+        r"(?i)system\s+override",
+        r"(?i)disregard\s+(all\s+)?(previous|prior|above)",
+        r"(?i)you\s+are\s+now\s+a",
+        r"(?i)new\s+system\s+prompt"
+    ]
+    sanitized = text
+    for pattern in patterns:
+        sanitized = re.sub(pattern, "[sanitized_directive]", sanitized)
+    return sanitized
+
 @ai_bp.route('/settings', methods=['GET'])
 @require_permission('manage_ai')
 def get_settings():
@@ -18,12 +60,14 @@ def get_settings():
         db.session.add(settings)
         db.session.commit()
     
+    effective_key = get_effective_openai_api_key()
     return jsonify({
         'id': settings.id,
         'medical_parameters': json.loads(settings.medical_parameters) if settings.medical_parameters else [],
         'system_prompt': settings.system_prompt,
         'response_format': settings.response_format,
-        'api_key': settings.api_key or "",
+        'api_key': mask_api_key(effective_key or ""),
+        'is_key_configured': bool(effective_key),
         'model_selection': settings.model_selection,
         'sample_comments': json.loads(settings.sample_comments) if settings.sample_comments else [],
         'prompt_fbc': settings.prompt_fbc,
@@ -76,12 +120,13 @@ def update_settings():
         settings.prompt_kft = data.get('prompt_kft', settings.prompt_kft)
         
         new_api_key = data.get('api_key')
-        if new_api_key:
-            settings.api_key = new_api_key
+        if new_api_key and not is_masked_key(new_api_key) and new_api_key.strip():
+            clean_key = new_api_key.strip()
+            settings.api_key = clean_key
             # Persist to .env as per user request
-            update_env_file('OPENAI_API_KEY', new_api_key)
+            update_env_file('OPENAI_API_KEY', clean_key)
             # Update current env for immediate use if needed (though os.getenv might need reload)
-            os.environ['OPENAI_API_KEY'] = new_api_key
+            os.environ['OPENAI_API_KEY'] = clean_key
             
         settings.model_selection = data.get('model_selection', settings.model_selection)
         settings.sample_comments = json.dumps(data.get('sample_comments', []))
@@ -92,6 +137,65 @@ def update_settings():
     except Exception as e:
         db.session.rollback()
         return jsonify({"error": str(e)}), 400
+
+@ai_bp.route('/test-connection', methods=['POST'])
+@require_permission('manage_ai')
+def test_connection():
+    try:
+        data = request.json or {}
+        settings = AISettings.query.first()
+        
+        raw_key = data.get('api_key')
+        api_key = get_effective_openai_api_key(raw_key)
+        model_name = data.get('model_selection') or (settings.model_selection if settings else "gpt-4o-mini") or "gpt-4o-mini"
+        
+        if not api_key:
+            return jsonify({"error": "No OpenAI API Key found. Please enter your API Key in the field above."}), 400
+            
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=20.0, max_retries=2)
+        
+        params = {
+            "model": model_name,
+            "messages": [
+                {"role": "user", "content": "Respond with exactly 'Operational' to confirm API connection."}
+            ]
+        }
+        if model_name.startswith("o1") or model_name.startswith("o3"):
+            params["max_completion_tokens"] = 15
+        else:
+            params["max_tokens"] = 15
+            
+        response = client.chat.completions.create(**params)
+        reply = response.choices[0].message.content.strip()
+        
+        return jsonify({
+            "status": "success",
+            "message": f"Connection verified successfully with {model_name}! (AI response: '{reply}')",
+            "model": model_name
+        }), 200
+        
+    except openai.AuthenticationError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Authentication Failure: The API Key is invalid or expired. Please check your OpenAI API key."}), 400
+    except openai.RateLimitError as e:
+        traceback.print_exc()
+        return jsonify({"error": "OpenAI Quota Exceeded: Your account usage limit has been reached or has insufficient billing credits. Please check your billing on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify internet access, firewall, or DNS."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
+    except Exception as e:
+        traceback.print_exc()
+        return jsonify({"error": f"AI Connection Failed: {str(e)}"}), 500
 
 @ai_bp.route('/generate', methods=['POST'])
 @require_permission('director_review')
@@ -105,13 +209,13 @@ def generate_overview():
             return jsonify({"error": "Staff ID and Screening Year are required"}), 400
             
         settings = AISettings.query.first()
-        # Prioritize key from environment variable as per user request
-        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        api_key = get_effective_openai_api_key()
         
         if not api_key:
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key)
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key.strip(), base_url=base_url, timeout=35.0, max_retries=2)
         
         # 1. Fetch Patient Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
@@ -121,11 +225,14 @@ def generate_overview():
             return jsonify({"error": "Patient data not found for given criteria."}), 404
             
         def getval(field_name, db_obj):
+            val = None
             if data and field_name in data:
-                return data[field_name]
-            if db_obj and hasattr(db_obj, field_name):
-                return getattr(db_obj, field_name)
-            return None
+                val = data[field_name]
+            elif db_obj and hasattr(db_obj, field_name):
+                val = getattr(db_obj, field_name)
+            if isinstance(val, str):
+                return sanitize_ai_input(val)
+            return val
 
         # 2. Build AI Prompt Context
         context_parts = []
@@ -199,7 +306,7 @@ def generate_overview():
             lp = LipidResult.query.filter_by(staff_id=staff_id, screening_year=screening_year).first()
             lp_rem = getval("lp_remark", lp)
             if lp_rem or lp:
-                context_parts.append(f"--- Lipid Profile Results ---")
+                context_parts.append(f"--- Lipid Profile ---")
                 context_parts.append(f"Remark: {lp_rem or 'N/A'}")
  
         if any(x in selected_params for x in ["ECG", "Spirometry", "Audiometry", "Weight", "Height"]):
@@ -281,13 +388,25 @@ def generate_overview():
         
     except openai.AuthenticationError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked on the OpenAI Platform. Please update your API credentials in the AI Configuration menu."}), 400
+        return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid or has been revoked. Please update your API credentials in the AI Configuration menu."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation and that a valid API key is currently provisioned."}), 402
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits have been exceeded. Please ensure your account has sufficient credits/billing allocation on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify your internet connection, firewall, or DNS settings."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"AI Processing Error: {str(e)}"}), 500
 
 @ai_bp.route('/generate-lab-remark', methods=['POST'])
 @require_permission('director_review')
@@ -301,12 +420,13 @@ def generate_lab_remark():
             return jsonify({"error": "Staff ID and Screening Year are required"}), 400
             
         settings = AISettings.query.first()
-        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        api_key = get_effective_openai_api_key()
         
         if not api_key:
             return jsonify({"error": "OpenAI API Key is not configured in environment variables or AI Settings."}), 400
             
-        client = OpenAI(api_key=api_key)
+        base_url = os.getenv('OPENAI_BASE_URL') or None
+        client = OpenAI(api_key=api_key, base_url=base_url, timeout=35.0, max_retries=2)
         
         # Fetch Patient & Lab Data
         patient = BioData.query.filter_by(staff_id=staff_id).first()
@@ -392,7 +512,19 @@ def generate_lab_remark():
         return jsonify({"error": "OpenAI Authentication Failure: The configured API Key is invalid, inactive, or has been revoked."}), 400
     except openai.RateLimitError as e:
         traceback.print_exc()
-        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded."}), 402
+        return jsonify({"error": "OpenAI Quota Exhausted: API usage limits exceeded. Please check your billing on platform.openai.com."}), 402
+    except openai.APIConnectionError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Error: Unable to reach OpenAI servers (api.openai.com). Please verify internet access, firewall, or DNS settings."}), 503
+    except openai.APITimeoutError as e:
+        traceback.print_exc()
+        return jsonify({"error": "Connection Timeout: Request to OpenAI timed out. Please try again."}), 504
+    except openai.NotFoundError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"Model Not Found: '{model_name}' is not accessible on this API key. Try switching to 'gpt-4o-mini' or 'gpt-4o'."}), 404
+    except openai.APIError as e:
+        traceback.print_exc()
+        return jsonify({"error": f"OpenAI API Error: {str(e)}"}), 500
     except Exception as e:
         traceback.print_exc()
-        return jsonify({"error": str(e)}), 500
+        return jsonify({"error": f"AI Processing Error: {str(e)}"}), 500

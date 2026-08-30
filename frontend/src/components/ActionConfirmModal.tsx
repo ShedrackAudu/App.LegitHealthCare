@@ -54,35 +54,35 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
   };
 
   const buttonStyles = {
-    danger: "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-lg shadow-destructive/20",
-    warning: "bg-amber-500 hover:bg-amber-600 text-white shadow-lg shadow-amber-500/20",
-    info: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-lg shadow-primary/20",
+    danger: "bg-destructive hover:bg-destructive/90 text-destructive-foreground shadow-xs shadow-destructive/20",
+    warning: "bg-amber-500 hover:bg-amber-600 text-white shadow-xs shadow-amber-500/20",
+    info: "bg-primary hover:bg-primary/90 text-primary-foreground shadow-xs shadow-primary/20",
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md rounded-[2rem] border-2 border-primary/5 shadow-2xl p-0 overflow-hidden">
-        <div className="p-8 space-y-6">
+      <DialogContent className="max-w-md rounded-2xl border border-border/70 bg-card/95 backdrop-blur-xl shadow-2xl p-0 overflow-hidden">
+        <div className="p-6 sm:p-8 space-y-6">
             <div className="flex flex-col items-center text-center space-y-4">
-                <div className={cn("p-4 rounded-2xl border-2 transition-all animate-in zoom-in-50 duration-300", variantStyles[variant])}>
-                    <HugeiconsIcon icon={iconName} className="w-8 h-8" />
+                <div className={cn("p-3.5 rounded-xl border transition-all animate-in zoom-in-50 duration-300 shadow-2xs", variantStyles[variant])}>
+                    <HugeiconsIcon icon={iconName} className="w-7 h-7" />
                 </div>
-                <div className="space-y-2">
-                    <DialogTitle className="text-2xl font-black tracking-tight">{title}</DialogTitle>
-                    <DialogDescription className="text-muted-foreground font-medium text-sm leading-relaxed max-w-[280px] mx-auto">
+                <div className="space-y-1.5">
+                    <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight">{title}</DialogTitle>
+                    <DialogDescription className="text-muted-foreground font-medium text-xs sm:text-sm leading-relaxed max-w-[280px] mx-auto">
                         {description}
                     </DialogDescription>
                 </div>
                 {verificationText && (
-                    <div className="space-y-3 mt-4 text-left w-full px-2">
-                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-widest text-center block">
-                            Type <span className="text-destructive bg-destructive/10 px-2 py-0.5 rounded-md select-all">{verificationText}</span> to confirm
+                    <div className="space-y-2 mt-4 text-left w-full px-2">
+                        <label className="text-[11px] font-bold text-muted-foreground uppercase tracking-wider text-center block">
+                            Type <span className="text-destructive bg-destructive/10 px-1.5 py-0.5 rounded select-all">{verificationText}</span> to confirm
                         </label>
                         <Input 
                             value={typedVerification}
                             onChange={(e) => setTypedVerification(e.target.value)}
                             placeholder={verificationText}
-                            className="h-12 border-2 focus-visible:ring-destructive text-center font-bold tracking-widest uppercase"
+                            className="h-10 border border-input/80 focus-visible:ring-destructive text-center font-bold tracking-wider uppercase rounded-lg shadow-2xs"
                             autoComplete="off"
                             autoCorrect="off"
                             spellCheck="false"
@@ -91,12 +91,12 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
                 )}
             </div>
 
-            <DialogFooter className="flex flex-col sm:flex-row gap-3 pt-2">
+            <DialogFooter className="flex flex-col sm:flex-row gap-2.5 pt-2">
                 <Button
                     variant="ghost"
                     onClick={onClose}
                     disabled={loading}
-                    className="flex-1 h-14 rounded-2xl font-bold text-muted-foreground hover:bg-muted active:scale-95 transition-all order-2 sm:order-1"
+                    className="flex-1 h-11 rounded-lg font-bold text-muted-foreground hover:bg-muted active:scale-95 transition-all order-2 sm:order-1"
                 >
                     {cancelText}
                 </Button>
@@ -105,7 +105,7 @@ export const ActionConfirmModal: React.FC<ActionConfirmModalProps> = ({
                         onConfirm();
                     }}
                     disabled={loading || (!!verificationText && typedVerification !== verificationText)}
-                    className={cn("flex-1 h-14 rounded-2xl font-black text-lg active:scale-95 transition-all order-1 sm:order-2", buttonStyles[variant])}
+                    className={cn("flex-1 h-11 rounded-lg font-bold text-sm active:scale-95 transition-all order-1 sm:order-2", buttonStyles[variant])}
                 >
                     {loading ? "Processing..." : confirmText}
                 </Button>

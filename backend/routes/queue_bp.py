@@ -96,17 +96,25 @@ def get_department_queue(department):
     if not is_authorized:
         return jsonify({"error": f"Permission denied for {target_dept} queue"}), 403
 
-    # Join with ScreeningYearBioData to ensure patient is in the screening matrix
+    # Join with ScreeningYearBioData and BioData to ensure patient is in the screening matrix and has full demographics
     entries_with_bio = db.session.query(
         QueueEntry.staff_id,
-        ScreeningYearBioData.first_name,
-        ScreeningYearBioData.last_name,
+        func.coalesce(ScreeningYearBioData.first_name, BioData.first_name).label('first_name'),
+        func.coalesce(ScreeningYearBioData.last_name, BioData.last_name).label('last_name'),
+        ScreeningYearBioData.patient_id,
+        func.coalesce(ScreeningYearBioData.age, BioData.age).label('age'),
+        func.coalesce(ScreeningYearBioData.gender, BioData.gender).label('gender'),
+        func.coalesce(ScreeningYearBioData.department, BioData.department).label('department'),
+        BioData.passport_image,
         QueueEntry.created_at,
         QueueEntry.queue_number
     ).join(
         ScreeningYearBioData,
         (QueueEntry.staff_id == ScreeningYearBioData.staff_id) &
         (QueueEntry.screening_year == ScreeningYearBioData.screening_year)
+    ).outerjoin(
+        BioData,
+        QueueEntry.staff_id == BioData.staff_id
     ).filter(
         QueueEntry.department == target_dept,
         QueueEntry.screening_year == year,
@@ -114,11 +122,16 @@ def get_department_queue(department):
     ).order_by(QueueEntry.created_at.asc()).all()
 
     patients = []
-    for staff_id, first_name, last_name, created_at, queue_number in entries_with_bio:
+    for staff_id, first_name, last_name, patient_id, age, gender, dept, passport_image, created_at, queue_number in entries_with_bio:
         patients.append({
             "staff_id": staff_id,
             "first_name": first_name,
             "last_name": last_name,
+            "patient_id": patient_id or "N/A",
+            "age": age,
+            "gender": gender or "N/A",
+            "department": dept or "N/A",
+            "passport_image": passport_image,
             "created_at": created_at.replace(tzinfo=ZoneInfo("Africa/Lagos")).isoformat(),
             "queue_number": queue_number
         })

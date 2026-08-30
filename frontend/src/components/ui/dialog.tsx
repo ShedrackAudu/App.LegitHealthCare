@@ -82,7 +82,7 @@ const DialogContent: React.FC<{ children: React.ReactNode; className?: string; h
           exit={{ opacity: 0, scale: 0.95, y: 10 }}
           transition={{ type: "spring", damping: 20, stiffness: 300 }}
           className={cn(
-            "relative z-50 w-full max-w-lg overflow-hidden rounded-2xl border bg-background p-6 shadow-2xl transition-all",
+            "relative z-50 w-full max-w-lg overflow-hidden rounded-2xl border border-border/80 bg-card/90 backdrop-blur-xl p-6 shadow-2xl transition-all",
             className
           )}
         >

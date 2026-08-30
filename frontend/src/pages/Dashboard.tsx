@@ -50,6 +50,7 @@ import { Skeleton } from '@/components/ui/skeleton';
 // Removed Loader2 lucide-react import
 import { toast } from 'react-hot-toast';
 import { ActionConfirmModal } from '@/components/ActionConfirmModal';
+import { getTimeGreeting } from '@/lib/timeUtils';
 
 const quickActions = [
   { 
@@ -57,7 +58,7 @@ const quickActions = [
     description: 'Intake new patients and update bio-data.',
     icon: UserAdd01Icon, 
     path: '/registration',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25',
     permission: 'registration'
   },
   { 
@@ -65,7 +66,7 @@ const quickActions = [
     description: 'Enter clinical assessments and recommendations.',
     icon: StethoscopeIcon, 
     path: '/consultation',
-    color: 'bg-primary/10 text-primary border-primary/20',
+    color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25',
     permission: 'consultation'
   },
   { 
@@ -73,7 +74,7 @@ const quickActions = [
     description: 'Record diagnostic findings (FBC, KFT, LFT, etc).',
     icon: Chemistry02Icon, 
     path: '/tests',
-    color: 'bg-rose-500/10 text-rose-400 border-rose-500/20',
+    color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25',
     permission: 'lab_entry'
   },
   { 
@@ -81,7 +82,7 @@ const quickActions = [
     description: 'Final clinical assessment & record validation.',
     icon: Shield01Icon, 
     path: '/director',
-    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25',
     permission: 'director_review'
   },
   { 
@@ -89,7 +90,7 @@ const quickActions = [
     description: 'Generate and export individual patient reports.',
     icon: UserIcon, 
     path: '/patient-report',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25',
     permission: 'view_records'
   },
   { 
@@ -97,7 +98,7 @@ const quickActions = [
     description: 'Search and review detailed clinical findings.',
     icon: Database02Icon, 
     path: '/view-records',
-    color: 'bg-violet-500/10 text-violet-400 border-violet-500/20',
+    color: 'bg-purple-500/10 text-purple-600 dark:text-purple-400 border-purple-500/25',
     permission: 'view_records'
   },
   { 
@@ -105,7 +106,7 @@ const quickActions = [
     description: 'Access complete registry of registered patients.',
     icon: UserGroupIcon, 
     path: '/view-patients',
-    color: 'bg-cyan-500/10 text-cyan-400 border-cyan-500/20',
+    color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25',
     permission: 'view_patients'
   },
   { 
@@ -113,7 +114,7 @@ const quickActions = [
     description: 'Manage clinic schedule and patient bookings.',
     icon: Calendar03Icon, 
     path: '/appointments',
-    color: 'bg-orange-500/10 text-orange-500 border-orange-500/20',
+    color: 'bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/25',
     permission: 'manage_appointments'
   },
   { 
@@ -121,7 +122,7 @@ const quickActions = [
     description: 'Track clinical supplies and stock levels.',
     icon: PackageIcon, 
     path: '/inventory',
-    color: 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20',
+    color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25',
     permission: 'view_inventory'
   },
   { 
@@ -129,7 +130,7 @@ const quickActions = [
     description: 'Internal communication & staff coordination.',
     icon: Activity01Icon, 
     path: '/messages',
-    color: 'bg-pink-500/10 text-pink-400 border-pink-500/20',
+    color: 'bg-fuchsia-500/10 text-fuchsia-600 dark:text-fuchsia-400 border-fuchsia-500/25',
     permission: 'messaging'
   },
 ];
@@ -140,7 +141,7 @@ const adminActions = [
     description: 'Monitor system-wide activity and security analytics.',
     icon: Activity01Icon, 
     path: '/security-analytics',
-    color: 'bg-rose-500/10 text-rose-500 border-rose-500/20',
+    color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25',
     permission: 'manage_roles'
   },
   { 
@@ -148,7 +149,7 @@ const adminActions = [
     description: 'Manage system users, roles, and account security.',
     icon: UserSettings01Icon, 
     path: '/user-management',
-    color: 'bg-sky-500/10 text-sky-400 border-sky-500/20',
+    color: 'bg-sky-500/10 text-sky-600 dark:text-sky-400 border-sky-500/25',
     permission: 'view_users'
   },
   { 
@@ -156,7 +157,7 @@ const adminActions = [
     description: 'Configure access control and role assignments.',
     icon: Shield01Icon, 
     path: '/roles-permissions',
-    color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25',
     permission: 'manage_roles'
   },
   { 
@@ -164,7 +165,7 @@ const adminActions = [
     description: 'Monitor system-wide activity and security events.',
     icon: Note01Icon, 
     path: '/audit-logs',
-    color: 'bg-slate-500/10 text-slate-400 border-slate-500/20',
+    color: 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border-slate-500/25',
     permission: 'view_audit_logs'
   },
   { 
@@ -172,7 +173,7 @@ const adminActions = [
     description: 'Export records and screening data to Excel.',
     icon: Database02Icon, 
     path: '/data-management',
-    color: 'bg-amber-500/10 text-amber-400 border-amber-500/20',
+    color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25',
     permission: 'download_data'
   },
   { 
@@ -180,7 +181,7 @@ const adminActions = [
     description: 'Generate temporary security entrance codes.',
     icon: Key01Icon, 
     path: '/admin/access-keys',
-    color: 'bg-primary/10 text-primary border-primary/20',
+    color: 'bg-violet-500/10 text-violet-600 dark:text-violet-400 border-violet-500/25',
     permission: 'manage_access_keys'
   },
   { 
@@ -188,7 +189,7 @@ const adminActions = [
     description: 'Configure AI agents and medical parameters.',
     icon: MachineRobotIcon, 
     path: '/ai-integration',
-    color: 'bg-primary/10 text-primary border-primary/20',
+    color: 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25',
     permission: 'manage_ai'
   },
   { 
@@ -196,7 +197,7 @@ const adminActions = [
     description: 'Customize clinic logos, names, and visual assets.',
     icon: PaintBrush01Icon, 
     path: '/system-branding',
-    color: 'bg-blue-500/10 text-blue-400 border-blue-500/20',
+    color: 'bg-pink-500/10 text-pink-600 dark:text-pink-400 border-pink-500/25',
     permission: 'manage_branding'
   },
   { 
@@ -204,7 +205,7 @@ const adminActions = [
     description: 'Manage clinical departments and system configurations.',
     icon: Settings02Icon, 
     path: '/system-config',
-    color: 'bg-indigo-500/10 text-indigo-400 border-indigo-500/20',
+    color: 'bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/25',
     permission: 'manage_departments'
   },
   { 
@@ -212,7 +213,7 @@ const adminActions = [
     description: 'Customize reference ranges, parameter names, and units on patient reports.',
     icon: Note01Icon, 
     path: '/report-customization',
-    color: 'bg-teal-500/10 text-teal-400 border-teal-500/20',
+    color: 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border-cyan-500/25',
     permission: 'manage_report_customization'
   },
 ];
@@ -228,9 +229,11 @@ const LiveClock: React.FC = () => {
   }, []);
 
   return (
-    <span className="flex items-center gap-1.5 font-bold transition-all">
-      <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5 text-primary" />
-      {time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • {time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}
+    <span className="flex items-center gap-1.5 font-medium transition-all truncate">
+      <HugeiconsIcon icon={Clock01Icon} className="h-3.5 w-3.5 text-primary shrink-0" />
+      <span className="hidden sm:inline">{time.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })} • </span>
+      <span className="sm:hidden">{time.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })} • </span>
+      <span>{time.toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', second: '2-digit', hour12: true })}</span>
     </span>
   );
 };
@@ -448,46 +451,94 @@ const Dashboard: React.FC = () => {
   return (
     <MainLayout>
       <div className="space-y-8 animate-in fade-in duration-700 dashboard-page">
-        {/* Welcome Section */}
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-          <div className="flex flex-col space-y-0.5 sm:space-y-1">
-            <h1 className="text-xl sm:text-3xl font-bold tracking-tight leading-tight">Welcome back, {user.first_name}!</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground leading-snug">
-              Currently managing <span className="text-primary font-bold">{activeSection}</span> for the <span className="text-primary font-bold">{activeYear}</span> Screening Program.
-            </p>
-            <div className="text-[11px] sm:text-xs text-muted-foreground/80 pt-0.5">
-              <LiveClock />
-            </div>
+        {/* Executive Welcome Hero Section */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-r from-teal-500/10 via-primary/5 to-emerald-500/10 dark:from-teal-950/45 dark:via-card/70 dark:to-emerald-950/30 backdrop-blur-md border border-teal-500/25 dark:border-teal-500/35 p-3.5 sm:p-5 lg:p-6 shadow-xs shadow-teal-500/5 group">
+          {/* Subtle Watermark Icon */}
+          <div className="absolute -right-8 -bottom-8 w-28 sm:w-44 h-28 sm:h-44 text-primary/[0.06] dark:text-primary/[0.1] pointer-events-none -rotate-12 group-hover:rotate-0 transition-transform duration-1000">
+             <HugeiconsIcon icon={Activity01Icon} className="w-full h-full stroke-1" />
           </div>
-          <div className="flex items-center gap-3 bg-card border rounded-xl p-2 md:p-3 md:px-5 w-full md:w-auto justify-start md:justify-end">
-             <div className={`w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0 transition-colors duration-300 ${
-                serverConnected === null ? 'bg-muted text-muted-foreground' : 
-                serverConnected ? 'bg-emerald-500/10 text-emerald-500' : 'bg-rose-500/10 text-rose-500'
-             }`}>
-                <HugeiconsIcon icon={Activity01Icon} className={`w-5 h-5 md:w-6 md:h-6 ${serverConnected === null ? 'animate-pulse' : serverConnected ? 'animate-pulse' : ''}`} />
-             </div>
-             <div className="text-left md:text-right min-w-0">
-                <p className="text-[8px] md:text-[10px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Status</p>
-                <div className="flex items-center md:justify-end gap-1.5 mt-0.5">
+
+          <div className="relative z-10 flex flex-col lg:flex-row lg:items-center justify-between gap-2.5 sm:gap-4">
+            <div className="space-y-1.5 sm:space-y-2 max-w-2xl">
+              {/* Badges & Mobile Connection Pill */}
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                  <span className="inline-flex items-center gap-1.5 px-2 sm:px-2.5 py-0.5 rounded-full bg-primary/10 border border-primary/20 text-[9px] font-bold uppercase tracking-wider text-primary shadow-2xs">
+                    <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
+                    Clinical Portal
+                  </span>
+                  <span className="inline-flex items-center gap-1 px-2 sm:px-2.5 py-0.5 rounded-full bg-muted/60 border border-border/60 text-[9px] font-bold uppercase tracking-wider text-muted-foreground">
+                    <strong className="text-foreground">{activeSection}</strong> • <strong className="text-foreground">{activeYear}</strong>
+                  </span>
+                </div>
+
+                {/* Mobile Server Connection Mini Pill */}
+                <div className="flex sm:hidden items-center gap-1.5 px-2 py-0.5 rounded-full bg-card/80 dark:bg-card/60 border border-border/70 shadow-2xs">
                    {serverConnected && (
-                      <span className="relative flex h-2 w-2">
+                      <span className="relative flex h-1.5 w-1.5">
                          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                         <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span>
                       </span>
                    )}
                    {!serverConnected && serverConnected !== null && (
-                      <span className="relative flex h-2 w-2">
-                         <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                      <span className="relative flex h-1.5 w-1.5">
+                         <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-rose-500"></span>
                       </span>
                    )}
-                   <p className={`text-xs md:text-sm font-bold truncate transition-colors duration-300 ${
+                   <span className={`text-[9px] font-bold tracking-tight ${
                       serverConnected === null ? 'text-muted-foreground' : 
-                      serverConnected ? 'text-emerald-600 font-black' : 'text-rose-600 font-black'
+                      serverConnected ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'
                    }`}>
-                      {serverConnected === null ? 'Checking...' : serverConnected ? 'Connected' : 'Disconnected'}
-                   </p>
+                      {serverConnected === null ? 'Checking' : serverConnected ? 'Operational' : 'Offline'}
+                   </span>
                 </div>
-             </div>
+              </div>
+
+              <div>
+                <h1 className="text-lg sm:text-2xl lg:text-3xl font-bold tracking-tight text-foreground leading-tight">
+                  {getTimeGreeting()}, {user.first_name}!
+                </h1>
+                <p className="hidden sm:block text-[11px] sm:text-sm text-muted-foreground font-medium mt-0.5">
+                  Overview of patient flow, pending clinical assessments, and operations.
+                </p>
+              </div>
+
+              <div className="text-[10px] sm:text-[11px] font-medium text-muted-foreground/90 pt-0 flex items-center gap-2">
+                <LiveClock />
+              </div>
+            </div>
+
+            {/* Desktop Server Status Widget (hidden on mobile, visible on sm and up) */}
+            <div className="hidden sm:flex items-center gap-3 bg-card/70 dark:bg-card/50 backdrop-blur-md border border-border/70 rounded-xl p-2.5 sm:p-3 px-4 shrink-0 shadow-2xs">
+               <div className={`w-8 h-8 sm:w-9 sm:h-9 rounded-lg flex items-center justify-center shrink-0 transition-colors duration-300 ${
+                  serverConnected === null ? 'bg-muted text-muted-foreground' : 
+                  serverConnected ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shadow-2xs' : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/20 shadow-2xs'
+               }`}>
+                  <HugeiconsIcon icon={Activity01Icon} className={`w-4.5 h-4.5 sm:w-5 sm:h-5 ${serverConnected === null ? 'animate-pulse' : serverConnected ? 'animate-pulse' : ''}`} />
+               </div>
+               <div className="text-left min-w-0">
+                  <p className="text-[8px] sm:text-[9px] uppercase tracking-wider font-bold text-muted-foreground truncate">Server Connection</p>
+                  <div className="flex items-center gap-1.5 mt-0.5">
+                     {serverConnected && (
+                        <span className="relative flex h-2 w-2">
+                           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                           <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                        </span>
+                     )}
+                     {!serverConnected && serverConnected !== null && (
+                        <span className="relative flex h-2 w-2">
+                           <span className="relative inline-flex rounded-full h-2 w-2 bg-rose-500"></span>
+                        </span>
+                     )}
+                     <p className={`text-xs font-bold truncate transition-colors duration-300 ${
+                        serverConnected === null ? 'text-muted-foreground' : 
+                        serverConnected ? 'text-emerald-600 dark:text-emerald-400 font-bold' : 'text-rose-600 dark:text-rose-400 font-bold'
+                     }`}>
+                        {serverConnected === null ? 'Checking...' : serverConnected ? 'Operational' : 'Offline'}
+                     </p>
+                  </div>
+               </div>
+            </div>
           </div>
         </div>
 
@@ -501,10 +552,10 @@ const Dashboard: React.FC = () => {
               transition={{ duration: 0.35 }}
               className="block sm:hidden"
             >
-              <div className="relative overflow-hidden rounded-xl border border-primary/20 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent p-4">
+              <div className="relative overflow-hidden rounded-xl border border-primary/25 bg-gradient-to-r from-primary/10 via-primary/5 to-transparent backdrop-blur-md p-4 shadow-xs">
                 <button
                   onClick={() => setPwaDismissed(true)}
-                  className="absolute top-2 right-2 p-1 rounded-full hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
+                  className="absolute top-2 right-2 p-1.5 rounded-lg hover:bg-primary/10 text-muted-foreground hover:text-foreground transition-colors z-10"
                   aria-label="Dismiss"
                 >
                   <HugeiconsIcon icon={Cancel01Icon} className="h-4 w-4" />
@@ -514,11 +565,11 @@ const Dashboard: React.FC = () => {
                 </div>
                 <div className="relative z-10 flex flex-col gap-3">
                   <div className="flex items-center gap-3">
-                    <div className="h-10 w-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
+                    <div className="h-10 w-10 rounded-lg bg-primary/15 flex items-center justify-center shrink-0 border border-primary/20">
                       <HugeiconsIcon icon={Download01Icon} className="h-5 w-5 text-primary" />
                     </div>
                     <div>
-                      <h3 className="text-sm font-black text-foreground tracking-tight">Install the App</h3>
+                      <h3 className="text-sm font-bold text-foreground tracking-tight">Install the App</h3>
                       <p className="text-[11px] text-muted-foreground font-medium leading-snug">
                         Add to your home screen for quick access.
                       </p>
@@ -526,7 +577,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <Button
                     onClick={handlePwaInstall}
-                    className="w-full h-10 rounded-lg font-black text-xs uppercase tracking-wider active:scale-95 transition-all gap-2"
+                    className="w-full h-10 rounded-lg font-bold text-xs uppercase tracking-wider active:scale-95 transition-all gap-2 shadow-xs"
                   >
                     <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
                     Install Now
@@ -540,8 +591,8 @@ const Dashboard: React.FC = () => {
         {/* Quick Actions Grid */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-bold tracking-tight">Quick Actions</h2>
-            <div className="h-px flex-1 bg-border" />
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-foreground">Quick Actions</h2>
+            <div className="h-px flex-1 bg-border/60" />
           </div>
           
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-3">
@@ -550,23 +601,23 @@ const Dashboard: React.FC = () => {
               return (
                 <Card 
                   key={action.path}
-                  className="group cursor-pointer transition-all duration-300 border hover:border-primary/20 overflow-hidden bg-card/50 backdrop-blur-sm flex flex-col h-full"
+                  className="group cursor-pointer transition-all duration-300 border border-border/60 hover:border-primary/40 rounded-xl overflow-hidden bg-card/50 hover:bg-card/80 backdrop-blur-md shadow-2xs hover:shadow-md hover:-translate-y-0.5 flex flex-col h-full"
                   onClick={() => navigate(action.path)}
                 >
                   <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
-                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
+                    <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
                       <HugeiconsIcon icon={action.icon} className="w-4.5 h-4.5" />
                     </div>
                     <div className="min-w-0">
-                      <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
-                      <CardDescription className="text-[10px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
+                      <CardTitle className="text-sm font-bold tracking-tight truncate">{action.title}</CardTitle>
+                      <CardDescription className="text-[11px] font-medium text-muted-foreground line-clamp-1 mt-0.5">
                         {action.description}
                       </CardDescription>
                     </div>
                   </CardHeader>
                   <CardContent className="p-3.5 pt-0 mt-auto">
-                    <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
-                      <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
+                    <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/70 border-t border-border/50 pt-2.5">
+                      <span className="text-[9px] uppercase font-bold tracking-wider">Open Tool</span>
                       <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                     </div>
                   </CardContent>
@@ -587,7 +638,7 @@ const Dashboard: React.FC = () => {
           return (
             <div className="space-y-4">
               <div className="flex items-center gap-2">
-                <h2 className="text-xl font-black tracking-tight text-primary">Admin Control Panel</h2>
+                <h2 className="text-lg sm:text-xl font-bold tracking-tight text-primary">Admin Control Panel</h2>
                 <div className="h-px flex-1 bg-primary/20" />
               </div>
               
@@ -595,23 +646,23 @@ const Dashboard: React.FC = () => {
                 {filteredAdminActions.map((action) => (
                   <Card 
                     key={action.path}
-                    className="group cursor-pointer transition-all duration-300 border hover:border-primary/20 overflow-hidden bg-primary/[0.03] backdrop-blur-sm flex flex-col h-full"
+                    className="group cursor-pointer transition-all duration-300 border border-primary/20 hover:border-primary/45 rounded-xl overflow-hidden bg-primary/[0.03] hover:bg-primary/[0.08] backdrop-blur-md shadow-2xs hover:shadow-md hover:-translate-y-0.5 flex flex-col h-full"
                     onClick={() => navigate(action.path)}
                   >
                     <CardHeader className="p-3.5 pb-2.5 flex flex-row items-center gap-3 space-y-0 flex-1">
-                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-110 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
+                      <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 transition-transform duration-300 group-hover:scale-105 ${action.color.split(' ').slice(0,2).join(' ')} border ${action.color.split(' ')[2]}`}>
                         <HugeiconsIcon icon={action.icon} className="w-4.5 h-4.5" />
                       </div>
                       <div className="min-w-0">
-                        <CardTitle className="text-sm font-black tracking-tight truncate">{action.title}</CardTitle>
-                        <CardDescription className="text-[10px] font-medium text-muted-foreground line-clamp-1 mt-0.5 italic">
+                        <CardTitle className="text-sm font-bold tracking-tight truncate">{action.title}</CardTitle>
+                        <CardDescription className="text-[11px] font-medium text-muted-foreground line-clamp-1 mt-0.5 italic">
                           {action.description}
                         </CardDescription>
                       </div>
                     </CardHeader>
                     <CardContent className="p-3.5 pt-0 mt-auto">
-                      <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/60 border-t border-dashed pt-2.5">
-                        <span className="text-[9px] uppercase font-black tracking-widest">Open Tool</span>
+                      <div className="flex items-center justify-between group-hover:text-primary transition-colors text-muted-foreground/70 border-t border-primary/15 pt-2.5">
+                        <span className="text-[9px] uppercase font-bold tracking-wider">Open Tool</span>
                         <HugeiconsIcon icon={ArrowRight01Icon} className="w-3.5 h-3.5 transition-transform duration-300 group-hover:translate-x-1" />
                       </div>
                     </CardContent>
@@ -625,9 +676,9 @@ const Dashboard: React.FC = () => {
         {/* Queue Stats Section */}
         <div className="space-y-4">
           <div className="flex items-center gap-2">
-            <h2 className="text-xl font-black tracking-tight text-primary">Department Queues</h2>
+            <h2 className="text-lg sm:text-xl font-bold tracking-tight text-primary">Department Queues</h2>
             <div className="h-px flex-1 bg-primary/20" />
-            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-black uppercase tracking-widest text-primary hover:bg-primary/10">
+            <Button variant="ghost" size="sm" onClick={fetchQueueStats} className="text-[10px] font-bold uppercase tracking-wider text-primary hover:bg-primary/10 rounded-lg">
               Refresh
             </Button>
           </div>
@@ -635,10 +686,10 @@ const Dashboard: React.FC = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {isLoading ? (
               Array.from({ length: 4 }).map((_, i) => (
-                <Card key={i} className="border border-border/80 bg-card/45 backdrop-blur-sm">
+                <Card key={i} className="border border-border/60 bg-card/45 backdrop-blur-sm rounded-xl">
                   <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5 min-w-0 w-full animate-pulse">
-                      <Skeleton className="h-8 w-8 rounded-xl shrink-0 bg-muted/40" />
+                      <Skeleton className="h-8 w-8 rounded-lg shrink-0 bg-muted/40" />
                       <div className="space-y-1.5 w-full flex-1">
                         <Skeleton className="h-4 w-24 rounded bg-muted/40" />
                         <Skeleton className="h-3 w-12 rounded bg-muted/40" />
@@ -650,27 +701,27 @@ const Dashboard: React.FC = () => {
               ))
             ) : (
               [
-                { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20', icon: StethoscopeIcon },
-                { id: 'audiometry', label: 'Audiometry', color: 'bg-primary/10 text-primary border-primary/20', icon: VolumeHighIcon },
-                { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-500 border-orange-500/20', icon: FastWindIcon },
-                { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-500 border-rose-500/20', icon: FavouriteIcon }
+                { id: 'consultation', label: 'Consultation', color: 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/25', borderTop: 'border-t-blue-500', icon: StethoscopeIcon },
+                { id: 'audiometry', label: 'Audiometry', color: 'bg-teal-500/10 text-teal-600 dark:text-teal-400 border-teal-500/25', borderTop: 'border-t-teal-500', icon: VolumeHighIcon },
+                { id: 'spirometry', label: 'Spirometry', color: 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/25', borderTop: 'border-t-amber-500', icon: FastWindIcon },
+                { id: 'ecg', label: 'ECG', color: 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/25', borderTop: 'border-t-rose-500', icon: FavouriteIcon }
               ].map((dept) => (
                 <Card 
                   key={dept.id} 
-                  className="group cursor-pointer transition-all duration-300 border border-border/80 hover:border-primary/30 overflow-hidden bg-card/45 backdrop-blur-sm relative"
+                  className={`group cursor-pointer transition-all duration-300 border border-border/60 hover:border-primary/40 ${dept.borderTop} border-t-2 rounded-xl overflow-hidden bg-card/50 hover:bg-card/80 backdrop-blur-md shadow-2xs hover:shadow-md hover:-translate-y-0.5 relative`}
                   onClick={() => fetchQueueList(dept.label)}
                 >
                   <CardContent className="p-3 sm:p-3.5 flex items-center justify-between gap-3 relative z-10">
                     <div className="flex items-center gap-2.5 min-w-0">
-                      <div className={`p-1.5 sm:p-2 rounded-xl shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
+                      <div className={`p-2 rounded-lg shrink-0 ${dept.color.split(' ').slice(0, 2).join(' ')} border ${dept.color.split(' ')[2]}`}>
                         <HugeiconsIcon icon={dept.icon} className="h-4 w-4" />
                       </div>
                       <div className="min-w-0">
                         <h4 className="text-xs sm:text-sm font-bold tracking-tight text-foreground truncate">{dept.label}</h4>
                         <div className="flex items-center gap-1.5 mt-0.5">
                           <span className="relative flex h-1.5 w-1.5 shrink-0">
-                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-primary/70' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
-                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-primary' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
+                            <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${dept.id === 'consultation' ? 'bg-blue-400' : dept.id === 'audiometry' ? 'bg-teal-400' : dept.id === 'spirometry' ? 'bg-amber-400' : 'bg-rose-400'}`}></span>
+                            <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${dept.id === 'consultation' ? 'bg-blue-500' : dept.id === 'audiometry' ? 'bg-teal-500' : dept.id === 'spirometry' ? 'bg-amber-500' : 'bg-rose-500'}`}></span>
                           </span>
                           <span className="text-[9px] uppercase tracking-wider font-bold text-muted-foreground/80">Waiting</span>
                         </div>
@@ -680,7 +731,7 @@ const Dashboard: React.FC = () => {
                       <span className="text-xl sm:text-2xl font-black tracking-tighter text-foreground group-hover:text-primary transition-colors">
                         {queueStats?.[dept.id] || 0}
                       </span>
-                      <div className="flex items-center justify-center h-6 w-6 rounded-lg bg-muted/40 group-hover:bg-primary/10 transition-colors">
+                      <div className="flex items-center justify-center h-6 w-6 rounded-md bg-muted/50 group-hover:bg-primary/10 transition-colors">
                         <HugeiconsIcon icon={ArrowRight01Icon} className="h-3 w-3 text-muted-foreground group-hover:text-primary group-hover:translate-x-0.5 transition-all" />
                       </div>
                     </div>
@@ -694,21 +745,21 @@ const Dashboard: React.FC = () => {
 
         {/* Recent Overview */}
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <Card className="lg:col-span-2 border">
+            <Card className="lg:col-span-2 border border-border/60 bg-card/60 dark:bg-card/45 backdrop-blur-md rounded-xl shadow-xs">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
                         <HugeiconsIcon icon={Activity01Icon} className="h-5 w-5 text-primary" />
                         System Statistics
                     </CardTitle>
                     <CardDescription>Performance Overview for {activeSection} - {activeYear}</CardDescription>
                 </CardHeader>
-                <CardContent className="p-6 pt-4 border-t border-dashed bg-muted/5">
+                <CardContent className="p-6 pt-4 border-t border-border/50 bg-muted/5">
                     <div className="space-y-6">
                         {/* Summary Metrics */}
                         <div className="grid grid-cols-2 gap-4">
                             {isLoading ? (
                                 Array.from({ length: 2 }).map((_, i) => (
-                                    <div key={i} className="p-4 rounded-xl border bg-muted/5 flex items-center gap-3 animate-pulse">
+                                    <div key={i} className="p-4 rounded-xl border border-border/60 bg-card/50 flex items-center gap-3 animate-pulse">
                                         <Skeleton className="h-8 w-8 rounded-lg bg-muted/40 animate-pulse" />
                                         <div className="space-y-2 flex-1">
                                             <Skeleton className="h-3 w-24 rounded bg-muted/40 animate-pulse" />
@@ -718,16 +769,16 @@ const Dashboard: React.FC = () => {
                                 ))
                             ) : (
                                 [
-                                    { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: UserGroupIcon, color: 'text-blue-600', bg: 'bg-blue-500/10' },
-                                    { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity01Icon, color: 'text-primary', bg: 'bg-primary/10' }
+                                    { label: 'Total Registered', count: stats?.registration_stats?.year_total, icon: UserGroupIcon, color: 'text-blue-600 dark:text-blue-400', bg: 'bg-blue-500/10 border-blue-500/20', gradient: 'from-blue-500/5 to-transparent' },
+                                    { label: 'Registered Today', count: stats?.registration_stats?.today, icon: Activity01Icon, color: 'text-teal-600 dark:text-teal-400', bg: 'bg-teal-500/10 border-teal-500/20', gradient: 'from-teal-500/5 to-transparent' }
                                 ].map((s) => (
-                                    <div key={s.label} className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border border-transparent hover:border-primary/10 transition-all group/stat cursor-default overflow-hidden relative">
+                                    <div key={s.label} className={`bg-gradient-to-br ${s.gradient} bg-card/60 dark:bg-card/40 backdrop-blur-sm p-4 rounded-xl border border-border/60 hover:border-primary/30 shadow-2xs hover:shadow-xs transition-all group/stat cursor-default overflow-hidden relative`}>
                                         <div className="absolute top-0 right-0 w-16 h-16 bg-primary/5 rounded-bl-full translate-x-4 -translate-y-4 group-hover:scale-150 transition-transform duration-500"></div>
                                         <div className="flex items-center gap-2 mb-2 relative z-10">
-                                            <div className={`p-1.5 rounded-lg ${s.bg}`}>
+                                            <div className={`p-1.5 rounded-lg border ${s.bg}`}>
                                                 <HugeiconsIcon icon={s.icon} className={`h-4 w-4 ${s.color}`} />
                                             </div>
-                                            <p className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80">{s.label}</p>
+                                            <p className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80">{s.label}</p>
                                         </div>
                                         <div className="flex items-baseline gap-1 relative z-10">
                                             <h4 className="text-2xl font-black tracking-tighter group-hover:text-primary transition-colors">{s.count?.toLocaleString() || '0'}</h4>
@@ -741,8 +792,8 @@ const Dashboard: React.FC = () => {
                         {/* Charts */}
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             {/* Gender Distribution Chart */}
-                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border flex flex-col items-center">
-                                <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
+                            <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm p-4 rounded-xl border border-border/60 shadow-2xs flex flex-col items-center">
+                                <h4 className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 w-full text-left">Gender Distribution</h4>
                                 <div className="h-[150px] md:h-[140px] w-full mt-2 flex items-center justify-center">
                                     {isLoading ? (
                                         <div className="flex items-center gap-6 w-full px-4 animate-pulse">
@@ -777,11 +828,11 @@ const Dashboard: React.FC = () => {
                                                     dataKey="value"
                                                     stroke="none"
                                                 >
-                                                    <Cell fill="#4f46e5" /> {/* Indigo for Males */}
-                                                    <Cell fill="#e11d48" /> {/* Rose for Females */}
+                                                    <Cell fill="#0d9488" /> {/* Medical Teal for Males */}
+                                                    <Cell fill="#f43f5e" /> {/* Coral Rose for Females */}
                                                 </Pie>
                                                 <Tooltip 
-                                                    contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border) / 0.8)', backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'hsl(var(--foreground))', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.15)' }}
                                                     itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                                 />
                                                 <Legend 
@@ -814,8 +865,8 @@ const Dashboard: React.FC = () => {
                             </div>
 
                             {/* Age Distribution Chart */}
-                            <div className="bg-gradient-to-br from-muted/5 to-muted/10 p-4 rounded-xl border flex flex-col items-center">
-                                <h4 className="text-[10px] uppercase font-black tracking-widest text-muted-foreground/80 w-full text-left">Age Demographics</h4>
+                            <div className="bg-card/60 dark:bg-card/40 backdrop-blur-sm p-4 rounded-xl border border-border/60 shadow-2xs flex flex-col items-center">
+                                <h4 className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground/80 w-full text-left">Age Demographics</h4>
                                 <div className="h-[140px] w-full mt-2 flex items-end justify-center">
                                     {isLoading ? (
                                         <div className="flex items-end justify-around w-full h-[120px] px-8 pb-2 animate-pulse">
@@ -840,13 +891,13 @@ const Dashboard: React.FC = () => {
                                                 <XAxis dataKey="name" tick={{ fontSize: 10, fontWeight: 'bold', fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
                                                 <YAxis tick={{ fontSize: 10, fill: 'currentColor', opacity: 0.7 }} axisLine={false} tickLine={false} />
                                                 <Tooltip 
-                                                    cursor={{ fill: 'var(--primary)', opacity: 0.1 }}
-                                                    contentStyle={{ borderRadius: '0px', border: 'none', backgroundColor: 'var(--card)', color: 'var(--foreground)', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)' }}
+                                                    cursor={{ fill: 'var(--primary)', opacity: 0.08 }}
+                                                    contentStyle={{ borderRadius: '8px', border: '1px solid hsl(var(--border) / 0.8)', backgroundColor: 'hsl(var(--card) / 0.9)', backdropFilter: 'blur(12px)', WebkitBackdropFilter: 'blur(12px)', color: 'hsl(var(--foreground))', boxShadow: '0 10px 25px -5px rgb(0 0 0 / 0.15)' }}
                                                     itemStyle={{ fontSize: '12px', fontWeight: 'bold' }}
                                                 />
-                                                <Bar dataKey="value" radius={0} maxBarSize={50}>
-                                                    <Cell fill="#d97706" /> {/* Amber */}
-                                                    <Cell fill="#9333ea" /> {/* Purple */}
+                                                <Bar dataKey="value" radius={[4, 4, 0, 0]} maxBarSize={50}>
+                                                    <Cell fill="#6366f1" /> {/* Indigo */}
+                                                    <Cell fill="#f59e0b" /> {/* Amber Gold */}
                                                 </Bar>
                                             </BarChart>
                                         </ResponsiveContainer>
@@ -858,19 +909,19 @@ const Dashboard: React.FC = () => {
                 </CardContent>
             </Card>
 
-            <Card className="border">
+            <Card className="border border-border/60 bg-card/60 dark:bg-card/45 backdrop-blur-md rounded-xl shadow-xs overflow-hidden">
                 <CardHeader className="pb-4">
-                    <CardTitle className="flex items-center gap-2">
+                    <CardTitle className="flex items-center gap-2 text-base sm:text-lg font-bold">
                         <HugeiconsIcon icon={UserIcon} className="h-5 w-5 text-primary" />
                         Recent Registrations
                     </CardTitle>
                     <CardDescription>Latest patients added</CardDescription>
                 </CardHeader>
                 <CardContent className="p-0">
-                    <div className="divide-y border-t max-h-[350px] overflow-y-auto">
+                    <div className="divide-y border-t border-border/50 max-h-[350px] overflow-y-auto">
                         {isLoading ? (
                             Array.from({ length: 4 }).map((_, i) => (
-                                <div key={i} className="flex items-center justify-between p-4 px-6 hover:bg-muted/50 transition-colors animate-pulse">
+                                <div key={i} className="flex items-center justify-between p-4 px-6 hover:bg-muted/40 transition-colors animate-pulse">
                                     <div className="flex items-center gap-3">
                                         <Skeleton className="w-9 h-9 rounded-full bg-muted/40 animate-pulse" />
                                         <div className="space-y-2">
@@ -886,19 +937,19 @@ const Dashboard: React.FC = () => {
                             ))
                         ) : stats?.recent_registrations?.length > 0 ? (
                             stats.recent_registrations.map((reg: any) => (
-                                <div key={reg.staff_id} className="flex items-center justify-between p-4 px-6 hover:bg-muted/50 transition-colors group/row">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-9 h-9 rounded-full bg-primary/5 border border-primary/10 flex items-center justify-center text-xs font-bold text-primary group-hover/row:bg-primary group-hover/row:text-white transition-all">
+                                <div key={reg.staff_id} className="flex items-center justify-between p-3.5 px-5 hover:bg-muted/30 dark:hover:bg-card/70 transition-colors group/row">
+                                    <div className="flex items-center gap-3 min-w-0">
+                                        <div className="w-8 h-8 rounded-full bg-primary/10 border border-primary/20 flex items-center justify-center text-xs font-bold text-primary group-hover/row:bg-primary group-hover/row:text-primary-foreground transition-all shrink-0 shadow-2xs">
                                             {reg.first_name?.[0]}{reg.last_name?.[0]}
                                         </div>
-                                        <div className="text-sm">
-                                            <p className="font-bold">{reg.first_name} {reg.last_name}</p>
-                                            <p className="text-xs text-muted-foreground font-medium">ID: {reg.staff_id}</p>
+                                        <div className="min-w-0">
+                                            <p className="font-bold text-xs text-foreground truncate">{reg.first_name} {reg.last_name}</p>
+                                            <p className="text-[10px] text-muted-foreground font-mono font-medium truncate">ID: {reg.staff_id}</p>
                                         </div>
                                     </div>
-                                    <div className="text-right">
-                                        <span className="text-[10px] font-bold text-primary block">{reg.patient_id}</span>
-                                        <span className="text-[10px] font-medium text-muted-foreground">{getRelativeTime(reg.created_at)}</span>
+                                    <div className="text-right shrink-0 pl-2">
+                                        <span className="text-[10px] font-mono font-bold text-primary block">{reg.patient_id}</span>
+                                        <span className="text-[9px] font-medium text-muted-foreground/80">{getRelativeTime(reg.created_at)}</span>
                                     </div>
                                 </div>
                             ))
@@ -914,14 +965,14 @@ const Dashboard: React.FC = () => {
 
         {/* Queue List Modal */}
         <Dialog open={isQueueModalOpen} onOpenChange={setIsQueueModalOpen}>
-            <DialogContent className="max-w-2xl sm:max-w-[500px] border-primary/20 dashboard-dialog p-4 sm:p-6">
+            <DialogContent className="max-w-2xl sm:max-w-[500px] border border-border/70 bg-card/95 backdrop-blur-xl rounded-2xl dashboard-dialog p-4 sm:p-6 shadow-2xl">
                 <DialogHeader className="text-left">
                     <div className="flex items-center gap-3 mb-2 text-left">
-                        <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                        <div className="w-11 h-11 rounded-xl bg-primary/10 border border-primary/20 flex items-center justify-center text-primary shadow-2xs">
                             <HugeiconsIcon icon={ClipboardIcon} className="w-6 h-6" />
                         </div>
                         <div>
-                            <DialogTitle className="text-lg sm:text-xl font-black tracking-tight">{selectedDept} Queue</DialogTitle>
+                            <DialogTitle className="text-lg sm:text-xl font-bold tracking-tight">{selectedDept} Queue</DialogTitle>
                             <DialogDescription className="text-[11px] sm:text-xs font-medium"> Patients currently waiting for assessment</DialogDescription>
                         </div>
                     </div>
@@ -932,9 +983,9 @@ const Dashboard: React.FC = () => {
                         {loadingQueue ? (
                             <div className="space-y-3">
                                 {Array.from({ length: 4 }).map((_, idx) => (
-                                    <div key={idx} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card gap-3">
+                                    <div key={idx} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border border-border/60 bg-card/50 gap-3">
                                         <div className="flex items-center gap-3 min-w-0 flex-1">
-                                            <Skeleton className="w-10 h-10 rounded-xl bg-muted/40 animate-pulse shrink-0" />
+                                            <Skeleton className="w-10 h-10 rounded-lg bg-muted/40 animate-pulse shrink-0" />
                                             <div className="min-w-0 flex-1 flex flex-col gap-2">
                                                 <Skeleton className="h-4 w-32 rounded bg-muted/40 animate-pulse" />
                                                 <Skeleton className="h-3 w-48 rounded bg-muted/40 animate-pulse" />
@@ -947,14 +998,14 @@ const Dashboard: React.FC = () => {
                         ) : queueEntries.length > 0 ? (
                             <div className="space-y-3">
                                 {queueEntries.map((entry, idx) => (
-                                    <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border bg-card hover:bg-muted/10 transition-all duration-300 gap-3 group">
+                                    <div key={entry.staff_id} className="flex items-center justify-between p-3.5 sm:p-4 rounded-xl border border-border/60 bg-card/70 dark:bg-card/50 backdrop-blur-sm hover:bg-card/95 shadow-2xs hover:shadow-xs transition-all duration-200 gap-3 group">
                                         {/* Left Block (Avatar + Info) */}
                                         <div className="flex items-center gap-3 min-w-0 flex-1">
                                             <div className="relative shrink-0">
-                                                <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center text-xs font-black text-primary border border-primary/20 transition-transform group-hover:scale-105">
+                                                <div className="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center text-xs font-bold text-primary border border-primary/20 transition-transform group-hover:scale-105 shadow-2xs">
                                                     {entry.first_name?.[0]}{entry.last_name?.[0]}
                                                 </div>
-                                                <Badge className="absolute -top-2 -left-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-black text-[9px] px-1.5 py-0.5 border border-background h-5 min-w-[20px] flex items-center justify-center shadow-md">
+                                                <Badge className="absolute -top-2 -left-2 rounded-full bg-blue-500 hover:bg-blue-600 text-white font-bold text-[9px] px-1.5 py-0.5 border border-background h-5 min-w-[20px] flex items-center justify-center shadow-2xs">
                                                     #{entry.queue_number || '--'}
                                                 </Badge>
                                             </div>
@@ -962,7 +1013,8 @@ const Dashboard: React.FC = () => {
                                             <div className="min-w-0 flex-1 flex flex-col justify-center gap-0">
                                                 <p className="font-bold text-sm text-foreground tracking-tight truncate whitespace-nowrap leading-tight">{entry.first_name} {entry.last_name}</p>
                                                 
-                                                <div className="flex items-center justify-between gap-3 mt-0.5 w-full">                                                    {/* ID & Time: stacked on mobile, row on desktop */}
+                                                <div className="flex items-center justify-between gap-3 mt-0.5 w-full">
+                                                    {/* ID & Time: stacked on mobile, row on desktop */}
                                                     <div className="flex flex-col sm:flex-row sm:items-center gap-0.5 sm:gap-2 text-muted-foreground text-[10px] leading-none shrink-0">
                                                         <span className="font-bold uppercase tracking-wider">ID: {entry.staff_id}</span>
                                                         <span className="hidden sm:inline text-muted-foreground/60">•</span>
@@ -978,7 +1030,7 @@ const Dashboard: React.FC = () => {
                                                             <Button 
                                                                 size="sm" 
                                                                 variant="ghost" 
-                                                                className="h-7 w-7 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                                className="h-7 w-7 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0 shadow-2xs"
                                                                 onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
                                                                 title="Remove from queue"
                                                             >
@@ -996,7 +1048,7 @@ const Dashboard: React.FC = () => {
                                                 <Button 
                                                     size="sm" 
                                                     variant="ghost" 
-                                                    className="h-8 w-8 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0"
+                                                    className="h-8 w-8 p-0 text-rose-500 hover:text-white hover:bg-rose-500 border border-rose-500/20 hover:border-transparent rounded-lg flex items-center justify-center transition-colors shrink-0 shadow-2xs"
                                                     onClick={() => handleDeleteQueueEntry(selectedDept || '', entry.staff_id)}
                                                     title="Remove from queue"
                                                 >
@@ -1021,7 +1073,7 @@ const Dashboard: React.FC = () => {
                     <Button 
                         variant="ghost" 
                         onClick={() => setIsQueueModalOpen(false)}
-                        className="font-black text-xs uppercase tracking-widest"
+                        className="font-bold text-xs uppercase tracking-wider rounded-lg"
                     >
                         Close
                     </Button>

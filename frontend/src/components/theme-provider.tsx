@@ -34,51 +34,45 @@ export function ThemeProvider({
   const [resolvedTheme, setResolvedTheme] = useState<"light" | "dark">("light")
 
   useEffect(() => {
-    const storedTheme = localStorage.getItem(storageKey);
-    if (!storedTheme) {
-      fetch('/api/config/default-theme')
-        .then(res => {
-          if (!res.ok) throw new Error("API error");
-          return res.json();
-        })
-        .then(data => {
-          if (data.default_theme && (data.default_theme === 'light' || data.default_theme === 'dark' || data.default_theme === 'system')) {
-            setTheme(data.default_theme);
-          }
-        })
-        .catch(err => console.error("Failed to fetch default theme:", err));
-    }
-  }, [storageKey]);
-
-  useEffect(() => {
     const root = window.document.documentElement
 
-    root.classList.remove("light", "dark")
+    const applyTheme = () => {
+      root.classList.remove("light", "dark")
 
-    let current: "light" | "dark" = "light"
-    if (theme === "system") {
-      current = window.matchMedia("(prefers-color-scheme: dark)").matches
-        ? "dark"
-        : "light"
-    } else {
-      current = theme as "light" | "dark"
+      let current: "light" | "dark" = "light"
+      if (theme === "system") {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches
+          ? "dark"
+          : "light"
+      } else {
+        current = theme as "light" | "dark"
+      }
+
+      root.classList.add(current)
+      setResolvedTheme(current)
+
+      // Update PWA theme-color meta tag dynamically to match current theme
+      const themeColor = current === 'dark' ? '#000000' : '#ffffff'
+      const existingMetas = document.querySelectorAll('meta[name="theme-color"]')
+      existingMetas.forEach(meta => meta.remove())
+
+      const meta = document.createElement('meta')
+      meta.setAttribute('name', 'theme-color')
+      meta.setAttribute('content', themeColor)
+      document.head.appendChild(meta)
+
+      // Set cookie for backend manifest sync
+      document.cookie = `theme=${current}; path=/; max-age=31536000; SameSite=Lax`
     }
 
-    root.classList.add(current)
-    setResolvedTheme(current)
+    applyTheme()
 
-    // Update PWA theme-color meta tag dynamically to match current theme
-    const themeColor = current === 'dark' ? '#000000' : '#ffffff'
-    const existingMetas = document.querySelectorAll('meta[name="theme-color"]')
-    existingMetas.forEach(meta => meta.remove())
-
-    const meta = document.createElement('meta')
-    meta.setAttribute('name', 'theme-color')
-    meta.setAttribute('content', themeColor)
-    document.head.appendChild(meta)
-
-    // Set cookie for backend manifest sync
-    document.cookie = `theme=${current}; path=/; max-age=31536000; SameSite=Lax`
+    if (theme === "system") {
+      const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)")
+      const handleChange = () => applyTheme()
+      mediaQuery.addEventListener("change", handleChange)
+      return () => mediaQuery.removeEventListener("change", handleChange)
+    }
   }, [theme])
 
   const value = {

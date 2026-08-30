@@ -197,38 +197,69 @@ const ViewRecordsPage: React.FC = () => {
                     </div>
                     
                     <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
-                        <div className="flex-1 min-w-[280px]">
-                            <PatientSearch
-                                activeSection={activeSection}
-                                onSearch={(query, searchType) => {
-                                    setSearchTerm(query);
-                                    fetchRecords(1, query, searchType, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
-                                }}
-                                onSelect={(p) => {
-                                    setSearchTerm(p.staff_id);
-                                    fetchRecords(1, p.staff_id, 'general', perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
-                                }}
-                                searching={loading}
-                                themeColor="primary"
-                                placeholder="Search Staff ID or Name..."
-                                year={activeYear}
-                                strict={true}
-                                showPidToggle={true}
-                            />
-                        </div>
-                        <Button
-                            variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
-                        >
-                            <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
-                            <span>Filters</span>
-                            {activeFiltersCount > 0 && (
-                                <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
-                                    {activeFiltersCount}
-                                </Badge>
-                            )}
-                        </Button>
+                        {searchTerm && searchTerm.trim() !== '' ? (
+                            <>
+                                <Button
+                                    variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="h-11 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                                >
+                                    <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                                    <span>Filters</span>
+                                    {activeFiltersCount > 0 && (
+                                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                            {activeFiltersCount}
+                                        </Badge>
+                                    )}
+                                </Button>
+                                <Button
+                                    variant="outline"
+                                    onClick={() => {
+                                        setSearchTerm('');
+                                        fetchRecords(1, '', undefined, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+                                    }}
+                                    className="gap-2 border-2 border-primary/25 hover:border-primary hover:bg-primary/5 rounded-xl font-bold h-11 px-5 transition-all shadow-xs shrink-0 self-start sm:self-auto"
+                                >
+                                    <HugeiconsIcon icon={ArrowLeft01Icon} className="h-4 w-4 text-primary" />
+                                    <span>Back to Search</span>
+                                </Button>
+                            </>
+                        ) : (
+                            <>
+                                <div className="flex-1 min-w-[280px]">
+                                    <PatientSearch
+                                        activeSection={activeSection}
+                                        onSearch={(query, searchType) => {
+                                            setSearchTerm(query);
+                                            fetchRecords(1, query, searchType, perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+                                        }}
+                                        onSelect={(p) => {
+                                            setSearchTerm(p.staff_id);
+                                            fetchRecords(1, p.staff_id, 'general', perPage, { gender: genderFilter, dept: deptFilter, minA: minAge, maxA: maxAge });
+                                        }}
+                                        searching={loading}
+                                        themeColor="primary"
+                                        placeholder="Search Staff ID or Name..."
+                                        year={activeYear}
+                                        strict={true}
+                                        showPidToggle={true}
+                                    />
+                                </div>
+                                <Button
+                                    variant={showFilters || activeFiltersCount > 0 ? "default" : "outline"}
+                                    onClick={() => setShowFilters(!showFilters)}
+                                    className="h-11 sm:h-16 px-4 rounded-xl font-bold flex items-center gap-2 transition-all duration-300 shadow-sm"
+                                >
+                                    <HugeiconsIcon icon={FilterIcon} className="w-4 h-4" />
+                                    <span>Filters</span>
+                                    {activeFiltersCount > 0 && (
+                                        <Badge variant="secondary" className="bg-white/20 text-white border-none text-[10px] px-1.5 py-0.5 rounded-full font-black">
+                                            {activeFiltersCount}
+                                        </Badge>
+                                    )}
+                                </Button>
+                            </>
+                        )}
                     </div>
                 </div>
 

@@ -199,7 +199,6 @@ const SystemConfigPage: React.FC = () => {
     const [bulkAiReviewEnabled, setBulkAiReviewEnabled] = useState(true);
     const [bulkReportDownloadEnabled, setBulkReportDownloadEnabled] = useState(true);
     const [bulkReportEmailEnabled, setBulkReportEmailEnabled] = useState(true);
-    const [defaultThemeSetting, setDefaultThemeSetting] = useState<'light' | 'dark'>('light');
     const [confirmMaintenanceModal, setConfirmMaintenanceModal] = useState({
         open: false,
         title: '',
@@ -219,6 +218,13 @@ const SystemConfigPage: React.FC = () => {
     const [tickerIcon, setTickerIcon] = useState<'warning' | 'info' | 'alert' | 'success' | 'pin'>('info');
     const [tickerEnabled, setTickerEnabled] = useState(false);
     const [tickerSaving, setTickerSaving] = useState(false);
+
+    // Visitor Maintenance Mode State
+    const [maintenanceModeEnabled, setMaintenanceModeEnabled] = useState(false);
+    const [maintenanceTitle, setMaintenanceTitle] = useState('System Under Scheduled Maintenance');
+    const [maintenanceMessage, setMaintenanceMessage] = useState('We are currently performing routine upgrades and performance enhancements. Services will resume shortly.');
+    const [maintenanceEta, setMaintenanceEta] = useState('');
+    const [maintenanceConfigSaving, setMaintenanceConfigSaving] = useState(false);
 
     const fetchData = useCallback(async () => {
         setLoading(true);
@@ -295,9 +301,6 @@ const SystemConfigPage: React.FC = () => {
             if (response.data.bulk_report_email_enabled !== undefined) {
                 setBulkReportEmailEnabled(response.data.bulk_report_email_enabled === 'true');
             }
-            if (response.data.default_theme !== undefined) {
-                setDefaultThemeSetting(response.data.default_theme as 'light' | 'dark');
-            }
             if (response.data.ticker_message !== undefined) {
                 setTickerMessage(response.data.ticker_message);
             }
@@ -307,10 +310,50 @@ const SystemConfigPage: React.FC = () => {
             if (response.data.ticker_enabled !== undefined) {
                 setTickerEnabled(response.data.ticker_enabled === 'true');
             }
+            if (response.data.maintenance_mode_enabled !== undefined) {
+                setMaintenanceModeEnabled(response.data.maintenance_mode_enabled === 'true');
+            }
+            if (response.data.maintenance_title !== undefined) {
+                setMaintenanceTitle(response.data.maintenance_title);
+            }
+            if (response.data.maintenance_message !== undefined) {
+                setMaintenanceMessage(response.data.maintenance_message);
+            }
+            if (response.data.maintenance_eta !== undefined) {
+                setMaintenanceEta(response.data.maintenance_eta);
+            }
         } catch (err) {
             console.error("Failed to load system configuration");
         }
     }, [activeSection, user]);
+
+    const handleSaveMaintenanceConfig = async (e?: React.FormEvent, directToggle?: boolean) => {
+        if (e) e.preventDefault();
+        setMaintenanceConfigSaving(true);
+        const newEnabled = directToggle !== undefined ? directToggle : maintenanceModeEnabled;
+        try {
+            await axios.post('/api/admin/config', {
+                maintenance_mode_enabled: newEnabled.toString(),
+                maintenance_title: maintenanceTitle,
+                maintenance_message: maintenanceMessage,
+                maintenance_eta: maintenanceEta
+            }, {
+                headers: {
+                    'X-Company-Context': activeSection,
+                    'X-User-ID': user?.id?.toString()
+                }
+            });
+            if (directToggle !== undefined) {
+                setMaintenanceModeEnabled(directToggle);
+            }
+            toast.success(`Maintenance mode settings saved. Maintenance is now ${newEnabled ? 'ACTIVE (Visitors blocked)' : 'INACTIVE (Normal access)'}.`);
+            window.dispatchEvent(new Event('maintenanceUpdate'));
+        } catch (err) {
+            toast.error("Failed to save maintenance mode configuration.");
+        } finally {
+            setMaintenanceConfigSaving(false);
+        }
+    };
 
     const handleSaveTicker = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -607,27 +650,6 @@ const SystemConfigPage: React.FC = () => {
             toast.success(`Bulk report emailing has been ${newValue ? 'enabled' : 'disabled'}.`);
         } catch (err) {
             toast.error("Failed to update Bulk report emailing setting.");
-        } finally {
-            setMaintenanceSaving(false);
-        }
-    };
-
-    const handleSaveDefaultTheme = async (themeValue: 'light' | 'dark') => {
-        setMaintenanceSaving(true);
-        try {
-            await axios.post('/api/admin/config', 
-                { default_theme: themeValue },
-                {
-                    headers: {
-                        'X-Company-Context': activeSection,
-                        'X-User-ID': user?.id?.toString()
-                    }
-                }
-            );
-            setDefaultThemeSetting(themeValue);
-            toast.success(`Default system theme updated to ${themeValue}.`);
-        } catch (err) {
-            toast.error("Failed to update default theme setting.");
         } finally {
             setMaintenanceSaving(false);
         }
@@ -1197,37 +1219,6 @@ const SystemConfigPage: React.FC = () => {
                                             </button>
                                         </div>
                                     </div>
-
-                                    <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/5 bg-primary/[0.02]">
-                                        <div className="space-y-1">
-                                            <h4 className="font-bold text-lg text-foreground">Default App Theme</h4>
-                                            <p className="text-sm text-muted-foreground w-full max-w-lg">
-                                                Configure the default application theme (Light or Dark) for all users when they don't have a local preference.
-                                            </p>
-                                        </div>
-                                        <div className="flex items-center gap-4 bg-background p-2 pr-4 rounded-xl border-2 shadow-sm">
-                                            <div className="flex gap-2">
-                                                <Button 
-                                                    onClick={() => handleSaveDefaultTheme('light')}
-                                                    disabled={maintenanceSaving || !canManageMaintenance}
-                                                    variant={defaultThemeSetting === 'light' ? "default" : "outline"}
-                                                    size="sm"
-                                                    className="font-bold"
-                                                >
-                                                    Light
-                                                </Button>
-                                                <Button 
-                                                    onClick={() => handleSaveDefaultTheme('dark')}
-                                                    disabled={maintenanceSaving || !canManageMaintenance}
-                                                    variant={defaultThemeSetting === 'dark' ? "default" : "outline"}
-                                                    size="sm"
-                                                    className="font-bold"
-                                                >
-                                                    Dark
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    </div>
                                 </CardContent>
                             </Card>
 
@@ -1317,7 +1308,115 @@ const SystemConfigPage: React.FC = () => {
                     </TabsContent>
 
                     <TabsContent value="maintenance">
-                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500">
+                        <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-6">
+                            {/* Visitor Maintenance Mode Configuration */}
+                            <Card className={`border-2 shadow-xl relative overflow-hidden transition-all duration-300 ${maintenanceModeEnabled ? 'border-amber-500/40 bg-amber-500/[0.02]' : 'border-primary/20'}`}>
+                                <div className={`absolute top-0 right-0 w-32 h-32 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform ${maintenanceModeEnabled ? 'bg-amber-500/10' : 'bg-primary/5'}`}></div>
+                                <CardHeader className="border-b bg-muted/5 p-6">
+                                    <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                                        <div className="flex items-center gap-4">
+                                            <div className={`p-3 rounded-2xl ${maintenanceModeEnabled ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' : 'bg-primary/10 text-primary'}`}>
+                                                <HugeiconsIcon icon={Settings02Icon} className="h-6 w-6" />
+                                            </div>
+                                            <div>
+                                                <div className="flex items-center gap-2">
+                                                    <CardTitle className="text-xl font-black text-foreground">Visitor Maintenance Mode</CardTitle>
+                                                    {maintenanceModeEnabled && (
+                                                        <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/15 text-amber-600 dark:text-amber-400 border border-amber-500/30 animate-pulse">
+                                                            Active
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                <CardDescription>
+                                                    When enabled, visiting users and general staff see the maintenance notice. Only System Administrators can bypass to manage the portal.
+                                                </CardDescription>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="p-4 sm:p-6 md:p-8">
+                                    <form onSubmit={(e) => handleSaveMaintenanceConfig(e)} className="space-y-6">
+                                        {/* Toggle Switch */}
+                                        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6 p-4 sm:p-6 rounded-2xl border-2 border-primary/10 bg-card/60 backdrop-blur-sm">
+                                            <div className="space-y-1">
+                                                <h4 className="font-bold text-lg text-foreground">Enable Maintenance Mode</h4>
+                                                <p className="text-sm text-muted-foreground w-full max-w-lg">
+                                                    Locks public, patient, and staff portals. Only System Administrators can bypass and access the system.
+                                                </p>
+                                            </div>
+                                            <div className="flex items-center gap-4 bg-background p-2.5 pr-4 rounded-xl border-2 shadow-sm border-border">
+                                                <div className={`w-3 h-3 rounded-full ${maintenanceModeEnabled ? 'bg-amber-500 animate-ping' : 'bg-muted'}`} />
+                                                <span className={`text-xs font-black uppercase tracking-widest min-w-[80px] ${maintenanceModeEnabled ? 'text-amber-500' : 'text-muted-foreground'}`}>
+                                                    {maintenanceModeEnabled ? 'Active' : 'Inactive'}
+                                                </span>
+                                                <button
+                                                    type="button"
+                                                    disabled={!canManageMaintenance || maintenanceConfigSaving}
+                                                    onClick={() => setMaintenanceModeEnabled(!maintenanceModeEnabled)}
+                                                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-amber-500 focus:ring-offset-2 ${maintenanceModeEnabled ? 'bg-amber-500' : 'bg-muted'}`}
+                                                >
+                                                    <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${maintenanceModeEnabled ? 'translate-x-5' : 'translate-x-0'}`} />
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Headline */}
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Maintenance Headline</Label>
+                                            <Input
+                                                type="text"
+                                                value={maintenanceTitle}
+                                                onChange={(e) => setMaintenanceTitle(e.target.value)}
+                                                placeholder="e.g. System Under Scheduled Maintenance"
+                                                disabled={!canManageMaintenance}
+                                                className="h-11 rounded-xl font-semibold border-2"
+                                            />
+                                        </div>
+
+                                        {/* Announcement Message */}
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Public Notice Message</Label>
+                                            <textarea
+                                                value={maintenanceMessage}
+                                                onChange={(e) => setMaintenanceMessage(e.target.value)}
+                                                placeholder="Explain the scheduled maintenance to visiting users..."
+                                                rows={3}
+                                                disabled={!canManageMaintenance}
+                                                className="flex min-h-[80px] w-full rounded-xl border-2 bg-background px-3 py-2 text-sm font-semibold ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                            />
+                                        </div>
+
+                                        {/* Estimated Completion ETA */}
+                                        <div className="space-y-2">
+                                            <Label className="text-xs font-bold uppercase text-muted-foreground tracking-widest">Estimated Completion (ETA)</Label>
+                                            <Input
+                                                type="text"
+                                                value={maintenanceEta}
+                                                onChange={(e) => setMaintenanceEta(e.target.value)}
+                                                placeholder="e.g. Today at 4:00 PM UTC, or in ~45 minutes"
+                                                disabled={!canManageMaintenance}
+                                                className="h-11 rounded-xl font-semibold border-2"
+                                            />
+                                            <p className="text-[11px] text-muted-foreground font-medium">Leave blank if no estimated recovery time is known.</p>
+                                        </div>
+
+                                        <div className="flex justify-end pt-2">
+                                            <Button
+                                                type="submit"
+                                                loading={maintenanceConfigSaving}
+                                                disabled={maintenanceConfigSaving || !canManageMaintenance}
+                                                size="lg"
+                                                className="bg-primary hover:bg-primary/90 text-white font-bold h-12 px-10 shadow-xl shadow-primary/20 rounded-xl w-full sm:w-auto transition-all"
+                                            >
+                                                {!maintenanceConfigSaving && <HugeiconsIcon icon={FloppyDiskIcon} className="mr-2 h-5 w-5" />}
+                                                Save Maintenance Settings
+                                            </Button>
+                                        </div>
+                                    </form>
+                                </CardContent>
+                            </Card>
+
+                            {/* Existing Critical System Actions */}
                             <Card className="border-2 shadow-xl border-destructive/20 relative overflow-hidden group">
                                 <div className="absolute top-0 right-0 w-32 h-32 bg-destructive/5 rounded-bl-[100px] -z-10 group-hover:scale-110 transition-transform"></div>
                                 <CardHeader className="border-b bg-muted/5 p-6">
@@ -1326,8 +1425,8 @@ const SystemConfigPage: React.FC = () => {
                                             <HugeiconsIcon icon={ReloadIcon} className="h-6 w-6 text-destructive" />
                                         </div>
                                         <div>
-                                            <CardTitle className="text-xl text-destructive font-black">System Maintenance</CardTitle>
-                                            <CardDescription>Critical administrative actions to manage system state.</CardDescription>
+                                            <CardTitle className="text-xl text-destructive font-black">Critical Database Maintenance</CardTitle>
+                                            <CardDescription>Actions to clear queues, audit logs, and section bio-data.</CardDescription>
                                         </div>
                                     </div>
                                 </CardHeader>

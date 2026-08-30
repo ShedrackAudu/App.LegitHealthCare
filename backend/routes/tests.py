@@ -28,12 +28,14 @@ def generate_fbc_remark_in_background(app, staff_id, screening_year, fbc_data, c
                 import os
                 
                 settings = AISettings.query.first()
-                api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+                from routes.ai_bp import get_effective_openai_api_key
+                api_key = get_effective_openai_api_key()
                 if not api_key:
                     print("FBC AI Remark Error: OpenAI API Key is not configured.")
                     return
                     
-                client = OpenAI(api_key=api_key)
+                base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
+                client = OpenAI(api_key=api_key, base_url=base_url)
                 
                 # Fetch patient gender
                 patient_bio = BioData.query.filter(
@@ -104,12 +106,14 @@ def generate_lipid_remark_in_background(app, staff_id, screening_year, lipid_dat
                 import os
                 
                 settings = AISettings.query.first()
-                api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+                from routes.ai_bp import get_effective_openai_api_key
+                api_key = get_effective_openai_api_key()
                 if not api_key:
                     print("Lipid AI Remark Error: OpenAI API Key is not configured.")
                     return
                     
-                client = OpenAI(api_key=api_key)
+                base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
+                client = OpenAI(api_key=api_key, base_url=base_url)
                 
                 # Fetch patient gender
                 patient_bio = BioData.query.filter(
@@ -728,7 +732,8 @@ def bulk_ai_remarks(test_type):
         cleanup_old_tasks()
 
         settings = AISettings.query.first()
-        api_key = os.getenv('OPENAI_API_KEY') or (settings.api_key if settings else None)
+        from routes.ai_bp import get_effective_openai_api_key
+        api_key = get_effective_openai_api_key()
         if not api_key:
             return jsonify({"error": "OpenAI API Key is not configured."}), 400
 
@@ -984,7 +989,8 @@ def bulk_ai_remarks(test_type):
                             'LFTResult': LFTResult
                         }
                         bg_model_class = bg_model_map[model_class_name]
-                        bg_client = BGOpenAI(api_key=api_key)
+                        base_url = getattr(settings, 'base_url', None) or os.getenv('OPENAI_BASE_URL') or None
+                        bg_client = BGOpenAI(api_key=api_key, base_url=base_url)
 
                         def call_openai_and_save(item):
                             """Process a single patient: call OpenAI, save to DB, update task."""

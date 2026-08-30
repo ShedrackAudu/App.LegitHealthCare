@@ -323,8 +323,8 @@ const SignupPage: React.FC = () => {
   };
 
   return (
-    <div className="h-[100dvh] overflow-hidden grid grid-cols-1 lg:grid-cols-2 bg-background selection:bg-primary/20 registration-page">
-      {/* Left Side: Branding & Visuals (Consistent with Login) */}
+    <div className="h-[100dvh] overflow-hidden grid grid-cols-1 lg:grid-cols-[60%_40%] bg-background selection:bg-primary/20 registration-page">
+      {/* Left Side: Branding & Visuals (60%) */}
       <div className="hidden lg:flex relative overflow-hidden group h-full">
         <div 
           className="absolute inset-0 bg-cover bg-center transition-transform duration-1000 group-hover:scale-105"
@@ -888,7 +888,7 @@ const SignupPage: React.FC = () => {
         </div>
 
         <div className="fixed lg:absolute bottom-2 lg:bottom-4 left-1/2 -translate-x-1/2 text-[9px] font-black uppercase tracking-[0.2em] text-muted-foreground/60 whitespace-nowrap z-50 px-4 py-2 bg-background/60 backdrop-blur-xl border border-border/40 rounded-full shadow-2xl">
-          © 2026 {branding?.clinic_name || 'Legit HealthCare'} • v2.0
+          © 2026 {branding?.clinic_name || 'Legit HealthCare'} • {import.meta.env.VITE_APP_VERSION || 'v1.5'}
         </div>
       </div>
     </div>

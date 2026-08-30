@@ -240,10 +240,68 @@ const AppUpdateNotifier: React.FC = () => {
   );
 };
 
+import MaintenancePage from './pages/MaintenancePage';
+
+interface MaintenanceConfig {
+  enabled: boolean;
+  title: string;
+  message: string;
+  eta: string;
+}
+
+const MaintenanceWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [maintenance, setMaintenance] = useState<MaintenanceConfig | null>(null);
+  const [loading, setLoading] = useState(true);
+  const { user } = useAppContext();
+
+  const fetchMaintenance = async () => {
+    try {
+      const res = await axios.get('/api/config/maintenance');
+      setMaintenance(res.data);
+    } catch {
+      // ignore
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchMaintenance();
+    window.addEventListener('maintenanceUpdate', fetchMaintenance);
+    const interval = setInterval(fetchMaintenance, 30000); // Check every 30s
+    return () => {
+      window.removeEventListener('maintenanceUpdate', fetchMaintenance);
+      clearInterval(interval);
+    };
+  }, []);
+
+  if (loading) {
+    return <>{children}</>;
+  }
+
+  // If maintenance mode is active
+  if (maintenance && maintenance.enabled) {
+    // Robustly check if the current user has System Administrator privileges
+    const isSystemAdmin = user && (
+      user.is_admin === true ||
+      (Array.isArray(user.roles) && user.roles.some((r: string) => /admin/i.test(r) || /super/i.test(r) || /director/i.test(r))) ||
+      (typeof user.role === 'string' && /admin/i.test(user.role)) ||
+      (Array.isArray(user.permissions) && user.permissions.some((p: string) => /admin/i.test(p) || /manage_system/i.test(p) || /system_config/i.test(p)))
+    );
+
+    // If not a system administrator, display the maintenance page
+    if (!isSystemAdmin) {
+      return <MaintenancePage maintenanceData={maintenance} onRefreshStatus={fetchMaintenance} />;
+    }
+  }
+
+  return <>{children}</>;
+};
+
 function RootApp() {
   console.log("App.tsx: Full Render (as RootApp)...");
   return (
-    <ThemeProvider defaultTheme="light" storageKey="vite-ui-theme">
+    <ThemeProvider defaultTheme="system" storageKey="vite-ui-theme">
       <AppProvider>
         <Router>
           <AppUpdateNotifier />
@@ -252,14 +310,16 @@ function RootApp() {
             <div className="flex-1 min-h-0 relative">
               <CustomToaster />
               <MessageSlideOutNotification />
-              <Routes>
-                <Route path="/" element={<LandingPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/verify-otp" element={<OTPPage />} />
-                <Route path="/forgot-password" element={<Navigate to="/login?forgot=true" replace />} />
-                <Route path="/verify/:token" element={<ReportVerificationPage />} />
-                <Route path="/verify/:token/report" element={<PublicReportPage />} />
+              <MaintenanceWrapper>
+                <Routes>
+                  <Route path="/" element={<LandingPage />} />
+                  <Route path="/maintenance" element={<MaintenancePage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/verify-otp" element={<OTPPage />} />
+                  <Route path="/forgot-password" element={<Navigate to="/login?forgot=true" replace />} />
+                  <Route path="/verify/:token" element={<ReportVerificationPage />} />
+                  <Route path="/verify/:token/report" element={<PublicReportPage />} />
 
 
 
@@ -307,12 +367,13 @@ function RootApp() {
                 <Route path="/messages" element={<ProtectedRoute requiredPermission="messaging"><MessagingPage /></ProtectedRoute>} />
                 <Route path="/inventory" element={<ProtectedRoute requiredPermission="view_inventory"><InventoryPage /></ProtectedRoute>} />
               </Routes>
-            </div>
+            </MaintenanceWrapper>
           </div>
-        </Router>
-      </AppProvider>
-    </ThemeProvider>
-  );
+        </div>
+      </Router>
+    </AppProvider>
+  </ThemeProvider>
+);
 }
 
 export default RootApp;

@@ -11,7 +11,10 @@ def setup_system(app, purge=False):
     with app.app_context():
         # Create all tables in all binds
         print("Creating tables in all databases...")
-        db.create_all()
+        try:
+            db.create_all()
+        except Exception as e:
+            print(f"db.create_all notice: {e}")
         
         if purge:
             print("Purging all existing data from both databases...")

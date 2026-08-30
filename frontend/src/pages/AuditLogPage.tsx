@@ -234,7 +234,7 @@ const AuditLogPage: React.FC = () => {
           
           <div className="flex flex-wrap items-center gap-3 lg:w-auto w-full">
             <div className="relative group flex-grow sm:w-80">
-              <HugeiconsIcon icon={Search01Icon} className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
+              <HugeiconsIcon icon={Search01Icon} className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground group-focus-within:text-primary transition-colors pointer-events-none z-10" />
               <Input 
                 placeholder="Search action or staff..." 
                 value={searchQuery}

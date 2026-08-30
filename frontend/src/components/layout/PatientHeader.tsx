@@ -8,7 +8,8 @@ import {
   Notification01Icon,
   Download01Icon,
   AccountSetting01Icon,
-  Building02Icon
+  Building02Icon,
+  Tick01Icon
 } from '@hugeicons/core-free-icons';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useAppContext } from '@/context/AppContext';
@@ -110,12 +111,12 @@ export const PatientHeader: React.FC = () => {
   };
 
   return (
-    <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm h-14 border-l no-print">
+    <header className="sticky top-0 z-50 w-full border-b border-border/60 bg-background/80 backdrop-blur-md shadow-2xs h-14 no-print shrink-0">
       <div className="flex h-full items-center justify-between px-4 sm:px-6 w-full gap-4">
         
         {/* Left Side: Back Button, Page Title, and Mobile Logo Mark */}
         <div className="flex items-center gap-2 min-w-0">
-          <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 shrink-0 rounded-full" onClick={() => navigate(-1)}>
+          <Button variant="ghost" size="icon" className="hidden sm:inline-flex h-8 w-8 shrink-0 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/60" onClick={() => navigate(-1)}>
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="w-4 h-4"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>
           </Button>
           
@@ -151,39 +152,66 @@ export const PatientHeader: React.FC = () => {
               variant="outline"
               size="sm"
               onClick={handleInstallClick}
-              className="hidden sm:flex h-9 w-auto rounded-lg border-2 border-primary/20 hover:border-primary/50 gap-2 font-black text-[11px] uppercase tracking-wider bg-primary/5 shadow-sm text-primary transition-all active:scale-95 px-3"
+              className="hidden sm:flex h-9 w-auto rounded-lg border border-primary/30 hover:border-primary/50 gap-2 font-bold text-[11px] uppercase tracking-wider bg-primary/10 backdrop-blur-sm shadow-2xs text-primary transition-all active:scale-95 px-3"
               title="Install App"
             >
               <HugeiconsIcon icon={Download01Icon} className="h-3.5 w-3.5" />
               Install App
             </Button>
           )}
-          <Button
-            variant="outline"
-            size="icon"
-            className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card"
-            onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
-          >
-            <label className="sr-only">Toggle theme</label>
-            <HugeiconsIcon icon={Sun01Icon} className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
-              resolvedTheme === "dark" 
-                ? "-rotate-90 scale-0 opacity-0" 
-                : "rotate-0 scale-100 opacity-100"
-            }`} />
-            <HugeiconsIcon icon={Moon02Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
-              resolvedTheme === "dark" 
-                ? "rotate-0 scale-100 opacity-100" 
-                : "rotate-90 scale-0 opacity-0"
-            }`} />
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="outline"
+                size="icon"
+                className="h-7 w-7 sm:h-9 sm:w-9 border border-border/80 rounded-lg bg-card/60 backdrop-blur-sm shadow-2xs hover:border-border relative"
+                title={`Theme: ${theme === 'system' ? `System (${resolvedTheme})` : theme.charAt(0).toUpperCase() + theme.slice(1)}`}
+              >
+                <label className="sr-only">Toggle theme</label>
+                <HugeiconsIcon icon={Sun01Icon} className={`h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+                  resolvedTheme === "dark" 
+                    ? "-rotate-90 scale-0 opacity-0" 
+                    : "rotate-0 scale-100 opacity-100"
+                }`} />
+                <HugeiconsIcon icon={Moon02Icon} className={`absolute h-3 w-3 sm:h-4 sm:w-4 transition-all ${
+                  resolvedTheme === "dark" 
+                    ? "rotate-0 scale-100 opacity-100" 
+                    : "rotate-90 scale-0 opacity-0"
+                }`} />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-36 rounded-xl shadow-lg border-2" sideOffset={8}>
+              <DropdownMenuItem onClick={() => setTheme("light")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <HugeiconsIcon icon={Sun01Icon} className="h-3.5 w-3.5 text-amber-500" />
+                  <span className="text-xs">Light</span>
+                </div>
+                {theme === "light" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("dark")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <HugeiconsIcon icon={Moon02Icon} className="h-3.5 w-3.5 text-indigo-400" />
+                  <span className="text-xs">Dark</span>
+                </div>
+                {theme === "dark" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setTheme("system")} className="flex items-center justify-between cursor-pointer font-medium py-1.5 rounded-lg">
+                <div className="flex items-center gap-2">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3.5 w-3.5 text-muted-foreground"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg>
+                  <span className="text-xs">System</span>
+                </div>
+                {theme === "system" && <HugeiconsIcon icon={Tick01Icon} className="h-3.5 w-3.5 text-primary" />}
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
 
-          <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border-2 rounded-lg bg-card group">
+          <Button variant="outline" size="icon" className="h-7 w-7 sm:h-9 sm:w-9 border border-border/80 rounded-lg bg-card/60 backdrop-blur-sm shadow-2xs hover:border-border group">
             <HugeiconsIcon icon={Notification01Icon} className="h-3 w-3 sm:h-4 sm:w-4 group-hover:text-primary transition-colors" />
           </Button>
 
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1 sm:px-2 border-2 rounded-lg bg-primary/5 hover:border-primary/50 transition-all flex items-center gap-1 sm:gap-2 group">
+              <Button variant="outline" className="h-7 sm:h-9 w-auto px-1.5 sm:px-2.5 border border-border/80 rounded-lg bg-card/60 backdrop-blur-sm hover:border-primary/40 shadow-2xs transition-all flex items-center gap-1.5 sm:gap-2 group">
                 <div className="p-0.5 sm:p-1 rounded-md bg-primary/10 group-hover:bg-primary/20 transition-colors">
                   <HugeiconsIcon icon={UserIcon} className="h-3 w-3 sm:h-4 sm:w-4 text-primary" />
                 </div>

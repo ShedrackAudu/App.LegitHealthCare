@@ -7,29 +7,43 @@ from models import db, Role, Permission, QueueEntry, BioData, ScreeningYearBioDa
 @pytest.fixture
 def setup_rbac_and_queues(client):
     # Setup permissions
-    perm_manage_queues = Permission(name='manage_queues', description='Manage queues')
-    perm_spirometry = Permission(name='lab_spirometry', description='Spirometry')
-    perm_ecg = Permission(name='lab_ecg', description='ECG')
-    
-    db.session.add_all([perm_manage_queues, perm_spirometry, perm_ecg])
-    db.session.commit()
+    def get_or_create_perm(name, desc):
+        p = Permission.query.filter_by(name=name).first()
+        if not p:
+            p = Permission(name=name, description=desc)
+            db.session.add(p)
+            db.session.commit()
+        return p
+
+    perm_manage_queues = get_or_create_perm('manage_queues', 'Manage queues')
+    perm_spirometry = get_or_create_perm('lab_spirometry', 'Spirometry')
+    perm_ecg = get_or_create_perm('lab_ecg', 'ECG')
     
     # Setup roles
-    role_manage_queues = Role(name='QueueManager', description='Queue Manager')
-    role_manage_queues.permissions.append(perm_manage_queues)
-    
-    role_spiro = Role(name='SpiroTech', description='Spirometry Tech')
-    role_spiro.permissions.append(perm_spirometry)
+    def get_or_create_role(name, desc, perms):
+        r = Role.query.filter_by(name=name).first()
+        if not r:
+            r = Role(name=name, description=desc)
+            r.permissions = perms
+            db.session.add(r)
+            db.session.commit()
+        else:
+            r.permissions = perms
+            db.session.commit()
+        return r
 
-    role_ecg = Role(name='ECGTech', description='ECG Tech')
-    role_ecg.permissions.append(perm_ecg)
-    
-    db.session.add_all([role_manage_queues, role_spiro, role_ecg])
-    db.session.commit()
+    role_manage_queues = get_or_create_role('QueueManager', 'Queue Manager', [perm_manage_queues])
+    role_spiro = get_or_create_role('SpiroTech', 'Spirometry Tech', [perm_spirometry])
+    role_ecg = get_or_create_role('ECGTech', 'ECG Tech', [perm_ecg])
     
     # Create BioData, screening bio-data, and queue entries under a request context
     # so they route to the 'dcp' bind database
     with app.test_request_context(headers={'X-Company-Context': 'dcp'}):
+        QueueEntry.query.delete()
+        ScreeningYearBioData.query.delete()
+        BioData.query.delete()
+        db.session.commit()
+
         parent_bio = BioData(
             staff_id='ST-001',
             first_name='John',

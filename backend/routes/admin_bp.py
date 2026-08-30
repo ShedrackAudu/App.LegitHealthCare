@@ -172,7 +172,11 @@ def revoke_session(user_id):
 @admin_bp.route('/api/admin/users', methods=['GET'])
 @require_permission(['view_users', 'manage_access_keys'])
 def get_users():
-    staff = User.query.all()
+    from sqlalchemy.orm import selectinload
+    staff = User.query.options(
+        selectinload(User.roles).selectinload(Role.permissions),
+        selectinload(User.temp_codes).selectinload(TempAccessCode.permission)
+    ).all()
     patients = PatientPortalUser.query.all()
     
     all_users = [u.to_dict() for u in staff]
@@ -228,7 +232,7 @@ def get_users():
             current_app.logger.error(f"Bulk dct query failed in get_users: {e}")
 
     for p in patients:
-        p_dict = p.to_dict()
+        p_dict = p.to_dict(include_bio=False)
         p_dict['section'] = None
         p_dict['department'] = None
         

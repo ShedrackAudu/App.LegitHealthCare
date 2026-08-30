@@ -10,7 +10,8 @@ import {
   Download01Icon,
   Cancel01Icon,
   AlertCircleIcon,
-  Activity01Icon
+  Activity01Icon,
+  CheckmarkCircle02Icon
 } from '@hugeicons/core-free-icons';
 import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
@@ -84,8 +85,16 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
     fetchFiles();
   }, [staffId, year, department]);
 
+  const isSingleFileDept = Boolean(department && ['spirometry', 'audiometry', 'ecg'].includes(department.trim().toLowerCase()));
+  const hasReachedLimit = isSingleFileDept && files.length >= 1;
+
   const processFile = async (file: File) => {
     if (!file) return;
+
+    if (hasReachedLimit) {
+      toast.error("Only 1 file attachment is allowed per patient. Please delete the existing attachment before uploading a new one");
+      return;
+    }
 
     const allowedTypes = ['application/pdf', 'image/jpeg', 'image/jpg', 'image/png'];
     if (!allowedTypes.includes(file.type)) {
@@ -129,7 +138,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    if (allowUpload) setIsDragging(true);
+    if (allowUpload && !hasReachedLimit) setIsDragging(true);
   };
 
   const handleDragLeave = (e: React.DragEvent) => {
@@ -143,7 +152,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
     e.stopPropagation();
     setIsDragging(false);
     
-    if (!allowUpload) return;
+    if (!allowUpload || hasReachedLimit) return;
     
     const file = e.dataTransfer.files?.[0];
     if (file) processFile(file);
@@ -176,7 +185,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
       )}
 
       <div className={cn("flex flex-col gap-4", compact && "flex-col sm:flex-row items-center gap-2")}>
-        {allowUpload && department && (
+        {allowUpload && department && !hasReachedLimit && (
           <div 
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
@@ -231,6 +240,20 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
                 </>
               )}
             </Card>
+          </div>
+        )}
+
+        {!compact && allowUpload && department && hasReachedLimit && (
+          <div className="flex items-center justify-between gap-3 p-3.5 rounded-xl border border-emerald-500/20 bg-emerald-500/5 text-xs">
+            <div className="flex items-center gap-2.5">
+              <div className="w-7 h-7 rounded-lg bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0">
+                <HugeiconsIcon icon={CheckmarkCircle02Icon} className="w-4 h-4" />
+              </div>
+              <div>
+                <p className="font-bold text-foreground">1 of 1 Attachment Attached</p>
+                <p className="text-[11px] text-muted-foreground font-medium">To replace this file, delete the current attachment first.</p>
+              </div>
+            </div>
           </div>
         )}
 
@@ -372,7 +395,7 @@ export const FileAttachmentSection: React.FC<FileAttachmentSectionProps> = ({
             )}
             </div>
           </DialogHeader>
-          <div className="flex-1 w-full bg-zinc-800 dark:bg-black relative flex items-center justify-center overflow-auto">
+          <div className="flex-1 w-full bg-muted/20 relative flex items-center justify-center overflow-auto">
             {selectedFile && (
               selectedFile.filename.toLowerCase().endsWith('.pdf') ? (
                 <iframe 
