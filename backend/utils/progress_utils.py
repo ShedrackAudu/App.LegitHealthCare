@@ -273,3 +273,211 @@ def calculate_batch_progress(staff_ids, year, engine):
         print(f"BATCH PROGRESS CALCULATION ERROR: {e}")
         
     return results
+
+def validate_tracked_parameters(staff_id, screening_year, mode='comments', overrides=None):
+    """
+    Validates whether all tracked progress parameters are present for a patient.
+    mode: 'comments' -> checks all 41 tracked parameters (including overall_lab_remark, excluding comments)
+          'lab_remark' -> checks 40 tracked parameters (excluding comments and overall_lab_remark)
+    overrides: dict of fields passed in the request payload (if any)
+    
+    Returns: (is_valid: bool, missing_labels: list of str, resolved_values: dict)
+    """
+    from models import ConsultationData, DirectorReview, FBCResult, KFTResult, LipidResult, LFTResult, SpecialTestsResult
+    
+    overrides = overrides or {}
+    try:
+        year_int = int(screening_year) if screening_year is not None else None
+    except (ValueError, TypeError):
+        year_int = screening_year
+
+    consult = None
+    review = None
+    fbc = None
+    kft = None
+    lipid = None
+    lft = None
+    special = None
+
+    if year_int:
+        consult = ConsultationData.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        review = DirectorReview.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        fbc = FBCResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        kft = KFTResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        lipid = LipidResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        lft = LFTResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+        special = SpecialTestsResult.query.filter_by(staff_id=staff_id, screening_year=year_int).first()
+
+    def is_present(val):
+        if val is None:
+            return False
+        s = str(val).strip()
+        if not s or s.lower() in ['n/a', 'none', 'null', 'undefined']:
+            return False
+        return True
+
+    def get_val(field_name, *db_objs):
+        if field_name in overrides and is_present(overrides[field_name]):
+            return overrides[field_name]
+        for obj in db_objs:
+            if obj and hasattr(obj, field_name):
+                val = getattr(obj, field_name)
+                if is_present(val):
+                    return val
+        return None
+
+    def get_first_present(*vals):
+        for v in vals:
+            if is_present(v):
+                return v
+        return vals[0] if vals else None
+
+    # Construct resolved values dictionary ensuring identical resolution order for validation and prompts
+    resolved = {
+        "fbs": get_val("fbs", review, consult),
+        "rbs": get_val("rbs", review, consult),
+        "sugar_remark": get_first_present(get_val("sugar_remark", review, consult), get_val("fbs_rbs_remark", review, consult)),
+        "ua_result": get_val("ua_result", review, consult),
+        "ua_remark": get_val("ua_remark", review, consult),
+        "ua_remark_others": get_val("ua_remark_others", review, consult),
+        "psa": get_val("psa", review, consult),
+        "psa_remark": get_val("psa_remark", review, consult),
+        "bp": get_val("bp", review, consult),
+        "pulse": get_val("pulse", review, consult),
+        "spo2": get_val("spo2", review, consult),
+        "assessment_hx_pe": get_val("assessment_hx_pe", review, consult),
+        "overall_lab_remark": get_val("overall_lab_remark", review, consult),
+        "breast_exam": get_val("breast_exam", review, consult),
+        "breast_remark": get_val("breast_remark", review, consult),
+        "breast_others": get_val("breast_others", review, consult),
+        "abdomen": get_val("abdomen", review, consult),
+        "abdomen_others": get_val("abdomen_others", review, consult),
+        "luts": get_val("luts", review, consult),
+        "chronic_cough": get_val("chronic_cough", review, consult),
+        "chronic_chest_pain": get_val("chronic_chest_pain", review, consult),
+        "chest_infection": get_val("chest_infection", review, consult),
+        "heart_dx": get_val("heart_dx", review, consult),
+        "palor": get_val("palor", review, consult),
+        "jaundice": get_val("jaundice", review, consult),
+        "murmur": get_val("murmur", review, consult),
+        "chest_status": get_val("chest_status", review, consult),
+        "hs_status": get_val("hs_status", review, consult),
+        "dm_status": get_val("dm_status", review, consult),
+        "htn_status": get_val("htn_status", review, consult),
+        "other_assessments": get_val("other_assessments", review, consult),
+        "overall_assessment": get_val("overall_assessment", review, consult),
+        "other_remarks": get_val("other_remarks", review, consult),
+        
+        # FBC
+        "pcv": get_val("pcv", fbc),
+        "wbc": get_val("wbc", fbc),
+        "lymp_percent": get_val("lymp_percent", fbc),
+        "gra_percent": get_val("gra_percent", fbc),
+        "mid_percent": get_val("mid_percent", fbc),
+        "plt": get_val("plt", fbc),
+        "fbc_remark": get_val("fbc_remark", fbc),
+        
+        # KFT
+        "potassium": get_val("potassium", kft),
+        "sodium": get_val("sodium", kft),
+        "chloride": get_val("chloride", kft),
+        "hco3": get_first_present(get_val("hco3", kft), get_val("bicarbonate_ca", kft)),
+        "urea": get_first_present(get_val("urea", lft), get_val("urea", kft)),
+        "creatinine": get_first_present(get_val("creatinine", lft), get_val("creatinine", kft)),
+        "kft_remark": get_val("kft_remark", kft),
+        
+        # Lipid
+        "total_cholesterol": get_val("total_cholesterol", lipid),
+        "triglycerides": get_val("triglycerides", lipid),
+        "hdl": get_val("hdl", lipid),
+        "ldl": get_val("ldl", lipid),
+        "lp_remark": get_val("lp_remark", lipid),
+        
+        # LFT
+        "ast": get_val("ast", lft),
+        "alt": get_val("alt", lft),
+        "alp": get_val("alp", lft),
+        "tb": get_val("tb", lft),
+        "cb": get_val("cb", lft),
+        "lft_remark": get_val("lft_remark", lft),
+        
+        # Special
+        "ecg_result": get_val("ecg_result", special),
+        "ecg_remark": get_val("ecg_remark", special),
+        "spirometry_result": get_val("spirometry_result", special),
+        "spirometry_remark": get_val("spirometry_remark", special),
+        "audiometry_result": get_val("audiometry_result", special),
+        "audiometry_remark": get_val("audiometry_remark", special),
+        "weight": get_val("weight", special),
+        "height": get_val("height", special),
+    }
+
+    missing = []
+    def check(val, label):
+        if not is_present(val):
+            missing.append(label)
+
+    # Sugar (3)
+    check(resolved["fbs"], "FBS")
+    check(resolved["rbs"], "RBS")
+    check(resolved["sugar_remark"], "Sugar Remark")
+
+    # UA (2)
+    check(resolved["ua_result"], "Urine Result")
+    check(resolved["ua_remark"], "Urine Remark")
+
+    # PSA (2)
+    check(resolved["psa"], "PSA")
+    check(resolved["psa_remark"], "PSA Remark")
+
+    # Vitals (3)
+    check(resolved["bp"], "Blood Pressure")
+    check(resolved["pulse"], "Pulse Rate")
+    check(resolved["spo2"], "SPO2")
+
+    # Clinical (3)
+    check(resolved["assessment_hx_pe"], "Hx/PE")
+    if mode == 'comments':
+        check(resolved["overall_lab_remark"], "Lab Remark")
+    check(resolved["breast_exam"], "Breast Exam")
+
+    # FBC (7)
+    check(resolved["pcv"], "PCV")
+    check(resolved["wbc"], "WBC")
+    check(resolved["lymp_percent"], "Lymphocytes")
+    check(resolved["gra_percent"], "Neutrophils")
+    check(resolved["mid_percent"], "Mixed Cells")
+    check(resolved["plt"], "Platelets")
+    check(resolved["fbc_remark"], "FBC Remark")
+
+    # KFT (7)
+    check(resolved["potassium"], "Potassium")
+    check(resolved["sodium"], "Sodium")
+    check(resolved["chloride"], "Chloride")
+    check(resolved["hco3"], "Bicarbonate")
+    check(resolved["urea"], "Urea")
+    check(resolved["creatinine"], "Creatinine")
+    check(resolved["kft_remark"], "KFT Remark")
+
+    # Lipid (5)
+    check(resolved["total_cholesterol"], "Total Chol.")
+    check(resolved["triglycerides"], "Triglycerides")
+    check(resolved["hdl"], "HDL-c")
+    check(resolved["ldl"], "LDL-c")
+    check(resolved["lp_remark"], "Lipid Remark")
+
+    # LFT (6)
+    check(resolved["ast"], "AST")
+    check(resolved["alt"], "ALT")
+    check(resolved["alp"], "ALP")
+    check(resolved["tb"], "TB")
+    check(resolved["cb"], "CB")
+    check(resolved["lft_remark"], "LFT Remark")
+
+    # Special (3)
+    check(resolved["ecg_result"], "ECG")
+    check(resolved["spirometry_result"], "Spirometry")
+    check(resolved["audiometry_result"], "Audiometry")
+
+    return len(missing) == 0, missing, resolved
+
