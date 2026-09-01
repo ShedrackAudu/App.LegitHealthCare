@@ -180,6 +180,118 @@ const RadioField = ({ label, name, control, required = true }: any) => (
   </div>
 );
 
+const checkTrackedProgress = (patientHistory: any, formOverrides?: any, mode: 'comments' | 'lab_remark' = 'comments') => {
+    const isPresent = (val: any) => {
+        if (val === null || val === undefined) return false;
+        const s = String(val).trim();
+        return s !== '' && s.toLowerCase() !== 'n/a';
+    };
+
+    const getVal = (field: string, categoryObj?: any, fallbackObj?: any) => {
+        if (formOverrides && formOverrides[field] !== undefined && formOverrides[field] !== null && String(formOverrides[field]).trim() !== '') {
+            return formOverrides[field];
+        }
+        if (categoryObj && categoryObj[field] !== undefined && categoryObj[field] !== null && String(categoryObj[field]).trim() !== '') {
+            return categoryObj[field];
+        }
+        if (fallbackObj && fallbackObj[field] !== undefined && fallbackObj[field] !== null && String(fallbackObj[field]).trim() !== '') {
+            return fallbackObj[field];
+        }
+        return null;
+    };
+
+    const review = patientHistory?.review || {};
+    const consult = patientHistory?.consultation || {};
+    const fbc = patientHistory?.fbc || {};
+    const kft = patientHistory?.kft || {};
+    const lipid = patientHistory?.lipid || {};
+    const lft = patientHistory?.lft || {};
+    const special = patientHistory?.special || {};
+
+    const missing: string[] = [];
+
+    const getFirstPresent = (...vals: any[]) => {
+        for (const v of vals) {
+            if (isPresent(v)) return v;
+        }
+        return vals[0];
+    };
+
+    const check = (val: any, label: string) => {
+        if (!isPresent(val)) {
+            missing.push(label);
+        }
+    };
+
+    // Sugar (3)
+    check(getVal('fbs', review, consult), 'FBS');
+    check(getVal('rbs', review, consult), 'RBS');
+    check(getFirstPresent(getVal('sugar_remark', review, consult), getVal('fbs_rbs_remark', review, consult)), 'Sugar Remark');
+
+    // UA (2)
+    check(getVal('ua_result', review, consult), 'Urine Result');
+    check(getVal('ua_remark', review, consult), 'Urine Remark');
+
+    // PSA (2)
+    check(getVal('psa', review, consult), 'PSA');
+    check(getVal('psa_remark', review, consult), 'PSA Remark');
+
+    // Vitals (3)
+    check(getVal('bp', review, consult), 'Blood Pressure');
+    check(getVal('pulse', review, consult), 'Pulse Rate');
+    check(getVal('spo2', review, consult), 'SPO2');
+
+    // Clinical (3)
+    check(getVal('assessment_hx_pe', review, consult), 'Hx/PE');
+    if (mode === 'comments') {
+        check(getVal('overall_lab_remark', review, consult), 'Lab Remark');
+    }
+    check(getVal('breast_exam', review, consult), 'Breast Exam');
+
+    // FBC (7)
+    check(getVal('pcv', fbc), 'PCV');
+    check(getVal('wbc', fbc), 'WBC');
+    check(getVal('lymp_percent', fbc), 'Lymphocytes');
+    check(getVal('gra_percent', fbc), 'Neutrophils');
+    check(getVal('mid_percent', fbc), 'Mixed Cells');
+    check(getVal('plt', fbc), 'Platelets');
+    check(getVal('fbc_remark', fbc), 'FBC Remark');
+
+    // KFT (7)
+    check(getVal('potassium', kft), 'Potassium');
+    check(getVal('sodium', kft), 'Sodium');
+    check(getVal('chloride', kft), 'Chloride');
+    check(getFirstPresent(getVal('hco3', kft), getVal('bicarbonate_ca', kft)), 'Bicarbonate');
+    check(getVal('urea', lft, kft), 'Urea');
+    check(getVal('creatinine', lft, kft), 'Creatinine');
+    check(getVal('kft_remark', kft), 'KFT Remark');
+
+    // Lipid (5)
+    check(getVal('total_cholesterol', lipid), 'Total Chol.');
+    check(getVal('triglycerides', lipid), 'Triglycerides');
+    check(getVal('hdl', lipid), 'HDL-c');
+    check(getVal('ldl', lipid), 'LDL-c');
+    check(getVal('lp_remark', lipid), 'Lipid Remark');
+
+    // LFT (6)
+    check(getVal('ast', lft), 'AST');
+    check(getVal('alt', lft), 'ALT');
+    check(getVal('alp', lft), 'ALP');
+    check(getVal('tb', lft), 'TB');
+    check(getVal('cb', lft), 'CB');
+    check(getVal('lft_remark', lft), 'LFT Remark');
+
+    // Special (3)
+    check(getVal('ecg_result', special), 'ECG');
+    check(getVal('spirometry_result', special), 'Spirometry');
+    check(getVal('audiometry_result', special), 'Audiometry');
+
+    return {
+        isComplete: missing.length === 0,
+        missing
+    };
+};
+
 const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, activeSection }: any) => {
     const hasConsultation = history?.consultation && Object.keys(history.consultation).length > 0;
     const radioDefaults = !hasConsultation ? {
@@ -311,9 +423,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     }, [ua_result, setValue]);
 
     const handleAIGenerate = async () => {
+        const formValues = getValues();
+        const { isComplete, missing } = checkTrackedProgress(history, formValues, 'comments');
+        if (!isComplete) {
+            toast.error(`Cannot generate comments: Patient data is incomplete. Missing tracked parameter(s): ${missing.join(', ')}`);
+            return;
+        }
+
         setGeneratingAI(true);
         try {
-            const formValues = getValues();
             const res = await axios.post('/api/ai/generate', {
                 staff_id: patient.staff_id,
                 screening_year: activeYear,
@@ -344,9 +462,15 @@ const ReviewContent = ({ patient, history, loading, onSubmit, activeYear, active
     };
  
     const handleAILabRemarkGenerate = async () => {
+        const formValues = getValues();
+        const { isComplete, missing } = checkTrackedProgress(history, formValues, 'lab_remark');
+        if (!isComplete) {
+            toast.error(`Cannot generate lab remark: Patient data is incomplete. Missing tracked parameter(s): ${missing.join(', ')}`);
+            return;
+        }
+
         setGeneratingLabAI(true);
         try {
-            const formValues = getValues();
             const res = await axios.post('/api/ai/generate-lab-remark', {
                 staff_id: patient.staff_id,
                 screening_year: activeYear,
@@ -844,6 +968,17 @@ const DirectorPage: React.FC = () => {
                     continue;
                 }
                 
+                // Validate completeness: All 41 tracked progress parameters (including overall lab remark) must be present
+                const progressCheck = checkTrackedProgress(patientHistory, undefined, 'comments');
+                if (!progressCheck.isComplete) {
+                    const missingStr = progressCheck.missing.join(', ');
+                    setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: `Skipped: Incomplete data (Missing: ${missingStr})` } : log));
+                    failCount++;
+                    failedIds.push(i);
+                    setBatchProgress(prev => ({ ...prev, current: prev.current + 1, failCount }));
+                    continue;
+                }
+
                 setBatchLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Overview...' } : log));
 
                 // 3. Generate AI comments
@@ -974,6 +1109,17 @@ const DirectorPage: React.FC = () => {
                     continue;
                 }
                 
+                // Validate completeness: All 40 tracked progress parameters (excluding comments and overall lab remark) must be present
+                const progressCheck = checkTrackedProgress(patientHistory, undefined, 'lab_remark');
+                if (!progressCheck.isComplete) {
+                    const missingStr = progressCheck.missing.join(', ');
+                    setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, status: 'failed' as const, message: `Skipped: Incomplete data (Missing: ${missingStr})` } : log));
+                    failCount++;
+                    failedIds.push(i);
+                    setBatchLabProgress(prev => ({ ...prev, current: prev.current + 1, failCount }));
+                    continue;
+                }
+
                 setBatchLabLogs(prev => prev.map(log => log.id === i ? { ...log, message: 'Generating AI Lab Remark...' } : log));
 
                 // 3. Generate AI Overall Lab Remark
@@ -1274,7 +1420,7 @@ const DirectorPage: React.FC = () => {
                                             <p className="font-bold text-foreground">Generates comments meeting these criteria:</p>
                                             <ul className="list-disc list-inside space-y-1 pl-1">
                                                 <li>Patient has been registered for the screening year.</li>
-                                                <li>Prior departmental clinical data (Consultation, Lab, etc.) exists.</li>
+                                                <li>All 41 tracked progress parameters (including overall lab remark) are complete.</li>
                                             </ul>
                                         </div>
 
@@ -1396,7 +1542,7 @@ const DirectorPage: React.FC = () => {
                                             <p className="font-bold text-foreground">Generates remarks meeting these criteria:</p>
                                             <ul className="list-disc list-inside space-y-1 pl-1">
                                                 <li>Patient is registered for the screening year.</li>
-                                                <li>Prior lab data (FBC, LFT, KFT, Lipids) exists.</li>
+                                                <li>All 40 tracked progress parameters (excluding comments and overall lab remark) are complete.</li>
                                             </ul>
                                         </div>
 
